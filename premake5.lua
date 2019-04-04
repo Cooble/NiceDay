@@ -8,8 +8,14 @@ workspace "NiceDay"
 		"Release",
 		"Dist"
 	}
+    
+
 
 outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
+
+include "NiceDay/vendor/glfw"
+include "NiceDay/vendor/glad"
+include "NiceDay/vendor/imgui"
 
 project "NiceDay"
 	location "NiceDay"
@@ -29,10 +35,7 @@ project "NiceDay"
 		"%{prj.name}/vendor/glm/glm/**.hpp",
 		"%{prj.name}/vendor/glm/glm/**.inl",
 	}
-    
-    include "NiceDay/vendor/glfw"
-    include "NiceDay/vendor/glad"
-    include "NiceDay/vendor/imgui"
+   
 
 	includedirs
 	{
@@ -41,7 +44,7 @@ project "NiceDay"
 		"%{prj.name}/vendor/glfw/include",
 		"%{prj.name}/vendor/glad/include",
 		"%{prj.name}/vendor/imgui",
-		"%{prj.name}/vendor/glm",
+		"%{prj.name}/vendor/glm"
 	}
     links 
 	{ 
