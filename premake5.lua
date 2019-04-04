@@ -26,13 +26,31 @@ project "NiceDay"
 	{
 		"%{prj.name}/src/**.h",
 		"%{prj.name}/src/**.cpp",
+		"%{prj.name}/vendor/glm/glm/**.hpp",
+		"%{prj.name}/vendor/glm/glm/**.inl",
 	}
+    
+    include "NiceDay/vendor/glfw"
+    include "NiceDay/vendor/glad"
+    include "NiceDay/vendor/imgui"
 
 	includedirs
 	{
 		"%{prj.name}/src",
 		"%{prj.name}/vendor/spdlog/include",
+		"%{prj.name}/vendor/glfw/include",
+		"%{prj.name}/vendor/glad/include",
+		"%{prj.name}/vendor/imgui",
+		"%{prj.name}/vendor/glm",
 	}
+    links 
+	{ 
+		"glfw",
+		"glad",
+		"imgui",
+		"opengl32.lib"
+	}
+    
 
 	filter "system:windows"
 		cppdialect "C++17"
@@ -41,8 +59,9 @@ project "NiceDay"
 		defines
 		{
 			"ND_PLATFORM_WINDOWS",
-			"ND_BUILD_DLL",
+			"GLFW_INCLUDE_NONE"
 		}
+
 
 		--[[postbuildcommands
 		{
