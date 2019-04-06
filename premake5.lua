@@ -25,8 +25,8 @@ project "NiceDay"
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
 	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
 
-    --pchheader "hzpch.h"
-	--pchsource "NiceDay/src/hzpch.cpp"
+    pchheader "ndpch.h"
+	pchsource "NiceDay/src/ndpch.cpp"
 
 	files
 	{
@@ -34,6 +34,7 @@ project "NiceDay"
 		"%{prj.name}/src/**.cpp",
 		"%{prj.name}/vendor/glm/glm/**.hpp",
 		"%{prj.name}/vendor/glm/glm/**.inl",
+		"%{prj.name}/vendor/stb_image/**",
 	}
    
 
@@ -44,7 +45,8 @@ project "NiceDay"
 		"%{prj.name}/vendor/glfw/include",
 		"%{prj.name}/vendor/glad/include",
 		"%{prj.name}/vendor/imgui",
-		"%{prj.name}/vendor/glm"
+		"%{prj.name}/vendor/glm",
+		"%{prj.name}/vendor/stb_image"
 	}
     links 
 	{ 
