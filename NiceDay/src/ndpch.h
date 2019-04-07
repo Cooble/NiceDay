@@ -10,3 +10,4 @@
 #include <vector>
 
 #include "Log.h"
+#include "Core.h"

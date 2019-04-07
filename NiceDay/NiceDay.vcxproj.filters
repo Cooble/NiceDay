@@ -1182,14 +1182,14 @@
     <ClInclude Include="vendor\stb_image\stb_image.h">
       <Filter>vendor\stb_image</Filter>
     </ClInclude>
+    <ClInclude Include="src\Input.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\layer\Layer.h" />
+    <ClInclude Include="src\layer\LayerStack.h" />
+    <ClInclude Include="src\layer\MainLayer.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\Display.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\EntryPoint.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="src\Game.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -1226,5 +1226,16 @@
     <ClCompile Include="vendor\stb_image\stb_image.cpp">
       <Filter>vendor\stb_image</Filter>
     </ClCompile>
+    <ClCompile Include="src\Window.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\EntryPoint.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Input.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\layer\LayerStack.cpp" />
+    <ClCompile Include="src\layer\MainLayer.cpp" />
   </ItemGroup>
 </Project>

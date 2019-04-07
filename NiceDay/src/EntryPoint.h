@@ -4,10 +4,9 @@
 
 int main()
 {
-	Log::Init();
-	ND_WARN("Initialized Log!");
-	
+	Log::Init();	
 	Game game;
 	game.init();
 	game.start();
+	std::cin.get();
 }

@@ -3,18 +3,21 @@
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include "event/Event.h"
 
 
 class Window
 {
 private:
+	bool destroyed = false;
 	GLFWwindow* m_window;
-	
+	using EventCallbackFn = std::function<void(Event&)>;
+
 	struct WindowData
 	{
 		unsigned int width, height;
 		std::string title;
-		void(*eventCallback)();
+		EventCallbackFn eventCallback;
 	};
 	WindowData m_data;
 
@@ -25,12 +28,17 @@ public:
 
 	void setSize(int width, int height);
 	void setTitle(const char* title);
-	void setEventCallBack();
+	void close();
+	void update();
+	inline void setEventCallback(EventCallbackFn func) { m_data.eventCallback = func; };
 	inline bool shouldClose() { return m_window != nullptr && glfwWindowShouldClose(m_window); }
+	
 
+	inline GLFWwindow& getWindow() const { return *m_window; }
 	inline int getWidth() const { return m_data.width; }
 	inline int getHeight() const { return m_data.height; }
-	inline const char& getTitle() const { return *m_data.title.c_str(); }
+	inline const char* getTitle() const { return m_data.title.c_str(); }
+
 private:
 	//void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 };

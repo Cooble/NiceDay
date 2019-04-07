@@ -137,9 +137,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\Input.h" />
     <ClInclude Include="src\Core.h" />
     <ClInclude Include="src\EntryPoint.h" />
     <ClInclude Include="src\Game.h" />
+    <ClInclude Include="src\layer\Layer.h" />
+    <ClInclude Include="src\layer\LayerStack.h" />
+    <ClInclude Include="src\layer\MainLayer.h" />
     <ClInclude Include="src\Log.h" />
     <ClInclude Include="src\Window.h" />
     <ClInclude Include="src\event\Event.h" />
@@ -521,8 +525,11 @@
     <ClInclude Include="vendor\stb_image\stb_image.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\Display.cpp" />
+    <ClCompile Include="src\Input.cpp" />
     <ClCompile Include="src\EntryPoint.cpp" />
+    <ClCompile Include="src\layer\LayerStack.cpp" />
+    <ClCompile Include="src\layer\MainLayer.cpp" />
+    <ClCompile Include="src\Window.cpp" />
     <ClCompile Include="src\Game.cpp" />
     <ClCompile Include="src\Log.cpp" />
     <ClCompile Include="src\graphics\IndexBuffer.cpp" />

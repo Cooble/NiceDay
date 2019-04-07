@@ -26,7 +26,7 @@ public:
 	{
 	}
 	inline const float getScrollX() const { return m_scrollX; }
-	inline const float getScrollX() const { return m_scrollX; }
+	inline const float getScrollY() const { return m_scrollY; }
 	EVENT_TYPE_BUILD(MouseScroll)
 	EVENT_CATEGORY_BUILD(EventCategoryMouse)
 
@@ -59,12 +59,12 @@ public:
 	EVENT_CATEGORY_BUILD(EventCategoryMouse | EventCategoryMouseKey)
 
 };
-class MouseReleasedEvent :public MouseEvent
+class MouseReleaseEvent :public MouseEvent
 {
 private:
 	int m_button;
 public:
-	MouseReleasedEvent(float x, float y, int button) :
+	MouseReleaseEvent(float x, float y, int button) :
 		MouseEvent(x, y), m_button(button)
 	{
 	}
