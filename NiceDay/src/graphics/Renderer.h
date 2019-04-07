@@ -8,23 +8,17 @@
 #ifndef LOADED_CALL_G
 
 //this enables glGetError()
-#define DEBUG 
 
 void checkGLError(int line, const char* methodName, const char* file);
 
-#ifdef DEBUG
+#ifdef ND_DEBUG
 #define Call(x) \
 	while (glGetError() != GL_NO_ERROR);\
 	x;\
 	checkGLError(__LINE__,#x,__FILE__);
-
+#else
+#define Call(x) x;
 #endif // DEBUG
-
-#ifndef DEBUG
-#define Call(x) \
-	x;
-#endif // DEBUG
-
 
 #define LOADED_CALL_G
 #endif // LOADED_CALL_G

@@ -32,6 +32,7 @@ Window::Window(int width, int height, const char* title) :
 		glfwTerminate();
 		return;
 	}
+	glfwSwapInterval(1); // Enable vsync
 	glfwMakeContextCurrent(m_window);
 	// glad: load all OpenGL function pointers
 		// ---------------------------------------
@@ -129,11 +130,14 @@ void Window::close()
 {
 	destroyed = true;
 	glfwDestroyWindow(m_window);
+	
 }
 
 void Window::update()
 {
 	glfwPollEvents();
 	glfwSwapBuffers(m_window);
+	glClearColor(1, 0, 1, 1);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 

@@ -137,10 +137,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\world\Block.h" />
     <ClInclude Include="src\Input.h" />
     <ClInclude Include="src\Core.h" />
     <ClInclude Include="src\EntryPoint.h" />
     <ClInclude Include="src\Game.h" />
+    <ClInclude Include="src\layer\ImGuiLayer.h" />
     <ClInclude Include="src\layer\Layer.h" />
     <ClInclude Include="src\layer\LayerStack.h" />
     <ClInclude Include="src\layer\MainLayer.h" />
@@ -523,10 +525,15 @@
     <ClInclude Include="vendor\glm\glm\vec4.hpp" />
     <ClInclude Include="vendor\glm\glm\vector_relational.hpp" />
     <ClInclude Include="vendor\stb_image\stb_image.h" />
+    <ClInclude Include="src\world\World.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\world\Block.cpp" />
     <ClCompile Include="src\Input.cpp" />
     <ClCompile Include="src\EntryPoint.cpp" />
+    <ClCompile Include="src\layer\ImGuiBuild.cpp" />
+    <ClCompile Include="src\layer\ImGuiLayer.cpp" />
+    <ClCompile Include="src\layer\Layer.cpp" />
     <ClCompile Include="src\layer\LayerStack.cpp" />
     <ClCompile Include="src\layer\MainLayer.cpp" />
     <ClCompile Include="src\Window.cpp" />
@@ -544,6 +551,7 @@
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="vendor\stb_image\stb_image.cpp" />
+    <ClCompile Include="src\world\World.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="vendor\glfw\glfw.vcxproj">

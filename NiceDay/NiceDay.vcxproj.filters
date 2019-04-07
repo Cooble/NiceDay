@@ -1188,6 +1188,9 @@
     <ClInclude Include="src\layer\Layer.h" />
     <ClInclude Include="src\layer\LayerStack.h" />
     <ClInclude Include="src\layer\MainLayer.h" />
+    <ClInclude Include="src\layer\ImGuiLayer.h" />
+    <ClInclude Include="src\world\Block.h" />
+    <ClInclude Include="src\world\World.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Game.cpp">
@@ -1237,5 +1240,10 @@
     </ClCompile>
     <ClCompile Include="src\layer\LayerStack.cpp" />
     <ClCompile Include="src\layer\MainLayer.cpp" />
+    <ClCompile Include="src\layer\Layer.cpp" />
+    <ClCompile Include="src\layer\ImGuiLayer.cpp" />
+    <ClCompile Include="src\layer\ImGuiBuild.cpp" />
+    <ClCompile Include="src\world\Block.cpp" />
+    <ClCompile Include="src\world\World.cpp" />
   </ItemGroup>
 </Project>

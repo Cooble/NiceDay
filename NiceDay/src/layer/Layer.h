@@ -6,15 +6,15 @@ class Layer
 protected:
 	std::string m_name;
 public:
-	Layer(std::string name = "Layer");
+	Layer(const std::string& name = "Layer");
 	virtual ~Layer();
 
-	virtual void onAttach() = 0;
-	virtual void onDetach() = 0;
-	virtual void onUpdate() = 0;
-	virtual void onImGuiRender() = 0;
-	virtual void onEvent(Event& e) = 0;
+	virtual void onAttach() {}
+	virtual void onDetach() {}
+	virtual void onUpdate() {}
+	virtual void onImGuiRender() {}
+	virtual void onEvent(Event& e) {}
 
-	inline const std::string& getName() { return m_name; }
+	inline const std::string& getName() const { return m_name; }
 };
 

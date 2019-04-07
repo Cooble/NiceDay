@@ -34,7 +34,7 @@ public:
 	inline bool shouldClose() { return m_window != nullptr && glfwWindowShouldClose(m_window); }
 	
 
-	inline GLFWwindow& getWindow() const { return *m_window; }
+	inline GLFWwindow* getWindow() const { return m_window; }
 	inline int getWidth() const { return m_data.width; }
 	inline int getHeight() const { return m_data.height; }
 	inline const char* getTitle() const { return m_data.title.c_str(); }

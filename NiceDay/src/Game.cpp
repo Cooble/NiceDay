@@ -1,6 +1,9 @@
 #include "ndpch.h"
 #include "Game.h"
 #include "event/Event.h"
+#include "event/WindowEvent.h"
+#include "layer/MainLayer.h"
+#include "layer/ImGuiLayer.h"
 #include <chrono>
 
 #define BIND_EVENT_FN(x) std::bind(&Game::x, &Game::get(), std::placeholders::_1)
@@ -11,28 +14,39 @@ Game* Game::s_Instance = nullptr;
 
 Game::Game()
 {
-	ASSERT(s_Instance==nullptr,"Instance of game already exists!")
-	s_Instance = this;
+	ASSERT(s_Instance == nullptr, "Instance of game already exists!")
+		s_Instance = this;
 }
 
-bool Game::consumeEsc(MousePressEvent& e) {
-	ND_INFO("I have consumed {0}",e.toString());
+bool Game::onWindowClose(WindowCloseEvent& e){
+	ND_INFO("Window was closed");
+	stop();
 	return true;
 
 }
-static void callee(Event& e) {
-	//ND_INFO(e.toString());
-	EventDispatcher dis(e);
-	dis.dispatch<MousePressEvent>(BIND_EVENT_FN(consumeEsc));
 
-	if (e.getEventType() == Event::EventType::WindowClose) {
-		Game::get().stop();
+static void eventCallback(Event& e) {
+
+	LayerStack& stack = Game::get().getLayerStack();
+	EventDispatcher dispatcher(e);
+	dispatcher.dispatch<WindowCloseEvent>(BIND_EVENT_FN(onWindowClose));
+
+	for (auto it = stack.end(); it != stack.begin(); )
+	{
+		(*--it)->onEvent(e);
+		if (e.handled)
+			break;
 	}
 }
+
 void Game::init()
 {
-	m_Window = new Window(1280, 720, "NiceDay");
-	m_Window->setEventCallback(callee);
+	m_Window = new Window(1500, 720, "NiceDay");
+	m_Window->setEventCallback(eventCallback);
+	auto l = new MainLayer();
+	m_LayerStack.PushLayer(l);
+	m_ImGuiLayer = new ImGuiLayer();
+	m_LayerStack.PushOverlay(m_ImGuiLayer);
 }
 
 
@@ -49,16 +63,29 @@ void Game::start()
 			update();
 		}
 		render();
-		m_Window->update();
 
 	}
+	for (Layer* l : m_LayerStack)
+		l->onDetach();
+
 	m_Window->close();
 	ND_TRACE("Game quitted");
 }
 
 void Game::update() {
+	for (Layer* l : m_LayerStack)
+		l->onUpdate();
+
+
+
 }
 void Game::render() {
+	m_Window->update();
+
+	m_ImGuiLayer->begin();
+	for (Layer* l : m_LayerStack)
+		l->onImGuiRender();
+	m_ImGuiLayer->end();
 
 }
 void Game::stop() {
@@ -67,4 +94,5 @@ void Game::stop() {
 
 Game::~Game()
 {
+	delete m_Window;
 }

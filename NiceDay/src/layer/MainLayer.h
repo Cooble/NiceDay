@@ -4,7 +4,7 @@ class MainLayer: public Layer
 {
 public:
 	MainLayer();
-	virtual ~MainLayer();
+	~MainLayer();
 
 	virtual void onAttach() override;
 	virtual void onDetach() override;
