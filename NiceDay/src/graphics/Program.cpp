@@ -6,35 +6,30 @@
 
 
 
-struct ShaderProgramSources
-{
-	std::string vertexSrc;
-	std::string fragmentSrc;
 
-};
 
-static ShaderProgramSources parseShader(const std::string &file_path) {
-	
+static Program::ShaderProgramSources parseShader(const std::string &file_path) {
+
 	std::ifstream stream(file_path);
 
 	enum class ShaderType {
-		NONE = -1, VERTEX = 0, FRAGMENT = 1
+		NONE = -1, VERTEX = 0, FRAGMENT = 1, GEOMETRY = 2
 	};
 	ShaderType shaderType = ShaderType::NONE;
 	std::string line;
-	std::stringstream ss[2];
+	std::stringstream ss[3];
 	while (getline(stream, line)) {
-		if (line.find("#shader")!= std::string::npos) {
+		if (line.find("#shader") != std::string::npos) {
 			if (line.find("vertex") != std::string::npos)
 				shaderType = ShaderType::VERTEX;
-			else if (line.find("fragment") != std::string::npos) 
+			else if (line.find("fragment") != std::string::npos)
 				shaderType = ShaderType::FRAGMENT;
+			else if (line.find("geometry") != std::string::npos)
+				shaderType = ShaderType::GEOMETRY;
 
-			
+
 		}
-		else if(shaderType!=ShaderType::NONE){
-			//std::cout << (int)shaderType<<" ";
-			//std::cout << line << std::endl;
+		else if (shaderType != ShaderType::NONE) {
 			ss[(int)shaderType] << line << "\n";
 
 		}
@@ -42,7 +37,7 @@ static ShaderProgramSources parseShader(const std::string &file_path) {
 
 
 	}
-	return { ss[0].str(),ss[1].str()};
+	return { ss[0].str(),ss[1].str(),ss[2].str() };
 
 }
 
@@ -55,26 +50,31 @@ static unsigned int compileShader(unsigned int type, const std::string& src) {
 	int result;
 	Call(glGetShaderiv(id, GL_COMPILE_STATUS, &result));
 	if (result == GL_FALSE) {
-		std::cout << "Failed to compile shader";
+
+		ND_ERROR("Failed to compile shader");
 
 		int length;
 		Call(glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length));
 		char * message = (char*)alloca(length * sizeof(char));
 		Call(glGetShaderInfoLog(id, length, &length, message));
-		std::cout << message << std::endl;
+		ND_ERROR(message);
 		return 0;
 
 	}
 	return id;
-
-	//TODO errors?
-
 }
 
-static unsigned int buildProgram(const std::string &vertex, const std::string &fragment) {
+static unsigned int buildProgram(const Program::ShaderProgramSources& src) {
 	Call(unsigned int program = glCreateProgram());
-	unsigned int vs = compileShader(GL_VERTEX_SHADER, vertex);
-	unsigned int fs = compileShader(GL_FRAGMENT_SHADER, fragment);
+	unsigned int vs = compileShader(GL_VERTEX_SHADER, src.vertexSrc);
+	unsigned int fs = compileShader(GL_FRAGMENT_SHADER, src.fragmentSrc);
+	unsigned int gs;
+	bool geometry = src.geometrySrc.compare("") == 0;
+
+	if (geometry) {
+		gs = compileShader(GL_GEOMETRY_SHADER, src.geometrySrc);
+		Call(glAttachShader(program, gs));
+	}
 	Call(glAttachShader(program, vs));
 	Call(glAttachShader(program, fs));
 	Call(glLinkProgram(program));
@@ -82,17 +82,21 @@ static unsigned int buildProgram(const std::string &vertex, const std::string &f
 
 	Call(glDeleteShader(vs));
 	Call(glDeleteShader(fs));
-	std::cout << "Parsed program with id: " << program << std::endl;
+	if (geometry)
+		Call(glDeleteShader(gs));
+
+	ND_TRACE("Parsed program with id: ", program);
 
 	return program;
 }
 
-Program::Program(const std::string &vertex, const std::string &fragment) :m_id(0) {
-	m_id = buildProgram(vertex, fragment);
+Program::Program(const Program::ShaderProgramSources& src) :m_id(0) {
+	m_id = buildProgram(src);
 }
-Program::Program(const std::string &file_path):m_id(0) {
-	ShaderProgramSources s = parseShader(file_path);
-	m_id = buildProgram(s.vertexSrc, s.fragmentSrc);
+
+Program::Program(const std::string &file_path) : m_id(0) {
+	Program::ShaderProgramSources& s = parseShader(file_path);
+	m_id = buildProgram(s);
 }
 
 void Program::bind() const {
@@ -121,9 +125,9 @@ void Program::setUniform1f(const std::string & name, float f0)
 {
 	glUniform1f(getUniformLocation(name), f0);
 }
-void Program::setUniform2f(const std::string & name, float f0,float f1)
+void Program::setUniform2f(const std::string & name, float f0, float f1)
 {
-	glUniform2f(getUniformLocation(name), f0,f1);
+	glUniform2f(getUniformLocation(name), f0, f1);
 }
 
 void Program::setUniform1i(const std::string & name, int v)
@@ -137,9 +141,9 @@ int Program::getUniformLocation(const std::string& name)
 	if (cache.find(name) != cache.end()) {
 		return cache[name];
 	}
-	int out =  glGetUniformLocation(m_id, name.c_str());
-	if (out == -1) 
-		std::cout << "Uniform doesn't exist: " << name << std::endl;
+	int out = glGetUniformLocation(m_id, name.c_str());
+	if (out == -1)
+		ND_WARN("Uniform doesn't exist: ", name);
 
 	cache[name] = out;
 	return out;

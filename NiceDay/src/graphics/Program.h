@@ -12,7 +12,16 @@ private:
 	int getUniformLocation(const std::string& name);
 	std::unordered_map<std::string, int> cache;
 public:
-	Program(const std::string &vertex, const std::string &fragment);
+	struct ShaderProgramSources
+	{
+		std::string vertexSrc;
+		std::string fragmentSrc;
+		std::string geometrySrc;
+		ShaderProgramSources(const std::string& vertex,const std::string& fragment,const std::string& geometry = "")
+			:vertexSrc(vertex), fragmentSrc(fragment),geometrySrc(geometry) {}
+
+	};
+	Program(const ShaderProgramSources& src);
 	Program(const std::string &file_path);
 	~Program();
 

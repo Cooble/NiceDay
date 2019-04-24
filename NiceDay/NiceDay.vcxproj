@@ -137,6 +137,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\world\BlockRegistry.h" />
+    <ClInclude Include="src\graphics\IRenderable.h" />
+    <ClInclude Include="src\ChunkMesh.h" />
     <ClInclude Include="src\world\Block.h" />
     <ClInclude Include="src\Input.h" />
     <ClInclude Include="src\Core.h" />
@@ -526,8 +529,12 @@
     <ClInclude Include="vendor\glm\glm\vector_relational.hpp" />
     <ClInclude Include="vendor\stb_image\stb_image.h" />
     <ClInclude Include="src\world\World.h" />
+    <ClInclude Include="src\layer\WorldLayer.h" />
+    <ClInclude Include="src\world\WorldGen.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\world\BlockRegistry.cpp" />
+    <ClCompile Include="src\ChunkMesh.cpp" />
     <ClCompile Include="src\world\Block.cpp" />
     <ClCompile Include="src\Input.cpp" />
     <ClCompile Include="src\EntryPoint.cpp" />
@@ -552,6 +559,8 @@
     </ClCompile>
     <ClCompile Include="vendor\stb_image\stb_image.cpp" />
     <ClCompile Include="src\world\World.cpp" />
+    <ClCompile Include="src\layer\WorldLayer.cpp" />
+    <ClCompile Include="src\world\WorldGen.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="vendor\glfw\glfw.vcxproj">

@@ -4,6 +4,7 @@
 #include "event/WindowEvent.h"
 #include "layer/MainLayer.h"
 #include "layer/ImGuiLayer.h"
+#include "layer/WorldLayer.h"
 #include <chrono>
 
 #define BIND_EVENT_FN(x) std::bind(&Game::x, &Game::get(), std::placeholders::_1)
@@ -47,6 +48,7 @@ void Game::init()
 	m_LayerStack.PushLayer(l);
 	m_ImGuiLayer = new ImGuiLayer();
 	m_LayerStack.PushOverlay(m_ImGuiLayer);
+	m_LayerStack.PushLayer(new WorldLayer());
 }
 
 
@@ -81,6 +83,8 @@ void Game::update() {
 }
 void Game::render() {
 	m_Window->update();
+	for (Layer* l : m_LayerStack)
+		l->onRender();
 
 	m_ImGuiLayer->begin();
 	for (Layer* l : m_LayerStack)

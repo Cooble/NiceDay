@@ -12,6 +12,7 @@ public:
 	virtual void onAttach() {}
 	virtual void onDetach() {}
 	virtual void onUpdate() {}
+	virtual void onRender() {}
 	virtual void onImGuiRender() {}
 	virtual void onEvent(Event& e) {}
 
