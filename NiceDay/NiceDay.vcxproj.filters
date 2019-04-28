@@ -1195,7 +1195,10 @@
     <ClInclude Include="src\ChunkMesh.h" />
     <ClInclude Include="src\graphics\IRenderable.h" />
     <ClInclude Include="src\world\BlockRegistry.h" />
-    <ClInclude Include="src\world\WorldGen.h" />
+    <ClInclude Include="src\world\WorldIO.h" />
+    <ClInclude Include="src\entity\Camera.h" />
+    <ClInclude Include="src\world\ITickable.h" />
+    <ClInclude Include="src\world\ChunkLoader.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Game.cpp">
@@ -1253,6 +1256,8 @@
     <ClCompile Include="src\layer\WorldLayer.cpp" />
     <ClCompile Include="src\ChunkMesh.cpp" />
     <ClCompile Include="src\world\BlockRegistry.cpp" />
-    <ClCompile Include="src\world\WorldGen.cpp" />
+    <ClCompile Include="src\world\WorldIO.cpp" />
+    <ClCompile Include="src\entity\Camera.cpp" />
+    <ClCompile Include="src\world\ChunkLoader.cpp" />
   </ItemGroup>
 </Project>

@@ -137,6 +137,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\world\ChunkLoader.h" />
+    <ClInclude Include="src\entity\Camera.h" />
     <ClInclude Include="src\world\BlockRegistry.h" />
     <ClInclude Include="src\graphics\IRenderable.h" />
     <ClInclude Include="src\ChunkMesh.h" />
@@ -163,6 +165,7 @@
     <ClInclude Include="src\graphics\VertexBuffer.h" />
     <ClInclude Include="src\graphics\VertexBufferLayout.h" />
     <ClInclude Include="src\ndpch.h" />
+    <ClInclude Include="src\world\ITickable.h" />
     <ClInclude Include="vendor\glm\glm\common.hpp" />
     <ClInclude Include="vendor\glm\glm\detail\_features.hpp" />
     <ClInclude Include="vendor\glm\glm\detail\_fixes.hpp" />
@@ -530,9 +533,11 @@
     <ClInclude Include="vendor\stb_image\stb_image.h" />
     <ClInclude Include="src\world\World.h" />
     <ClInclude Include="src\layer\WorldLayer.h" />
-    <ClInclude Include="src\world\WorldGen.h" />
+    <ClInclude Include="src\world\WorldIO.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\world\ChunkLoader.cpp" />
+    <ClCompile Include="src\entity\Camera.cpp" />
     <ClCompile Include="src\world\BlockRegistry.cpp" />
     <ClCompile Include="src\ChunkMesh.cpp" />
     <ClCompile Include="src\world\Block.cpp" />
@@ -560,7 +565,7 @@
     <ClCompile Include="vendor\stb_image\stb_image.cpp" />
     <ClCompile Include="src\world\World.cpp" />
     <ClCompile Include="src\layer\WorldLayer.cpp" />
-    <ClCompile Include="src\world\WorldGen.cpp" />
+    <ClCompile Include="src\world\WorldIO.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="vendor\glfw\glfw.vcxproj">

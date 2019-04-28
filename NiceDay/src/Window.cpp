@@ -63,16 +63,19 @@ Window::Window(int width, int height, const char* title) :
 	glfwSetKeyCallback(m_window, [](GLFWwindow * window, int key, int scancode, int action, int mods) {
 		WindowData& d = *(WindowData*)glfwGetWindowUserPointer(window);
 		if (action == GLFW_PRESS) {
-			KeyPressEvent e(scancode, mods);
+			KeyPressEvent e(key, mods);
 			d.eventCallback(e);
 		}
 		else if (action == GLFW_RELEASE) {
-			KeyReleaseEvent e(scancode);
+			KeyReleaseEvent e(key);
 			d.eventCallback(e);
 		}
 	});
-
-
+	glfwSetCharCallback(m_window, [](GLFWwindow * window, unsigned int key) {
+		WindowData& d = *(WindowData*)glfwGetWindowUserPointer(window);
+		KeyTypeEvent e(key);
+		d.eventCallback(e);
+	});
 	//mouse events
 	glfwSetMouseButtonCallback(m_window, [](GLFWwindow * window, int button, int action, int mods) {
 		WindowData& d = *(WindowData*)glfwGetWindowUserPointer(window);
