@@ -5,6 +5,7 @@
 #include <glm/glm.hpp>
 
 
+static const char* s_current_file="null";
 class Program
 {
 private:

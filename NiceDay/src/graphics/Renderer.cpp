@@ -6,7 +6,7 @@
 
 void checkGLError(int line, const char* methodName, const char* file) {
 	while (auto e = glGetError() != GL_NO_ERROR) {
-		std::cout << "[OpenGL Error]: " << e << ", " << methodName << ",	Line: " << line << ", File: " << file<<std::endl;
+		ND_ERROR("[OpenGL Error]: {}, {},	Line: {}, File: {} ", (GLenum)e, methodName, line, file);
 	}
 }
 

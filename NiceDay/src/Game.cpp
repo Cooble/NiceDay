@@ -42,7 +42,7 @@ static void eventCallback(Event& e) {
 
 void Game::init()
 {
-	m_Window = new Window(1500, 720, "NiceDay");
+	m_Window = new Window(720, 720, "NiceDay");
 	m_Window->setEventCallback(eventCallback);
 	auto l = new MainLayer();
 	m_LayerStack.PushLayer(l);

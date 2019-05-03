@@ -137,11 +137,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\graphics\Renderable2D.h" />
     <ClInclude Include="src\world\ChunkLoader.h" />
     <ClInclude Include="src\entity\Camera.h" />
     <ClInclude Include="src\world\BlockRegistry.h" />
-    <ClInclude Include="src\graphics\IRenderable.h" />
-    <ClInclude Include="src\ChunkMesh.h" />
+    <ClInclude Include="src\ChunkMeshInstance.h" />
     <ClInclude Include="src\world\Block.h" />
     <ClInclude Include="src\Input.h" />
     <ClInclude Include="src\Core.h" />
@@ -539,7 +539,7 @@
     <ClCompile Include="src\world\ChunkLoader.cpp" />
     <ClCompile Include="src\entity\Camera.cpp" />
     <ClCompile Include="src\world\BlockRegistry.cpp" />
-    <ClCompile Include="src\ChunkMesh.cpp" />
+    <ClCompile Include="src\ChunkMeshInstance.cpp" />
     <ClCompile Include="src\world\Block.cpp" />
     <ClCompile Include="src\Input.cpp" />
     <ClCompile Include="src\EntryPoint.cpp" />

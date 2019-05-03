@@ -1,5 +1,6 @@
 #pragma once
 #include "ndpch.h"
+#include "glad/glad.h"
 
 class Texture
 {
@@ -11,7 +12,7 @@ private:
 	std::string m_filePath;
 
 public:
-	Texture(const std::string& filePath);
+	Texture(const std::string& file_path,GLenum filter_mode = GL_LINEAR, GLenum wrap_mode=GL_REPEAT);
 
 	void bind(unsigned int slot = 0) const;
 	void unbind() const;

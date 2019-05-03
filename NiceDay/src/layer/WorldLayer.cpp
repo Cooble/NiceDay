@@ -1,5 +1,6 @@
 #include "ndpch.h"
 #include "WorldLayer.h"
+#include "world/BlockRegistry.h"
 #include "world/WorldIO.h"
 #include "Core.h"
 #include "event/KeyEvent.h"
@@ -49,10 +50,12 @@ public:
 WorldLayer::WorldLayer()
 	:Layer("WorldLayer") 
 {
+	Block stone(0);
+	BlockRegistry::get().registerBlock(stone);
 	WorldIOInfo info;
 	info.world_name = "NiceWorld";
-	info.chunk_width = 20;
-	info.chunk_height = 10;
+	info.chunk_width = 5;
+	info.chunk_height = 5;
 	info.seed = 0;
 	//m_world = WorldIO::loadWorld(info.world_name);
 	auto stream = WorldIO::Session(info.world_name+".world", true,true);
@@ -69,6 +72,10 @@ WorldLayer::WorldLayer()
 	m_chunk_loader->onUpdate();
 	m_cam->pos = { 128,2 };
 	m_chunk_loader->onUpdate();
+
+	ChunkMesh::init();
+	m_mesh = new ChunkMeshInstance();
+	m_mesh->createVBOFromChunk(*m_world, m_world->getChunk(0,0));
 
 
 
@@ -104,6 +111,7 @@ void WorldLayer::onUpdate()
 void WorldLayer::onRender()
 {
 	m_world->onRender();
+	m_mesh->render();
 }
 void WorldLayer::onImGuiRender()
 {
@@ -126,7 +134,7 @@ void WorldLayer::onImGuiRender()
 	ImGui::Separator();
 	auto& map = m_world->getMap();
 	int ind = 0;
-	for (auto& iterator = map.begin(); iterator != map.end(); iterator++) {
+	for (auto& iterator = map.begin(); iterator != map.end(); ++iterator) {
 		char label[32];
 		int x, y;
 		Chunk::getChunkPosFromID(iterator->first,x,y);

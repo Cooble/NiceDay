@@ -5,19 +5,18 @@
 
 
 
-Texture::Texture(const std::string& filePath)
-	:m_id(0), m_buffer(nullptr), m_width(0), m_height(0),
-	m_filePath(filePath), m_BPP(0)
+Texture::Texture(const std::string& file_path,GLenum filter_mode, GLenum wrap_mode)
+	:m_filePath(file_path)
 {
 	stbi_set_flip_vertically_on_load(true);
-	m_buffer = stbi_load(filePath.c_str(), &m_width, &m_height, &m_BPP, 4);
+	m_buffer = stbi_load(file_path.c_str(), &m_width, &m_height, &m_BPP, 4);
 
 	Call(glGenTextures(1, &m_id));
 	Call(glBindTexture(GL_TEXTURE_2D, m_id));
-	Call(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
-	Call(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
-	Call(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP));
-	Call(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP));
+	Call(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter_mode));
+	Call(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter_mode));
+	Call(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrap_mode));
+	Call(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap_mode));
 
 	Call(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, m_width, m_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, m_buffer));
 

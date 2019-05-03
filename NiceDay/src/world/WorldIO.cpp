@@ -61,10 +61,12 @@ namespace WorldIO {
 		//creating world file
 		m_stream->write((const char*)&w.getInfo(), sizeof(WorldInfo));
 		auto buff = new char[HEADER_SIZE - sizeof(WorldInfo)];
+		memset(buff, 0, HEADER_SIZE - sizeof(WorldInfo));
 		m_stream->write(buff, HEADER_SIZE - sizeof(WorldInfo));//add some space to fill the HEADER_SIZE
-		delete buff;
+		delete[] buff;
 
 		Chunk* cc = new Chunk();
+		memset(cc, 0,  sizeof(Chunk));
 		cc->m_loaded = false;
 		cc->last_save_time = 0;
 

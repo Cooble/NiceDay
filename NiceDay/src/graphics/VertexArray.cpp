@@ -3,6 +3,7 @@
 #include "Renderer.h"
 
 VertexArray::VertexArray()
+:m_atrib_point_index(0)
 {
 	Call(glGenVertexArrays(1, &m_id));
 }
@@ -22,10 +23,11 @@ void VertexArray::addBuffer(const VertexBuffer& vbo, const VertexBufferLayout& l
 
 	for (unsigned int i = 0; i < ray.size(); i++) {
 		auto& e = ray[i];
-		Call(glEnableVertexAttribArray(i));
-		Call(glVertexAttribPointer(i, e.count, e.type, e.normalized, layout.getStride(), (const void*)offset));
+		Call(glEnableVertexAttribArray(m_atrib_point_index+i));
+		Call(glVertexAttribPointer(m_atrib_point_index+i, e.count, e.type, e.normalized, layout.getStride(), (const void*)offset));
 		offset += e.count*VertexBufferElement::getByteCount(e.type);
 	}
+	m_atrib_point_index+= ray.size();
 
 
 }

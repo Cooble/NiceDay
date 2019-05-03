@@ -14,14 +14,14 @@ ChunkLoader::~ChunkLoader()
 }
 
 static void printMap(std::unordered_map<int, int>& map) {
-	for (auto& it = map.begin(); it != map.end(); it++) {
+	for (auto& it = map.begin(); it != map.end(); ++it) {
 		int x, y;
 		Chunk::getChunkPosFromID(it->first, x, y);
 		ND_INFO("{}, {}",x,y);
 	}
 }
 static void printSet(std::set<int>& set) {
-	for (auto& it = set.begin(); it != set.end(); it++) {
+	for (auto& it = set.begin(); it != set.end(); ++it) {
 		int x, y;
 		Chunk::getChunkPosFromID(*it, x, y);
 		ND_INFO("{}, {}", x, y);
@@ -35,7 +35,7 @@ void ChunkLoader::tickInner()
 	
 
 	auto& map = m_world->getMap();
-	for (auto& iterator = map.begin(); iterator != map.end(); iterator++) {
+	for (auto& iterator = map.begin(); iterator != map.end(); ++iterator) {
 			toRemoveList.insert(iterator->first);//get all loaded chunks
 	}
 

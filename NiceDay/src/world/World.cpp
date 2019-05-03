@@ -2,7 +2,6 @@
 #include "World.h"
 #include "WorldIO.h"
 
-#include <algorithm>
 
 Chunk::Chunk() :m_loaded(false)
 {
@@ -16,15 +15,15 @@ void World::init() {
 	ND_INFO("Made world instance");
 }
 
-World::World(const std::string& filePath, const char* name, int chunk_width, int chunk_height)
-	:m_info({ 0,chunk_width,chunk_height,0 }), m_file_path(filePath)//seed,width,height,time
-{//todo check if m_file_path works?
+World::World(const std::string& file_path, const char* name, int chunk_width, int chunk_height)
+	:m_info({ 0,chunk_width,chunk_height,0 }), m_file_path(file_path)//seed,width,height,time
+{	//todo check if m_file_path works?
 	strcpy_s(m_info.name, name);//name
 	init();
 
 }
-World::World(const std::string& filePath, const WorldInfo * info)
-	:m_info(*info), m_file_path(filePath)
+World::World(const std::string& file_path, const WorldInfo * info)
+	:m_info(*info), m_file_path(file_path)
 {
 	init();
 }
@@ -70,26 +69,26 @@ void World::onRender()
 
 void World::unloadAllChunks()
 {
-	for (Chunk& c : m_chunks) {
+	for (auto& c : m_chunks) {
 		unloadChunk(c);
 	}
 }
 
 void World::saveAllChunks()
 {
-	for (Chunk& c : m_chunks) {
+	for (auto& c : m_chunks) {
 		saveChunk(c);
 	}
 }
 
-Chunk& World::getChunk(int x,int y)
+Chunk& World::getChunk(int x, int y)
 {
-	int index = getChunkIndex(x,y);
+	int index = getChunkIndex(x, y);
 	ASSERT(index != -1, "Invalid operation retrieving chunk thats not loaded!");
 	return m_chunks[index];
 }
 
-int World::getChunkIndex(int x,int y)
+int World::getChunkIndex(int x, int y)
 {
 	return getChunkIndex(Chunk::getChunkIDFromChunkPos(x, y));
 }
@@ -102,9 +101,9 @@ int World::getChunkIndex(int id)
 	return -1;
 }
 
-Chunk& World::loadChunk(int x,int y)
+Chunk& World::loadChunk(int x, int y)
 {
-	for (int i = 0; i < m_chunks.size(); i++)
+	for (auto i = 0; i < m_chunks.size(); i++)
 	{
 		Chunk& c = m_chunks[i];
 		if (!c.isLoaded())
@@ -143,11 +142,11 @@ void World::unloadChunk(Chunk& c)
 	ND_INFO("canot remove chunk " + m_chunks.size());
 }
 
-void World::unloadChunks(std::set<int>& chunkIds)
+void World::unloadChunks(std::set<int>& chunk_ids)
 {
 	WorldIO::Session stream = WorldIO::Session(m_file_path, true);
 
-	for (int chunkId : chunkIds) {
+	for (int chunkId : chunk_ids) {
 		auto& c = m_chunks[getChunkIndex(chunkId)];
 		m_local_offset_map.erase(chunkId);//is complexity bad?
 		int x, y;
@@ -159,11 +158,11 @@ void World::unloadChunks(std::set<int>& chunkIds)
 	}
 }
 
-void World::loadChunks(std::set<int>& chunkIds)
+void World::loadChunks(std::set<int>& chunk_ids)
 {
 	WorldIO::Session stream = WorldIO::Session(m_file_path, true);
 	int lastFreeChunk = 0;
-	for (int chunkId : chunkIds) {
+	for (int chunkId : chunk_ids) {
 		int indexX, indexY;
 		Chunk::getChunkPosFromID(chunkId, indexX, indexY);
 		bool foundFreeChunk = false;
@@ -175,6 +174,7 @@ void World::loadChunks(std::set<int>& chunkIds)
 				lastFreeChunk = i + 1;
 				stream.loadChunk(&c, getChunkSaveOffset(indexX, indexY));
 				c.m_loaded = true;
+
 				m_local_offset_map[c.chunkID()] = i;
 				foundFreeChunk = true;
 				break;
@@ -193,17 +193,14 @@ void World::loadChunks(std::set<int>& chunkIds)
 	}
 }
 
-void World::saveChunks(std::set<int>& chunkIds)
+void World::saveChunks(std::set<int>& chunk_ids)
 {
 	WorldIO::Session stream = WorldIO::Session(m_file_path, true);
 
-	for (int chunkId : chunkIds) {
+	for (int chunkId : chunk_ids) {
 		auto& c = m_chunks[getChunkIndex(chunkId)];
 		c.last_save_time = getTime();
 		stream.saveChunk(&c, getChunkSaveOffset(c.chunkID()));
-		return;
-
-		ND_INFO("canot remove chunk " + m_chunks.size());
 	}
 }
 

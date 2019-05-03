@@ -64,18 +64,18 @@ private:
 
 	void init();
 public:
-	World(const std::string& filePath, const char* name, int chunk_width, int chunk_height);
-	World(const std::string& filePath, const WorldInfo* info);
+	World(const std::string& file_path, const char* name, int chunk_width, int chunk_height);
+	World(const std::string& file_path, const WorldInfo* info);
 	~World();
 
 	void onUpdate();
-	void tick();
+	void tick() override;
 	void onRender();
 	inline bool isChunkLoaded(int x, int y) const { return m_local_offset_map.find(Chunk::getChunkIDFromChunkPos(x, y)) != m_local_offset_map.end(); }
 	void unloadChunk(Chunk&);
-	void unloadChunks(std::set<int>& chunkIds);
-	void loadChunks(std::set<int>& chunkIds);
-	void saveChunks(std::set<int>& chunkIds);
+	void unloadChunks(std::set<int>& chunk_ids);
+	void loadChunks(std::set<int>& chunk_ids);
+	void saveChunks(std::set<int>& chunk_ids);
 	void saveChunk(Chunk&);
 
 	inline int getChunkSaveOffset(int x, int y) const { return y * m_info.chunk_width + x; };
@@ -104,7 +104,7 @@ public:
 		return m_local_offset_map.end();
 	}
 
-	inline long getTime() const { return m_info.time; }
+    inline long getTime() const { return m_info.time; }
 	inline const std::string getName() const { return m_info.name; }
 	//returns copy of info!
 	inline WorldInfo getInfo() const { return m_info; };

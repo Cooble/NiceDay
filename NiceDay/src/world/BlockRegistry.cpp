@@ -18,6 +18,7 @@ const Block& BlockRegistry::getBlock(int block_id)
 		if (b.getID() == block_id)
 			return b;
 	}
+	//return m_blocks.at(0);
 	ASSERT(false,"Invalid block_id!");
 
 }

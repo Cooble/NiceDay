@@ -5,6 +5,7 @@ class VertexArray
 {
 private:
 	unsigned int m_id;
+	unsigned int m_atrib_point_index;
 	
 public:
 	VertexArray();

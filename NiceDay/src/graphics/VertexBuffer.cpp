@@ -9,7 +9,9 @@ VertexBuffer::VertexBuffer(const void* data, unsigned int length,bool dynamic) {
 }
 void VertexBuffer::changeData(const void* data, int size, int offset)
 {
-	Call(glBufferSubData(m_id,offset,size,data));
+	bind();
+	Call(glBufferSubData(GL_ARRAY_BUFFER,offset,size,data));
+	unbind();
 }
 
 VertexBuffer::~VertexBuffer()

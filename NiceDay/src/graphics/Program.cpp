@@ -5,16 +5,31 @@
 #include <fstream>
 
 
+#define FORGET_BIND_PROTECTION //just bind it please, dont waste your time 
 
+
+static void shaderTypeToString(unsigned int t)
+{	
+	if (t == GL_VERTEX_SHADER)
+		ND_ERROR( "VERTEX");
+	else if (t == GL_FRAGMENT_SHADER)
+		ND_ERROR("FRAGMENT");
+	else if (t == GL_GEOMETRY_SHADER)
+		ND_ERROR("GEOMETRY");
+	else
+		ND_ERROR("NONE");
+
+}
 
 
 static Program::ShaderProgramSources parseShader(const std::string &file_path) {
-
+	s_current_file = file_path.c_str();
 	std::ifstream stream(file_path);
 
 	enum class ShaderType {
 		NONE = -1, VERTEX = 0, FRAGMENT = 1, GEOMETRY = 2
 	};
+	
 	ShaderType shaderType = ShaderType::NONE;
 	std::string line;
 	std::stringstream ss[3];
@@ -50,9 +65,8 @@ static unsigned int compileShader(unsigned int type, const std::string& src) {
 	int result;
 	Call(glGetShaderiv(id, GL_COMPILE_STATUS, &result));
 	if (result == GL_FALSE) {
-
-		ND_ERROR("Failed to compile shader");
-
+		ND_ERROR("[Shader Error] Failed to compile shader {}",s_current_file);
+		shaderTypeToString(type);
 		int length;
 		Call(glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length));
 		char * message = (char*)alloca(length * sizeof(char));
@@ -68,8 +82,8 @@ static unsigned int buildProgram(const Program::ShaderProgramSources& src) {
 	Call(unsigned int program = glCreateProgram());
 	unsigned int vs = compileShader(GL_VERTEX_SHADER, src.vertexSrc);
 	unsigned int fs = compileShader(GL_FRAGMENT_SHADER, src.fragmentSrc);
-	unsigned int gs;
-	bool geometry = src.geometrySrc.compare("") == 0;
+	unsigned int gs=0;
+	bool geometry = src.geometrySrc != "";
 
 	if (geometry) {
 		gs = compileShader(GL_GEOMETRY_SHADER, src.geometrySrc);
@@ -85,7 +99,7 @@ static unsigned int buildProgram(const Program::ShaderProgramSources& src) {
 	if (geometry)
 		Call(glDeleteShader(gs));
 
-	ND_TRACE("Parsed program with id: ", program);
+	ND_TRACE("Parsed program with id: {}", program);
 
 	return program;
 }
@@ -143,7 +157,7 @@ int Program::getUniformLocation(const std::string& name)
 	}
 	int out = glGetUniformLocation(m_id, name.c_str());
 	if (out == -1)
-		ND_WARN("Uniform doesn't exist: ", name);
+		ND_WARN("Uniform doesn't exist: {}", name);
 
 	cache[name] = out;
 	return out;
