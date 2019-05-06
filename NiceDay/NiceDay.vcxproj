@@ -137,12 +137,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\entity\I2DLocalable.h" />
     <ClInclude Include="src\graphics\Renderable2D.h" />
+    <ClInclude Include="src\world\block\basic_blocks.h" />
     <ClInclude Include="src\world\ChunkLoader.h" />
     <ClInclude Include="src\entity\Camera.h" />
     <ClInclude Include="src\world\BlockRegistry.h" />
-    <ClInclude Include="src\ChunkMeshInstance.h" />
-    <ClInclude Include="src\world\Block.h" />
+    <ClInclude Include="src\world\ChunkMeshInstance.h" />
+    <ClInclude Include="src\world\block\Block.h" />
     <ClInclude Include="src\Input.h" />
     <ClInclude Include="src\Core.h" />
     <ClInclude Include="src\EntryPoint.h" />
@@ -157,15 +159,16 @@
     <ClInclude Include="src\event\KeyEvent.h" />
     <ClInclude Include="src\event\MouseEvent.h" />
     <ClInclude Include="src\event\WindowEvent.h" />
-    <ClInclude Include="src\graphics\IndexBuffer.h" />
+    <ClInclude Include="src\graphics\buffer\IndexBuffer.h" />
     <ClInclude Include="src\graphics\Program.h" />
     <ClInclude Include="src\graphics\Renderer.h" />
     <ClInclude Include="src\graphics\Texture.h" />
-    <ClInclude Include="src\graphics\VertexArray.h" />
-    <ClInclude Include="src\graphics\VertexBuffer.h" />
-    <ClInclude Include="src\graphics\VertexBufferLayout.h" />
+    <ClInclude Include="src\graphics\buffer\VertexArray.h" />
+    <ClInclude Include="src\graphics\buffer\VertexBuffer.h" />
+    <ClInclude Include="src\graphics\buffer\VertexBufferLayout.h" />
     <ClInclude Include="src\ndpch.h" />
     <ClInclude Include="src\world\ITickable.h" />
+    <ClInclude Include="src\world\WorldRenderManager.h" />
     <ClInclude Include="vendor\glm\glm\common.hpp" />
     <ClInclude Include="vendor\glm\glm\detail\_features.hpp" />
     <ClInclude Include="vendor\glm\glm\detail\_fixes.hpp" />
@@ -536,11 +539,12 @@
     <ClInclude Include="src\world\WorldIO.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\world\block\basic_blocks.cpp" />
     <ClCompile Include="src\world\ChunkLoader.cpp" />
     <ClCompile Include="src\entity\Camera.cpp" />
     <ClCompile Include="src\world\BlockRegistry.cpp" />
-    <ClCompile Include="src\ChunkMeshInstance.cpp" />
-    <ClCompile Include="src\world\Block.cpp" />
+    <ClCompile Include="src\world\ChunkMeshInstance.cpp" />
+    <ClCompile Include="src\world\block\Block.cpp" />
     <ClCompile Include="src\Input.cpp" />
     <ClCompile Include="src\EntryPoint.cpp" />
     <ClCompile Include="src\layer\ImGuiBuild.cpp" />
@@ -551,17 +555,18 @@
     <ClCompile Include="src\Window.cpp" />
     <ClCompile Include="src\Game.cpp" />
     <ClCompile Include="src\Log.cpp" />
-    <ClCompile Include="src\graphics\IndexBuffer.cpp" />
+    <ClCompile Include="src\graphics\buffer\IndexBuffer.cpp" />
     <ClCompile Include="src\graphics\Program.cpp" />
     <ClCompile Include="src\graphics\Renderer.cpp" />
     <ClCompile Include="src\graphics\Texture.cpp" />
-    <ClCompile Include="src\graphics\VertexArray.cpp" />
-    <ClCompile Include="src\graphics\VertexBuffer.cpp" />
-    <ClCompile Include="src\graphics\VertexBufferLayout.cpp" />
+    <ClCompile Include="src\graphics\buffer\VertexArray.cpp" />
+    <ClCompile Include="src\graphics\buffer\VertexBuffer.cpp" />
+    <ClCompile Include="src\graphics\buffer\VertexBufferLayout.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\ndpch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="src\world\WorldRenderManager.cpp" />
     <ClCompile Include="vendor\stb_image\stb_image.cpp" />
     <ClCompile Include="src\world\World.cpp" />
     <ClCompile Include="src\layer\WorldLayer.cpp" />

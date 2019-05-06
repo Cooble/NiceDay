@@ -2,15 +2,18 @@
 #include "Layer.h"
 #include "world/World.h"
 #include "world/ChunkLoader.h"
-#include "ChunkMeshInstance.h"
-class ChunkLoadingCam;
+#include "world/ChunkMeshInstance.h"
+#include "world/WorldRenderManager.h"
+#include "entity/Camera.h"
+
 class WorldLayer : public Layer
 {
 private:
 	World* m_world;
 	ChunkLoader* m_chunk_loader;
-	ChunkLoadingCam* m_cam;
-	ChunkMeshInstance* m_mesh;
+	//ChunkMeshInstance* m_mesh;
+	WorldRenderManager* m_render_manager;
+	Camera* m_cam;
 public:
 	WorldLayer();
 	~WorldLayer();

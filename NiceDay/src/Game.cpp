@@ -9,7 +9,7 @@
 
 #define BIND_EVENT_FN(x) std::bind(&Game::x, &Game::get(), std::placeholders::_1)
 
-#define ND_TPS_MS 30
+#define ND_TPS_MS 120
 
 Game* Game::s_Instance = nullptr;
 
@@ -20,7 +20,6 @@ Game::Game()
 }
 
 bool Game::onWindowClose(WindowCloseEvent& e){
-	ND_INFO("Window was closed");
 	stop();
 	return true;
 
@@ -42,7 +41,7 @@ static void eventCallback(Event& e) {
 
 void Game::init()
 {
-	m_Window = new Window(720, 720, "NiceDay");
+	m_Window = new Window(1280,720, "NiceDay");
 	m_Window->setEventCallback(eventCallback);
 	auto l = new MainLayer();
 	m_LayerStack.PushLayer(l);
@@ -64,7 +63,10 @@ void Game::start()
 			lastTime = now;
 			update();
 		}
+		//auto lastRender = std::chrono::system_clock::now();
 		render();
+		//auto nowRender = std::chrono::system_clock::now();
+		//m_fps = 1000/std::chrono::duration_cast<std::chrono::milliseconds>(nowRender - lastRender).count();
 
 	}
 	for (Layer* l : m_LayerStack)

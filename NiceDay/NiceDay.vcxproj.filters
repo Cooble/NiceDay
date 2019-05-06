@@ -63,9 +63,6 @@
     <ClInclude Include="src\event\WindowEvent.h">
       <Filter>src\event</Filter>
     </ClInclude>
-    <ClInclude Include="src\graphics\IndexBuffer.h">
-      <Filter>src\graphics</Filter>
-    </ClInclude>
     <ClInclude Include="src\graphics\Program.h">
       <Filter>src\graphics</Filter>
     </ClInclude>
@@ -73,15 +70,6 @@
       <Filter>src\graphics</Filter>
     </ClInclude>
     <ClInclude Include="src\graphics\Texture.h">
-      <Filter>src\graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="src\graphics\VertexArray.h">
-      <Filter>src\graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="src\graphics\VertexBuffer.h">
-      <Filter>src\graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="src\graphics\VertexBufferLayout.h">
       <Filter>src\graphics</Filter>
     </ClInclude>
     <ClInclude Include="src\ndpch.h">
@@ -1189,7 +1177,6 @@
     <ClInclude Include="src\layer\LayerStack.h" />
     <ClInclude Include="src\layer\MainLayer.h" />
     <ClInclude Include="src\layer\ImGuiLayer.h" />
-    <ClInclude Include="src\world\Block.h" />
     <ClInclude Include="src\world\World.h" />
     <ClInclude Include="src\layer\WorldLayer.h" />
     <ClInclude Include="src\world\BlockRegistry.h" />
@@ -1198,7 +1185,23 @@
     <ClInclude Include="src\world\ITickable.h" />
     <ClInclude Include="src\world\ChunkLoader.h" />
     <ClInclude Include="src\graphics\Renderable2D.h" />
-    <ClInclude Include="src\ChunkMeshInstance.h" />
+    <ClInclude Include="src\graphics\buffer\IndexBuffer.h">
+      <Filter>src\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\graphics\buffer\VertexArray.h">
+      <Filter>src\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\graphics\buffer\VertexBuffer.h">
+      <Filter>src\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\graphics\buffer\VertexBufferLayout.h">
+      <Filter>src\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world\WorldRenderManager.h" />
+    <ClInclude Include="src\world\ChunkMeshInstance.h" />
+    <ClInclude Include="src\entity\I2DLocalable.h" />
+    <ClInclude Include="src\world\block\Block.h" />
+    <ClInclude Include="src\world\block\basic_blocks.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Game.cpp">
@@ -1207,9 +1210,6 @@
     <ClCompile Include="src\Log.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\graphics\IndexBuffer.cpp">
-      <Filter>src\graphics</Filter>
-    </ClCompile>
     <ClCompile Include="src\graphics\Program.cpp">
       <Filter>src\graphics</Filter>
     </ClCompile>
@@ -1217,15 +1217,6 @@
       <Filter>src\graphics</Filter>
     </ClCompile>
     <ClCompile Include="src\graphics\Texture.cpp">
-      <Filter>src\graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\VertexArray.cpp">
-      <Filter>src\graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\VertexBuffer.cpp">
-      <Filter>src\graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\VertexBufferLayout.cpp">
       <Filter>src\graphics</Filter>
     </ClCompile>
     <ClCompile Include="src\main.cpp">
@@ -1251,13 +1242,27 @@
     <ClCompile Include="src\layer\Layer.cpp" />
     <ClCompile Include="src\layer\ImGuiLayer.cpp" />
     <ClCompile Include="src\layer\ImGuiBuild.cpp" />
-    <ClCompile Include="src\world\Block.cpp" />
     <ClCompile Include="src\world\World.cpp" />
     <ClCompile Include="src\layer\WorldLayer.cpp" />
     <ClCompile Include="src\world\BlockRegistry.cpp" />
     <ClCompile Include="src\world\WorldIO.cpp" />
     <ClCompile Include="src\entity\Camera.cpp" />
     <ClCompile Include="src\world\ChunkLoader.cpp" />
-    <ClCompile Include="src\ChunkMeshInstance.cpp" />
+    <ClCompile Include="src\graphics\buffer\IndexBuffer.cpp">
+      <Filter>src\graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\buffer\VertexArray.cpp">
+      <Filter>src\graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\buffer\VertexBuffer.cpp">
+      <Filter>src\graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\buffer\VertexBufferLayout.cpp">
+      <Filter>src\graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\world\WorldRenderManager.cpp" />
+    <ClCompile Include="src\world\ChunkMeshInstance.cpp" />
+    <ClCompile Include="src\world\block\Block.cpp" />
+    <ClCompile Include="src\world\block\basic_blocks.cpp" />
   </ItemGroup>
 </Project>

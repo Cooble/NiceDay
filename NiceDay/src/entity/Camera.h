@@ -1,15 +1,30 @@
 #pragma once
 #include <glm/vec2.hpp>
-class Camera
+#include "world/ChunkLoader.h"
+
+class Camera : public IChunkLoaderEntity
 {
-private:
-	glm::vec2 position;
-	
+protected:
+	//worldpos
+	glm::vec2 m_position;
+
+	//size of view
+	glm::vec2 m_dimension;
+
+	int m_chunk_radius;
+
 public:
 	Camera();
-	~Camera();
+	virtual ~Camera() = default;
 
-	inline const glm::vec2 getPosition() const { return position; };
-	inline void setPosition(glm::vec2 vec) { position = vec; }
+	inline const glm::vec2& getPosition() const override;
+	inline int getChunkRadius() const override;
+
+	inline void setChunkRadius(int rad) { m_chunk_radius = rad; }
+
+	inline void setPosition(const glm::vec2& vec) { m_position = vec; }
+
+
+	glm::vec2& getDimension();
 };
 

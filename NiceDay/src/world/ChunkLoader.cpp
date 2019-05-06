@@ -1,6 +1,5 @@
 #include "ndpch.h"
 #include "ChunkLoader.h"
-#include "world/WorldIO.h"
 
 
 
@@ -57,6 +56,7 @@ void ChunkLoader::tickInner()
 			for (int y = cy - newRadius; y < cy + newRadius; y++) {
 				if ((y < 0) || (y > m_world->getInfo().chunk_height - 1))
 					continue;
+
 				if (!m_world->isChunkLoaded(x, y))
 					toLoadList.insert(Chunk::getChunkIDFromChunkPos(x, y));
 
@@ -70,6 +70,11 @@ void ChunkLoader::tickInner()
 
 void ChunkLoader::onUpdate()
 {
+	if (m_dirty) {
+		m_dirty = false;
+		tickInner();
+		return;
+	}
 	for (const EntityWrapper& w : m_loader_entities) {
 		auto pos = w.e->getPosition();
 		int newID = Chunk::getChunkIDFromWorldPos((int)pos.x, (int)pos.y);
@@ -87,6 +92,7 @@ void ChunkLoader::onUpdate()
 
 void ChunkLoader::registerEntity(IChunkLoaderEntity * e)
 {
+	m_dirty = true;
 	EntityWrapper w = { e, -1, 0 };
 	m_loader_entities.push_back(w);//does it work?
 }
@@ -101,5 +107,11 @@ void ChunkLoader::unregisterEntity(IChunkLoaderEntity * e)
 		}
 		i++;
 	}
+}
+
+void ChunkLoader::clearEntities()
+{
+	m_loader_entities.clear();
+	tickInner();
 }
 

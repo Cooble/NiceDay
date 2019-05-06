@@ -1,6 +1,17 @@
 #pragma once
 #include "ndpch.h"
 
+/*
+WorldIO::Session is responsible for loading and saving world related data i.e. WorldInfo, Chunks.
+
+Possible errors you might do:
+
+	1. read when write_only mode is set
+	2. using write_only when not writing the whole file at once
+	3. bad filepath
+
+*/
+
 class World;
 class Chunk;
 
@@ -18,8 +29,13 @@ namespace WorldIO {
 	private:
 		std::fstream* m_stream;
 		std::string m_file_path;
+
+		#ifdef ND_DEBUG
+		bool m_write_only;
+		bool m_write_mode;
+		#endif
 	public:
-		World* genWorld(const WorldIOInfo& info);
+		World* genWorldFile(const WorldIOInfo& info);
 
 		void saveWorld(World * world);
 

@@ -9,4 +9,6 @@ int main()
 	game.init();
 	game.start();
 	std::cin.get();
+
+	return 0;
 }

@@ -4,20 +4,16 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
-void checkGLError(int line, const char* methodName, const char* file) {
+void checkGLError(int line, const char* method_name, const char* file) {
 	while (auto e = glGetError() != GL_NO_ERROR) {
-		ND_ERROR("[OpenGL Error]: {}, {},	Line: {}, File: {} ", (GLenum)e, methodName, line, file);
+		ND_ERROR("[OpenGL Error]: {}, {},	Line: {}, File: {} ", (GLenum)e, method_name, line, file);
 	}
 }
 
-Renderer::Renderer()
-{
-}
+Renderer::Renderer() = default;
 
 
-Renderer::~Renderer()
-{
-}
+Renderer::~Renderer()= default;
 
 void Renderer::draw(const VertexArray& vao, const Program& shader, const IndexBuffer& ibo)
 {

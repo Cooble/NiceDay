@@ -2,14 +2,15 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
-#include "VertexArray.h"
+#include "buffer/VertexArray.h"
+#include "buffer/IndexBuffer.h"
+
 #include "Program.h"
-#include "IndexBuffer.h"
 #ifndef LOADED_CALL_G
 
 //this enables glGetError()
 
-void checkGLError(int line, const char* methodName, const char* file);
+void checkGLError(int line, const char* method_name, const char* file);
 
 #ifdef ND_DEBUG
 #define Call(x) \

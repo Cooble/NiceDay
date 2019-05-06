@@ -1,6 +1,6 @@
 #include "ndpch.h"
 #include "VertexBuffer.h"
-#include "Renderer.h"
+#include "graphics/Renderer.h"
 
 VertexBuffer::VertexBuffer(const void* data, unsigned int length,bool dynamic) {
 	Call(glGenBuffers(1, &m_id));

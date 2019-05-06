@@ -4,6 +4,7 @@
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 
+#define BREAK_IF_SHADER_COMPILE_ERROR 1
 
 static const char* s_current_file="null";
 class Program

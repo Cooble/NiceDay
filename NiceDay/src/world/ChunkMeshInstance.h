@@ -1,12 +1,15 @@
 #pragma once
 #include  "world/World.h"
-#include "graphics/VertexArray.h"
 #include "graphics/Program.h"
 #include "glm/vec2.hpp"
 #include "graphics/Texture.h"
+#include "graphics/buffer/VertexBufferLayout.h"
+#include "graphics/buffer/VertexBuffer.h"
+#include "graphics/buffer/VertexArray.h"
 
 constexpr unsigned int CHUNK_MESH_WIDTH = WORLD_CHUNK_SIZE;
-constexpr unsigned int BLOCK_ATLAS_ICON_NUMBER_BIT = 1;//2 to the n icons in atlas in row
+constexpr unsigned int BLOCK_TEXTURE_ATLAS_SIZE_BIT = 1;//2 to the n icons in atlas in row
+constexpr unsigned int BLOCK_CORNER_ATLAS_SIZE_BIT = 3;//2 to the n icons in atlas in row
 class Renderer;
 
 class ChunkMesh
@@ -26,6 +29,7 @@ private:
 	static VertexBuffer* s_buffer;
 	static Program* s_program;
 	static Texture* s_texture;
+	static Texture* s_texture_corners;
 
 public:
 	static void init();
@@ -34,6 +38,7 @@ public:
 	static inline Program* getProgram() { return s_program; }
 	static inline VertexBuffer* getVBO() { return s_buffer; }
 	static inline Texture* getAtlas() { return s_texture; }
+	static inline Texture* getCornerAtlas() { return s_texture_corners; }
 
 
 
@@ -46,17 +51,18 @@ private:
 	VertexBuffer* m_vbo;
 	char* m_buff;
 	glm::vec2 m_pos;
-	float m_scale;
-
 
 public:
+	bool m_enabled;
 	ChunkMeshInstance();
 
-	void createVBOFromChunk(const World& world, const Chunk& chunk);
+	void updateMesh(const World& world, const Chunk& chunk);
 
-	void render();
+	inline glm::vec2& getPos() { return m_pos; }
+	inline VertexArray& getVAO() { return *m_vao; }
 
 	~ChunkMeshInstance();
+
 };
 
 

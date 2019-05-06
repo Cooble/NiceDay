@@ -4,6 +4,8 @@
 #include <iostream>
 #include <fstream>
 
+
+
 #ifdef ND_DEBUG
 #define CHECK_STREAM_STATE(x) checkDebugState(x)
 #define CHECK_STREAM_STATE_START(x,y) if(checkDebugState(x)){ND_ERROR("WorldIO: Check if filepath is valid: \"{}\"",y);}
@@ -31,14 +33,8 @@ static bool checkDebugState(std::fstream* stream) {
 
 //in bytes
 static const int HEADER_SIZE = 1000;
-/**
 
-WorldSaveHeader:
--WorldInfo
--Map of chunks? nope
--Chunks
 
-*/
 namespace WorldIO {
 	Session::Session(const std::string& path, bool write_mode,bool write_only):
 		m_file_path(path)
@@ -53,7 +49,7 @@ namespace WorldIO {
 	}
 
 
-	World* Session::genWorld(const WorldIOInfo & info)
+	World* Session::genWorldFile(const WorldIOInfo & info)
 	{
 		World* ww = new World(m_file_path, info.world_name.c_str(), info.chunk_width, info.chunk_height);
 		World& w = *ww;
@@ -69,7 +65,7 @@ namespace WorldIO {
 		memset(cc, 0,  sizeof(Chunk));
 		cc->m_loaded = false;
 		cc->last_save_time = 0;
-
+		//writing blank chunks
 		for (int y = 0; y < info.chunk_height; y++)
 		{
 			for (int x = 0; x < info.chunk_width; x++)
@@ -88,33 +84,31 @@ namespace WorldIO {
 	
 	World* Session::loadWorld()
 	{
-		//ND_TRACE("Loading world {0}", m_file_path);
+		ND_TRACE("Loading world {0}", m_file_path);
 		WorldInfo info;
 		m_stream->read((char*)&info, sizeof(WorldInfo));
 		CHECK_STREAM_STATE(m_stream);
+		if (m_stream->rdstate() & std::fstream::failbit)//cannot read file
+			return nullptr;
 		World* ww = new World(m_file_path, &info);
 		return ww;
 	}
 
+	//saves only worldinfo
 	void Session::saveWorld(World* world)
 	{
-		//ND_TRACE("Saving world {0}", world->getName());
 
 		m_stream->write((char*)&world->getInfo(), sizeof(WorldInfo));
 		CHECK_STREAM_STATE(m_stream);
 	}
 
-
 	void Session::loadChunk(Chunk* chunk, int offset) {
-		//ND_TRACE("Loading chunk with offset {0}", offset);
 		m_stream->seekg(HEADER_SIZE + sizeof(Chunk)*offset, std::ios::beg);
 		m_stream->read((char*)chunk, sizeof(Chunk));
 		CHECK_STREAM_STATE(m_stream);
 	}
 
 	void Session::saveChunk(Chunk* chunk, int offset) {
-		//ND_TRACE("Saving chunk with offset {0}", offset);
-
 		m_stream->seekp(HEADER_SIZE + sizeof(Chunk)*offset, std::ios::beg);
 		m_stream->write((char*)chunk, sizeof(Chunk));
 		CHECK_STREAM_STATE(m_stream);

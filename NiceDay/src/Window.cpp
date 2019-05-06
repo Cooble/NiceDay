@@ -4,6 +4,7 @@
 #include "event/MouseEvent.h"
 #include "event/KeyEvent.h"
 #include "event/WindowEvent.h"
+#include "graphics/Renderer.h"
 
 static void blankFun(Event& e) {}
 static bool is_glfw_initialized = false;
@@ -47,6 +48,7 @@ Window::Window(int width, int height, const char* title) :
 	//window events
 	glfwSetFramebufferSizeCallback(m_window, [](GLFWwindow * window, int width, int height) {
 		WindowData& d = *(WindowData*)glfwGetWindowUserPointer(window);
+		Call(glViewport(0, 0, width, height));
 		d.width = width;
 		d.height = height;
 		WindowResizeEvent e(width, height);
@@ -111,7 +113,7 @@ Window::Window(int width, int height, const char* title) :
 
 Window::~Window()
 {
-	if (!destroyed)
+	if (!m_destroyed)
 		glfwDestroyWindow(m_window);
 	glfwTerminate();
 }
@@ -131,7 +133,7 @@ void Window::setTitle(const char * title)
 
 void Window::close()
 {
-	destroyed = true;
+	m_destroyed = true;
 	glfwDestroyWindow(m_window);
 	
 }

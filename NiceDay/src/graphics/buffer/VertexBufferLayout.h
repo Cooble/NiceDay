@@ -6,6 +6,18 @@ struct VertexBufferElement {
 	unsigned char normalized;
 	unsigned int count;
 
+	inline bool isIType() const { 
+		switch (type)
+		{
+		case GL_UNSIGNED_INT:
+		case GL_UNSIGNED_SHORT:
+		case GL_UNSIGNED_BYTE: 
+			return true;
+		default:
+			return false;
+		}
+	}
+
 	static unsigned int getByteCount(unsigned int type) {
 		switch (type)
 		{

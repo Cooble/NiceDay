@@ -1,14 +1,12 @@
 #pragma once
 #include "world/World.h"
-#include "entity/Camera.h"
-#include "world/ITickable.h"
-#include <glm/vec2.hpp>
+#include "entity/I2DLocalable.h"
 
 
-class IChunkLoaderEntity {
+class IChunkLoaderEntity:public I2DLocalable 
+{
 public:
-	/*Location in world*/
-	virtual const glm::vec2& getPosition() const = 0;
+	virtual ~IChunkLoaderEntity() = default;
 	/*Return 0 if no chunk should be updated*/
 	virtual int getChunkRadius() const = 0;
 };
@@ -24,6 +22,7 @@ class ChunkLoader
 {
 private:
 	World* m_world;
+	bool m_dirty;//entity was added need to recalculate chunks
 	std::vector<EntityWrapper> m_loader_entities;
 	void tickInner();
 
@@ -31,10 +30,14 @@ public:
 	ChunkLoader(World* w);
 	~ChunkLoader();
 
-
+	
 	void onUpdate();
+
 
 	void registerEntity(IChunkLoaderEntity* e);
 	void unregisterEntity(IChunkLoaderEntity* e);
+	
+	/*unregisters all entities need to call onUpdate() to unload all chunks*/
+	void clearEntities();
 };
 

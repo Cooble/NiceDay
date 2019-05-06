@@ -23,9 +23,11 @@ public:
 	inline Window* getWindow() { return m_Window; }
 	inline Input& getInput() { return m_Input; }
 	inline LayerStack& getLayerStack() { return m_LayerStack; }
+	inline int getFPS() const{ return m_fps; }
 
 private:
 	static Game* s_Instance;
+	int m_fps;
 
 	Window* m_Window;
 	Input m_Input;

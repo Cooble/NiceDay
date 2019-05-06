@@ -7,23 +7,21 @@ BlockRegistry::BlockRegistry()
 {
 }
 
-void BlockRegistry::registerBlock(Block & block)
+void BlockRegistry::registerBlock(Block* block)
 {
-	m_blocks.push_back(block);
+	m_blocks.resize(block->getID()+1);
+	m_blocks[block->getID()] = block;
 }
 
 const Block& BlockRegistry::getBlock(int block_id)
 {
-	for (const Block& b : m_blocks) {
-		if (b.getID() == block_id)
-			return b;
-	}
-	//return m_blocks.at(0);
-	ASSERT(false,"Invalid block_id!");
-
+	ASSERT(m_blocks.size() > block_id, "Invalid block id");
+	return *m_blocks[block_id];
 }
 
 
 BlockRegistry::~BlockRegistry()
 {
+	for (Block* b : m_blocks)
+		delete b;
 }

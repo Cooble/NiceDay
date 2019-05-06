@@ -72,6 +72,9 @@ static unsigned int compileShader(unsigned int type, const std::string& src) {
 		char * message = (char*)alloca(length * sizeof(char));
 		Call(glGetShaderInfoLog(id, length, &length, message));
 		ND_ERROR(message);
+		#if BREAK_IF_SHADER_COMPILE_ERROR == 1
+		ASSERT(false, "Shader compile error");
+		#endif
 		return 0;
 
 	}
@@ -83,7 +86,7 @@ static unsigned int buildProgram(const Program::ShaderProgramSources& src) {
 	unsigned int vs = compileShader(GL_VERTEX_SHADER, src.vertexSrc);
 	unsigned int fs = compileShader(GL_FRAGMENT_SHADER, src.fragmentSrc);
 	unsigned int gs=0;
-	bool geometry = src.geometrySrc != "";
+	bool geometry = !src.geometrySrc.empty();
 
 	if (geometry) {
 		gs = compileShader(GL_GEOMETRY_SHADER, src.geometrySrc);
