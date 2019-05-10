@@ -68,8 +68,8 @@ void WorldRenderManager::onUpdate()
 				auto targetY = cy + y;
 				if (targetX<0
 					|| targetY<0
-					|| targetX>(m_world->getInfo().chunk_width - 1)
-					|| targetY>(m_world->getInfo().chunk_height - 1))
+					|| targetX>=(m_world->getInfo().chunk_width)
+					|| targetY>=(m_world->getInfo().chunk_height))
 					continue;
 				StructChunkID mid = { Chunk::getChunkIDFromChunkPos(targetX, targetY) };
 				int index = m_world->getChunkIndex(targetX, targetY);
