@@ -1,3 +1,3 @@
 # NiceDay
 
-Let's make a Terraria in C++!
+Let's make Terraria in C++!
