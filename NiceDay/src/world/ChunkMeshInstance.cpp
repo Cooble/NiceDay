@@ -23,7 +23,7 @@ void ChunkMesh::init()
 	{
 		initialized = true;
 
-		static char* ray = new char[CHUNK_MESH_WIDTH*CHUNK_MESH_WIDTH * 2 * sizeof(float)];
+		static char* ray = new char[WORLD_CHUNK_SIZE*WORLD_CHUNK_SIZE * 2 * sizeof(float)];
 
 		s_texture = new Texture("res/images/atlas/atlas_small.png", GL_NEAREST);
 		s_texture_corners = new Texture("res/images/atlas/corners.png", GL_NEAREST);
@@ -40,21 +40,21 @@ void ChunkMesh::init()
 		s_offset_buffer_layout.push<unsigned int>(1);//offset
 		s_offset_buffer_layout.push<unsigned int>(1);//offset corner
 
-		for (int y = 0; y < CHUNK_MESH_WIDTH; y++) {
-			for (int x = 0; x < CHUNK_MESH_WIDTH; x++)
+		for (int y = 0; y < WORLD_CHUNK_SIZE; y++) {
+			for (int x = 0; x < WORLD_CHUNK_SIZE; x++)
 			{
-				*(float*)(&ray[(y*CHUNK_MESH_WIDTH + x) * 2 * sizeof(float)]) = (float)x;
-				*(float*)(&ray[(y*CHUNK_MESH_WIDTH + x) * 2 * sizeof(float) + sizeof(float)]) = (float)y;
+				*(float*)(&ray[(y*WORLD_CHUNK_SIZE + x) * 2 * sizeof(float)]) = (float)x;
+				*(float*)(&ray[(y*WORLD_CHUNK_SIZE + x) * 2 * sizeof(float) + sizeof(float)]) = (float)y;
 			}
 		}
-		s_buffer = new VertexBuffer(ray, CHUNK_MESH_WIDTH*CHUNK_MESH_WIDTH * 2 * sizeof(float));
+		s_buffer = new VertexBuffer(ray, WORLD_CHUNK_SIZE*WORLD_CHUNK_SIZE * 2 * sizeof(float));
 	}
 }
 
 
 ChunkMeshInstance::ChunkMeshInstance() :m_enabled(false)
 {
-	const int BUFF_SIZE = CHUNK_MESH_WIDTH * CHUNK_MESH_WIDTH * sizeof(int) * 2;
+	const int BUFF_SIZE = WORLD_CHUNK_AREA * sizeof(int) * 2;
 	m_buff = new char[BUFF_SIZE];
 	memset(m_buff, 0, BUFF_SIZE);
 
@@ -68,24 +68,22 @@ ChunkMeshInstance::ChunkMeshInstance() :m_enabled(false)
 
 void ChunkMeshInstance::updateMesh(const World& world, const Chunk& chunk)
 {
-	for (int y = 0; y < CHUNK_MESH_WIDTH; y++)
+	for (int y = 0; y < WORLD_CHUNK_SIZE; y++)
 	{
-		int ylevel = y * CHUNK_MESH_WIDTH;
-		for (int x = 0; x < CHUNK_MESH_WIDTH; x++)
+		int ylevel = y * WORLD_CHUNK_SIZE;
+		for (int x = 0; x < WORLD_CHUNK_SIZE; x++)
 		{
 			const BlockStruct& bs = chunk.getBlock(x, y);
 			const Block& blok = BlockRegistry::get().getBlock(bs.id);
-			auto t_offset = 1 + blok.getTextureOffset(bs.metadata);
-			auto t_corner_offset = blok.getCornerOffset(bs.corner);
+			auto t_offset = 1 + blok.getTextureOffset(bs);
+			auto t_corner_offset = blok.getCornerOffset(bs);
 
 			*((unsigned int*)&m_buff[sizeof(unsigned int)* 2 * (ylevel + x)]) = t_offset;
 			*((unsigned int*)&m_buff[sizeof(unsigned int)* 2 * (ylevel + x) + sizeof(unsigned int)]) = t_corner_offset;
 		}
 	}
-	m_vbo->changeData(m_buff, CHUNK_MESH_WIDTH*CHUNK_MESH_WIDTH * sizeof(unsigned int)*2, 0);
+	m_vbo->changeData(m_buff, WORLD_CHUNK_SIZE*WORLD_CHUNK_SIZE * sizeof(unsigned int)*2, 0);
 }
-
-
 
 
 ChunkMeshInstance::~ChunkMeshInstance()

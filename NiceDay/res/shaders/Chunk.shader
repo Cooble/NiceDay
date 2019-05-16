@@ -36,13 +36,16 @@ uniform mat4 u_transform;
 
 
 void main() {
+	float nibbleOfssetX = (int(gl_in[0].gl_Position.x) & 3) * 0.25f;
+	float nibbleOfssetY = (int(gl_in[0].gl_Position.y) & 3) * 0.25f;
+
 	int offset = int(v_texture_offset[0]);
 	if (offset == 0)//zero means no render
 		return;
 	offset -= 1;
 	int mask = (1 << u_texture_atlas_icon_number_bit) - 1;
-	int x = offset & mask;
-	int y = (offset >> u_texture_atlas_icon_number_bit) & mask;
+	float x = float(offset & mask) + nibbleOfssetX;
+	float y = float((offset >> u_texture_atlas_icon_number_bit) & mask) + nibbleOfssetY;
 
 	float co = 1.0f / (1 << u_texture_atlas_icon_number_bit);
 
@@ -54,25 +57,24 @@ void main() {
 	int corner_y = (corner_offset >> u_corner_atlas_icon_number_bit) & corner_mask;
 
 	float corner_co = 1.0f / (1 << u_corner_atlas_icon_number_bit);
-	
 
 	g_corner_uv_coords = vec2(corner_x, corner_y) * corner_co;
 	g_uv_coords = vec2(x, y) * co;
 	gl_Position = u_transform * (gl_in[0].gl_Position);
 	EmitVertex();
 
-	g_corner_uv_coords = vec2(corner_x+1, corner_y) * corner_co;
-	g_uv_coords = vec2(x + 1, y) * co;
+	g_corner_uv_coords = vec2(corner_x + 1, corner_y) * corner_co;
+	g_uv_coords = vec2(x + 0.25f, y) * co;
 	gl_Position = u_transform * (gl_in[0].gl_Position + vec2(1, 0));
 	EmitVertex();
 
-	g_corner_uv_coords = vec2(corner_x, corner_y+1) * corner_co;
-	g_uv_coords = vec2(x, y + 1) * co;
+	g_corner_uv_coords = vec2(corner_x, corner_y + 1) * corner_co;
+	g_uv_coords = vec2(x, y + 0.25f) * co;
 	gl_Position = u_transform * (gl_in[0].gl_Position + vec2(0, 1));
 	EmitVertex();
 
-	g_corner_uv_coords = vec2(corner_x+1, corner_y+1) * corner_co;
-	g_uv_coords = vec2(x + 1, y + 1) * co;
+	g_corner_uv_coords = vec2(corner_x + 1, corner_y + 1) * corner_co;
+	g_uv_coords = vec2(x + 0.25f, y + 0.25f) * co;
 	gl_Position = u_transform * (gl_in[0].gl_Position + vec2(1, 1));
 	EmitVertex();
 
@@ -92,7 +94,7 @@ in vec2 g_uv_coords;
 in vec2 g_corner_uv_coords;
 
 void main() {
-	
+
 	vec4 corner_color = texture2D(u_corners, g_corner_uv_coords);
 	if (corner_color.a == 0)
 		discard;

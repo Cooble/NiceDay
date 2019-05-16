@@ -12,3 +12,4 @@
 
 #include "Log.h"
 #include "Core.h"
+#include "NDUtil.h"

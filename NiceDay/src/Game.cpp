@@ -9,7 +9,6 @@
 
 #define BIND_EVENT_FN(x) std::bind(&Game::x, &Game::get(), std::placeholders::_1)
 
-#define ND_TPS_MS 120
 
 Game* Game::s_Instance = nullptr;
 
@@ -19,7 +18,7 @@ Game::Game()
 		s_Instance = this;
 }
 
-bool Game::onWindowClose(WindowCloseEvent& e){
+bool Game::onWindowClose(WindowCloseEvent& e) {
 	stop();
 	return true;
 
@@ -41,7 +40,7 @@ static void eventCallback(Event& e) {
 
 void Game::init()
 {
-	m_Window = new Window(1280,720, "NiceDay");
+	m_Window = new Window(1280, 720, "NiceDay");
 	m_Window->setEventCallback(eventCallback);
 	auto l = new MainLayer();
 	m_LayerStack.PushLayer(l);
@@ -63,10 +62,22 @@ void Game::start()
 			lastTime = now;
 			update();
 		}
-		//auto lastRender = std::chrono::system_clock::now();
 		render();
-		//auto nowRender = std::chrono::system_clock::now();
-		//m_fps = 1000/std::chrono::duration_cast<std::chrono::milliseconds>(nowRender - lastRender).count();
+		auto nowRender = std::chrono::system_clock::now();
+		current_fps++;
+		if (current_fps == sizeof(fpss) / sizeof(int))
+		{
+			m_fps = 0;
+			while (current_fps--)
+			{
+				m_fps += fpss[current_fps];
+			}
+			m_fps /= sizeof(fpss) / sizeof(int);
+			current_fps = 0;
+		}
+		int f = (std::chrono::duration_cast<std::chrono::milliseconds>(nowRender - now).count());
+
+		fpss[current_fps] = f == 0 ? 60 : 1000 / f;
 
 	}
 	for (Layer* l : m_LayerStack)

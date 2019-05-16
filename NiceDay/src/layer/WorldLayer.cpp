@@ -2,17 +2,15 @@
 #include "WorldLayer.h"
 #include "world/BlockRegistry.h"
 #include "world/WorldIO.h"
-#include "Core.h"
 #include "event/KeyEvent.h"
 #include "event/MouseEvent.h"
 #include "Game.h"
+#include "Stats.h"
+#include "imguiplotvar.h"
 #include <GLFW/glfw3.h>
-#include <glad/glad.h>
 
 
 #include <imgui.h>
-#include <examples/imgui_impl_glfw.h>
-#include <examples/imgui_impl_opengl3.h>
 #include "graphics/Renderer.h"
 #include "world/block/Block.h"
 #include "world/block/basic_blocks.h"
@@ -23,7 +21,7 @@ int CHUNKS_DRAWN;
 int WORLD_CHUNK_WIDTH;
 int WORLD_CHUNK_HEIGHT;
 std::string CURRENT_BLOCK_ID;
-BlockStruct* CURRENT_BLOCK;
+const BlockStruct* CURRENT_BLOCK;
 float CURSOR_X;
 float CURSOR_Y;
 
@@ -78,20 +76,8 @@ WorldLayer::WorldLayer()
 	m_chunk_loader->onUpdate();
 
 	ChunkMesh::init();
-	//m_mesh = new ChunkMeshInstance();
-	
-	for (int i = 0; i < 10; i++) {
-		m_world->getBlock(i+10, i*2+10).id = 1;
-		for (int j = 0; j < 10; j++) {
-			m_world->getBlock(i + 11+j, i * 2 + 10).id = 2;
-		}
-	}
-	m_world->getBlock(1 , 1).id = 1;
-
-	//m_mesh->createVBOFromChunk(*m_world, m_world->getChunk(0,0));
 
 	m_render_manager = new WorldRenderManager(m_cam,m_world);
-	//m_render_manager->addtestChunkMesh(*m_mesh);
 
 }
 
@@ -124,6 +110,10 @@ void WorldLayer::onUpdate()
 	CURSOR_X = CURSOR_X / BLOCK_PIXEL_SIZE*2+m_cam->getPosition().x;
 	CURSOR_Y = CURSOR_Y / BLOCK_PIXEL_SIZE*2 + m_cam->getPosition().y;
 
+	if(m_world->isValidBlock(CURSOR_X,CURSOR_Y))
+	{
+		
+	}
 	CURRENT_BLOCK = &m_world->getBlock(CURSOR_X, CURSOR_Y);
 	CURRENT_BLOCK_ID = BlockRegistry::get().getBlock(m_world->getBlock(CURSOR_X, CURSOR_Y).id).toString();
 
@@ -173,6 +163,14 @@ void WorldLayer::onRender()
 }
 void WorldLayer::onImGuiRender()
 {
+	float fps = FLT_MAX;
+	static int slowness = 10;
+	slowness--;
+	if (slowness == 0) {
+		slowness = 10;
+		fps = Game::get().getFPS();
+
+	}
 	static bool show = true;
 
 	if (!ImGui::Begin("WorldInfo", &show))
@@ -180,7 +178,10 @@ void WorldLayer::onImGuiRender()
 		ImGui::End();
 		return;
 	}
-	ImGui::Text("FPS: %d", Game::get().getFPS());
+
+	ImGui::PlotVar("FPS", fps);
+	ImGui::Checkbox(Stats::light_enable?"Lighting Enabled":"Lighting Disabled", &Stats::light_enable);
+
 	ImGui::Text("World filepath: %s", WORLD_FILE_PATH);
 	ImGui::Text("Chunks Size: (%d/%d)", WORLD_CHUNK_WIDTH, WORLD_CHUNK_HEIGHT);
 	ImGui::Text("Chunks loaded: %d", CHUNKS_LOADED);
@@ -207,7 +208,6 @@ void WorldLayer::onImGuiRender()
 		}
 		ImGui::TreePop();
 	}
-	ImGui::Separator();
 	ImGui::Separator();
 
 	ImGui::Text("Drawn Chunks:");
@@ -236,6 +236,11 @@ void WorldLayer::onEvent(Event& e)
 			Game::get().stop();
 			event->handled = true;
 		}
+	}
+
+	if (e.getEventType() == Event::EventType::WindowResize) {
+		auto event = dynamic_cast<WindowResizeEvent*>(&e);
+		m_render_manager->onScreenResize();
 	}
 
 	if (e.getEventType() == Event::EventType::MousePress) {

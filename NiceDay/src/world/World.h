@@ -1,15 +1,16 @@
 #pragma once
 #include "ndpch.h"
-#include "block/Block.h"
 #include "WorldIO.h"
+#include "block/Block.h"
+
 #define CHUNK_NOT_EXIST -1
 #define CHUNK_BUFFER_LENGTH 20 //5*4
 
 const int WORLD_CHUNK_BIT_SIZE = 5;
 const int WORLD_CHUNK_SIZE = 32;
+const int WORLD_CHUNK_AREA = WORLD_CHUNK_SIZE * WORLD_CHUNK_SIZE;
 
 static const int BITS_FOR_CHUNK_LOC = 16;
-
 
 class Chunk {
 private:
@@ -62,6 +63,7 @@ private:
 	WorldInfo m_info;
 	std::string m_file_path;
 	std::unordered_map<int, int> m_local_offset_map;//chunkID,offsetInBuffer
+	BlockStruct m_air_block;
 
 private:
 	void init();
@@ -75,7 +77,11 @@ public:
 	}
 	inline static int getChunkCoord(float x)
 	{
-		return (int)x >> WORLD_CHUNK_BIT_SIZE;
+		return getChunkCoord((int)x);
+	}
+	inline static int getChunkCoord(int x)
+	{
+		return x >> WORLD_CHUNK_BIT_SIZE;
 	}
 public:
 	World(const std::string& file_path, const char* name, int chunk_width, int chunk_height);
@@ -91,7 +97,7 @@ public:
 	void saveChunks(std::set<int>& chunk_ids);
 	void saveChunk(Chunk&);
 
-	bool isValidBlock(int x, int y);
+	bool isValidBlock(int x, int y) const;
 
 	inline int getChunkSaveOffset(int x, int y) const { return y * m_info.chunk_width + x; };
 	inline int getChunkSaveOffset(int id) const {
@@ -102,14 +108,18 @@ public:
 
 	void saveAllChunks();
 	Chunk &getChunk(int x, int y);
-	int getChunkIndex(int x, int y);
-	int getChunkIndex(int id);
+	int getChunkIndex(int x, int y) const;
+	int getChunkIndex(int id) const;
 	Chunk &loadChunk(int x, int y);
 	void genWorld(long seed);//deprecated
 
+	//for reading the blocks 
+	inline const BlockStruct& getBlock(int x, int y);
+	const BlockStruct* getBlockPointer(int x, int y);
 	//note any changes wont be visible in graphics ->use setBlock() instead
-	//todo make it const
-	BlockStruct& getBlock(int x, int y);
+	BlockStruct& editBlock(int x, int y);
+	//return is block at coords is air and true if outside the map
+	bool isAir(int x, int y);
 
 	//automatically calls chunk.markdirty() to update graphics and call onNeighbourBlockChange()
 	void setBlock(int x, int y,BlockStruct&);
@@ -121,7 +131,7 @@ public:
 	inline const std::unordered_map<int, int>::iterator& getChunkEnd() {return m_local_offset_map.end();}
 
     inline long getTime() const { return m_info.time; }
-	inline const std::string getName() const { return m_info.name; }
+	inline std::string getName() const { return m_info.name; }
 	//returns copy of info!
 	inline WorldInfo getInfo() const { return m_info; };
 	inline const std::string& getFilePath() const { return m_file_path; }

@@ -4,49 +4,42 @@
 //AIR=======================================
 BlockAir::BlockAir()
 	:Block(BLOCK_AIR)
-{}
-
-int BlockAir::getTextureOffset(int metadata) const
 {
-	return -1;
+	m_opacity = 0.05f;
+	m_texture_offset = -1;
 }
 
 //STONE=======================================
 
 BlockStone::BlockStone()
 	:Block(BLOCK_STONE)
-{}
-
-int BlockStone::getTextureOffset(int metadata) const
 {
-	return 3;
+	m_texture_offset = 3;
 }
 
 //DIRT========================================
 BlockDirt::BlockDirt()
 	:Block(BLOCK_DIRT)
-{}
-
-int BlockDirt::getTextureOffset(int metadata) const
 {
-	return 2;
+	m_texture_offset = 2;
+
 }
+
+
 
 //GOLD========================================
 BlockGold::BlockGold()
 	:Block(BLOCK_GOLD)
-{}
-
-int BlockGold::getTextureOffset(int metadata) const
 {
-	return 1;
+	m_texture_offset =1;
+
 }
+
+//ADAMANTITE==================================
 
 BlockAdamantite::BlockAdamantite()
 	:Block(BLOCK_ADAMANTITE)
-{}
-
-int BlockAdamantite::getTextureOffset(int metadata) const
 {
-	return 0;
+	m_texture_offset = 0;
+
 }

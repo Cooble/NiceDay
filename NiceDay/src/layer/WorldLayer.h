@@ -2,7 +2,6 @@
 #include "Layer.h"
 #include "world/World.h"
 #include "world/ChunkLoader.h"
-#include "world/ChunkMeshInstance.h"
 #include "world/WorldRenderManager.h"
 #include "entity/Camera.h"
 

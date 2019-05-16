@@ -7,7 +7,6 @@
 #include "graphics/buffer/VertexBuffer.h"
 #include "graphics/buffer/VertexArray.h"
 
-constexpr unsigned int CHUNK_MESH_WIDTH = WORLD_CHUNK_SIZE;
 constexpr unsigned int BLOCK_TEXTURE_ATLAS_SIZE_BIT = 1;//2 to the n icons in atlas in row
 constexpr unsigned int BLOCK_CORNER_ATLAS_SIZE_BIT = 3;//2 to the n icons in atlas in row
 class Renderer;
@@ -26,8 +25,11 @@ class ChunkMesh
 private:
 	static VertexBufferLayout s_pos_layout;
 	static VertexBufferLayout s_offset_buffer_layout;
+	
 	static VertexBuffer* s_buffer;
+	
 	static Program* s_program;
+	
 	static Texture* s_texture;
 	static Texture* s_texture_corners;
 

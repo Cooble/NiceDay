@@ -26,30 +26,44 @@ const int BLOCK_DIRT		= 2;
 const int BLOCK_GOLD		= 3;
 const int BLOCK_ADAMANTITE	= 4;
 
-class World;
 struct BlockStruct {
 	int id;
 	int metadata;
 	int corner;
 	BlockStruct() = default;
-	BlockStruct(int idd):id(idd),metadata(0),corner(0)
+	BlockStruct(int idd) :id(idd), metadata(0), corner(0)
 	{}
 
 	inline bool isAir() const { return id == BLOCK_AIR; }
 };
+
+class World;
+
 class Block
 {
 private:
 	const int m_id;
+
+protected:
+
+	//how much light will be consumed by this block 
+	//1		-> consumes all light
+	//0.5	-> consumes half of light passing through
+	//0		-> consumes no light
+	float m_opacity;
+
+	//offset in block texture atlas
+	int m_texture_offset;
 public:
 	Block(int id);
 	Block(const Block& c) = delete;
 	void operator=(Block const&) = delete;
 	virtual ~Block();
 	inline int getID() const { return m_id; };
+	virtual float getOpacity(const BlockStruct&) const;
 	//returns -1 if not render
-	virtual int getTextureOffset(int metadata) const;
-	virtual int getCornerOffset(int corner_state) const;
+	virtual int getTextureOffset(const BlockStruct&) const;
+	virtual int getCornerOffset(const BlockStruct&) const;
 
 	//returns true if this block was changed as well
 	virtual bool onNeighbourBlockChange(World* world, int x, int y) const;

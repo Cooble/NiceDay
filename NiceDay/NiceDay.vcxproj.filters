@@ -1202,6 +1202,10 @@
     <ClInclude Include="src\entity\I2DLocalable.h" />
     <ClInclude Include="src\world\block\Block.h" />
     <ClInclude Include="src\world\block\basic_blocks.h" />
+    <ClInclude Include="src\graphics\buffer\FrameBuffer.h" />
+    <ClInclude Include="src\NDUtil.h" />
+    <ClInclude Include="src\layer\imguiplotvar.h" />
+    <ClInclude Include="src\Stats.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Game.cpp">
@@ -1264,5 +1268,8 @@
     <ClCompile Include="src\world\ChunkMeshInstance.cpp" />
     <ClCompile Include="src\world\block\Block.cpp" />
     <ClCompile Include="src\world\block\basic_blocks.cpp" />
+    <ClCompile Include="src\graphics\buffer\FrameBuffer.cpp" />
+    <ClCompile Include="src\layer\imguiplotvar.cpp" />
+    <ClCompile Include="src\State.cpp" />
   </ItemGroup>
 </Project>

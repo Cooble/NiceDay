@@ -1,24 +1,28 @@
 #include "ndpch.h"
-#include "Block.h"
 #include "world/World.h"
+#include "Block.h"
 
 
-Block::Block(int id) : m_id(id)
+Block::Block(int id)
+	:m_id(id), m_opacity(0.25f), m_texture_offset(0)
 {
 }
 
-Block::~Block()
+Block::~Block() = default;
+
+float Block::getOpacity(const BlockStruct&) const
 {
+	return m_opacity;
 }
 
-int Block::getTextureOffset(int metadata) const
+int Block::getTextureOffset(const BlockStruct&)const
 {
-	return 0;
+	return m_texture_offset;
 }
 
-int Block::getCornerOffset(int corner_state) const
+int Block::getCornerOffset(const BlockStruct& b) const
 {
-	return corner_state;
+	return b.corner;
 }
 
 bool Block::onNeighbourBlockChange(World* world, int x, int y) const
@@ -26,18 +30,12 @@ bool Block::onNeighbourBlockChange(World* world, int x, int y) const
 	if (getID() == BLOCK_AIR)
 		return false;
 
-	BlockStruct& upB = world->getBlock(x, y + 1);
-	BlockStruct& downB = world->getBlock(x, y - 1);
-	BlockStruct& leftB = world->getBlock(x - 1, y);
-	BlockStruct& rightB = world->getBlock(x + 1, y);
+	bool up = world->isAir(x, y + 1);
+	bool down = world->isAir(x, y - 1);
+	bool left = world->isAir(x - 1, y);
+	bool right = world->isAir(x + 1, y);
 
-	bool up = upB.isAir();
-	bool down = downB.isAir();
-	bool left = leftB.isAir();
-	bool right = rightB.isAir();
-
-
-	BlockStruct& block = world->getBlock(x, y);
+	BlockStruct& block = world->editBlock(x, y);
 	int lastCorner = block.corner;
 	//bit
 	if (up && down && left && right)
@@ -108,7 +106,7 @@ bool Block::onNeighbourBlockChange(World* world, int x, int y) const
 	{
 		block.corner = BLOCK_STATE_CORNER_DOWN_RIGHT;
 	}
-	
+
 	return lastCorner != block.corner;//we have a change (or not)
 
 }
