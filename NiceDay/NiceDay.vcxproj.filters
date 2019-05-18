@@ -1206,6 +1206,7 @@
     <ClInclude Include="src\NDUtil.h" />
     <ClInclude Include="src\layer\imguiplotvar.h" />
     <ClInclude Include="src\Stats.h" />
+    <ClInclude Include="src\world\LightCalculator.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Game.cpp">
@@ -1271,5 +1272,6 @@
     <ClCompile Include="src\graphics\buffer\FrameBuffer.cpp" />
     <ClCompile Include="src\layer\imguiplotvar.cpp" />
     <ClCompile Include="src\State.cpp" />
+    <ClCompile Include="src\world\LightCalculator.cpp" />
   </ItemGroup>
 </Project>

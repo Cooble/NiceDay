@@ -4,6 +4,7 @@
 #include "entity/Camera.h"
 #include "BlockRegistry.h"
 #include "graphics/buffer/FrameBuffer.h"
+#include "LightCalculator.h"
 
 
 const int BLOCK_PIXEL_SIZE = 32;
@@ -20,11 +21,11 @@ struct StructChunkID
 	StructChunkID(int idd):id(idd){}
 	StructChunkID(uint16_t xx, uint16_t yy):x(xx),y(yy){}
 };
-typedef float half;//maybe in future replace with half float to save space
 
 class WorldRenderManager
 {
 private:
+	LightCalculator& m_light_calculator;
 	FrameBuffer* m_light_frame_buffer;
 	
 	Texture* m_light_texture;
@@ -41,9 +42,8 @@ private:
 
 	glm::mat4 m_world_view_matrix;
 
-
 	std::vector<ChunkMeshInstance*> m_chunks;
-	half* m_light_map;//for 1 block there are 4 lightPixels
+
 	World* m_world;
 	Camera* m_camera;
 	glm::mat4 m_view_matrix;
@@ -52,18 +52,7 @@ private:
 
 	std::unordered_map<int, int> m_offset_map;//chunkID,offsetInBuffer
 
-	void computeLight();
-	inline half& lightValue(int x, int y) { return m_light_map[y*m_chunk_width*WORLD_CHUNK_SIZE+x]; }
-	inline void clearLightMap() { memset(m_light_map, 0, getChunksSize()*WORLD_CHUNK_AREA*sizeof(half)); }
-	inline float getBlockOpacity(int x, int y)
-	{
-
-		auto b = m_world->getBlockPointer(x, y);
-		if (!b)
-			return 1;
-		return BlockRegistry::get().getBlock(b->id).getOpacity(*b);
-	}
-
+	ChunkPos lightOffset;
 	int getChunkIndex(int cx, int cy);
 public:
 	WorldRenderManager(Camera* cam,World* world);

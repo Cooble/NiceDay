@@ -172,6 +172,7 @@
     <ClInclude Include="src\graphics\buffer\VertexBufferLayout.h" />
     <ClInclude Include="src\ndpch.h" />
     <ClInclude Include="src\world\ITickable.h" />
+    <ClInclude Include="src\world\LightCalculator.h" />
     <ClInclude Include="src\world\WorldRenderManager.h" />
     <ClInclude Include="vendor\glm\glm\common.hpp" />
     <ClInclude Include="vendor\glm\glm\detail\_features.hpp" />
@@ -573,6 +574,7 @@
     <ClCompile Include="src\ndpch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="src\world\LightCalculator.cpp" />
     <ClCompile Include="src\world\WorldRenderManager.cpp" />
     <ClCompile Include="vendor\stb_image\stb_image.cpp" />
     <ClCompile Include="src\world\World.cpp" />

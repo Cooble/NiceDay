@@ -10,6 +10,7 @@ namespace  ImGui
 		std::vector<float>  Data;
 		int            DataInsertIdx;
 		int            LastFrame;
+		float			LastNormalVal;
 
 		PlotVarData() : ID(0), DataInsertIdx(0), LastFrame(-1) {}
 	};
@@ -21,6 +22,7 @@ namespace  ImGui
 	// Call with 'value == FLT_MAX' to draw without adding new value to the buffer
 	void PlotVar(const char* label, float value, float scale_min, float scale_max, size_t buffer_size)
 	{
+			
 		assert(label);
 		if (buffer_size == 0)
 			buffer_size = 1000;
@@ -30,6 +32,9 @@ namespace  ImGui
 
 		// Lookup O(log N)
 		PlotVarData& pvd = g_PlotVarsMap[id];
+		if (value != FLT_MAX)
+			pvd.LastNormalVal = value;
+
 
 		// Setup
 		if (pvd.Data.capacity() != buffer_size)
@@ -53,7 +58,7 @@ namespace  ImGui
 		{
 			ImGui::PlotLines("##plot", &pvd.Data[0], buffer_size, pvd.DataInsertIdx, NULL, scale_min, scale_max, ImVec2(0, 40));
 			ImGui::SameLine();
-			ImGui::Text("%s\n%-3.4f", label, pvd.Data[display_idx]);	// Display last value in buffer
+			ImGui::Text("%s\n%-3.0f", label, pvd.LastNormalVal);	// Display last value in buffer
 			pvd.LastFrame = current_frame;
 		}
 

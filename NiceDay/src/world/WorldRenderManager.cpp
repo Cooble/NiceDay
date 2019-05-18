@@ -10,9 +10,9 @@
 
 
 WorldRenderManager::WorldRenderManager(Camera* cam, World* world)
-	: m_light_texture(nullptr),
+	: m_light_calculator(world->getLightCalculator()),
+	m_light_texture(nullptr),
 	m_light_simple_texture(nullptr),
-	m_light_map(nullptr),
 	m_world(world),
 	m_camera(cam)
 {
@@ -27,7 +27,6 @@ WorldRenderManager::WorldRenderManager(Camera* cam, World* world)
 		1,1,
 		0,0,
 		0,1,
-
 	};
 	m_light_VBO = new VertexBuffer(quad, sizeof(quad));//todo is sizeof valid?
 	VertexBufferLayout l;
@@ -58,7 +57,6 @@ WorldRenderManager::~WorldRenderManager()
 	for (ChunkMeshInstance* m : m_chunks)
 		delete m;
 
-	delete[] m_light_map;
 	delete m_light_frame_buffer;
 
 	delete m_light_program;
@@ -92,6 +90,8 @@ void WorldRenderManager::onScreenResize()
 	m_chunk_width = ceil(chunkwidth) + 3;
 	m_chunk_height = ceil(chunkheight) + 3;
 
+	m_light_calculator.setDimensions(m_chunk_width, m_chunk_height);
+
 	m_chunks.reserve(getChunksSize());
 
 	m_offset_map.clear();
@@ -101,11 +101,6 @@ void WorldRenderManager::onScreenResize()
 
 	while (m_chunks.size() < getChunksSize())
 		m_chunks.push_back(new ChunkMeshInstance());
-
-	if (m_light_map)
-		delete[] m_light_map;
-	m_light_map = new half[getChunksSize()*WORLD_CHUNK_AREA];
-
 
 	//made default light texture with 1 channel
 	if (m_light_simple_texture)
@@ -134,13 +129,14 @@ void WorldRenderManager::onUpdate()
 
 	if (cx != last_cx || cy != last_cy)
 	{
+		m_light_calculator.setChunkOffset(cx, cy);
 		last_cx = cx;
 		last_cy = cy;
 
 		std::set<int> toRemoveList;
 		std::set<int> toLoadList;
 
-		for (auto& iterator = m_offset_map.begin(); iterator != m_offset_map.end(); ++iterator) {
+		for (auto iterator = m_offset_map.begin(); iterator != m_offset_map.end(); ++iterator) {
 			toRemoveList.insert(iterator->first);//get all loaded chunks
 		}
 		for (int x = 0; x < m_chunk_width; x++) {
@@ -149,10 +145,10 @@ void WorldRenderManager::onUpdate()
 				auto targetX = cx + x;
 				auto targetY = cy + y;
 				if (
-					targetX<0
-					|| targetY<0
-					|| targetX>=(m_world->getInfo().chunk_width)
-					|| targetY>=(m_world->getInfo().chunk_height))
+					targetX < 0
+					|| targetY < 0
+					|| targetX >= (m_world->getInfo().chunk_width)
+					|| targetY >= (m_world->getInfo().chunk_height))
 					continue;
 				StructChunkID mid = { Chunk::getChunkIDFromChunkPos(targetX, targetY) };
 				int index = m_world->getChunkIndex(targetX, targetY);
@@ -207,7 +203,7 @@ void WorldRenderManager::onUpdate()
 	}
 	else
 	{
-		for (auto& iterator = m_offset_map.begin(); iterator != m_offset_map.end(); ++iterator) {
+		for (auto iterator = m_offset_map.begin(); iterator != m_offset_map.end(); ++iterator) {
 			StructChunkID id = iterator->first;
 			Chunk& c = m_world->getChunk(id.x, id.y);
 			if (c.isDirty())
@@ -235,9 +231,6 @@ int WorldRenderManager::getChunkIndex(int cx, int cy)
 
 void WorldRenderManager::render()
 {
-	if (Stats::light_enable)
-		computeLight();
-
 	auto& program = *ChunkMesh::getProgram();
 	program.bind();
 	ChunkMesh::getAtlas()->bind(0);
@@ -270,6 +263,11 @@ void WorldRenderManager::render()
 
 void WorldRenderManager::renderLightMap()
 {
+	if (m_light_calculator.isFreshMap()) {
+		m_light_simple_texture->setPixels(m_light_calculator.getCurrentLightMap());
+		lightOffset = m_light_calculator.getCurrentOffset();
+	}
+
 	m_light_frame_buffer->bind();
 	{
 		Call(glViewport(0, 0, m_chunk_width*WORLD_CHUNK_SIZE * 2, m_chunk_height*WORLD_CHUNK_SIZE * 2));
@@ -289,8 +287,8 @@ void WorldRenderManager::renderMainLightMap()
 
 	auto worldMatrix = glm::mat4(1.0f);
 	worldMatrix = glm::translate(worldMatrix, glm::vec3(
-		last_cx*WORLD_CHUNK_SIZE - m_camera->getPosition().x,
-		last_cy*WORLD_CHUNK_SIZE - m_camera->getPosition().y, 0.0f));
+		lightOffset.first*WORLD_CHUNK_SIZE - m_camera->getPosition().x,
+		lightOffset.second*WORLD_CHUNK_SIZE - m_camera->getPosition().y, 0.0f));
 	worldMatrix = glm::scale(worldMatrix, glm::vec3(m_chunk_width*WORLD_CHUNK_SIZE, m_chunk_height*WORLD_CHUNK_SIZE, 1));
 
 
@@ -303,139 +301,4 @@ void WorldRenderManager::renderMainLightMap()
 	glBlendFunc(GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA);
 	Call(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
 	glDisable(GL_BLEND);
-}
-
-
-struct Pos
-{
-	int x, y;
-};
-
-void WorldRenderManager::computeLight()
-{
-	const half minLevel = 0.05f;
-	/*static int ignore = 10;
-	--ignore;
-	if (ignore != 0)
-		return;
-	ignore = 100;*/
-
-	clearLightMap();
-
-	int blockX = last_cx * WORLD_CHUNK_SIZE;
-	int blockY = last_cy * WORLD_CHUNK_SIZE;
-
-	int test_light_x = m_camera->getPosition().x - blockX;
-	//int test_light_x = 20;
-	int test_light_y = m_camera->getPosition().y - blockY;
-	//int test_light_y = 20;
-	half lightPower = 2;
-
-
-	//todo optimize vectors
-
-	NDUtil::FifoList<Pos> list(500);
-	NDUtil::FifoList<Pos> newList(500);
-	auto current_list = &list;
-	auto new_list = &newList;
-
-	int blockOffsetX = last_cx * WORLD_CHUNK_SIZE;
-	int blockOffsetY = last_cy * WORLD_CHUNK_SIZE;
-	int maxX = m_chunk_width * WORLD_CHUNK_SIZE;
-	int maxY = m_chunk_height * WORLD_CHUNK_SIZE;
-
-	lightValue(test_light_x, test_light_y) = lightPower;
-	current_list->push({ test_light_x, test_light_y });
-
-
-	int runs = 0;
-	while (!current_list->empty()) {
-		current_list->popMode();
-		while (!current_list->empty())
-		{
-			runs++;
-			auto& p = current_list->pop();
-			int x = p.x;
-			int y = p.y;
-
-
-			half l = lightValue(x, y) - getBlockOpacity(x + blockOffsetX, y + blockOffsetY);
-			if (l < minLevel)
-				continue;
-			half newLightPower = l;
-
-
-
-
-			//left
-			int xm1 = x - 1;
-			if (xm1 > 0)
-			{
-				half& v = lightValue(xm1, y);
-				if (v < newLightPower) {
-					v = newLightPower;
-					new_list->push({ xm1, y });
-				}
-			}
-			//down
-			int ym1 = y - 1;
-			if (ym1 > 0)
-			{
-				half& v = lightValue(x, ym1);
-				if (v < newLightPower) {
-					v = newLightPower;
-					new_list->push({ x, ym1 });
-				}
-			}
-			//right
-			int x1 = x + 1;
-			if (x1 < maxX)
-			{
-				half& v = lightValue(x1, y);
-				if (v < newLightPower) {
-					v = newLightPower;
-					new_list->push({ x1, y });
-				}
-			}
-			//up
-			int y1 = y + 1;
-			if (y1 < maxY)
-			{
-				half& v = lightValue(x, y1);
-				if (v < newLightPower) {
-					v = newLightPower;
-					new_list->push({ x, y1 });
-				}
-			}
-		}
-		/*int i = m_chunk_width * m_chunk_height*WORLD_CHUNK_AREA * 4;
-		while(i--)
-		{
-			m_light_map[i] /= lightPower;
-		}*/
-
-		auto t = current_list;
-		t->clear();
-		current_list = new_list;
-		new_list = t;
-	}
-
-	m_light_simple_texture->setPixels(m_light_map);
-
-	bool b = true;
-	int g = 0;
-	if (b)
-		return;
-
-	for (int y = 0; y < 100; y++)
-	{
-		for (int x = 0; x < 100; x++)
-		{
-			int b = (int)lightValue(x, y);
-			std::cout << ((b > 9) ? "" : " ") << b;
-		}
-		std::cout << std::endl;
-	}
-
-
 }

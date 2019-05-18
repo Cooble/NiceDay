@@ -1,6 +1,7 @@
 #include "ndpch.h"
 #include "WorldLayer.h"
 #include "world/BlockRegistry.h"
+#include "world/LightCalculator.h"
 #include "world/WorldIO.h"
 #include "event/KeyEvent.h"
 #include "event/MouseEvent.h"
@@ -29,7 +30,6 @@ float CAM_POS_X;
 float CAM_POS_Y;
 
 static int BLOCK_PALLETE_SELECTED=0;
-
 WorldLayer::WorldLayer()
 	:Layer("WorldLayer") 
 {
@@ -76,8 +76,10 @@ WorldLayer::WorldLayer()
 	m_chunk_loader->onUpdate();
 
 	ChunkMesh::init();
-
+	LightCalculator& c = m_world->getLightCalculator();
+	c.registerLight(dynamic_cast<LightSource*>(m_cam));
 	m_render_manager = new WorldRenderManager(m_cam,m_world);
+
 
 }
 
@@ -101,8 +103,21 @@ void WorldLayer::onDetach()
 	ND_INFO("Saving world {}", m_world->getFilePath());
 	s.close();
 }
+static int fpsCount;
 void WorldLayer::onUpdate()
 {
+	m_cam->m_light_intensity = Stats::player_light_intensity;
+	fpsCount++;
+	static int lightCalcDelay = 0;
+	if(lightCalcDelay)
+	{
+		lightCalcDelay--;
+
+	}
+	else {
+		m_world->getLightCalculator().snapshot();
+		lightCalcDelay = 1;
+	}
 	auto pair = Game::get().getInput().getMouseLocation();
 	CURSOR_X = pair.first - Game::get().getWindow()->getWidth() / 2;
 	CURSOR_Y = -pair.second + Game::get().getWindow()->getHeight() / 2;
@@ -122,7 +137,7 @@ void WorldLayer::onUpdate()
 			m_world->setBlock(CURSOR_X, CURSOR_Y, BLOCK_PALLETE_SELECTED);
 
 	auto pos = m_cam->getPosition();
-	float speed = 0.5f;
+	float speed = Stats::player_speed;
 
 	if (Game::get().getInput().isKeyPressed(GLFW_KEY_RIGHT))
 		pos.x += speed;
@@ -141,12 +156,15 @@ void WorldLayer::onUpdate()
 		pos.x = m_world->getInfo().chunk_width*WORLD_CHUNK_SIZE - 1;
 	if (pos.y > m_world->getInfo().chunk_height*WORLD_CHUNK_SIZE - 1)
 		pos.y = m_world->getInfo().chunk_height*WORLD_CHUNK_SIZE - 1;
-
-	m_cam->setPosition(pos);
+	if (!Stats::move_through_blocks_enable) {
+		if (m_world->isAir((int)pos.x, (int)pos.y))
+			m_cam->setPosition(pos);
+	}
+	else m_cam->setPosition(pos);
 
 	CAM_POS_X = (m_cam->getPosition().x);
 	CAM_POS_Y = (m_cam->getPosition().y);
-	CHUNKS_LOADED = m_world->getNumberOfLoadedChunks();
+	CHUNKS_LOADED = m_world->getMap().size();
 	CHUNKS_DRAWN = m_render_manager->getMap().size();
 	WORLD_FILE_PATH = m_world->getFilePath().c_str();
 	WORLD_CHUNK_WIDTH = m_world->getInfo().chunk_width;
@@ -164,10 +182,9 @@ void WorldLayer::onRender()
 void WorldLayer::onImGuiRender()
 {
 	float fps = FLT_MAX;
-	static int slowness = 10;
-	slowness--;
-	if (slowness == 0) {
-		slowness = 10;
+	if(fpsCount>Game::get().getTargetTPS())
+	{
+		fpsCount = 0;
 		fps = Game::get().getFPS();
 
 	}
@@ -180,7 +197,16 @@ void WorldLayer::onImGuiRender()
 	}
 
 	ImGui::PlotVar("FPS", fps);
+	bool l = Stats::light_enable;
 	ImGui::Checkbox(Stats::light_enable?"Lighting Enabled":"Lighting Disabled", &Stats::light_enable);
+	if(l!=Stats::light_enable)
+	{
+		if(!l) m_world->getLightCalculator().run();
+		else m_world->getLightCalculator().stop();
+	}
+	ImGui::Checkbox(Stats::move_through_blocks_enable?"Move through Blocks Enabled":"Move through Blocks Disabled", &Stats::move_through_blocks_enable);
+	ImGui::InputFloat("Player speed: ",&Stats::player_speed);
+	ImGui::InputFloat("Light Intensity: ",&Stats::player_light_intensity);
 
 	ImGui::Text("World filepath: %s", WORLD_FILE_PATH);
 	ImGui::Text("Chunks Size: (%d/%d)", WORLD_CHUNK_WIDTH, WORLD_CHUNK_HEIGHT);

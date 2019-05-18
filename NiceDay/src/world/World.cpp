@@ -1,5 +1,6 @@
 #include "ndpch.h"
 #include "World.h"
+#include <utility>
 #include "block/Block.h"
 #include "WorldIO.h"
 #include "BlockRegistry.h"
@@ -17,21 +18,25 @@ void World::init() {
 	ND_INFO("Made world instance");
 }
 
-World::World(const std::string& file_path, const char* name, int chunk_width, int chunk_height)
-	:m_info({ 0,chunk_width,chunk_height,0 }), m_file_path(file_path),m_air_block(0)//seed,width,height,time
-{	
+World::World(std::string file_path, const char* name, int chunk_width, int chunk_height)
+	:m_light_calc(this),
+	m_info({ 0,chunk_width,chunk_height,0 }),
+	m_file_path(std::move(file_path)),
+	m_air_block(0)//seed,width,height,time
+{
 	strcpy_s(m_info.name, name);//name
 	init();
 
 }
-World::World(const std::string& file_path, const WorldInfo * info)
-	:m_info(*info), m_file_path(file_path), m_air_block(0)
+World::World(std::string file_path, const WorldInfo * info)
+	:m_light_calc(this),
+	m_info(*info),
+	m_file_path(std::move(file_path)),
+	m_air_block(0)
 {
 	init();
 }
-World::~World()
-{
-}
+World::~World() = default;
 
 void World::genWorld(long seed)
 {
@@ -211,14 +216,23 @@ bool World::isValidBlock(int x, int y) const
 	return x > 0 && y > 0 && x < getInfo().chunk_width*WORLD_CHUNK_SIZE && y < getInfo().chunk_height*WORLD_CHUNK_SIZE;
 }
 
-const BlockStruct& World::getBlock(int x, int y){
+const BlockStruct& World::getBlock(int x, int y) {
 	return editBlock(x, y);
 }
+
 const BlockStruct* World::getBlockPointer(int x, int y) {
 	if (isValidBlock(x, y))
 	{
 		auto& b = const_cast<BlockStruct&>(getBlock(x, y));
 		return &b;
+	}
+	return nullptr;
+}
+const BlockStruct* World::getLoadedBlockPointer(int x, int y) const {
+	int index = getChunkIndex(x >> WORLD_CHUNK_BIT_SIZE, y >> WORLD_CHUNK_BIT_SIZE);
+	if (index != -1)
+	{
+		return &const_cast<BlockStruct&>(m_chunks[index].getBlock(x & (WORLD_CHUNK_SIZE - 1), y  & (WORLD_CHUNK_SIZE - 1)));
 	}
 	return nullptr;
 }
@@ -245,7 +259,7 @@ BlockStruct& World::editBlock(int x, int y)
 	return editBlock(x, y);
 }
 
-bool World::isAir(int x, int y){
+bool World::isAir(int x, int y) {
 	return getBlock(x, y).isAir();
 }
 
@@ -258,7 +272,7 @@ void World::onBlocksChange(int x, int y, int deep = 0)
 		ND_WARN("Block update too deep! protecting stack");
 		return;
 	}
-	if (isValidBlock(x,y+1) && BlockRegistry::get().getBlock(getBlock(x, y + 1).id).onNeighbourBlockChange(this, x, y + 1)) {
+	if (isValidBlock(x, y + 1) && BlockRegistry::get().getBlock(getBlock(x, y + 1).id).onNeighbourBlockChange(this, x, y + 1)) {
 		getChunk(World::getChunkCoord(x), World::getChunkCoord(y + 1)).markDirty(true);
 		onBlocksChange(x, y + 1, deep);
 	}
@@ -268,12 +282,12 @@ void World::onBlocksChange(int x, int y, int deep = 0)
 		onBlocksChange(x, y - 1, deep);
 	}
 
-	if (isValidBlock(x+1, y) && BlockRegistry::get().getBlock(getBlock(x + 1, y).id).onNeighbourBlockChange(this, x + 1, y)) {
+	if (isValidBlock(x + 1, y) && BlockRegistry::get().getBlock(getBlock(x + 1, y).id).onNeighbourBlockChange(this, x + 1, y)) {
 		getChunk(World::getChunkCoord(x + 1), World::getChunkCoord(y)).markDirty(true);
 		onBlocksChange(x + 1, y, deep);
 	}
 
-	if (isValidBlock(x-1, y) && BlockRegistry::get().getBlock(getBlock(x - 1, y).id).onNeighbourBlockChange(this, x - 1, y)) {
+	if (isValidBlock(x - 1, y) && BlockRegistry::get().getBlock(getBlock(x - 1, y).id).onNeighbourBlockChange(this, x - 1, y)) {
 		getChunk(World::getChunkCoord(x - 1), World::getChunkCoord(y)).markDirty(true);
 		onBlocksChange(x - 1, y, deep);
 	}
@@ -304,7 +318,7 @@ void World::setBlock(int x, int y, BlockStruct& blok)
 
 	int index = getChunkIndex(cx, cy);
 	Chunk* c;
-	if (index == -1) 
+	if (index == -1)
 		c = &loadChunk(cx, cy);
 	else c = &m_chunks[index];
 

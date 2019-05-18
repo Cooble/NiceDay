@@ -1,6 +1,7 @@
 #pragma once
 #include "ndpch.h"
 #include "WorldIO.h"
+#include "LightCalculator.h"
 #include "block/Block.h"
 
 #define CHUNK_NOT_EXIST -1
@@ -31,8 +32,8 @@ public:
 	inline bool isLoaded() const { return m_loaded; }
 
 
-	inline BlockStruct& getBlock(int x, int y) { return m_blocks[y<<WORLD_CHUNK_BIT_SIZE | x]; }
-	inline void setBlock(int x, int y,BlockStruct& blok) { m_blocks[y<<WORLD_CHUNK_BIT_SIZE | x]=blok; }
+	inline BlockStruct& getBlock(int x, int y) { return m_blocks[y << WORLD_CHUNK_BIT_SIZE | x]; }
+	inline void setBlock(int x, int y, BlockStruct& blok) { m_blocks[y << WORLD_CHUNK_BIT_SIZE | x] = blok; }
 	inline const BlockStruct& getBlock(int x, int y) const { return m_blocks[y << WORLD_CHUNK_BIT_SIZE | x]; }
 	inline bool isDirty()const { return m_dirty; }
 	inline void markDirty(bool dirty) { m_dirty = dirty; }
@@ -57,18 +58,6 @@ struct WorldInfo {
 
 class World
 {
-private:
-	std::vector<Chunk> m_chunks;
-
-	WorldInfo m_info;
-	std::string m_file_path;
-	std::unordered_map<int, int> m_local_offset_map;//chunkID,offsetInBuffer
-	BlockStruct m_air_block;
-
-private:
-	void init();
-	void onBlocksChange(int x, int y,int deep);
-
 public:
 	inline static void getChunkCoords(float x, float y, unsigned int& cx, unsigned int& cy)
 	{
@@ -83,11 +72,25 @@ public:
 	{
 		return x >> WORLD_CHUNK_BIT_SIZE;
 	}
+private:
+	LightCalculator  m_light_calc;
+	std::vector<Chunk> m_chunks;
+
+	WorldInfo m_info;
+	std::string m_file_path;
+	std::unordered_map<int, int> m_local_offset_map;//chunkID,offsetInBuffer
+	BlockStruct m_air_block;
+
+private:
+	void init();
+	void onBlocksChange(int x, int y, int deep);
+
 public:
-	World(const std::string& file_path, const char* name, int chunk_width, int chunk_height);
-	World(const std::string& file_path, const WorldInfo* info);
+	World(std::string file_path, const char* name, int chunk_width, int chunk_height);
+	World(std::string file_path, const WorldInfo* info);
 	~World();
 
+	inline LightCalculator& getLightCalculator() { return m_light_calc; }
 	void onUpdate();
 	void tick();
 	inline bool isChunkLoaded(int x, int y) const { return m_local_offset_map.find(Chunk::getChunkIDFromChunkPos(x, y)) != m_local_offset_map.end(); }
@@ -101,8 +104,8 @@ public:
 
 	inline int getChunkSaveOffset(int x, int y) const { return y * m_info.chunk_width + x; };
 	inline int getChunkSaveOffset(int id) const {
-		int x,y;
-		Chunk::getChunkPosFromID(id,x,y);
+		int x, y;
+		Chunk::getChunkPosFromID(id, x, y);
 		return getChunkSaveOffset(x, y);
 	};
 
@@ -113,29 +116,45 @@ public:
 	Chunk &loadChunk(int x, int y);
 	void genWorld(long seed);//deprecated
 
-	//for reading the blocks 
-	inline const BlockStruct& getBlock(int x, int y);
+
+	//==============BLOCK METHODS=======================================================================
+
+	//return nullptr if block is not loaded or invalid coords 
+	//(won't cause chunk load)
+	const BlockStruct* getLoadedBlockPointer(int x, int y) const;
+
+	//return nullptr if invalid coords 
+	//(may cause chunk load)
 	const BlockStruct* getBlockPointer(int x, int y);
-	//note any changes wont be visible in graphics ->use setBlock() instead
-	BlockStruct& editBlock(int x, int y);
+
+	//for reading the blocks 
+	//(may cause chunk load)
+	inline const BlockStruct& getBlock(int x, int y);
+
 	//return is block at coords is air and true if outside the map
 	bool isAir(int x, int y);
 
-	//automatically calls chunk.markdirty() to update graphics and call onNeighbourBlockChange()
-	void setBlock(int x, int y,BlockStruct&);
-	void setBlock(int x, int y,int block_id);
+	//any changes wont be visible in graphics ->use setBlock() instead 
+	//(may cause chunk load)
+	BlockStruct& editBlock(int x, int y);
 
-	inline const std::unordered_map<int, int>::iterator& getChunkBegin() {return m_local_offset_map.begin();}
+	//automatically calls chunk.markdirty() to update graphics and call onNeighbourBlockChange()
+	//(may cause chunk load)
+	void setBlock(int x, int y, BlockStruct&);
+
+	//automatically calls chunk.markdirty() to update graphics and call onNeighbourBlockChange()
+	//(may cause chunk load)
+	void setBlock(int x, int y, int block_id);
+
+	//==================================================================================================
+
 	inline std::unordered_map<int, int>& getMap() { return m_local_offset_map; }
 
-	inline const std::unordered_map<int, int>::iterator& getChunkEnd() {return m_local_offset_map.end();}
-
-    inline long getTime() const { return m_info.time; }
+	inline long getTime() const { return m_info.time; }
 	inline std::string getName() const { return m_info.name; }
 	//returns copy of info!
 	inline WorldInfo getInfo() const { return m_info; };
 	inline const std::string& getFilePath() const { return m_file_path; }
-	inline int getNumberOfLoadedChunks() const {return m_local_offset_map.size();}
 
 };
 
