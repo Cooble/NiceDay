@@ -1,9 +1,8 @@
 # NiceDay
 
 Let's make Terraria in C++!  
-
-
-## Pictured changelog:
+  
+### Pictured changelog:
 
 Basic tile render (03_05_2019)
 ![Alt text](screenshots/03_05_2019.png?raw=false "")
