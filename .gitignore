@@ -6,4 +6,4 @@ bin-int/
 # Files
 *.user
 *.world
-imgui.ini
+*imgui.ini

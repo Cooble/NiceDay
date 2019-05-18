@@ -42,7 +42,7 @@ Window::Window(int width, int height, const char* title) :
 		ND_ERROR("Failed to initialize GLAD");
 		return;
 	}
-
+	
 	glfwSetWindowUserPointer(m_window, &m_data);
 
 	//window events

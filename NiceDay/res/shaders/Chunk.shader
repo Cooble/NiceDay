@@ -56,7 +56,7 @@ void main() {
 	int corner_x = corner_offset & corner_mask;
 	int corner_y = (corner_offset >> u_corner_atlas_icon_number_bit) & corner_mask;
 
-	float corner_co = 1.0f / (1 << u_corner_atlas_icon_number_bit);
+	float corner_co = 1.0f / float(1 << u_corner_atlas_icon_number_bit);
 
 	g_corner_uv_coords = vec2(corner_x, corner_y) * corner_co;
 	g_uv_coords = vec2(x, y) * co;
@@ -65,17 +65,17 @@ void main() {
 
 	g_corner_uv_coords = vec2(corner_x + 1, corner_y) * corner_co;
 	g_uv_coords = vec2(x + 0.25f, y) * co;
-	gl_Position = u_transform * (gl_in[0].gl_Position + vec2(1, 0));
+	gl_Position = u_transform * (gl_in[0].gl_Position + vec2(1.0f, 0.0f));
 	EmitVertex();
 
 	g_corner_uv_coords = vec2(corner_x, corner_y + 1) * corner_co;
 	g_uv_coords = vec2(x, y + 0.25f) * co;
-	gl_Position = u_transform * (gl_in[0].gl_Position + vec2(0, 1));
+	gl_Position = u_transform * (gl_in[0].gl_Position + vec2(0.0f, 1.0f));
 	EmitVertex();
 
 	g_corner_uv_coords = vec2(corner_x + 1, corner_y + 1) * corner_co;
 	g_uv_coords = vec2(x + 0.25f, y + 0.25f) * co;
-	gl_Position = u_transform * (gl_in[0].gl_Position + vec2(1, 1));
+	gl_Position = u_transform * (gl_in[0].gl_Position + vec2(1.0f, 1.0f));
 	EmitVertex();
 
 
@@ -94,7 +94,6 @@ in vec2 g_uv_coords;
 in vec2 g_corner_uv_coords;
 
 void main() {
-
 	vec4 corner_color = texture2D(u_corners, g_corner_uv_coords);
 	if (corner_color.a == 0)
 		discard;
