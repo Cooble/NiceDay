@@ -94,6 +94,7 @@ in vec2 g_uv_coords;
 in vec2 g_corner_uv_coords;
 
 void main() {
+
 	vec4 corner_color = texture2D(u_corners, g_corner_uv_coords);
 	if (corner_color.a == 0)
 		discard;
