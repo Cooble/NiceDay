@@ -2,6 +2,7 @@
 #include "ndpch.h"
 #include "Game.h"
 
+
 int main()
 {
 	/*NDUtil::FifoList<int> list(2);
@@ -21,6 +22,8 @@ int main()
 	while (!list.empty())
 		int g = list.pop();
 	*/
+
+
 
 
 

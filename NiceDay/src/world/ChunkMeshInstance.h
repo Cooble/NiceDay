@@ -7,7 +7,7 @@
 #include "graphics/buffer/VertexBuffer.h"
 #include "graphics/buffer/VertexArray.h"
 
-constexpr unsigned int BLOCK_TEXTURE_ATLAS_SIZE_BIT = 1;//2 to the n icons in atlas in row
+constexpr unsigned int BLOCK_TEXTURE_ATLAS_SIZE =16;//2 to the n icons in atlas in row
 constexpr unsigned int BLOCK_CORNER_ATLAS_SIZE_BIT = 3;//2 to the n icons in atlas in row
 class Renderer;
 

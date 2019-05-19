@@ -4,7 +4,11 @@
 
 
 Block::Block(int id)
-	:m_id(id), m_opacity(0.25f), m_texture_offset(0)
+	:m_id(id),
+	m_texture_pos(0),
+	m_has_big_texture(false),
+	m_opacity(0.25f),
+	m_block_connect_group(BIT(BLOCK_GROUP_DIRT_BIT))
 {
 }
 
@@ -15,25 +19,35 @@ float Block::getOpacity(const BlockStruct&) const
 	return m_opacity;
 }
 
-int Block::getTextureOffset(const BlockStruct&)const
+int Block::getTextureOffset(int x, int y, const BlockStruct&)const
 {
-	return m_texture_offset;
+	if (!m_has_big_texture)
+		return m_texture_pos.i;
+
+	return half_int(m_texture_pos.x * 4 + (x & 3), m_texture_pos.y * 4 + (y & 3)).i;
+	//return half_int(m_texture_pos.x*4, m_texture_pos.y*4).i;	
 }
 
-int Block::getCornerOffset(const BlockStruct& b) const
+int Block::getCornerOffset(int x, int y, const BlockStruct& b) const
 {
 	return b.corner;
 }
 
+bool Block::isInGroup(World* w, int x, int y, int group)
+{
+	const BlockStruct* b = w->getBlockPointer(x, y);
+	if (b == nullptr)
+		return false;
+	return BlockRegistry::get().getBlock(b->id).isInConnectGroup(group);
+}
+
 bool Block::onNeighbourBlockChange(World* world, int x, int y) const
 {
-	if (getID() == BLOCK_AIR)
-		return false;
 
-	bool up = world->isAir(x, y + 1);
-	bool down = world->isAir(x, y - 1);
-	bool left = world->isAir(x - 1, y);
-	bool right = world->isAir(x + 1, y);
+	bool up =	!isInGroup(world, x, y + 1, m_block_connect_group);
+	bool down = !isInGroup(world, x, y - 1, m_block_connect_group);
+	bool left = !isInGroup(world, x - 1, y, m_block_connect_group);
+	bool right =!isInGroup(world, x + 1, y, m_block_connect_group);
 
 	BlockStruct& block = world->editBlock(x, y);
 	int lastCorner = block.corner;

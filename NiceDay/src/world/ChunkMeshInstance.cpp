@@ -25,14 +25,14 @@ void ChunkMesh::init()
 
 		static char* ray = new char[WORLD_CHUNK_SIZE*WORLD_CHUNK_SIZE * 2 * sizeof(float)];
 
-		s_texture = new Texture("res/images/atlas/atlas_small.png", GL_NEAREST);
+		s_texture = new Texture("res/images/atlas/newatlas.png", GL_NEAREST);
 		s_texture_corners = new Texture("res/images/atlas/corners.png", GL_NEAREST);
 
 		s_program = new Program("res/shaders/Chunk.shader");
 		s_program->bind();
 		s_program->setUniform1i("u_texture", 0);
 		s_program->setUniform1i("u_corners", 1);
-		s_program->setUniform1i("u_texture_atlas_icon_number_bit", BLOCK_TEXTURE_ATLAS_SIZE_BIT);
+		s_program->setUniform1i("u_texture_atlas_width", BLOCK_TEXTURE_ATLAS_SIZE);
 		s_program->setUniform1i("u_corner_atlas_icon_number_bit", BLOCK_CORNER_ATLAS_SIZE_BIT);
 		s_program->unbind();
 
@@ -75,8 +75,8 @@ void ChunkMeshInstance::updateMesh(const World& world, const Chunk& chunk)
 		{
 			const BlockStruct& bs = chunk.getBlock(x, y);
 			const Block& blok = BlockRegistry::get().getBlock(bs.id);
-			auto t_offset = 1 + blok.getTextureOffset(bs);
-			auto t_corner_offset = blok.getCornerOffset(bs);
+			auto t_offset = 1 + blok.getTextureOffset(x,y,bs);
+			auto t_corner_offset = blok.getCornerOffset(x,y,bs);
 
 			*((unsigned int*)&m_buff[sizeof(unsigned int)* 2 * (ylevel + x)]) = t_offset;
 			*((unsigned int*)&m_buff[sizeof(unsigned int)* 2 * (ylevel + x) + sizeof(unsigned int)]) = t_corner_offset;

@@ -38,6 +38,7 @@ WorldLayer::WorldLayer()
 	BlockRegistry::get().registerBlock(new BlockDirt());
 	BlockRegistry::get().registerBlock(new BlockGold());
 	BlockRegistry::get().registerBlock(new BlockAdamantite());
+	BlockRegistry::get().registerBlock(new BlockPlatform());
 
 	WorldIOInfo info;
 	info.world_name = "NiceWorld";
@@ -276,12 +277,6 @@ void WorldLayer::onEvent(Event& e)
 			BLOCK_PALLETE_SELECTED = m_world->getBlock(CURSOR_X, CURSOR_Y).id;
 			event->handled = true;
 		}
-	}
-	if (e.getEventType() == Event::EventType::MouseScroll) {
-		auto event = dynamic_cast<MouseScrollEvent*>(&e);
-		ND_INFO("{}", event->getScrollY());
-
-
 	}
 
 }

@@ -235,7 +235,8 @@ void WorldRenderManager::render()
 	program.bind();
 	ChunkMesh::getAtlas()->bind(0);
 	ChunkMesh::getCornerAtlas()->bind(1);
-
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	for (ChunkMeshInstance* mesh : m_chunks)
 	{
 		if (!(mesh->m_enabled))
@@ -251,6 +252,8 @@ void WorldRenderManager::render()
 		Call(glDrawArrays(GL_POINTS, 0, WORLD_CHUNK_AREA));
 
 	}
+	glDisable(GL_BLEND);
+
 
 	//light stuff
 	if (!Stats::light_enable)

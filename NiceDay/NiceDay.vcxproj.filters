@@ -1207,6 +1207,7 @@
     <ClInclude Include="src\layer\imguiplotvar.h" />
     <ClInclude Include="src\Stats.h" />
     <ClInclude Include="src\world\LightCalculator.h" />
+    <ClInclude Include="src\world\block\ActionPolygon.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Game.cpp">
@@ -1273,5 +1274,6 @@
     <ClCompile Include="src\layer\imguiplotvar.cpp" />
     <ClCompile Include="src\State.cpp" />
     <ClCompile Include="src\world\LightCalculator.cpp" />
+    <ClCompile Include="src\world\block\ActionPolygon.cpp" />
   </ItemGroup>
 </Project>

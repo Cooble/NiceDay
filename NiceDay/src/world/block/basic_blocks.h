@@ -5,6 +5,8 @@ class BlockAir:public Block
 {
 public:
 	BlockAir();
+	int getTextureOffset(int x, int y, const BlockStruct&) const override;
+	bool onNeighbourBlockChange(World* world, int x, int y) const override;
 	BLOCK_TO_STRING(BlockAir)
 };
 class BlockStone :public Block
@@ -30,4 +32,13 @@ class BlockAdamantite :public Block
 public:
 	BlockAdamantite();
 	BLOCK_TO_STRING(BlockAdamantite)
+};
+class BlockPlatform :public Block
+{
+public:
+	BlockPlatform();
+	bool onNeighbourBlockChange(World* world, int x, int y) const override;
+	int getCornerOffset(int x, int y, const BlockStruct&) const override;
+	int getTextureOffset(int x, int y, const BlockStruct&) const override;
+	BLOCK_TO_STRING(BlockPlatform)
 };

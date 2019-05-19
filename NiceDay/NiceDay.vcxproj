@@ -143,6 +143,7 @@
     <ClInclude Include="src\layer\imguiplotvar.h" />
     <ClInclude Include="src\NDUtil.h" />
     <ClInclude Include="src\Stats.h" />
+    <ClInclude Include="src\world\block\ActionPolygon.h" />
     <ClInclude Include="src\world\block\basic_blocks.h" />
     <ClInclude Include="src\world\ChunkLoader.h" />
     <ClInclude Include="src\entity\Camera.h" />
@@ -547,6 +548,7 @@
     <ClCompile Include="src\graphics\buffer\FrameBuffer.cpp" />
     <ClCompile Include="src\layer\imguiplotvar.cpp" />
     <ClCompile Include="src\State.cpp" />
+    <ClCompile Include="src\world\block\ActionPolygon.cpp" />
     <ClCompile Include="src\world\block\basic_blocks.cpp" />
     <ClCompile Include="src\world\ChunkLoader.cpp" />
     <ClCompile Include="src\entity\Camera.cpp" />
