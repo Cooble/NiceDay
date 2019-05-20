@@ -178,7 +178,7 @@ void World::loadChunks(std::set<int>& chunk_ids)
 			}
 		}
 		if (!foundFreeChunk) {
-			lastFreeChunk = m_chunks.size();//dont bother scrolling through whole occupied chunklist
+			lastFreeChunk = m_chunks.size()+1;//dont bother scrolling through whole occupied chunklist
 			//no unloaded chunk -> add new to list
 			m_chunks.emplace_back();
 			Chunk& c = m_chunks[m_chunks.size() - 1];
