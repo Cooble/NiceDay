@@ -12,3 +12,7 @@ Corner tile render (06_05_2019)
 
 Lighting with water-spill-algorithm (18_05_2019)
 ![Alt text](screenshots/18_05_2019.png?raw=false "")
+
+Platforms, grass, sky (20_05_2019)
+![Alt text](screenshots/20_05_2019.png?raw=false "")
+
