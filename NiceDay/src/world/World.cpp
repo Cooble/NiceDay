@@ -213,7 +213,7 @@ void World::saveChunk(Chunk& c)
 
 bool World::isValidBlock(int x, int y) const
 {
-	return x > 0 && y > 0 && x < getInfo().chunk_width*WORLD_CHUNK_SIZE && y < getInfo().chunk_height*WORLD_CHUNK_SIZE;
+	return x >= 0 && y >= 0 && x < getInfo().chunk_width*WORLD_CHUNK_SIZE && y < getInfo().chunk_height*WORLD_CHUNK_SIZE;
 }
 
 const BlockStruct& World::getBlock(int x, int y) {
