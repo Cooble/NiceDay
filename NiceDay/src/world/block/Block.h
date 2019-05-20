@@ -29,6 +29,7 @@ const int BLOCK_DIRT		= 2;
 const int BLOCK_GOLD		= 3;
 const int BLOCK_ADAMANTITE	= 4;
 const int BLOCK_PLATFORM	= 5;
+const int BLOCK_GRASS		= 6;
 
 struct BlockStruct {
 	int id;

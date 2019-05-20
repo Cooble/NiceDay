@@ -39,15 +39,17 @@ WorldLayer::WorldLayer()
 	BlockRegistry::get().registerBlock(new BlockGold());
 	BlockRegistry::get().registerBlock(new BlockAdamantite());
 	BlockRegistry::get().registerBlock(new BlockPlatform());
+	BlockRegistry::get().registerBlock(new BlockGrass());
 
 	WorldIOInfo info;
 	info.world_name = "NiceWorld";
 	info.chunk_width = 5;
 	info.chunk_height = 5;
 	info.seed = 0;
+	info.terrain_level = (info.chunk_height - 2)*WORLD_CHUNK_SIZE;
 
 
-	bool genW = false;
+	bool genW = true;
 
 
 	if (genW) {

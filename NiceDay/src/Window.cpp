@@ -8,6 +8,7 @@
 
 static void blankFun(Event& e) {}
 static bool is_glfw_initialized = false;
+
 Window::Window(int width, int height, const char* title) :
 	m_window(nullptr)
 {
@@ -20,6 +21,8 @@ Window::Window(int width, int height, const char* title) :
 		is_glfw_initialized = true;
 		glfwInit();
 	}
+
+	
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
@@ -106,6 +109,9 @@ Window::Window(int width, int height, const char* title) :
 		MouseScrollEvent e(x, y, xx, yy);
 		d.eventCallback(e);
 	});
+
+	//GLint i = 0;
+	//glad_glGetIntegerv(GL_MAX_TEXTURE_SIZE, &i);
 
 
 }

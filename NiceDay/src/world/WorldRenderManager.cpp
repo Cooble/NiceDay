@@ -16,6 +16,9 @@ WorldRenderManager::WorldRenderManager(Camera* cam, World* world)
 	m_world(world),
 	m_camera(cam)
 {
+	//setup sky
+	m_sky_program = new Program("res/shaders/Sky.shader");
+
 	//setup main light texture
 	m_light_frame_buffer = new FrameBuffer();
 	m_light_program = new Program("res/shaders/Light.shader");
@@ -46,9 +49,9 @@ WorldRenderManager::WorldRenderManager(Camera* cam, World* world)
 		-1, 1,
 
 	};
-	m_light_simple_VBO = new VertexBuffer(simpleQuad, sizeof(simpleQuad));
-	m_light_simple_VAO = new VertexArray();
-	m_light_simple_VAO->addBuffer(*m_light_simple_VBO, l);
+	m_full_screen_quad_VBO = new VertexBuffer(simpleQuad, sizeof(simpleQuad));
+	m_full_screen_quad_VAO = new VertexArray();
+	m_full_screen_quad_VAO->addBuffer(*m_full_screen_quad_VBO, l);
 	onScreenResize();
 }
 
@@ -66,10 +69,10 @@ WorldRenderManager::~WorldRenderManager()
 	delete m_light_simple_texture;
 
 	delete m_light_VAO;
-	delete m_light_simple_VAO;
+	delete m_full_screen_quad_VAO;
 
 	delete m_light_VBO;
-	delete m_light_simple_VBO;
+	delete m_full_screen_quad_VBO;
 };
 
 void WorldRenderManager::onScreenResize()
@@ -229,8 +232,34 @@ int WorldRenderManager::getChunkIndex(int cx, int cy)
 	return -1;
 }
 
+glm::vec4 WorldRenderManager::getSkyColor(float y)
+{
+	auto upColor = glm::vec4(0, 0, 0, 1);
+	auto downColor = glm::vec4(0 , 0.5f , 1, 1);
+
+
+	y -= m_world->getInfo().terrain_level;
+	y /= m_world->getInfo().chunk_height * WORLD_CHUNK_SIZE - m_world->getInfo().terrain_level;
+	return glm::mix(downColor,upColor, y);
+}
+
 void WorldRenderManager::render()
 {
+
+	float CURSOR_Y = Game::get().getWindow()->getHeight() / BLOCK_PIXEL_SIZE + m_camera->getPosition().y;
+	float CURSOR_YY = -(float)Game::get().getWindow()->getHeight() / BLOCK_PIXEL_SIZE + m_camera->getPosition().y;
+	//sky render
+	m_sky_program->bind();
+	auto upColor = getSkyColor(CURSOR_Y);
+	//auto downColor = glm::vec4(68.0f/255, 85.0f/255,90.0f/255,1);
+	auto downColor = getSkyColor(CURSOR_YY);
+	m_sky_program->setUniform4f("u_up_color", upColor.r, upColor.g, upColor.b, upColor.a);
+	m_sky_program->setUniform4f("u_down_color", downColor.r, downColor.g, downColor.b, downColor.a);
+	m_full_screen_quad_VAO->bind();
+	Call(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
+
+
+	//chunk render
 	auto& program = *ChunkMesh::getProgram();
 	program.bind();
 	ChunkMesh::getAtlas()->bind(0);
@@ -278,7 +307,7 @@ void WorldRenderManager::renderLightMap()
 		Call(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 		m_light_simple_program->bind();
 		m_light_simple_texture->bind(0);
-		m_light_simple_VAO->bind();
+		m_full_screen_quad_VAO->bind();
 		Call(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
 		Call(glViewport(0, 0, Game::get().getWindow()->getWidth(), Game::get().getWindow()->getHeight()));
 	}

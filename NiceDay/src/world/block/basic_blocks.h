@@ -42,3 +42,11 @@ public:
 	int getTextureOffset(int x, int y, const BlockStruct&) const override;
 	BLOCK_TO_STRING(BlockPlatform)
 };
+class BlockGrass :public Block
+{
+public:
+	BlockGrass();
+	bool onNeighbourBlockChange(World* world, int x, int y) const override;
+	int getTextureOffset(int x, int y, const BlockStruct&) const override;
+	BLOCK_TO_STRING(BlockGrass)
+};

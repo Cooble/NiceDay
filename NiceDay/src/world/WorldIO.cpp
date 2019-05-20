@@ -53,6 +53,7 @@ namespace WorldIO {
 	{
 		World* ww = new World(m_file_path, info.world_name.c_str(), info.chunk_width, info.chunk_height);
 		World& w = *ww;
+		w.m_info.terrain_level = info.terrain_level;
 
 		//creating world file
 		m_stream->write((const char*)&w.getInfo(), sizeof(WorldInfo));

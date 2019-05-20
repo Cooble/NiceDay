@@ -25,6 +25,16 @@ struct StructChunkID
 class WorldRenderManager
 {
 private:
+	Program* m_sky_program;
+
+
+	//whole_screen_quad
+	VertexArray* m_full_screen_quad_VAO;
+	VertexBuffer* m_full_screen_quad_VBO;
+
+
+
+	//light stuff
 	LightCalculator& m_light_calculator;
 	FrameBuffer* m_light_frame_buffer;
 	
@@ -35,10 +45,8 @@ private:
 	Program* m_light_simple_program;
 
 	VertexBuffer* m_light_VBO;
-	VertexBuffer* m_light_simple_VBO;
-
 	VertexArray* m_light_VAO;
-	VertexArray* m_light_simple_VAO;
+	//end of light
 
 	glm::mat4 m_world_view_matrix;
 
@@ -54,6 +62,7 @@ private:
 
 	ChunkPos lightOffset;
 	int getChunkIndex(int cx, int cy);
+	glm::vec4 getSkyColor(float y);
 public:
 	WorldRenderManager(Camera* cam,World* world);
 	~WorldRenderManager();

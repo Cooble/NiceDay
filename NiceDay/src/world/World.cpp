@@ -50,9 +50,16 @@ void World::genWorld(long seed)
 				for (int y = 0; y < WORLD_CHUNK_SIZE; y++)
 				{
 					auto& block = c.getBlock(x, y);
+					auto worldy = cy * WORLD_CHUNK_SIZE + y;
 					if (x == 0 || y == 0)
-						block.id = 0;
-					else block.id = 1;
+						block.id = BLOCK_AIR;
+					else if (worldy > m_info.terrain_level)
+						block.id =BLOCK_AIR;
+					else if (worldy == m_info.terrain_level)
+						block.id = BLOCK_GRASS;
+					else if (worldy > m_info.terrain_level-6)//5 block of dirt
+						block.id = BLOCK_DIRT;
+					else block.id = BLOCK_STONE;
 
 				}
 			}

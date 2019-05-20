@@ -19,7 +19,7 @@ struct WorldIOInfo {
 	std::string world_name;
 	int chunk_width, chunk_height;
 	long seed;
-
+	int terrain_level;
 };
 namespace WorldIO {
 	class Session {

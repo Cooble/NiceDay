@@ -7,6 +7,8 @@
 #define CHUNK_NOT_EXIST -1
 #define CHUNK_BUFFER_LENGTH 20 //5*4
 
+
+
 const int WORLD_CHUNK_BIT_SIZE = 5;
 const int WORLD_CHUNK_SIZE = 32;
 const int WORLD_CHUNK_AREA = WORLD_CHUNK_SIZE * WORLD_CHUNK_SIZE;
@@ -52,6 +54,7 @@ public:
 struct WorldInfo {
 	long seed;
 	int chunk_width, chunk_height;
+	int terrain_level;
 	long time;
 	char name[100];
 };
@@ -73,6 +76,7 @@ public:
 		return x >> WORLD_CHUNK_BIT_SIZE;
 	}
 private:
+	friend class WorldIO::Session;
 	LightCalculator  m_light_calc;
 	std::vector<Chunk> m_chunks;
 
@@ -153,7 +157,7 @@ public:
 	inline long getTime() const { return m_info.time; }
 	inline std::string getName() const { return m_info.name; }
 	//returns copy of info!
-	inline WorldInfo getInfo() const { return m_info; };
+	inline const WorldInfo& getInfo() const { return m_info; };
 	inline const std::string& getFilePath() const { return m_file_path; }
 
 };
