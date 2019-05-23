@@ -71,7 +71,7 @@ WorldLayer::WorldLayer()
 
 	m_chunk_loader = new ChunkLoader(m_world);
 	m_cam = new Camera();
-	glm::vec2 po = { 0,0 };
+	glm::vec2 po = { m_world->getInfo().chunk_width*WORLD_CHUNK_SIZE/2,m_world->getInfo().terrain_level };
 	m_cam->setPosition(po);
 	m_cam->setChunkRadius(4);
 

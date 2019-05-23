@@ -25,8 +25,9 @@ void ChunkMesh::init()
 
 		static char* ray = new char[WORLD_CHUNK_SIZE*WORLD_CHUNK_SIZE * 2 * sizeof(float)];
 
-		s_texture = new Texture("res/images/atlas/newatlas.png", GL_NEAREST);
-		s_texture_corners = new Texture("res/images/atlas/corners.png", GL_NEAREST);
+		TextureInfo info;
+		s_texture = new Texture(info.path("res/images/atlas/newatlas.png").filterMode(GL_NEAREST));
+		s_texture_corners = new Texture(info.path("res/images/atlas/corners.png"));
 
 		s_program = new Program("res/shaders/Chunk.shader");
 		s_program->bind();

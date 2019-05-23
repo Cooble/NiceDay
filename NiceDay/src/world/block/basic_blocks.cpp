@@ -129,7 +129,7 @@ bool BlockGrass::onNeighbourBlockChange(World* world, int x, int y) const
 		|| block.corner == BLOCK_STATE_THIN_LINE_END_RIGHT)
 		block.metadata = half_int(2 + std::rand() % 2, 12).i;
 	else
-		block.metadata = half_int(std::rand() % 4, 13).i;
+		block.metadata = half_int(x&3, 13).i;
 
 	return lastCorner != block.corner || lastid != block.id;//we have a change (or not)
 

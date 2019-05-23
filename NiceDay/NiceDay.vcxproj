@@ -140,6 +140,7 @@
     <ClInclude Include="src\entity\I2DLocalable.h" />
     <ClInclude Include="src\graphics\buffer\FrameBuffer.h" />
     <ClInclude Include="src\graphics\Renderable2D.h" />
+    <ClInclude Include="src\graphics\Sprite2D.h" />
     <ClInclude Include="src\layer\imguiplotvar.h" />
     <ClInclude Include="src\NDUtil.h" />
     <ClInclude Include="src\Stats.h" />
@@ -546,6 +547,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\graphics\buffer\FrameBuffer.cpp" />
+    <ClCompile Include="src\graphics\Sprite2D.cpp" />
     <ClCompile Include="src\layer\imguiplotvar.cpp" />
     <ClCompile Include="src\State.cpp" />
     <ClCompile Include="src\world\block\ActionPolygon.cpp" />

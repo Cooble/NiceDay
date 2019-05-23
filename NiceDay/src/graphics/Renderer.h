@@ -4,6 +4,7 @@
 
 #include "buffer/VertexArray.h"
 #include "buffer/IndexBuffer.h"
+#include "Sprite2D.h"
 
 #include "Program.h"
 #ifndef LOADED_CALL_G
@@ -36,6 +37,7 @@ public:
 	~Renderer();
 
 	void draw(const VertexArray& vao, const Program& shader, const IndexBuffer& ibo);
+	void draw(glm::mat4 trans,Sprite2D& sprite);
 	void clear();
 };
 

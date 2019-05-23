@@ -24,6 +24,7 @@ layout(location=0) out vec4 color;
 
 
 void main(){
+	
 	color = vec4(0,0,0,texture2D(u_texture, v_uv_coords).a);
 	//if (color.r == 0)
 	//discard;

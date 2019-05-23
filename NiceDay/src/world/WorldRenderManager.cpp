@@ -4,7 +4,7 @@
 #include "Stats.h"
 #include "graphics/Renderer.h"
 #include "world/ChunkMeshInstance.h"
-#include "glm/gtx/io.hpp"
+
 
 
 
@@ -19,6 +19,19 @@ WorldRenderManager::WorldRenderManager(Camera* cam, World* world)
 	//setup sky
 	m_sky_program = new Program("res/shaders/Sky.shader");
 
+	//setup bg
+	for (int i = 0; i < sizeof(m_bgs) / sizeof(Sprite2D*); i++)
+	{
+		TextureInfo info(std::string("res/images/bg_") + std::to_string(i) + std::string(".png"));
+		info.wrap_mode_s = GL_REPEAT;
+		info.wrap_mode_t = GL_CLAMP_TO_BORDER;
+		//info.wrap_mode_t = GL_CLAMP_TO_BORDER;
+		m_bgs[i] = new Sprite2D(new Texture(info));
+		ND_INFO("tex");
+		m_bgs[i]->setPosition(glm::vec2(-1, -1));
+		m_bgs[i]->setScale(glm::vec2(2, 2));
+	}
+
 	//setup main light texture
 	m_light_frame_buffer = new FrameBuffer();
 	m_light_program = new Program("res/shaders/Light.shader");
@@ -31,7 +44,7 @@ WorldRenderManager::WorldRenderManager(Camera* cam, World* world)
 		0,0,
 		0,1,
 	};
-	m_light_VBO = new VertexBuffer(quad, sizeof(quad));//todo is sizeof valid?
+	m_light_VBO = new VertexBuffer(quad, sizeof(quad));
 	VertexBufferLayout l;
 	l.push<float>(2);
 	m_light_VAO = new VertexArray();
@@ -57,9 +70,12 @@ WorldRenderManager::WorldRenderManager(Camera* cam, World* world)
 
 WorldRenderManager::~WorldRenderManager()
 {
+
+	for (auto& m_bg : m_bgs)
+		delete m_bg;
+
 	for (ChunkMeshInstance* m : m_chunks)
 		delete m;
-
 	delete m_light_frame_buffer;
 
 	delete m_light_program;
@@ -81,7 +97,7 @@ void WorldRenderManager::onScreenResize()
 	//build world view matrix
 	float ratioo = (float)Game::get().getWindow()->getHeight() / (float)Game::get().getWindow()->getWidth();
 	float chunkheightt = (float)BLOCK_PIXEL_SIZE / (float)Game::get().getWindow()->getHeight();
-	m_world_view_matrix = glm::scale(glm::mat4(1.0f), glm::vec3(ratioo*chunkheightt, chunkheightt, 1));
+	m_proj_matrix = glm::scale(glm::mat4(1.0f), glm::vec3(ratioo*chunkheightt, chunkheightt, 1));
 
 	int screenWidth = Game::get().getWindow()->getWidth();
 	int screenHeight = Game::get().getWindow()->getHeight();
@@ -108,14 +124,19 @@ void WorldRenderManager::onScreenResize()
 	//made default light texture with 1 channel
 	if (m_light_simple_texture)
 		delete m_light_simple_texture;
-	m_light_simple_texture = new Texture(m_chunk_width*WORLD_CHUNK_SIZE, m_chunk_height*WORLD_CHUNK_SIZE, GL_LINEAR, GL_REPEAT, GL_RED);
+	TextureInfo info;
+	info.size(m_chunk_width*WORLD_CHUNK_SIZE, m_chunk_height*WORLD_CHUNK_SIZE).f_format=GL_RED;
+	m_light_simple_texture = new Texture(info);
 
 
 	//made main light map texture with 4 channels
 	if (m_light_texture)
 		delete m_light_texture;
-	m_light_texture = new Texture(m_chunk_width*WORLD_CHUNK_SIZE * 2, m_chunk_height*WORLD_CHUNK_SIZE * 2, GL_NEAREST, GL_REPEAT, GL_RGBA);
+	
+	info = TextureInfo();
+	info.size(m_chunk_width*WORLD_CHUNK_SIZE*2, m_chunk_height*WORLD_CHUNK_SIZE*2).filterMode(GL_NEAREST).format(GL_RGBA);
 
+	m_light_texture = new Texture(info);
 	m_light_frame_buffer->bind();
 	m_light_frame_buffer->attachTexture(m_light_texture->getID());
 	m_light_frame_buffer->unbind();
@@ -235,23 +256,23 @@ int WorldRenderManager::getChunkIndex(int cx, int cy)
 glm::vec4 WorldRenderManager::getSkyColor(float y)
 {
 	auto upColor = glm::vec4(0, 0, 0, 1);
-	auto downColor = glm::vec4(0 , 0.5f , 1, 1);
+	auto downColor = glm::vec4(0, 0.5f, 1, 1);
 
 
 	y -= m_world->getInfo().terrain_level;
 	y /= m_world->getInfo().chunk_height * WORLD_CHUNK_SIZE - m_world->getInfo().terrain_level;
-	return glm::mix(downColor,upColor, y);
+	y /= 2;
+
+	return glm::mix(downColor, upColor, y + 0.2f);
 }
 
 void WorldRenderManager::render()
 {
-
+	//sky render
 	float CURSOR_Y = Game::get().getWindow()->getHeight() / BLOCK_PIXEL_SIZE + m_camera->getPosition().y;
 	float CURSOR_YY = -(float)Game::get().getWindow()->getHeight() / BLOCK_PIXEL_SIZE + m_camera->getPosition().y;
-	//sky render
 	m_sky_program->bind();
 	auto upColor = getSkyColor(CURSOR_Y);
-	//auto downColor = glm::vec4(68.0f/255, 85.0f/255,90.0f/255,1);
 	auto downColor = getSkyColor(CURSOR_YY);
 	m_sky_program->setUniform4f("u_up_color", upColor.r, upColor.g, upColor.b, upColor.a);
 	m_sky_program->setUniform4f("u_down_color", downColor.r, downColor.g, downColor.b, downColor.a);
@@ -259,13 +280,55 @@ void WorldRenderManager::render()
 	Call(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
 
 
+	//bg render
+	using namespace glm;
+
+	vec2 screenDim = vec2(Game::get().getWindow()->getWidth(), Game::get().getWindow()->getHeight());
+	vec2 lowerScreen = m_camera->getPosition() - ((screenDim / (float)BLOCK_PIXEL_SIZE) / 2.0f);
+	vec2 upperScreen = m_camera->getPosition() + ((screenDim / (float)BLOCK_PIXEL_SIZE) / 2.0f);
+	screenDim = upperScreen-lowerScreen;
+	Sprite2D::init();
+	m_bgs[0]->getProgram().bind();
+	m_bgs[0]->getVAO().bind();
+
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	for (int i = 0; i < sizeof(m_bgs) / sizeof(Sprite2D*); i++)
+	{
+		Sprite2D& s = *m_bgs[i];
+
+		auto texDim = vec2(s.getTexture().getWidth()/2, s.getTexture().getHeight()/2);
+		auto pos = vec2(
+			m_world->getInfo().chunk_width / 2 * WORLD_CHUNK_SIZE,
+			 -i*2 +(float)s.getTexture().getHeight()/BLOCK_PIXEL_SIZE/3+m_world->getInfo().terrain_level);
+		//pos = pos - (m_camera->getPosition()-pos);
+		vec2 meshLower = pos;
+		vec2 meshUpper = pos + texDim/(float)BLOCK_PIXEL_SIZE;
+		vec2 meshDim = meshUpper - meshLower;
+
+		vec2 delta = m_camera->getPosition() - (meshLower + meshUpper) / 2.0f;//delta of centers
+		delta = delta / (3.0f-i);
+
+		auto transl = delta / meshDim;
+		auto scal = screenDim / meshDim;
+		mat4 t(1.0f);
+		t = glm::translate(t, vec3(transl.x, transl.y, 0));
+		t = glm::scale(t, vec3(scal.x, scal.y, 0));
+
+		s.getProgram().setUniformMat4("u_model_transform", s.getModelMatrix());
+		s.getProgram().setUniformMat4("u_uv_transform", t);
+
+		s.getTexture().bind(0);
+		Call(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
+	}
+	
+	
 	//chunk render
 	auto& program = *ChunkMesh::getProgram();
 	program.bind();
 	ChunkMesh::getAtlas()->bind(0);
 	ChunkMesh::getCornerAtlas()->bind(1);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	for (ChunkMeshInstance* mesh : m_chunks)
 	{
 		if (!(mesh->m_enabled))
@@ -275,7 +338,7 @@ void WorldRenderManager::render()
 			mesh->getPos().x - m_camera->getPosition().x,
 			mesh->getPos().y - m_camera->getPosition().y, 0.0f));
 
-		program.setUniformMat4("u_transform", getWorldViewMatrix()*worldMatrix);
+		program.setUniformMat4("u_transform", getProjMatrix()*worldMatrix);
 
 		mesh->getVAO().bind();
 		Call(glDrawArrays(GL_POINTS, 0, WORLD_CHUNK_AREA));
@@ -323,9 +386,8 @@ void WorldRenderManager::renderMainLightMap()
 		lightOffset.second*WORLD_CHUNK_SIZE - m_camera->getPosition().y, 0.0f));
 	worldMatrix = glm::scale(worldMatrix, glm::vec3(m_chunk_width*WORLD_CHUNK_SIZE, m_chunk_height*WORLD_CHUNK_SIZE, 1));
 
-
 	m_light_program->bind();
-	m_light_program->setUniformMat4("u_transform", getWorldViewMatrix() * worldMatrix);
+	m_light_program->setUniformMat4("u_transform", getProjMatrix() * worldMatrix);
 	m_light_texture->bind(0);
 	m_light_VAO->bind();
 

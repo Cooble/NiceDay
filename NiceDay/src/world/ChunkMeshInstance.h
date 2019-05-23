@@ -1,7 +1,7 @@
 #pragma once
+#include "ndpch.h"
 #include  "world/World.h"
 #include "graphics/Program.h"
-#include "glm/vec2.hpp"
 #include "graphics/Texture.h"
 #include "graphics/buffer/VertexBufferLayout.h"
 #include "graphics/buffer/VertexBuffer.h"

@@ -1,5 +1,5 @@
 #pragma once
-#include <glm/vec2.hpp>
+#include "ndpch.h"
 #include "world/ChunkLoader.h"
 #include "world/LightCalculator.h"
 

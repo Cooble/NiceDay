@@ -1208,6 +1208,7 @@
     <ClInclude Include="src\Stats.h" />
     <ClInclude Include="src\world\LightCalculator.h" />
     <ClInclude Include="src\world\block\ActionPolygon.h" />
+    <ClInclude Include="src\graphics\Sprite2D.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Game.cpp">
@@ -1275,5 +1276,6 @@
     <ClCompile Include="src\State.cpp" />
     <ClCompile Include="src\world\LightCalculator.cpp" />
     <ClCompile Include="src\world\block\ActionPolygon.cpp" />
+    <ClCompile Include="src\graphics\Sprite2D.cpp" />
   </ItemGroup>
 </Project>

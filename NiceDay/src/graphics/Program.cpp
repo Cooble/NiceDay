@@ -1,8 +1,7 @@
 #include "ndpch.h"
 #include "Program.h"
 #include "Renderer.h"
-#include <glm/gtc/type_ptr.hpp>
-#include <fstream>
+
 
 
 #define FORGET_BIND_PROTECTION //just bind it please, dont waste your time 

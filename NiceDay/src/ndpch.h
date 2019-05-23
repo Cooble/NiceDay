@@ -4,6 +4,7 @@
 //streams
 #include <iostream>
 #include <sstream>
+#include <fstream>
 
 //data sets
 #include <memory>
@@ -16,6 +17,11 @@
 
 //threads
 #include <mutex>
+
+//glm
+#include <glm/glm.hpp>
+#include <glm/gtx/io.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 //program specific
 #include "Log.h"

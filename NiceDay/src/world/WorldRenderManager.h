@@ -5,6 +5,7 @@
 #include "BlockRegistry.h"
 #include "graphics/buffer/FrameBuffer.h"
 #include "LightCalculator.h"
+#include "graphics/Sprite2D.h"
 
 
 const int BLOCK_PIXEL_SIZE = 32;
@@ -25,8 +26,9 @@ struct StructChunkID
 class WorldRenderManager
 {
 private:
-	Program* m_sky_program;
+	Sprite2D* m_bgs[3];
 
+	Program* m_sky_program;
 
 	//whole_screen_quad
 	VertexArray* m_full_screen_quad_VAO;
@@ -48,13 +50,13 @@ private:
 	VertexArray* m_light_VAO;
 	//end of light
 
-	glm::mat4 m_world_view_matrix;
+	//converts from camera space to screen space (-1,-1,1,1)
+	glm::mat4 m_proj_matrix;
 
 	std::vector<ChunkMeshInstance*> m_chunks;
 
 	World* m_world;
 	Camera* m_camera;
-	glm::mat4 m_view_matrix;
 	int m_chunk_width, m_chunk_height;
 	int last_cx=-10000, last_cy=-10000;//the chunk from which light is computed
 
@@ -73,7 +75,7 @@ public:
 	void renderMainLightMap();
 	inline int getChunksSize() const { return m_chunk_width * m_chunk_height; }
 	inline std::unordered_map<int, int>& getMap() { return m_offset_map; }
-	inline const glm::mat4& getWorldViewMatrix() { return m_world_view_matrix; }
+	inline const glm::mat4& getProjMatrix() { return m_proj_matrix; }
 };
 
 

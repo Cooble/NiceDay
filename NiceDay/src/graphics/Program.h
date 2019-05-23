@@ -1,8 +1,8 @@
 #pragma once
 
+#include "ndpch.h"
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-#include <glm/glm.hpp>
 
 #define BREAK_IF_SHADER_COMPILE_ERROR 1
 
