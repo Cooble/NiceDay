@@ -4,11 +4,29 @@
     <Filter Include="src">
       <UniqueIdentifier>{2DAB880B-99B4-887C-2230-9F7C8E38947C}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\entity">
+      <UniqueIdentifier>{F9D6DE58-E58E-20A6-4E96-F9013A6DBB96}</UniqueIdentifier>
+    </Filter>
     <Filter Include="src\event">
       <UniqueIdentifier>{5E2A22B5-CA94-D62B-13D3-87D17F7CB480}</UniqueIdentifier>
     </Filter>
     <Filter Include="src\graphics">
       <UniqueIdentifier>{2DF282EC-1955-1291-C2DA-4A47AE1CDE13}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\graphics\buffer">
+      <UniqueIdentifier>{96B31A58-0215-F865-8B82-3E18F7E22E25}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\layer">
+      <UniqueIdentifier>{D9A595B5-4510-4A2C-8E4E-FBD1FAF72781}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\world">
+      <UniqueIdentifier>{C44364B6-30AE-182D-79EC-C9D2E595F681}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\world\biome">
+      <UniqueIdentifier>{1F58ACD3-8BE3-1998-94F4-9C8C00FF7598}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\world\block">
+      <UniqueIdentifier>{FEFBADD3-6A87-1B98-7398-9E8CDFA27798}</UniqueIdentifier>
     </Filter>
     <Filter Include="vendor">
       <UniqueIdentifier>{B3738122-9F15-ACF8-88D0-BF4C74113349}</UniqueIdentifier>
@@ -45,11 +63,26 @@
     <ClInclude Include="src\Game.h">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="src\Input.h">
+      <Filter>src</Filter>
+    </ClInclude>
     <ClInclude Include="src\Log.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\NDUtil.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Stats.h">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="src\Window.h">
       <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\entity\Camera.h">
+      <Filter>src\entity</Filter>
+    </ClInclude>
+    <ClInclude Include="src\entity\I2DLocalable.h">
+      <Filter>src\entity</Filter>
     </ClInclude>
     <ClInclude Include="src\event\Event.h">
       <Filter>src\event</Filter>
@@ -66,14 +99,101 @@
     <ClInclude Include="src\graphics\Program.h">
       <Filter>src\graphics</Filter>
     </ClInclude>
+    <ClInclude Include="src\graphics\Renderable2D.h">
+      <Filter>src\graphics</Filter>
+    </ClInclude>
     <ClInclude Include="src\graphics\Renderer.h">
+      <Filter>src\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\graphics\Sprite2D.h">
       <Filter>src\graphics</Filter>
     </ClInclude>
     <ClInclude Include="src\graphics\Texture.h">
       <Filter>src\graphics</Filter>
     </ClInclude>
+    <ClInclude Include="src\graphics\buffer\FrameBuffer.h">
+      <Filter>src\graphics\buffer</Filter>
+    </ClInclude>
+    <ClInclude Include="src\graphics\buffer\IndexBuffer.h">
+      <Filter>src\graphics\buffer</Filter>
+    </ClInclude>
+    <ClInclude Include="src\graphics\buffer\VertexArray.h">
+      <Filter>src\graphics\buffer</Filter>
+    </ClInclude>
+    <ClInclude Include="src\graphics\buffer\VertexBuffer.h">
+      <Filter>src\graphics\buffer</Filter>
+    </ClInclude>
+    <ClInclude Include="src\graphics\buffer\VertexBufferLayout.h">
+      <Filter>src\graphics\buffer</Filter>
+    </ClInclude>
+    <ClInclude Include="src\layer\ImGuiLayer.h">
+      <Filter>src\layer</Filter>
+    </ClInclude>
+    <ClInclude Include="src\layer\Layer.h">
+      <Filter>src\layer</Filter>
+    </ClInclude>
+    <ClInclude Include="src\layer\LayerStack.h">
+      <Filter>src\layer</Filter>
+    </ClInclude>
+    <ClInclude Include="src\layer\MainLayer.h">
+      <Filter>src\layer</Filter>
+    </ClInclude>
+    <ClInclude Include="src\layer\WorldLayer.h">
+      <Filter>src\layer</Filter>
+    </ClInclude>
+    <ClInclude Include="src\layer\imguiplotvar.h">
+      <Filter>src\layer</Filter>
+    </ClInclude>
     <ClInclude Include="src\ndpch.h">
       <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world\ChunkLoader.h">
+      <Filter>src\world</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world\ChunkMeshInstance.h">
+      <Filter>src\world</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world\ITickable.h">
+      <Filter>src\world</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world\LightCalculator.h">
+      <Filter>src\world</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world\World.h">
+      <Filter>src\world</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world\WorldIO.h">
+      <Filter>src\world</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world\WorldRenderManager.h">
+      <Filter>src\world</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world\biome\Biome.h">
+      <Filter>src\world\biome</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world\biome\BiomeForest.h">
+      <Filter>src\world\biome</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world\biome\BiomeRegistry.h">
+      <Filter>src\world\biome</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world\biome\BiomeTiledTexture.h">
+      <Filter>src\world\biome</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world\biome\biomes.h">
+      <Filter>src\world\biome</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world\block\ActionPolygon.h">
+      <Filter>src\world\block</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world\block\Block.h">
+      <Filter>src\world\block</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world\block\BlockRegistry.h">
+      <Filter>src\world\block</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world\block\basic_blocks.h">
+      <Filter>src\world\block</Filter>
     </ClInclude>
     <ClInclude Include="vendor\glm\glm\common.hpp">
       <Filter>vendor\glm\glm</Filter>
@@ -1170,57 +1290,28 @@
     <ClInclude Include="vendor\stb_image\stb_image.h">
       <Filter>vendor\stb_image</Filter>
     </ClInclude>
-    <ClInclude Include="src\Input.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="src\layer\Layer.h" />
-    <ClInclude Include="src\layer\LayerStack.h" />
-    <ClInclude Include="src\layer\MainLayer.h" />
-    <ClInclude Include="src\layer\ImGuiLayer.h" />
-    <ClInclude Include="src\world\World.h" />
-    <ClInclude Include="src\layer\WorldLayer.h" />
-    <ClInclude Include="src\world\WorldIO.h" />
-    <ClInclude Include="src\entity\Camera.h" />
-    <ClInclude Include="src\world\ITickable.h" />
-    <ClInclude Include="src\world\ChunkLoader.h" />
-    <ClInclude Include="src\graphics\Renderable2D.h" />
-    <ClInclude Include="src\graphics\buffer\IndexBuffer.h">
-      <Filter>src\graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="src\graphics\buffer\VertexArray.h">
-      <Filter>src\graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="src\graphics\buffer\VertexBuffer.h">
-      <Filter>src\graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="src\graphics\buffer\VertexBufferLayout.h">
-      <Filter>src\graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="src\world\WorldRenderManager.h" />
-    <ClInclude Include="src\world\ChunkMeshInstance.h" />
-    <ClInclude Include="src\entity\I2DLocalable.h" />
-    <ClInclude Include="src\world\block\Block.h" />
-    <ClInclude Include="src\world\block\basic_blocks.h" />
-    <ClInclude Include="src\graphics\buffer\FrameBuffer.h" />
-    <ClInclude Include="src\NDUtil.h" />
-    <ClInclude Include="src\layer\imguiplotvar.h" />
-    <ClInclude Include="src\Stats.h" />
-    <ClInclude Include="src\world\LightCalculator.h" />
-    <ClInclude Include="src\world\block\ActionPolygon.h" />
-    <ClInclude Include="src\graphics\Sprite2D.h" />
-    <ClInclude Include="src\world\biome\Biome.h" />
-    <ClInclude Include="src\world\biome\BiomeForest.h" />
-    <ClInclude Include="src\world\biome\BiomeRegistry.h" />
-    <ClInclude Include="src\world\block\BlockRegistry.h" />
-    <ClInclude Include="src\world\biome\BiomeTiledTexture.h" />
-    <ClInclude Include="src\world\biome\biomes.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\EntryPoint.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
     <ClCompile Include="src\Game.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Input.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\Log.cpp">
       <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\State.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Window.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\entity\Camera.cpp">
+      <Filter>src\entity</Filter>
     </ClCompile>
     <ClCompile Include="src\graphics\Program.cpp">
       <Filter>src\graphics</Filter>
@@ -1228,8 +1319,47 @@
     <ClCompile Include="src\graphics\Renderer.cpp">
       <Filter>src\graphics</Filter>
     </ClCompile>
+    <ClCompile Include="src\graphics\Sprite2D.cpp">
+      <Filter>src\graphics</Filter>
+    </ClCompile>
     <ClCompile Include="src\graphics\Texture.cpp">
       <Filter>src\graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\buffer\FrameBuffer.cpp">
+      <Filter>src\graphics\buffer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\buffer\IndexBuffer.cpp">
+      <Filter>src\graphics\buffer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\buffer\VertexArray.cpp">
+      <Filter>src\graphics\buffer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\buffer\VertexBuffer.cpp">
+      <Filter>src\graphics\buffer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\buffer\VertexBufferLayout.cpp">
+      <Filter>src\graphics\buffer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\layer\ImGuiBuild.cpp">
+      <Filter>src\layer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\layer\ImGuiLayer.cpp">
+      <Filter>src\layer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\layer\Layer.cpp">
+      <Filter>src\layer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\layer\LayerStack.cpp">
+      <Filter>src\layer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\layer\MainLayer.cpp">
+      <Filter>src\layer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\layer\WorldLayer.cpp">
+      <Filter>src\layer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\layer\imguiplotvar.cpp">
+      <Filter>src\layer</Filter>
     </ClCompile>
     <ClCompile Include="src\main.cpp">
       <Filter>src</Filter>
@@ -1237,55 +1367,53 @@
     <ClCompile Include="src\ndpch.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\world\ChunkLoader.cpp">
+      <Filter>src\world</Filter>
+    </ClCompile>
+    <ClCompile Include="src\world\ChunkMeshInstance.cpp">
+      <Filter>src\world</Filter>
+    </ClCompile>
+    <ClCompile Include="src\world\LightCalculator.cpp">
+      <Filter>src\world</Filter>
+    </ClCompile>
+    <ClCompile Include="src\world\World.cpp">
+      <Filter>src\world</Filter>
+    </ClCompile>
+    <ClCompile Include="src\world\WorldIO.cpp">
+      <Filter>src\world</Filter>
+    </ClCompile>
+    <ClCompile Include="src\world\WorldRenderManager.cpp">
+      <Filter>src\world</Filter>
+    </ClCompile>
+    <ClCompile Include="src\world\biome\Biome.cpp">
+      <Filter>src\world\biome</Filter>
+    </ClCompile>
+    <ClCompile Include="src\world\biome\BiomeForest.cpp">
+      <Filter>src\world\biome</Filter>
+    </ClCompile>
+    <ClCompile Include="src\world\biome\BiomeRegistry.cpp">
+      <Filter>src\world\biome</Filter>
+    </ClCompile>
+    <ClCompile Include="src\world\biome\BiomeTiledTexture.cpp">
+      <Filter>src\world\biome</Filter>
+    </ClCompile>
+    <ClCompile Include="src\world\biome\biomes.cpp">
+      <Filter>src\world\biome</Filter>
+    </ClCompile>
+    <ClCompile Include="src\world\block\ActionPolygon.cpp">
+      <Filter>src\world\block</Filter>
+    </ClCompile>
+    <ClCompile Include="src\world\block\Block.cpp">
+      <Filter>src\world\block</Filter>
+    </ClCompile>
+    <ClCompile Include="src\world\block\BlockRegistry.cpp">
+      <Filter>src\world\block</Filter>
+    </ClCompile>
+    <ClCompile Include="src\world\block\basic_blocks.cpp">
+      <Filter>src\world\block</Filter>
+    </ClCompile>
     <ClCompile Include="vendor\stb_image\stb_image.cpp">
       <Filter>vendor\stb_image</Filter>
     </ClCompile>
-    <ClCompile Include="src\Window.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\EntryPoint.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Input.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\layer\LayerStack.cpp" />
-    <ClCompile Include="src\layer\MainLayer.cpp" />
-    <ClCompile Include="src\layer\Layer.cpp" />
-    <ClCompile Include="src\layer\ImGuiLayer.cpp" />
-    <ClCompile Include="src\layer\ImGuiBuild.cpp" />
-    <ClCompile Include="src\world\World.cpp" />
-    <ClCompile Include="src\layer\WorldLayer.cpp" />
-    <ClCompile Include="src\world\WorldIO.cpp" />
-    <ClCompile Include="src\entity\Camera.cpp" />
-    <ClCompile Include="src\world\ChunkLoader.cpp" />
-    <ClCompile Include="src\graphics\buffer\IndexBuffer.cpp">
-      <Filter>src\graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\buffer\VertexArray.cpp">
-      <Filter>src\graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\buffer\VertexBuffer.cpp">
-      <Filter>src\graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\buffer\VertexBufferLayout.cpp">
-      <Filter>src\graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="src\world\WorldRenderManager.cpp" />
-    <ClCompile Include="src\world\ChunkMeshInstance.cpp" />
-    <ClCompile Include="src\world\block\Block.cpp" />
-    <ClCompile Include="src\world\block\basic_blocks.cpp" />
-    <ClCompile Include="src\graphics\buffer\FrameBuffer.cpp" />
-    <ClCompile Include="src\layer\imguiplotvar.cpp" />
-    <ClCompile Include="src\State.cpp" />
-    <ClCompile Include="src\world\LightCalculator.cpp" />
-    <ClCompile Include="src\world\block\ActionPolygon.cpp" />
-    <ClCompile Include="src\graphics\Sprite2D.cpp" />
-    <ClCompile Include="src\world\biome\Biome.cpp" />
-    <ClCompile Include="src\world\biome\BiomeForest.cpp" />
-    <ClCompile Include="src\world\biome\BiomeRegistry.cpp" />
-    <ClCompile Include="src\world\block\BlockRegistry.cpp" />
-    <ClCompile Include="src\world\biome\BiomeTiledTexture.cpp" />
-    <ClCompile Include="src\world\biome\biomes.cpp" />
   </ItemGroup>
 </Project>
