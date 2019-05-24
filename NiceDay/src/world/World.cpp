@@ -3,7 +3,8 @@
 #include <utility>
 #include "block/Block.h"
 #include "WorldIO.h"
-#include "BlockRegistry.h"
+#include "block/BlockRegistry.h"
+#include "biome/BiomeRegistry.h"
 
 Chunk::Chunk() :m_loaded(false)
 {
@@ -46,6 +47,11 @@ void World::genWorld(long seed)
 		for (int cy = 0; cy < m_info.chunk_height; cy++) {
 			loadChunk(cx, cy);
 			Chunk& c = getChunk(cx, cy);
+			c.m_biome = BIOME_UNDERGROUND;
+			if((cy)*WORLD_CHUNK_SIZE > (m_info.terrain_level-1))
+				c.m_biome = BIOME_FOREST;
+			if (cx < 2)
+				c.m_biome = BIOME_DIRT;
 			for (int x = 0; x < WORLD_CHUNK_SIZE; x++) {
 				for (int y = 0; y < WORLD_CHUNK_SIZE; y++)
 				{
@@ -79,16 +85,23 @@ void World::tick()
 
 void World::saveAllChunks()
 {
-	for (auto& c : m_chunks) {
+	for (auto& c : m_chunks)
 		saveChunk(c);
-	}
 }
 
-Chunk& World::getChunk(int x, int y)
+Chunk& World::getChunk(int cx, int cy)
 {
-	int index = getChunkIndex(x, y);
-	ASSERT(index != -1, "Invalid operation retrieving chunk thats not loaded!");
+	int index = getChunkIndex(cx, cy);
+	ASSERT(index != -1, "Invalid operation: retrieving chunk thats not loaded!");
 	return m_chunks[index];
+}
+
+const Chunk* World::getLoadedChunkPointer(int cx, int cy) const
+{
+	int index = getChunkIndex(cx, cy);
+	if (index == -1)
+		return nullptr;
+	return &m_chunks[index];
 }
 
 int World::getChunkIndex(int x, int y) const
@@ -271,6 +284,7 @@ bool World::isAir(int x, int y) {
 }
 
 #define MAX_BLOCK_UPDATE_DEPTH 20
+
 void World::onBlocksChange(int x, int y, int deep = 0)
 {
 	//todo fix bug when blocks at corners of the world dont set right corner

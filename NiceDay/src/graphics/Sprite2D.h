@@ -16,6 +16,8 @@ private:
 public:
 	
 	static void init();
+	static inline Program& getProgramStatic() { return *s_program; }
+	static inline VertexArray& getVAOStatic() { return *s_vao; }
 
 private:
 	Texture* m_texture;
@@ -37,6 +39,16 @@ public:
 
 	inline Program& getProgram() { return *s_program; }
 	inline VertexArray& getVAO() { return *s_vao; }
+	inline void setModelMatrix(const glm::mat4& m)
+	{
+		m_model_matrix = m;
+		m_stale_model_matrix = false;
+	}
+	inline void setUVMatrix(const glm::mat4& m)
+	{
+		m_uv_matrix = m;
+		m_stale_uv_matrix = false;
+	}
 	void setPosition(glm::vec2);
 	void setScale(glm::vec2);
 

@@ -2,12 +2,26 @@
 #include "ndpch.h"
 #include "ChunkMeshInstance.h"
 #include "entity/Camera.h"
-#include "BlockRegistry.h"
+#include "block/BlockRegistry.h"
+#include "biome/BiomeRegistry.h"
 #include "graphics/buffer/FrameBuffer.h"
 #include "LightCalculator.h"
 #include "graphics/Sprite2D.h"
 
 
+struct BiomeDistances
+{
+	int biomes[4];
+	float intensities[4];
+
+	BiomeDistances()
+	{
+		biomes[0] = -1;
+		biomes[1] = -1;
+		biomes[2] = -1;
+		biomes[3] = -1;
+	}
+};
 const int BLOCK_PIXEL_SIZE = 32;
 struct StructChunkID
 {
@@ -26,19 +40,22 @@ struct StructChunkID
 class WorldRenderManager
 {
 private:
-	Sprite2D* m_bgs[3];
-
 	Program* m_sky_program;
 
 	//whole_screen_quad
 	VertexArray* m_full_screen_quad_VAO;
 	VertexBuffer* m_full_screen_quad_VBO;
 
+	//background
+	Texture* m_bg_texture;
+	FrameBuffer* m_bg_FBO;
+	Texture* m_bg_layer_texture;
+	FrameBuffer* m_bg_layer_FBO;
 
 
 	//light stuff
 	LightCalculator& m_light_calculator;
-	FrameBuffer* m_light_frame_buffer;
+	FrameBuffer* m_light_frame_FBO;
 	
 	Texture* m_light_texture;
 	Texture* m_light_simple_texture;
@@ -65,7 +82,9 @@ private:
 	ChunkPos lightOffset;
 	int getChunkIndex(int cx, int cy);
 	glm::vec4 getSkyColor(float y);
+	void renderBiomeBackgroundToFBO();
 public:
+	
 	WorldRenderManager(Camera* cam,World* world);
 	~WorldRenderManager();
 	void onScreenResize();

@@ -6,7 +6,8 @@
 #include "world/ChunkMeshInstance.h"
 
 
-
+#include "biome/BiomeForest.h"
+#include "biome/biomes.h"
 
 
 WorldRenderManager::WorldRenderManager(Camera* cam, World* world)
@@ -20,20 +21,11 @@ WorldRenderManager::WorldRenderManager(Camera* cam, World* world)
 	m_sky_program = new Program("res/shaders/Sky.shader");
 
 	//setup bg
-	for (int i = 0; i < sizeof(m_bgs) / sizeof(Sprite2D*); i++)
-	{
-		TextureInfo info(std::string("res/images/bg_") + std::to_string(i) + std::string(".png"));
-		info.wrap_mode_s = GL_REPEAT;
-		info.wrap_mode_t = GL_CLAMP_TO_BORDER;
-		//info.wrap_mode_t = GL_CLAMP_TO_BORDER;
-		m_bgs[i] = new Sprite2D(new Texture(info));
-		ND_INFO("tex");
-		m_bgs[i]->setPosition(glm::vec2(-1, -1));
-		m_bgs[i]->setScale(glm::vec2(2, 2));
-	}
+	m_bg_FBO = new FrameBuffer();
+	m_bg_layer_FBO = new FrameBuffer();
 
 	//setup main light texture
-	m_light_frame_buffer = new FrameBuffer();
+	m_light_frame_FBO = new FrameBuffer();
 	m_light_program = new Program("res/shaders/Light.shader");
 	m_light_program->bind();
 	m_light_program->setUniform1i("u_texture", 0);
@@ -71,12 +63,9 @@ WorldRenderManager::WorldRenderManager(Camera* cam, World* world)
 WorldRenderManager::~WorldRenderManager()
 {
 
-	for (auto& m_bg : m_bgs)
-		delete m_bg;
-
 	for (ChunkMeshInstance* m : m_chunks)
 		delete m;
-	delete m_light_frame_buffer;
+	delete m_light_frame_FBO;
 
 	delete m_light_program;
 	delete m_light_simple_program;
@@ -99,13 +88,11 @@ void WorldRenderManager::onScreenResize()
 	float chunkheightt = (float)BLOCK_PIXEL_SIZE / (float)Game::get().getWindow()->getHeight();
 	m_proj_matrix = glm::scale(glm::mat4(1.0f), glm::vec3(ratioo*chunkheightt, chunkheightt, 1));
 
+	//refresh number of chunks 
 	int screenWidth = Game::get().getWindow()->getWidth();
 	int screenHeight = Game::get().getWindow()->getHeight();
-
-
 	float chunkwidth = ((float)screenWidth / (float)BLOCK_PIXEL_SIZE) / (float)WORLD_CHUNK_SIZE;
 	float chunkheight = ((float)screenHeight / (float)BLOCK_PIXEL_SIZE) / (float)WORLD_CHUNK_SIZE;
-
 	m_chunk_width = ceil(chunkwidth) + 3;
 	m_chunk_height = ceil(chunkheight) + 3;
 
@@ -125,27 +112,91 @@ void WorldRenderManager::onScreenResize()
 	if (m_light_simple_texture)
 		delete m_light_simple_texture;
 	TextureInfo info;
-	info.size(m_chunk_width*WORLD_CHUNK_SIZE, m_chunk_height*WORLD_CHUNK_SIZE).f_format=GL_RED;
+	info.size(m_chunk_width*WORLD_CHUNK_SIZE, m_chunk_height*WORLD_CHUNK_SIZE).f_format = GL_RED;
 	m_light_simple_texture = new Texture(info);
 
 
 	//made main light map texture with 4 channels
 	if (m_light_texture)
 		delete m_light_texture;
-	
+
 	info = TextureInfo();
-	info.size(m_chunk_width*WORLD_CHUNK_SIZE*2, m_chunk_height*WORLD_CHUNK_SIZE*2).filterMode(GL_NEAREST).format(GL_RGBA);
+	info.size(m_chunk_width*WORLD_CHUNK_SIZE * 2, m_chunk_height*WORLD_CHUNK_SIZE * 2).filterMode(GL_NEAREST).format(GL_RGBA);
 
 	m_light_texture = new Texture(info);
-	m_light_frame_buffer->bind();
-	m_light_frame_buffer->attachTexture(m_light_texture->getID());
-	m_light_frame_buffer->unbind();
+	m_light_frame_FBO->bind();
+	m_light_frame_FBO->attachTexture(m_light_texture->getID());
+	m_light_frame_FBO->unbind();
 
+	//bg
+	info = TextureInfo();
+	info.size(screenWidth / 2, screenHeight / 2).filterMode(GL_NEAREST).format(GL_RGBA);
+
+	m_bg_texture = new Texture(info);
+	m_bg_FBO->bind();
+	m_bg_FBO->attachTexture(m_bg_texture->getID());
+	m_bg_FBO->unbind();
+
+	//bg2
+	m_bg_layer_texture = new Texture(info);
+	m_bg_layer_FBO->bind();
+	m_bg_layer_FBO->attachTexture(m_bg_layer_texture->getID());
+	m_bg_layer_FBO->unbind();
 
 	last_cx = -1000;
 	onUpdate();
 }
+#include <algorithm>
 
+
+float minim(float f0, float f1)
+{
+	if (f0 < f1)
+		return f0;
+	return f1;
+}
+inline float narrowFunc(float f)
+{
+	return std::clamp((f - 0.5f) * 2 + 0.5f, 0.0f, 1.0f);
+
+}
+BiomeDistances calculateBiomeDistances(Camera* cam, World* w)
+{
+	int cx = (int)cam->getPosition().x >> WORLD_CHUNK_BIT_SIZE;
+	int cy = (int)cam->getPosition().y >> WORLD_CHUNK_BIT_SIZE;
+	std::unordered_map<int, float> map;
+	for (int x = -1; x < 2; ++x)
+	{
+		for (int y = -1; y < 2; ++y)
+		{
+			const Chunk* c = w->getLoadedChunkPointer(cx + x, cy + y);
+			if (c == nullptr)
+				continue;
+			int biome = c->getBiome();
+			float length = glm::length(cam->getPosition() - glm::vec2((cx + x + 0.5f)*WORLD_CHUNK_SIZE, (cy + y + 0.5f)*WORLD_CHUNK_SIZE));
+			if (length <= WORLD_CHUNK_SIZE)//we care only about close chunks radius of chunks is 
+				map[biome] = minim(map.find(biome) != map.end() ? map[biome] : 100000, length / (WORLD_CHUNK_SIZE));
+		}
+	}
+	std::unordered_map<int, float> newmap;
+	for (std::pair<int, float> element : map)
+		newmap[element.first] = 1 - narrowFunc(element.second);
+
+	float normalizer = 0;
+	for (std::pair<int, float> element : newmap)
+		normalizer += element.second;
+
+	BiomeDistances out;
+	int index = 0;
+	for (std::pair<int, float> element : newmap)
+	{
+		out.biomes[index] = element.first;
+		out.intensities[index] = element.second / normalizer;
+		index++;
+		ASSERT(index != 4, "This shouldnot happen, only 4 chunks can be closest to the camera");
+	}
+	return out;
+}
 void WorldRenderManager::onUpdate()
 {
 	auto cx = round(m_camera->getPosition().x / WORLD_CHUNK_SIZE) - m_chunk_width / 2;
@@ -266,8 +317,85 @@ glm::vec4 WorldRenderManager::getSkyColor(float y)
 	return glm::mix(downColor, upColor, y + 0.2f);
 }
 
+void WorldRenderManager::renderBiomeBackgroundToFBO()
+{
+
+	//bg render
+	Sprite2D::init();
+
+	using namespace glm;
+
+	vec2 screenDim = vec2(Game::get().getWindow()->getWidth(), Game::get().getWindow()->getHeight());
+	vec2 lowerScreen = m_camera->getPosition() - ((screenDim / (float)BLOCK_PIXEL_SIZE) / 2.0f);
+	vec2 upperScreen = m_camera->getPosition() + ((screenDim / (float)BLOCK_PIXEL_SIZE) / 2.0f);
+	screenDim = upperScreen - lowerScreen;
+
+	BiomeDistances distances = calculateBiomeDistances(m_camera, m_world);
+	Stats::biome_distances = distances;
+
+	m_bg_FBO->bind();
+	glViewport(0, 0, m_bg_texture->getWidth(), m_bg_texture->getHeight());
+	glClearColor(0, 0, 0, 0);
+	glClear(GL_COLOR_BUFFER_BIT);
+
+	for (int i = 0; i < 4; ++i)
+	{
+		int biome = distances.biomes[i];
+		if (biome == -1)
+			break;
+		float intensity = distances.intensities[i];
+		Biome& b = BiomeRegistry::get().getBiome(biome);
+		b.update(m_world, m_camera);
+		Sprite2D** sprites = b.getBGSprites();
+		sprites[0]->getProgram().bind();
+		sprites[0]->getVAO().bind();
+
+
+		glEnable(GL_BLEND);
+		glBlendEquation(GL_FUNC_ADD);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+		m_bg_layer_FBO->bind();
+		glViewport(0, 0, m_bg_layer_texture->getWidth(), m_bg_layer_texture->getHeight());
+		glClearColor(0, 0, 0, 0);
+		glClear(GL_COLOR_BUFFER_BIT);
+
+		for (int i = 0; i < b.getBGSpritesSize(); i++)
+		{
+			Sprite2D& sprite = *sprites[i];
+			sprite.getProgram().setUniformMat4("u_model_transform", sprite.getModelMatrix());
+			sprite.getProgram().setUniformMat4("u_uv_transform", sprite.getUVMatrix());
+
+			sprite.getTexture().bind(0);
+			Call(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
+		}
+		glEnable(GL_BLEND);
+		glBlendEquation(GL_FUNC_ADD);
+		glBlendFunc(GL_CONSTANT_ALPHA, GL_ONE);
+		glBlendColor(0, 0, 0, intensity);
+
+		m_bg_FBO->bind();
+		glViewport(0, 0, m_bg_texture->getWidth(), m_bg_texture->getHeight());
+
+		Sprite2D::getProgramStatic().bind();
+		Sprite2D::getVAOStatic().bind();
+		auto m = glm::translate(glm::mat4(1.0f), glm::vec3(-1, -1, 0));
+		m = glm::scale(m, glm::vec3(2, 2, 0));
+		Sprite2D::getProgramStatic().setUniformMat4("u_model_transform", m);
+		Sprite2D::getProgramStatic().setUniformMat4("u_uv_transform", glm::mat4(1.0f));
+		m_bg_layer_texture->bind(0);
+		Call(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
+
+	}
+
+	m_bg_FBO->unbind();
+	glViewport(0, 0, Game::get().getWindow()->getWidth(), Game::get().getWindow()->getHeight());
+	glDisable(GL_BLEND);
+}
+
 void WorldRenderManager::render()
 {
+
 	//sky render
 	float CURSOR_Y = Game::get().getWindow()->getHeight() / BLOCK_PIXEL_SIZE + m_camera->getPosition().y;
 	float CURSOR_YY = -(float)Game::get().getWindow()->getHeight() / BLOCK_PIXEL_SIZE + m_camera->getPosition().y;
@@ -280,50 +408,19 @@ void WorldRenderManager::render()
 	Call(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
 
 
-	//bg render
-	using namespace glm;
-
-	vec2 screenDim = vec2(Game::get().getWindow()->getWidth(), Game::get().getWindow()->getHeight());
-	vec2 lowerScreen = m_camera->getPosition() - ((screenDim / (float)BLOCK_PIXEL_SIZE) / 2.0f);
-	vec2 upperScreen = m_camera->getPosition() + ((screenDim / (float)BLOCK_PIXEL_SIZE) / 2.0f);
-	screenDim = upperScreen-lowerScreen;
-	Sprite2D::init();
-	m_bgs[0]->getProgram().bind();
-	m_bgs[0]->getVAO().bind();
-
+	//background
+	renderBiomeBackgroundToFBO();
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	Sprite2D::getProgramStatic().bind();
+	Sprite2D::getVAOStatic().bind();
+	auto m = glm::translate(glm::mat4(1.0f), glm::vec3(-1, -1, 0));
+	m = glm::scale(m, glm::vec3(2, 2, 0));
+	Sprite2D::getProgramStatic().setUniformMat4("u_model_transform", m);
+	Sprite2D::getProgramStatic().setUniformMat4("u_uv_transform", glm::mat4(1.0f));
+	m_bg_texture->bind(0);
+	Call(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
 
-	for (int i = 0; i < sizeof(m_bgs) / sizeof(Sprite2D*); i++)
-	{
-		Sprite2D& s = *m_bgs[i];
-
-		auto texDim = vec2(s.getTexture().getWidth()/2, s.getTexture().getHeight()/2);
-		auto pos = vec2(
-			m_world->getInfo().chunk_width / 2 * WORLD_CHUNK_SIZE,
-			 -i*2 +(float)s.getTexture().getHeight()/BLOCK_PIXEL_SIZE/3+m_world->getInfo().terrain_level);
-		//pos = pos - (m_camera->getPosition()-pos);
-		vec2 meshLower = pos;
-		vec2 meshUpper = pos + texDim/(float)BLOCK_PIXEL_SIZE;
-		vec2 meshDim = meshUpper - meshLower;
-
-		vec2 delta = m_camera->getPosition() - (meshLower + meshUpper) / 2.0f;//delta of centers
-		delta = delta / (3.0f-i);
-
-		auto transl = delta / meshDim;
-		auto scal = screenDim / meshDim;
-		mat4 t(1.0f);
-		t = glm::translate(t, vec3(transl.x, transl.y, 0));
-		t = glm::scale(t, vec3(scal.x, scal.y, 0));
-
-		s.getProgram().setUniformMat4("u_model_transform", s.getModelMatrix());
-		s.getProgram().setUniformMat4("u_uv_transform", t);
-
-		s.getTexture().bind(0);
-		Call(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
-	}
-	
-	
 	//chunk render
 	auto& program = *ChunkMesh::getProgram();
 	program.bind();
@@ -363,7 +460,7 @@ void WorldRenderManager::renderLightMap()
 		lightOffset = m_light_calculator.getCurrentOffset();
 	}
 
-	m_light_frame_buffer->bind();
+	m_light_frame_FBO->bind();
 	{
 		Call(glViewport(0, 0, m_chunk_width*WORLD_CHUNK_SIZE * 2, m_chunk_height*WORLD_CHUNK_SIZE * 2));
 		Call(glClearColor(0.5f, 0.5f, 0.5f, 1));
@@ -374,12 +471,11 @@ void WorldRenderManager::renderLightMap()
 		Call(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
 		Call(glViewport(0, 0, Game::get().getWindow()->getWidth(), Game::get().getWindow()->getHeight()));
 	}
-	m_light_frame_buffer->unbind();
+	m_light_frame_FBO->unbind();
 }
 
 void WorldRenderManager::renderMainLightMap()
 {
-
 	auto worldMatrix = glm::mat4(1.0f);
 	worldMatrix = glm::translate(worldMatrix, glm::vec3(
 		lightOffset.first*WORLD_CHUNK_SIZE - m_camera->getPosition().x,

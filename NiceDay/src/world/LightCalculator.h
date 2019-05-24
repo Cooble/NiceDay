@@ -1,7 +1,7 @@
 ﻿#pragma once
 #include "ndpch.h"
 
-#include "BlockRegistry.h"
+#include "block/BlockRegistry.h"
 
 
 

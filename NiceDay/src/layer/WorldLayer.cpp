@@ -1,6 +1,7 @@
 #include "ndpch.h"
 #include "WorldLayer.h"
-#include "world/BlockRegistry.h"
+#include "world/block/BlockRegistry.h"
+#include "world/biome/BiomeRegistry.h"
 #include "world/LightCalculator.h"
 #include "world/WorldIO.h"
 #include "event/KeyEvent.h"
@@ -10,6 +11,8 @@
 #include "imguiplotvar.h"
 #include <GLFW/glfw3.h>
 
+#include "world/biome/BiomeForest.h"
+#include "world/biome/biomes.h"
 
 #include <imgui.h>
 #include "graphics/Renderer.h"
@@ -40,6 +43,10 @@ WorldLayer::WorldLayer()
 	BlockRegistry::get().registerBlock(new BlockAdamantite());
 	BlockRegistry::get().registerBlock(new BlockPlatform());
 	BlockRegistry::get().registerBlock(new BlockGrass());
+
+	BiomeRegistry::get().registerBiome(new BiomeForest());
+	BiomeRegistry::get().registerBiome(new BiomeUnderground());
+	BiomeRegistry::get().registerBiome(new BiomeDirt());
 
 	WorldIOInfo info;
 	info.world_name = "NiceWorld";
@@ -198,7 +205,13 @@ void WorldLayer::onImGuiRender()
 		ImGui::End();
 		return;
 	}
+	BiomeDistances d = Stats::biome_distances;
+	ImGui::Text("Biomes:");
+	for (int i = 0; i < 4; ++i)
+	{
+		ImGui::Text("* %d, %.2f", d.biomes[i],d.intensities[i]);
 
+	}
 	ImGui::PlotVar("FPS", fps);
 	bool l = Stats::light_enable;
 	ImGui::Checkbox(Stats::light_enable?"Lighting Enabled":"Lighting Disabled", &Stats::light_enable);

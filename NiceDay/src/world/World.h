@@ -26,6 +26,7 @@ private:
 	bool m_dirty;//if this flag is set in next update chunk graphics will be reloaded into chunkrenderer
 	friend class World;
 	friend class WorldIO::Session;
+	int m_biome;
 
 public:
 	Chunk();
@@ -39,6 +40,8 @@ public:
 	inline const BlockStruct& getBlock(int x, int y) const { return m_blocks[y << WORLD_CHUNK_BIT_SIZE | x]; }
 	inline bool isDirty()const { return m_dirty; }
 	inline void markDirty(bool dirty) { m_dirty = dirty; }
+	inline int getBiome() const { return m_biome; }
+	inline void setBiome(int biome_id) { m_biome= biome_id; }
 
 
 
@@ -112,9 +115,14 @@ public:
 		Chunk::getChunkPosFromID(id, x, y);
 		return getChunkSaveOffset(x, y);
 	};
+	//==============CHUNK METHODS========================================================================
 
 	void saveAllChunks();
-	Chunk &getChunk(int x, int y);
+	Chunk& getChunk(int x, int y);
+
+	//return nullptr if chunk is not loaded or invalid coords 
+	//(won't cause chunk load)
+	const Chunk* getLoadedChunkPointer(int x,int y) const;
 	int getChunkIndex(int x, int y) const;
 	int getChunkIndex(int id) const;
 	Chunk &loadChunk(int x, int y);
@@ -136,6 +144,7 @@ public:
 	inline const BlockStruct& getBlock(int x, int y);
 
 	//return is block at coords is air and true if outside the map
+	//(may cause chunk load)
 	bool isAir(int x, int y);
 
 	//any changes wont be visible in graphics ->use setBlock() instead 
@@ -156,7 +165,6 @@ public:
 
 	inline long getTime() const { return m_info.time; }
 	inline std::string getName() const { return m_info.name; }
-	//returns copy of info!
 	inline const WorldInfo& getInfo() const { return m_info; };
 	inline const std::string& getFilePath() const { return m_file_path; }
 

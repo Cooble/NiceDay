@@ -1,6 +1,6 @@
 #pragma once
 #include "ndpch.h"
-#include "block/Block.h"
+#include "Block.h"
 class BlockRegistry
 {
 
@@ -12,7 +12,6 @@ private:
 public:
 	~BlockRegistry();
 
-	inline int size(){return m_blocks.size();}
 	inline  const std::vector<Block*>& getBlocks() { return m_blocks; }
 
 

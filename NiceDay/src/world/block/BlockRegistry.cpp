@@ -1,11 +1,8 @@
 #include "ndpch.h"
 #include "BlockRegistry.h"
 
-//todo blockid will be position in list/vector
 
-BlockRegistry::BlockRegistry()
-{
-}
+BlockRegistry::BlockRegistry()= default;
 
 void BlockRegistry::registerBlock(Block* block)
 {

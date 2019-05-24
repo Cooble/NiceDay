@@ -1,5 +1,5 @@
 #include "ndpch.h"
-#include "world/BlockRegistry.h"
+#include "world/block/BlockRegistry.h"
 #include "world/World.h"
 #include "graphics/Renderer.h"
 #include "ChunkMeshInstance.h"
