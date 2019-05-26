@@ -16,3 +16,6 @@ Lighting with water-spill-algorithm (18_05_2019)
 Platforms, grass, sky (20_05_2019)
 ![Alt text](screenshots/20_05_2019.png?raw=false "")
 
+Blocks, Walls, Background -> milestone reached (26_05_2019)
+![Alt text](screenshots/26_05_2019.png?raw=false "")
+
