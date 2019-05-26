@@ -1,6 +1,6 @@
 ﻿#pragma once
 #include "ndpch.h"
-#include "ChunkMeshInstance.h"
+#include "ChunkMesh.h"
 #include "entity/Camera.h"
 #include "block/BlockRegistry.h"
 #include "biome/BiomeRegistry.h"

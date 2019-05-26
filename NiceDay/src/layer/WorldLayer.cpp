@@ -18,6 +18,7 @@
 #include "graphics/Renderer.h"
 #include "world/block/Block.h"
 #include "world/block/basic_blocks.h"
+#include "world/block/basic_walls.h"
 
 const char* WORLD_FILE_PATH;
 int CHUNKS_LOADED;
@@ -32,9 +33,10 @@ float CURSOR_Y;
 float CAM_POS_X;
 float CAM_POS_Y;
 
-static int BLOCK_PALLETE_SELECTED=0;
+static int BLOCK_PALLETE_SELECTED = 0;
+static bool BLOCK_OR_WALL_SELECTED = true;
 WorldLayer::WorldLayer()
-	:Layer("WorldLayer") 
+	:Layer("WorldLayer")
 {
 	BlockRegistry::get().registerBlock(new BlockAir());
 	BlockRegistry::get().registerBlock(new BlockStone());
@@ -43,6 +45,9 @@ WorldLayer::WorldLayer()
 	BlockRegistry::get().registerBlock(new BlockAdamantite());
 	BlockRegistry::get().registerBlock(new BlockPlatform());
 	BlockRegistry::get().registerBlock(new BlockGrass());
+	BlockRegistry::get().registerWall(new WallAir());
+	BlockRegistry::get().registerWall(new WallDirt());
+	BlockRegistry::get().registerWall(new WallStone());
 
 	BiomeRegistry::get().registerBiome(new BiomeForest());
 	BiomeRegistry::get().registerBiome(new BiomeUnderground());
@@ -50,21 +55,22 @@ WorldLayer::WorldLayer()
 
 	WorldIOInfo info;
 	info.world_name = "NiceWorld";
-	info.chunk_width = 5;
-	info.chunk_height = 5;
+	info.chunk_width = 10;
+	info.chunk_height = 10;
 	info.seed = 0;
 	info.terrain_level = (info.chunk_height - 2)*WORLD_CHUNK_SIZE;
 
 
-	bool genW = true;
+	bool genW = false;
 
 
 	if (genW) {
-		auto stream = WorldIO::Session(info.world_name + ".world", true,true);
+		auto stream = WorldIO::Session(info.world_name + ".world", true, true);
 		m_world = stream.genWorldFile(info);
 		stream.close();
 		m_world->genWorld(info.seed);
-	}else
+	}
+	else
 	{
 		auto stream = WorldIO::Session(info.world_name + ".world", false);
 		m_world = stream.loadWorld();
@@ -78,7 +84,7 @@ WorldLayer::WorldLayer()
 
 	m_chunk_loader = new ChunkLoader(m_world);
 	m_cam = new Camera();
-	glm::vec2 po = { m_world->getInfo().chunk_width*WORLD_CHUNK_SIZE/2,m_world->getInfo().terrain_level };
+	glm::vec2 po = { m_world->getInfo().chunk_width*WORLD_CHUNK_SIZE / 2,m_world->getInfo().terrain_level };
 	m_cam->setPosition(po);
 	m_cam->setChunkRadius(4);
 
@@ -88,7 +94,7 @@ WorldLayer::WorldLayer()
 	ChunkMesh::init();
 	LightCalculator& c = m_world->getLightCalculator();
 	c.registerLight(dynamic_cast<LightSource*>(m_cam));
-	m_render_manager = new WorldRenderManager(m_cam,m_world);
+	m_render_manager = new WorldRenderManager(m_cam, m_world);
 
 
 }
@@ -119,7 +125,7 @@ void WorldLayer::onUpdate()
 	m_cam->m_light_intensity = Stats::player_light_intensity;
 	fpsCount++;
 	static int lightCalcDelay = 0;
-	if(lightCalcDelay)
+	if (lightCalcDelay)
 	{
 		lightCalcDelay--;
 
@@ -132,19 +138,32 @@ void WorldLayer::onUpdate()
 	CURSOR_X = pair.first - Game::get().getWindow()->getWidth() / 2;
 	CURSOR_Y = -pair.second + Game::get().getWindow()->getHeight() / 2;
 
-	CURSOR_X = CURSOR_X / BLOCK_PIXEL_SIZE*2+m_cam->getPosition().x;
-	CURSOR_Y = CURSOR_Y / BLOCK_PIXEL_SIZE*2 + m_cam->getPosition().y;
+	CURSOR_X = CURSOR_X / BLOCK_PIXEL_SIZE * 2 + m_cam->getPosition().x;
+	CURSOR_Y = CURSOR_Y / BLOCK_PIXEL_SIZE * 2 + m_cam->getPosition().y;
 
-	if(m_world->isValidBlock(CURSOR_X,CURSOR_Y))
+	if (m_world->isValidBlock(CURSOR_X, CURSOR_Y))
 	{
-		
+
 	}
 	CURRENT_BLOCK = &m_world->getBlock(CURSOR_X, CURSOR_Y);
-	CURRENT_BLOCK_ID = BlockRegistry::get().getBlock(m_world->getBlock(CURSOR_X, CURSOR_Y).id).toString();
+	CURRENT_BLOCK_ID = BlockRegistry::get().getBlock(m_world->getBlock(CURSOR_X, CURSOR_Y).block_id).toString();
+
 
 	if (Game::get().getInput().isMousePressed(GLFW_MOUSE_BUTTON_1))
-		if (m_world->getBlock(CURSOR_X, CURSOR_Y).id != BLOCK_PALLETE_SELECTED)
-			m_world->setBlock(CURSOR_X, CURSOR_Y, BLOCK_PALLETE_SELECTED);
+		if (BLOCK_OR_WALL_SELECTED) {
+			if (m_world->getBlock(CURSOR_X, CURSOR_Y).block_id != BLOCK_PALLETE_SELECTED)
+				m_world->setBlock(CURSOR_X, CURSOR_Y, BLOCK_PALLETE_SELECTED);
+		}
+		else
+		{
+			if (m_world->getBlock(CURSOR_X, CURSOR_Y).isWallOccupied()) {
+				if (m_world->getBlock(CURSOR_X, CURSOR_Y).wallID() != BLOCK_PALLETE_SELECTED)
+					m_world->setWall(CURSOR_X, CURSOR_Y, BLOCK_PALLETE_SELECTED);
+
+			}
+			else
+				m_world->setWall(CURSOR_X, CURSOR_Y, BLOCK_PALLETE_SELECTED);
+		}
 
 	auto pos = m_cam->getPosition();
 	float speed = Stats::player_speed;
@@ -192,7 +211,7 @@ void WorldLayer::onRender()
 void WorldLayer::onImGuiRender()
 {
 	float fps = FLT_MAX;
-	if(fpsCount>Game::get().getTargetTPS())
+	if (fpsCount > Game::get().getTargetTPS())
 	{
 		fpsCount = 0;
 		fps = Game::get().getFPS();
@@ -205,24 +224,28 @@ void WorldLayer::onImGuiRender()
 		ImGui::End();
 		return;
 	}
-	BiomeDistances d = Stats::biome_distances;
+	/*BiomeDistances d = Stats::biome_distances;
 	ImGui::Text("Biomes:");
 	for (int i = 0; i < 4; ++i)
 	{
-		ImGui::Text("* %d, %.2f", d.biomes[i],d.intensities[i]);
+		ImGui::Text("* %d, %.2f", d.biomes[i], d.intensities[i]);
 
-	}
+	}*/
 	ImGui::PlotVar("FPS", fps);
 	bool l = Stats::light_enable;
-	ImGui::Checkbox(Stats::light_enable?"Lighting Enabled":"Lighting Disabled", &Stats::light_enable);
-	if(l!=Stats::light_enable)
+	ImGui::Checkbox(Stats::light_enable ? "Lighting Enabled" : "Lighting Disabled", &Stats::light_enable);
+	if (l != Stats::light_enable)
 	{
-		if(!l) m_world->getLightCalculator().run();
+		if (!l) m_world->getLightCalculator().run();
 		else m_world->getLightCalculator().stop();
 	}
-	ImGui::Checkbox(Stats::move_through_blocks_enable?"Move through Blocks Enabled":"Move through Blocks Disabled", &Stats::move_through_blocks_enable);
-	ImGui::InputFloat("Player speed: ",&Stats::player_speed);
-	ImGui::InputFloat("Light Intensity: ",&Stats::player_light_intensity);
+	ImGui::Checkbox(Stats::move_through_blocks_enable ? "Move through Blocks Enabled" : "Move through Blocks Disabled", &Stats::move_through_blocks_enable);
+	l = BLOCK_OR_WALL_SELECTED;
+	ImGui::Checkbox(BLOCK_OR_WALL_SELECTED ? "BLOCK mode" : "WALL mode", &BLOCK_OR_WALL_SELECTED);
+	if (l != BLOCK_OR_WALL_SELECTED)
+		BLOCK_PALLETE_SELECTED = 0;
+	ImGui::InputFloat("Player speed: ", &Stats::player_speed);
+	ImGui::InputFloat("Light Intensity: ", &Stats::player_light_intensity);
 
 	ImGui::Text("World filepath: %s", WORLD_FILE_PATH);
 	ImGui::Text("Chunks Size: (%d/%d)", WORLD_CHUNK_WIDTH, WORLD_CHUNK_HEIGHT);
@@ -232,41 +255,77 @@ void WorldLayer::onImGuiRender()
 	ImGui::Text("Cam Y: %.2f", CAM_POS_Y);
 	ImGui::Text("Cursor X: %.2f", CURSOR_X);
 	ImGui::Text("Cursor y: %.2f", CURSOR_Y);
-	if(CURRENT_BLOCK)
-		ImGui::Text("Current Block: %s (id: %d, corner: %d)", CURRENT_BLOCK_ID.c_str(),CURRENT_BLOCK->id,CURRENT_BLOCK->corner);
+	if (CURRENT_BLOCK) {
+		ImGui::Text("Current Block: %s (id: %d, corner: %d)", CURRENT_BLOCK_ID.c_str(), CURRENT_BLOCK->block_id, CURRENT_BLOCK->block_corner);
+		int wallid = CURRENT_BLOCK->wall_id[0];
+		if (!CURRENT_BLOCK->isWallOccupied())
+			wallid = -1;
+		ImGui::Text("Current Wall: %s (id: %d)", BlockRegistry::get().getWall(CURRENT_BLOCK->wall_id[0]).toString().c_str(), wallid);
+
+		for (int i = 0; i < 2; ++i)
+			for (int j = 0; j < 2; ++j)
+			{
+				const Wall& w = BlockRegistry::get().getWall(CURRENT_BLOCK->wall_id[i * 2 + j]);
+				ImGui::Text(" -> (%d, %d): corner:%d, %s ", j, i, CURRENT_BLOCK->wall_corner[i * 2 + j], w.toString().c_str());
+			}
+		int ccx = CURSOR_X;
+		int ccy = CURSOR_Y;
+		int j = CURSOR_X - ccx < 0.5f?0:1;
+		int i = CURSOR_Y - ccy < 0.5f?0:1;
+		const Wall& w = BlockRegistry::get().getWall(CURRENT_BLOCK->wall_id[i * 2 + j]);
+		ImGui::Text("Selected Wall -> (%d, %d): corner:%d, %s ", j, i, CURRENT_BLOCK->wall_corner[i * 2 + j], w.toString().c_str());
+
+	}
 	ImGui::Separator();
 
 	ImGui::Columns(2, "mycolumns3", false);  // 3-ways, no border
 	ImGui::Separator();
-	if (ImGui::TreeNode("Block Selection"))
-	{
-		auto& blocks = BlockRegistry::get().getBlocks();
-		for (int n = 0; n < blocks.size(); n++)
+	if (BLOCK_OR_WALL_SELECTED) {
+		if (ImGui::TreeNode("Block Selection"))
 		{
-			char buf[32];
-			sprintf(buf, "%s", blocks[n]->toString().c_str());
-			if (ImGui::Selectable(buf, BLOCK_PALLETE_SELECTED == n))
-				BLOCK_PALLETE_SELECTED = n;
+			auto& blocks = BlockRegistry::get().getBlocks();
+			for (int n = 0; n < blocks.size(); n++)
+			{
+				char buf[32];
+				sprintf(buf, "%s", blocks[n]->toString().c_str());
+				if (ImGui::Selectable(buf, BLOCK_PALLETE_SELECTED == n))
+					BLOCK_PALLETE_SELECTED = n;
+			}
+			ImGui::TreePop();
 		}
-		ImGui::TreePop();
+	}
+	else
+	{
+		if (ImGui::TreeNode("Wall Selection"))
+		{
+			auto& walls = BlockRegistry::get().getWalls();
+			for (int n = 0; n < walls.size(); n++)
+			{
+				char buf[32];
+				sprintf(buf, "%s", walls[n]->toString().c_str());
+				if (ImGui::Selectable(buf, BLOCK_PALLETE_SELECTED == n))
+					BLOCK_PALLETE_SELECTED = n;
+			}
+			ImGui::TreePop();
+		}
 	}
 	ImGui::Separator();
 
-	ImGui::Text("Drawn Chunks:");
+	/*ImGui::Text("Drawn Chunks:");
 	auto& map = m_render_manager->getMap();
 	int ind = 0;
 	for (auto& iterator = map.begin(); iterator != map.end(); ++iterator) {
 		char label[32];
 		int x, y;
-		Chunk::getChunkPosFromID(iterator->first,x,y);
-		sprintf(label, "%d, %d", x,y);
-		ImGui::Text(label);		
+		Chunk::getChunkPosFromID(iterator->first, x, y);
+		sprintf(label, "%d, %d", x, y);
+		ImGui::Text(label);
 		ind++;
 		if (ind == map.size() / 2)
 			ImGui::NextColumn();
 	}
-	ImGui::Separator();
-	
+	ImGui::Separator();*/
+
 	ImGui::End();
 }
 void WorldLayer::onEvent(Event& e)
@@ -287,9 +346,15 @@ void WorldLayer::onEvent(Event& e)
 
 	if (e.getEventType() == Event::EventType::MousePress) {
 		auto event = dynamic_cast<MousePressEvent*>(&e);
-		if(event->getButton()==GLFW_MOUSE_BUTTON_2)
+		if (event->getButton() == GLFW_MOUSE_BUTTON_2)
 		{
-			BLOCK_PALLETE_SELECTED = m_world->getBlock(CURSOR_X, CURSOR_Y).id;
+			if (BLOCK_OR_WALL_SELECTED) {
+				BLOCK_PALLETE_SELECTED = m_world->getBlock(CURSOR_X, CURSOR_Y).block_id;
+			}
+			else
+			{
+				BLOCK_PALLETE_SELECTED = m_world->getBlock(CURSOR_X, CURSOR_Y).wallID();
+			}
 			event->handled = true;
 		}
 	}

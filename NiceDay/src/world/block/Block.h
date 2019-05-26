@@ -1,60 +1,92 @@
 #pragma once
 #define BLOCK_STATE_FULL				0
-#define BLOCK_STATE_BIT					56
-#define BLOCK_STATE_BOLD_LINE_UP		48
-#define BLOCK_STATE_BOLD_LINE_DOWN		40
-#define BLOCK_STATE_BOLD_LINE_LEFT		32
-#define BLOCK_STATE_BOLD_LINE_RIGHT		24
-#define BLOCK_STATE_THIN_LINE_HORIZONTAL 53
-#define BLOCK_STATE_THIN_LINE_VERTICAL	52
+//		  ______________
+//		 <              >
+//		 >			    <
+//		 <\/\/\/\/\/\/\/>
+//
+#define BLOCK_STATE_LINE_UP				1
+#define BLOCK_STATE_LINE_DOWN			2
+#define BLOCK_STATE_LINE_LEFT			3
+#define BLOCK_STATE_LINE_RIGHT			4
 
-#define BLOCK_STATE_THIN_LINE_END_UP	60
-#define BLOCK_STATE_THIN_LINE_END_LEFT	61
-#define BLOCK_STATE_THIN_LINE_END_DOWN	62
-#define BLOCK_STATE_THIN_LINE_END_RIGHT 63
+//     ____
+//    |      \     
+//    |		    \
+//    |__________|
+//
+#define BLOCK_STATE_CORNER_UP_LEFT		5
+#define BLOCK_STATE_CORNER_UP_RIGHT		6
+#define BLOCK_STATE_CORNER_DOWN_LEFT	7
+#define BLOCK_STATE_CORNER_DOWN_RIGHT	8
 
-#define BLOCK_STATE_CORNER_UP_LEFT		44
-#define BLOCK_STATE_CORNER_UP_RIGHT		45
-#define BLOCK_STATE_CORNER_DOWN_LEFT	36
-#define BLOCK_STATE_CORNER_DOWN_RIGHT	37
+#define BLOCK_STATE_BIT					9
+//		  ______________
+//		 <              >
+//		 >			    <
+//		 <______________>
+//
+#define BLOCK_STATE_LINE_HORIZONTAL		10
+#define BLOCK_STATE_LINE_VERTICAL		11
 
-#define BLOCK_GROUP_AIR_BIT			0
-#define BLOCK_GROUP_DIRT_BIT		1
-#define BLOCK_GROUP_PLATFORM_BIT	2
-
-
-const int BLOCK_AIR			= 0;
-const int BLOCK_STONE		= 1;
-const int BLOCK_DIRT		= 2;
-const int BLOCK_GOLD		= 3;
-const int BLOCK_ADAMANTITE	= 4;
-const int BLOCK_PLATFORM	= 5;
-const int BLOCK_GRASS		= 6;
+//______________
+//              \
+//				|
+//______________/
+//
+#define BLOCK_STATE_LINE_END_UP			12
+#define BLOCK_STATE_LINE_END_LEFT		13
+#define BLOCK_STATE_LINE_END_DOWN		14
+#define BLOCK_STATE_LINE_END_RIGHT		15
 
 struct BlockStruct {
-	int id;
-	int metadata;
-	int corner;
-	BlockStruct():corner(BLOCK_STATE_FULL){}
-	BlockStruct(int idd) :id(idd), metadata(0), corner(BLOCK_STATE_FULL)
+
+	short block_id;
+	int block_metadata;
+	char block_corner;
+
+	short wall_id[4];
+	char wall_corner[4];
+
+	BlockStruct() :
+		block_corner(BLOCK_STATE_FULL),
+		wall_id{ 0,0,0,0 }
 	{}
+	BlockStruct(int block_id) :
+		block_id(block_id),
+		block_metadata(0),
+		block_corner(BLOCK_STATE_FULL),
+		wall_id{ 0,0,0,0 }
+	{}
+	inline int wallID() const { return wall_id[0]; }
+	inline bool isAir() const { return block_id == 0; }
 
-	inline bool isAir() const { return id == BLOCK_AIR; }
-};
-
-struct half_int
-{
-	union
+	//block is either full air or shared
+	inline bool isWallFree() const
 	{
-		uint32_t i;
-		struct
+		return wall_corner[0] != BLOCK_STATE_FULL || wall_id[0] == 0;
+	}
+	inline void setWall(int id)
+	{
+		for (int i = 0; i < 4; ++i)
 		{
-			uint16_t x;//lsb
-			uint16_t y;//msb
-		};
-	};
-	half_int(int in):i(in){}
-	half_int(int xx,int yy):x((short)xx),y((short)yy){}
+			wall_id[i] = id;
+			wall_corner[i] = BLOCK_STATE_FULL;
+		}
+	}
+
+	//block is either full block or full air
+	inline bool isWallOccupied() const
+	{
+		return (wall_corner[0] == BLOCK_STATE_FULL
+			&& wall_corner[1] == BLOCK_STATE_FULL
+			&& wall_corner[2] == BLOCK_STATE_FULL
+			&& wall_corner[3] == BLOCK_STATE_FULL)
+			|| (wall_id[0] == 0
+				&& wall_id[1] == 0
+				&& wall_id[2] == 0
+				&& wall_id[3] == 0);
+	}
 };
 
 class World;
@@ -67,6 +99,8 @@ private:
 protected:
 	//offset in block texture atlas
 	half_int m_texture_pos;
+	//array[BLOCK_STATE]=TEXTURE_OFFSET
+	const half_int* m_corner_translate_array;
 
 	//if yes the texturepos will be added based on location of block in chunk
 	bool m_has_big_texture;
@@ -87,23 +121,58 @@ public:
 	inline int getID() const { return m_id; };
 	inline int getConnectGroup() const { return m_block_connect_group; }
 	virtual float getOpacity(const BlockStruct&) const;
-	
-	inline bool isInConnectGroup(int groups) const { return (groups & m_block_connect_group) == groups; }
-	
+
+	inline bool isInConnectGroup(int groups) const { return (groups & m_block_connect_group) != 0; }//they have group in common 
+
 	//returns -1 if not render
-	virtual int getTextureOffset(int x,int y,const BlockStruct&) const;
-	virtual int getCornerOffset(int x,int y,const BlockStruct&) const;
+	virtual int getTextureOffset(int x, int y, const BlockStruct&) const;
+	virtual int getCornerOffset(int x, int y, const BlockStruct&) const;
 
 	//returns true if this block was changed as well
 	virtual bool onNeighbourBlockChange(World* world, int x, int y) const;
 
 #ifdef ND_DEBUG
 	inline virtual std::string toString() const { return "UNDEFINED_BLOCK"; }
-	
-	#define BLOCK_TO_STRING(x)\
+
+#define TO_STRING(x)\
 	inline std::string toString() const override {return #x;}
 #else
-	#define BLOCK_TO_STRING(X)
+#define TO_STRING(X)
 #endif
 };
 
+class Wall
+{
+private:
+	const int m_id;
+protected:
+	//offset in block texture atlas
+	half_int m_texture_pos;
+	//array[BLOCK_STATE]=TEXTURE_OFFSET
+	const half_int* m_corner_translate_array;
+
+	bool m_opaque;
+public:
+	Wall(int id);
+	Wall(const Wall& c) = delete;
+	void operator=(Wall const&) = delete;
+	virtual ~Wall();
+	inline int getID() const { return m_id; };
+	virtual bool isOpaque(const BlockStruct&) const;
+
+	//returns -1 if not render
+	virtual int getTextureOffset(int wx, int wy, const BlockStruct&) const;
+	virtual int getCornerOffset(int wx, int wy, const BlockStruct&) const;
+
+	//returns true if this block was changed as well
+	virtual void onNeighbourWallChange(World* world, int x, int y) const;
+
+#ifdef ND_DEBUG
+	inline virtual std::string toString() const { return "UNDEFINED_WALL"; }
+
+#define TO_STRING(x)\
+	inline std::string toString() const override {return #x;}
+#else
+#define TO_STRING(X)
+#endif
+};

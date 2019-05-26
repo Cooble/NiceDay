@@ -150,9 +150,6 @@
     <ClInclude Include="src\world\ChunkLoader.h">
       <Filter>src\world</Filter>
     </ClInclude>
-    <ClInclude Include="src\world\ChunkMeshInstance.h">
-      <Filter>src\world</Filter>
-    </ClInclude>
     <ClInclude Include="src\world\ITickable.h">
       <Filter>src\world</Filter>
     </ClInclude>
@@ -1290,6 +1287,11 @@
     <ClInclude Include="vendor\stb_image\stb_image.h">
       <Filter>vendor\stb_image</Filter>
     </ClInclude>
+    <ClInclude Include="src\world\block\block_datas.h" />
+    <ClInclude Include="src\world\ChunkMesh.h">
+      <Filter>src\world</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world\block\basic_walls.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\EntryPoint.cpp">
@@ -1370,9 +1372,6 @@
     <ClCompile Include="src\world\ChunkLoader.cpp">
       <Filter>src\world</Filter>
     </ClCompile>
-    <ClCompile Include="src\world\ChunkMeshInstance.cpp">
-      <Filter>src\world</Filter>
-    </ClCompile>
     <ClCompile Include="src\world\LightCalculator.cpp">
       <Filter>src\world</Filter>
     </ClCompile>
@@ -1415,5 +1414,9 @@
     <ClCompile Include="vendor\stb_image\stb_image.cpp">
       <Filter>vendor\stb_image</Filter>
     </ClCompile>
+    <ClCompile Include="src\world\ChunkMesh.cpp">
+      <Filter>src\world</Filter>
+    </ClCompile>
+    <ClCompile Include="src\world\block\basic_walls.cpp" />
   </ItemGroup>
 </Project>

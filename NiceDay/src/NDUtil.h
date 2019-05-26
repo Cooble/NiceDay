@@ -89,4 +89,24 @@ namespace NDUtil
 		m_head = 0;
 		m_size = 0;
 	}
+
 }
+struct half_int
+{
+	union
+	{
+		uint32_t i;
+		struct
+		{
+			uint16_t x;//lsb
+			uint16_t y;//msb
+		};
+	};
+	half_int(int in) :i(in) {}
+	half_int(int xx, int yy) :x((short)xx), y((short)yy) {}
+	half_int plus(half_int v) const
+	{
+		return half_int(x + v.x, y + v.y);
+	}
+
+};

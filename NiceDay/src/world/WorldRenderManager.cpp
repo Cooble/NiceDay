@@ -3,7 +3,7 @@
 #include "Game.h"
 #include "Stats.h"
 #include "graphics/Renderer.h"
-#include "world/ChunkMeshInstance.h"
+#include "world/ChunkMesh.h"
 
 
 #include "biome/BiomeForest.h"
@@ -148,7 +148,6 @@ void WorldRenderManager::onScreenResize()
 }
 #include <algorithm>
 
-
 float minim(float f0, float f1)
 {
 	if (f0 < f1)
@@ -266,6 +265,7 @@ void WorldRenderManager::onUpdate()
 					c.getPos().y = loaded.y * WORLD_CHUNK_SIZE;
 
 					c.updateMesh(*m_world, m_world->getChunk(loaded.x, loaded.y));
+					
 
 					m_offset_map[loaded.id] = i;
 					foundFreeChunk = true;
@@ -424,8 +424,29 @@ void WorldRenderManager::render()
 	//chunk render
 	auto& program = *ChunkMesh::getProgram();
 	program.bind();
+	program.setUniform1i("u_texture_atlas_width", WALL_TEXTURE_ATLAS_SIZE);
+	program.setUniform1i("u_corner_atlas_width", WALL_CORNER_ATLAS_SIZE);
 	ChunkMesh::getAtlas()->bind(0);
 	ChunkMesh::getCornerAtlas()->bind(1);
+	//walls
+	for (ChunkMeshInstance* mesh : m_chunks)
+	{
+		if (!(mesh->m_enabled))
+			continue;
+
+		auto worldMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(
+			mesh->getPos().x - m_camera->getPosition().x,
+			mesh->getPos().y - m_camera->getPosition().y, 0.0f));
+		worldMatrix = glm::scale(worldMatrix, glm::vec3(0.5f,0.5f,1));
+		program.setUniformMat4("u_transform", getProjMatrix()*worldMatrix);
+
+		mesh->getWallVAO().bind();
+		Call(glDrawArrays(GL_POINTS, 0, WORLD_CHUNK_AREA*4));
+
+	}
+	//blocks
+	program.setUniform1i("u_texture_atlas_width", BLOCK_TEXTURE_ATLAS_SIZE);
+	program.setUniform1i("u_corner_atlas_width", BLOCK_CORNER_ATLAS_SIZE);
 	for (ChunkMeshInstance* mesh : m_chunks)
 	{
 		if (!(mesh->m_enabled))

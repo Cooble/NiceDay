@@ -168,8 +168,10 @@
     <ClInclude Include="src\layer\WorldLayer.h" />
     <ClInclude Include="src\layer\imguiplotvar.h" />
     <ClInclude Include="src\ndpch.h" />
+    <ClInclude Include="src\world\block\basic_walls.h" />
+    <ClInclude Include="src\world\block\block_datas.h" />
     <ClInclude Include="src\world\ChunkLoader.h" />
-    <ClInclude Include="src\world\ChunkMeshInstance.h" />
+    <ClInclude Include="src\world\ChunkMesh.h" />
     <ClInclude Include="src\world\ITickable.h" />
     <ClInclude Include="src\world\LightCalculator.h" />
     <ClInclude Include="src\world\World.h" />
@@ -578,8 +580,9 @@
     <ClCompile Include="src\ndpch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="src\world\block\basic_walls.cpp" />
     <ClCompile Include="src\world\ChunkLoader.cpp" />
-    <ClCompile Include="src\world\ChunkMeshInstance.cpp" />
+    <ClCompile Include="src\world\ChunkMesh.cpp" />
     <ClCompile Include="src\world\LightCalculator.cpp" />
     <ClCompile Include="src\world\World.cpp" />
     <ClCompile Include="src\world\WorldIO.cpp" />

@@ -6,32 +6,33 @@ class BlockAir:public Block
 public:
 	BlockAir();
 	int getTextureOffset(int x, int y, const BlockStruct&) const override;
+	int getCornerOffset(int x, int y, const BlockStruct&) const override;
 	bool onNeighbourBlockChange(World* world, int x, int y) const override;
-	BLOCK_TO_STRING(BlockAir)
+	TO_STRING(BlockAir)
 };
 class BlockStone :public Block
 {
 public:
 	BlockStone();
-	BLOCK_TO_STRING(BlockStone)
+	TO_STRING(BlockStone)
 };
 class BlockDirt :public Block
 {
 public:
 	BlockDirt();
-	BLOCK_TO_STRING(BlockDirt)
+	TO_STRING(BlockDirt)
 };
 class BlockGold :public Block
 {
 public:
 	BlockGold();
-	BLOCK_TO_STRING(BlockGold)
+	TO_STRING(BlockGold)
 };
 class BlockAdamantite :public Block
 {
 public:
 	BlockAdamantite();
-	BLOCK_TO_STRING(BlockAdamantite)
+	TO_STRING(BlockAdamantite)
 };
 class BlockPlatform :public Block
 {
@@ -40,7 +41,7 @@ public:
 	bool onNeighbourBlockChange(World* world, int x, int y) const override;
 	int getCornerOffset(int x, int y, const BlockStruct&) const override;
 	int getTextureOffset(int x, int y, const BlockStruct&) const override;
-	BLOCK_TO_STRING(BlockPlatform)
+	TO_STRING(BlockPlatform)
 };
 class BlockGrass :public Block
 {
@@ -48,5 +49,5 @@ public:
 	BlockGrass();
 	bool onNeighbourBlockChange(World* world, int x, int y) const override;
 	int getTextureOffset(int x, int y, const BlockStruct&) const override;
-	BLOCK_TO_STRING(BlockGrass)
+	TO_STRING(BlockGrass)
 };

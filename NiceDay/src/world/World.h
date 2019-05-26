@@ -91,6 +91,7 @@ private:
 private:
 	void init();
 	void onBlocksChange(int x, int y, int deep);
+	void onWallsChange(int xx, int yy, BlockStruct& blok);
 
 public:
 	World(std::string file_path, const char* name, int chunk_width, int chunk_height);
@@ -147,6 +148,7 @@ public:
 	//(may cause chunk load)
 	bool isAir(int x, int y);
 
+
 	//any changes wont be visible in graphics ->use setBlock() instead 
 	//(may cause chunk load)
 	BlockStruct& editBlock(int x, int y);
@@ -158,6 +160,10 @@ public:
 	//automatically calls chunk.markdirty() to update graphics and call onNeighbourBlockChange()
 	//(may cause chunk load)
 	void setBlock(int x, int y, int block_id);
+
+	//automatically calls chunk.markdirty() to update graphics and call onNeighbourWallChange()
+	//(may cause chunk load)
+	void setWall(int x, int y, int wall_id);
 
 	//==================================================================================================
 

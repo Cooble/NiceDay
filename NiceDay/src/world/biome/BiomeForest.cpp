@@ -31,7 +31,7 @@ void BiomeForest::updateSprites(World* m_world, Camera* m_camera)
 	{
 		Sprite2D& s = *m_sprites[i];
 
-		auto texDim = vec2(s.getTexture().getWidth() / 2, s.getTexture().getHeight() / 2);
+		auto texDim = vec2(s.getTexture().getWidth()/1.5 , s.getTexture().getHeight() / 1.5);
 		auto pos = vec2(
 			m_world->getInfo().chunk_width / 2 * WORLD_CHUNK_SIZE,
 			-i * 2 + (float)s.getTexture().getHeight() / BLOCK_PIXEL_SIZE / 3 + m_world->getInfo().terrain_level);

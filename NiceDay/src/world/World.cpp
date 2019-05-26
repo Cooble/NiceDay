@@ -5,6 +5,7 @@
 #include "WorldIO.h"
 #include "block/BlockRegistry.h"
 #include "biome/BiomeRegistry.h"
+#include "block/block_datas.h"
 
 Chunk::Chunk() :m_loaded(false)
 {
@@ -48,26 +49,35 @@ void World::genWorld(long seed)
 			loadChunk(cx, cy);
 			Chunk& c = getChunk(cx, cy);
 			c.m_biome = BIOME_UNDERGROUND;
-			if((cy)*WORLD_CHUNK_SIZE > (m_info.terrain_level-1))
+			if ((cy + 1)*WORLD_CHUNK_SIZE > (m_info.terrain_level - 1))
 				c.m_biome = BIOME_FOREST;
 			if (cx < 2)
 				c.m_biome = BIOME_DIRT;
 			for (int x = 0; x < WORLD_CHUNK_SIZE; x++) {
 				for (int y = 0; y < WORLD_CHUNK_SIZE; y++)
 				{
+
 					auto& block = c.getBlock(x, y);
+					
 					auto worldy = cy * WORLD_CHUNK_SIZE + y;
 					auto worldx = cx * WORLD_CHUNK_SIZE + x;
-					auto terrain = m_info.terrain_level + sin(worldx / 4) * 3;
-				//	if (x == 0 || y == 0)
-					//	block.id = BLOCK_AIR;
-					if (worldy >terrain)
-						block.id =BLOCK_AIR;
+					int terrain = m_info.terrain_level + sin(worldx / 4) * 3;
+					//	if (x == 0 || y == 0)
+						//	block.id = BLOCK_AIR;
+					if (worldy > terrain)
+						block.block_id = BLOCK_AIR;
 					else if (worldy == terrain)
-						block.id = BLOCK_GRASS;
-					else if (worldy > m_info.terrain_level - 7)//5 block of dirt
-						block.id = BLOCK_DIRT;
-					else block.id = BLOCK_STONE;
+						block.block_id = BLOCK_GRASS;
+					else if (worldy > m_info.terrain_level - 7) {//5 block of dirt
+						block.block_id = BLOCK_DIRT;
+						block.setWall(WALL_DIRT);
+					}
+					else if (cx < 2)
+						block.block_id = BLOCK_ADAMANTITE;
+					else {
+						block.block_id = BLOCK_STONE;
+						block.setWall(WALL_STONE);
+					}
 
 				}
 			}
@@ -122,6 +132,8 @@ int World::getChunkIndex(int id) const
 
 Chunk& World::loadChunk(int x, int y)
 {
+	if (isChunkLoaded(x, y))
+		return getChunk(x, y);
 	for (auto i = 0; i < m_chunks.size(); i++)
 	{
 		Chunk& c = m_chunks[i];
@@ -200,7 +212,7 @@ void World::loadChunks(std::set<int>& chunk_ids)
 			}
 		}
 		if (!foundFreeChunk) {
-			lastFreeChunk = m_chunks.size()+1;//dont bother scrolling through whole occupied chunklist
+			lastFreeChunk = m_chunks.size() + 1;//dont bother scrolling through whole occupied chunklist
 			//no unloaded chunk -> add new to list
 			m_chunks.emplace_back();
 			Chunk& c = m_chunks[m_chunks.size() - 1];
@@ -295,24 +307,64 @@ void World::onBlocksChange(int x, int y, int deep = 0)
 		ND_WARN("Block update too deep! protecting stack");
 		return;
 	}
-	if (isValidBlock(x, y + 1) && BlockRegistry::get().getBlock(getBlock(x, y + 1).id).onNeighbourBlockChange(this, x, y + 1)) {
+	if (isValidBlock(x, y + 1) && BlockRegistry::get().getBlock(getBlock(x, y + 1).block_id).onNeighbourBlockChange(this, x, y + 1)) {
 		getChunk(World::getChunkCoord(x), World::getChunkCoord(y + 1)).markDirty(true);
 		onBlocksChange(x, y + 1, deep);
 	}
 
-	if (isValidBlock(x, y - 1) && BlockRegistry::get().getBlock(getBlock(x, y - 1).id).onNeighbourBlockChange(this, x, y - 1)) {
+	if (isValidBlock(x, y - 1) && BlockRegistry::get().getBlock(getBlock(x, y - 1).block_id).onNeighbourBlockChange(this, x, y - 1)) {
 		getChunk(World::getChunkCoord(x), World::getChunkCoord(y - 1)).markDirty(true);
 		onBlocksChange(x, y - 1, deep);
 	}
 
-	if (isValidBlock(x + 1, y) && BlockRegistry::get().getBlock(getBlock(x + 1, y).id).onNeighbourBlockChange(this, x + 1, y)) {
+	if (isValidBlock(x + 1, y) && BlockRegistry::get().getBlock(getBlock(x + 1, y).block_id).onNeighbourBlockChange(this, x + 1, y)) {
 		getChunk(World::getChunkCoord(x + 1), World::getChunkCoord(y)).markDirty(true);
 		onBlocksChange(x + 1, y, deep);
 	}
 
-	if (isValidBlock(x - 1, y) && BlockRegistry::get().getBlock(getBlock(x - 1, y).id).onNeighbourBlockChange(this, x - 1, y)) {
+	if (isValidBlock(x - 1, y) && BlockRegistry::get().getBlock(getBlock(x - 1, y).block_id).onNeighbourBlockChange(this, x - 1, y)) {
 		getChunk(World::getChunkCoord(x - 1), World::getChunkCoord(y)).markDirty(true);
 		onBlocksChange(x - 1, y, deep);
+	}
+
+}
+
+void World::onWallsChange(int xx, int yy, BlockStruct& blok)
+{
+	BlockRegistry::get().getWall(blok.wallID()).onNeighbourWallChange(this, xx, yy);
+	/*for (int x = -1; x < 2; ++x)
+	{
+		for (int y = -1; y < 2; ++y)
+		{
+			if (x == 0 && y == 0)
+				continue;
+			if (isValidBlock(x + xx, y + yy)) {
+				BlockStruct& b = editBlock(x + xx, y + yy);
+				if (b.isWallOccupied())//i cannot call this method on some foreign wall pieces
+					BlockRegistry::get().getWall(b.wallID()).onNeighbourWallChange(this, x + xx, y + yy);
+			}
+		}
+	}*/
+	for (int x = -2; x < 3; ++x)
+	{
+		for (int y = -2; y < 3; ++y)
+		{
+			/*if (x >=-1&&x<2)
+				continue;
+			if (y >= -1 && y < 2)
+				continue;*/
+			if (x == 0 && y == 0)
+				continue;
+			if (isValidBlock(x + xx, y + yy)) {
+				
+				BlockStruct& b = editBlock(x + xx, y + yy);
+				if (b.isWallOccupied()) {//i cannot call this method on some foreign wall pieces
+					BlockRegistry::get().getWall(b.wallID()).onNeighbourWallChange(this, x + xx, y + yy);
+					Chunk& c = getChunk(getChunkCoord(x + xx), getChunkCoord(y + yy));
+					c.markDirty(true);//mesh needs to be updated
+				}
+			}
+		}
 	}
 
 }
@@ -321,6 +373,40 @@ void World::setBlock(int x, int y, int block_id)
 {
 	BlockStruct s = block_id;
 	setBlock(x, y, s);
+}
+
+void World::setWall(int x, int y, int wall_id)
+{
+
+#ifdef ND_DEBUG
+	if (x < 0 || y < 0) {
+		ND_WARN("Set block with invalid position");
+		return;
+	}
+	if (x > getInfo().chunk_width*WORLD_CHUNK_SIZE - 1 || y > getInfo().chunk_height*WORLD_CHUNK_SIZE - 1) {
+		ND_WARN("Set block with invalid position");
+		return;
+	}
+#endif
+	int cx = x >> WORLD_CHUNK_BIT_SIZE;
+	int cy = y >> WORLD_CHUNK_BIT_SIZE;
+
+	int index = getChunkIndex(cx, cy);
+	Chunk* c;
+	if (index == -1)
+		c = &loadChunk(cx, cy);
+	else c = &m_chunks[index];
+
+	//set block from old block acordingly
+	auto& blok = c->getBlock(x & (WORLD_CHUNK_SIZE - 1), y  & (WORLD_CHUNK_SIZE - 1));
+
+	if (!blok.isWallOccupied() && wall_id == 0)//cannot erase other blocks parts on this shared block
+		return;
+	blok.setWall(wall_id);
+
+	onWallsChange(x, y, blok);
+	c->markDirty(true);
+
 }
 
 
@@ -345,8 +431,13 @@ void World::setBlock(int x, int y, BlockStruct& blok)
 		c = &loadChunk(cx, cy);
 	else c = &m_chunks[index];
 
+	//set walls from old block acordingly
+	auto& block = c->getBlock(x & (WORLD_CHUNK_SIZE - 1), y  & (WORLD_CHUNK_SIZE - 1));
+	memcpy(blok.wall_id, block.wall_id, sizeof(blok.wall_id));
+	memcpy(blok.wall_corner, block.wall_corner, sizeof(blok.wall_corner));
+
 	c->setBlock(x & (WORLD_CHUNK_SIZE - 1), y  & (WORLD_CHUNK_SIZE - 1), blok);
-	BlockRegistry::get().getBlock(blok.id).onNeighbourBlockChange(this, x, y);
+	BlockRegistry::get().getBlock(blok.block_id).onNeighbourBlockChange(this, x, y);
 	onBlocksChange(x, y);
 	c->markDirty(true);
 }

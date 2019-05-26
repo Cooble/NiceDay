@@ -136,7 +136,7 @@ float LightCalculator::getBlockOpacity(int x, int y)
 {
 	auto b = m_world->getLoadedBlockPointer(x, y);
 	if (b)
-		return BlockRegistry::get().getBlock(b->id).getOpacity(*b);
+		return BlockRegistry::get().getBlock(b->block_id).getOpacity(*b);
 	return 1000; //outside map -> no light
 }
 

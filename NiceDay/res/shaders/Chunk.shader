@@ -30,7 +30,7 @@ out vec2 g_corner_uv_coords;
 
 //2 to the n icons in atlas in row
 uniform int u_texture_atlas_width;
-uniform int u_corner_atlas_icon_number_bit;
+uniform int u_corner_atlas_width;
 uniform mat4 u_transform;
 //todo shader chnk
 
@@ -50,11 +50,10 @@ void main() {
 
 	int corner_offset = int(v_corner_offset[0]);
 
-	int corner_mask = (1 << u_corner_atlas_icon_number_bit) - 1;
-	int corner_x = corner_offset & corner_mask;
-	int corner_y = (corner_offset >> u_corner_atlas_icon_number_bit) & corner_mask;
+	float corner_x = float(corner_offset & ((1 << 16) - 1));//get lsb 16 bits
+	float corner_y = float((corner_offset >> 16) & ((1 << 16) - 1));//get msb 16 bits
 
-	float corner_co = 1.0f / float(1 << u_corner_atlas_icon_number_bit);
+	float corner_co = 1.0f / u_corner_atlas_width;
 
 	g_corner_uv_coords = vec2(corner_x, corner_y) * corner_co;
 	g_uv_coords = vec2(x, y) * co;
