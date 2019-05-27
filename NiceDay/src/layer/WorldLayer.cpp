@@ -45,6 +45,7 @@ WorldLayer::WorldLayer()
 	BlockRegistry::get().registerBlock(new BlockAdamantite());
 	BlockRegistry::get().registerBlock(new BlockPlatform());
 	BlockRegistry::get().registerBlock(new BlockGrass());
+	BlockRegistry::get().registerBlock(new BlockGlass());
 	BlockRegistry::get().registerWall(new WallAir());
 	BlockRegistry::get().registerWall(new WallDirt());
 	BlockRegistry::get().registerWall(new WallStone());

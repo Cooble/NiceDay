@@ -108,5 +108,9 @@ struct half_int
 	{
 		return half_int(x + v.x, y + v.y);
 	}
+	half_int operator+(half_int v) const
+	{
+		return plus(v);
+	}
 
 };

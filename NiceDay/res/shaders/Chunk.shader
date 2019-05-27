@@ -26,7 +26,9 @@ in uint v_corner_offset[];
 
 out vec2 g_uv_coords;
 out vec2 g_corner_uv_coords;
+//out vec2 g_corner_color;
 
+uniform sampler2D u_texture;
 
 //2 to the n icons in atlas in row
 uniform int u_texture_atlas_width;
@@ -46,7 +48,7 @@ void main() {
 	float y = float((offset>>16) & ((1 << 16) - 1));//get msb 16 bits
 
 	float co = 1.0f / u_texture_atlas_width;
-
+	
 
 	int corner_offset = int(v_corner_offset[0]);
 
@@ -60,10 +62,12 @@ void main() {
 	gl_Position = u_transform * (gl_in[0].gl_Position);
 	EmitVertex();
 
+
 	g_corner_uv_coords = vec2(corner_x + 1, corner_y) * corner_co;
 	g_uv_coords = vec2(x + 1, y) * co;
 	gl_Position = u_transform * (gl_in[0].gl_Position + vec2(1.0f, 0.0f));
 	EmitVertex();
+
 
 	g_corner_uv_coords = vec2(corner_x, corner_y + 1) * corner_co;
 	g_uv_coords = vec2(x, y + 1) * co;
@@ -84,6 +88,10 @@ void main() {
 
 uniform sampler2D u_texture;
 uniform sampler2D u_corners;
+uniform int u_texture_atlas_pixel_width;
+uniform int u_texture_atlas_width;
+uniform int u_texture_atlas_pixel_width_corner;
+
 
 layout(location = 0) out vec4 color;
 
@@ -91,12 +99,18 @@ in vec2 g_uv_coords;
 in vec2 g_corner_uv_coords;
 
 void main() {
-
 	vec4 corner_color = texture2D(u_corners, g_corner_uv_coords);
 	if (corner_color.a == 0)
 		discard;
 	if (corner_color.r == 1.0f)
 		color = texture2D(u_texture, g_uv_coords);
-	else
-		color = vec4(0.0f, 0.0f, 0.0f, 1.0f);
+	else {
+		//color = texture2D(u_texture, g_corner_color);
+		ivec2 pixelCoord = 
+			ivec2(
+				floor(g_uv_coords.x*u_texture_atlas_pixel_width) / u_texture_atlas_pixel_width_corner,
+				floor(g_uv_coords.y*u_texture_atlas_pixel_width) / u_texture_atlas_pixel_width_corner);
+		color = texelFetch(u_texture, pixelCoord,0);
+		//color = vec4(0,0,0,1);
+	}
 }

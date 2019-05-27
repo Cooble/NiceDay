@@ -60,7 +60,7 @@ BlockAdamantite::BlockAdamantite()
 	:Block(BLOCK_ADAMANTITE)
 {
 	m_has_big_texture = true;
-	m_texture_pos = { 0,0 };
+	m_texture_pos = { 2,1 };
 	m_corner_translate_array = BLOCK_CORNERS_DIRT;
 	m_block_connect_group = BIT(BLOCK_GROUP_ORE_BIT) | BIT(BLOCK_GROUP_DIRT_BIT);
 
@@ -126,6 +126,8 @@ int BlockGrass::getTextureOffset(int x, int y, const BlockStruct& s) const
 {
 	return s.block_metadata;
 }
+
+
 bool BlockGrass::onNeighbourBlockChange(World* world, int x, int y) const
 {
 	BlockStruct& block = world->editBlock(x, y);
@@ -156,4 +158,27 @@ bool BlockGrass::onNeighbourBlockChange(World* world, int x, int y) const
 
 }
 
+//GLASS=======================================
 
+BlockGlass::BlockGlass()
+	:Block(BLOCK_GLASS)
+{
+	m_opacity = 0.05f;
+	m_texture_pos = { 0,14 };
+	m_corner_translate_array = BLOCK_CORNERS_DIRT;
+
+}
+
+int BlockGlass::getTextureOffset(int x, int y, const BlockStruct& s) const
+{
+	return (m_texture_pos + half_int(s.block_metadata, 0)).i;
+}
+
+bool BlockGlass::onNeighbourBlockChange(World* world, int x, int y) const
+{
+	auto c = Block::onNeighbourBlockChange(world, x, y);
+	BlockStruct& e = world->editBlock(x, y);
+	e.block_metadata = std::rand() % 10;
+	e.block_metadata &= 3;
+	return c;
+}

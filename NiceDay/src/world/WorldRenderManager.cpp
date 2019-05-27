@@ -508,8 +508,10 @@ void WorldRenderManager::renderMainLightMap()
 	m_light_texture->bind(0);
 	m_light_VAO->bind();
 
+	glEnable(GL_FRAMEBUFFER_SRGB);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA);
 	Call(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
 	glDisable(GL_BLEND);
+	glDisable(GL_FRAMEBUFFER_SRGB);
 }

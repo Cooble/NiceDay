@@ -112,7 +112,7 @@ protected:
 	float m_opacity;
 
 	int m_block_connect_group;
-	static bool isInGroup(World* w, int x, int y, int group);
+	bool isInGroup(World* w, int x, int y, int group) const;
 public:
 	Block(int id);
 	Block(const Block& c) = delete;

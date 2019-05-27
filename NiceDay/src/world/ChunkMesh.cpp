@@ -5,6 +5,7 @@
 #include "ChunkMesh.h"
 #include "glm/gtx/io.hpp"
 #include "block/Block.h"
+#include "WorldRenderManager.h"
 
 
 VertexBufferLayout ChunkMesh::s_pos_layout;
@@ -33,8 +34,9 @@ void ChunkMesh::init()
 		s_program->bind();
 		s_program->setUniform1i("u_texture", 0);
 		s_program->setUniform1i("u_corners", 1);
-		s_program->setUniform1i("u_texture_atlas_width", BLOCK_TEXTURE_ATLAS_SIZE);
-		s_program->setUniform1i("u_corner_atlas_width", BLOCK_CORNER_ATLAS_SIZE);
+		s_program->setUniform1i("u_texture_atlas_pixel_width_corner", BLOCK_TEXTURE_ATLAS_SIZE);
+		//todo when changing blockpixels size this wont work you need to specify pixel size of texture
+		s_program->setUniform1i("u_texture_atlas_pixel_width", BLOCK_TEXTURE_ATLAS_SIZE*BLOCK_PIXEL_SIZE);
 		s_program->unbind();
 
 		s_pos_layout.push<float>(2);//pos

@@ -12,6 +12,7 @@ const int BLOCK_GOLD = 3;
 const int BLOCK_ADAMANTITE = 4;
 const int BLOCK_PLATFORM = 5;
 const int BLOCK_GRASS = 6;
+const int BLOCK_GLASS = 7;
 
 const int WALL_AIR = 0;
 const int WALL_DIRT = 1;
@@ -19,6 +20,24 @@ const int WALL_STONE = 2;
 
 
 const half_int BLOCK_CORNERS_DIRT[16] = {
+	half_int(0,0),//BLOCK_STATE_FULL				
+	half_int(0,6),//BLOCK_STATE_LINE_UP				
+	half_int(0,5),//BLOCK_STATE_LINE_DOWN			
+	half_int(0,4),//BLOCK_STATE_LINE_LEFT			
+	half_int(0,3),//BLOCK_STATE_LINE_RIGHT			
+	half_int(4,5),//BLOCK_STATE_CORNER_UP_LEFT		
+	half_int(5,5),//BLOCK_STATE_CORNER_UP_RIGHT		
+	half_int(4,4),//BLOCK_STATE_CORNER_DOWN_LEFT	
+	half_int(5,4),//BLOCK_STATE_CORNER_DOWN_RIGHT	
+	half_int(0,7),//BLOCK_STATE_BIT					
+	half_int(5,6),//BLOCK_STATE_LINE_HORIZONTAL		
+	half_int(4,6),//BLOCK_STATE_LINE_VERTICAL		
+	half_int(4,7),//BLOCK_STATE_LINE_END_UP			
+	half_int(5,7),//BLOCK_STATE_LINE_END_LEFT		
+	half_int(6,7),//BLOCK_STATE_LINE_END_DOWN		
+	half_int(7,7),//BLOCK_STATE_LINE_END_RIGHT		
+};
+const half_int BLOCK_CORNERS_GLASS[16] = {
 	half_int(0,0),//BLOCK_STATE_FULL				
 	half_int(0,6),//BLOCK_STATE_LINE_UP				
 	half_int(0,5),//BLOCK_STATE_LINE_DOWN			

@@ -34,11 +34,14 @@ int Block::getCornerOffset(int x, int y, const BlockStruct& b) const
 	return m_corner_translate_array[(int)b.block_corner].i;
 }
 
-bool Block::isInGroup(World* w, int x, int y, int group)
+bool Block::isInGroup(World* w, int x, int y, int group) const
 {
 	const BlockStruct* b = w->getBlockPointer(x, y);
 	if (b)
-		return BlockRegistry::get().getBlock(b->block_id).isInConnectGroup(group);
+	{
+		auto& bl = BlockRegistry::get().getBlock(b->block_id);
+		return bl.isInConnectGroup(group)|| bl.getID()==m_id;
+	}
 	return false;
 }
 
