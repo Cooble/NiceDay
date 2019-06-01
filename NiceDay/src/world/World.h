@@ -65,11 +65,6 @@ struct WorldInfo {
 class World
 {
 public:
-	inline static void getChunkCoords(float x, float y, unsigned int& cx, unsigned int& cy)
-	{
-		cx = getChunkCoord(x);
-		cy = getChunkCoord(y);
-	}
 	inline static int getChunkCoord(float x)
 	{
 		return getChunkCoord((int)x);

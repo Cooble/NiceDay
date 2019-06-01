@@ -32,9 +32,9 @@ namespace NDUtil
 
 	template <class T>
 	FifoList<T>::FifoList(int size)
-		:m_head(0),m_size(0),m_max_size(size),m_src(new T[size])
+		:m_head(0), m_size(0), m_max_size(size), m_src(new T[size])
 	{
-		
+
 	}
 
 	template <class T>
@@ -46,7 +46,7 @@ namespace NDUtil
 	template <class T>
 	void FifoList<T>::push(const T& v)
 	{
-		if(m_head==m_max_size)
+		if (m_head == m_max_size)
 		{
 
 			T* newRay = new T[m_max_size * 2];
@@ -59,7 +59,7 @@ namespace NDUtil
 			//memcpy
 		}
 		m_src[m_head] = v;
-		
+
 		++m_head;
 		++m_size;
 
@@ -102,6 +102,7 @@ struct half_int
 			uint16_t y;//msb
 		};
 	};
+	half_int(){}
 	half_int(int in) :i(in) {}
 	half_int(int xx, int yy) :x((short)xx), y((short)yy) {}
 	half_int plus(half_int v) const
@@ -114,3 +115,72 @@ struct half_int
 	}
 
 };
+struct Vector2D
+{
+	float x, y;
+	Vector2D()
+		:x(0), y(0)
+	{}
+	Vector2D(float v)
+		:x(v), y(v)
+	{}
+	Vector2D(float xx, float yy)
+		:x(xx), y(yy)
+	{}
+
+	
+	inline Vector2D operator+(const Vector2D& vector) const
+	{
+		return { x + vector.x,y + vector.y };
+	}
+	inline Vector2D operator-(const Vector2D& vector) const
+	{
+		return { x - vector.x,y - vector.y };
+	}
+	inline Vector2D operator*(const Vector2D& vector) const
+	{
+		return { x * vector.x,y * vector.y };
+	}
+	inline Vector2D operator/(const Vector2D& vector) const
+	{
+		return { x / vector.x,y / vector.y };
+	}
+
+	inline float length() const
+	{
+		return std::sqrt(x * x + y * y);
+	}
+	inline float lengthSquared() const
+	{
+		return x * x + y * y;
+	}
+	inline void plus(const Vector2D& vector)
+	{
+		x += vector.x;
+		y += vector.y;
+	}
+	inline void minus(const Vector2D& vector)
+	{
+		x -= vector.x;
+		y -= vector.y;
+	}
+	inline void multiply(const Vector2D& vector)
+	{
+		x *= vector.x;
+		y *= vector.y;
+	}
+	inline void divide(const Vector2D& vector)
+	{
+		x /= vector.x;
+		y /= vector.y;
+	}
+
+};
+inline bool operator==(const Vector2D& f0, const Vector2D& f1)
+{
+	return f0.x == f1.x&&f0.y == f1.y;
+}
+inline bool operator!=(const Vector2D& f0, const Vector2D& f1)
+{
+	return !(f0 == f1);
+}

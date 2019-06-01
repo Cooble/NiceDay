@@ -1292,6 +1292,8 @@
       <Filter>src\world</Filter>
     </ClInclude>
     <ClInclude Include="src\world\block\basic_walls.h" />
+    <ClInclude Include="src\world\entity\WorldEntity.h" />
+    <ClInclude Include="src\world\entity\ICollidable.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\EntryPoint.cpp">
@@ -1418,5 +1420,7 @@
       <Filter>src\world</Filter>
     </ClCompile>
     <ClCompile Include="src\world\block\basic_walls.cpp" />
+    <ClCompile Include="src\world\entity\WorldEntity.cpp" />
+    <ClCompile Include="src\world\entity\ICollidable.cpp" />
   </ItemGroup>
 </Project>

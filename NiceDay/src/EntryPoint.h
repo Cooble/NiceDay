@@ -2,9 +2,36 @@
 #include "ndpch.h"
 #include "Game.h"
 
+#include <bitset>
+#include <climits>
+
+/*template<typename T>
+void show_binrep(const T& a)
+{
+	const char* beg = reinterpret_cast<const char*>(&a);
+	const char* end = beg + sizeof(a);
+	while (beg != end)
+		std::cout << std::bitset<CHAR_BIT>(*beg++) << ' ';
+	std::cout << '\n';
+}*/
+
+void show_binrep(const char& a)
+{
+	ND_INFO((int)a);
+	const char* beg = reinterpret_cast<const char*>(&a);
+	const char* end = beg + sizeof(a);
+	while (beg != end)
+		std::cout << std::bitset<CHAR_BIT>(*beg++) << ' ';
+	std::cout << '\n';
+}
 
 int main()
 {
+	Log::Init();
+
+
+	
+
 	/*NDUtil::FifoList<int> list(2);
 
 	list.push(1);
@@ -28,7 +55,6 @@ int main()
 
 
 	
-	Log::Init();	
 	Game game;
 	game.init();
 	game.start();

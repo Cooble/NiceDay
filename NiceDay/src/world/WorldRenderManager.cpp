@@ -154,11 +154,13 @@ float minim(float f0, float f1)
 		return f0;
 	return f1;
 }
+
 inline float narrowFunc(float f)
 {
 	return std::clamp((f - 0.5f) * 2 + 0.5f, 0.0f, 1.0f);
 
 }
+
 BiomeDistances calculateBiomeDistances(Camera* cam, World* w)
 {
 	int cx = (int)cam->getPosition().x >> WORLD_CHUNK_BIT_SIZE;
@@ -196,6 +198,7 @@ BiomeDistances calculateBiomeDistances(Camera* cam, World* w)
 	}
 	return out;
 }
+
 void WorldRenderManager::onUpdate()
 {
 	auto cx = round(m_camera->getPosition().x / WORLD_CHUNK_SIZE) - m_chunk_width / 2;
@@ -508,10 +511,10 @@ void WorldRenderManager::renderMainLightMap()
 	m_light_texture->bind(0);
 	m_light_VAO->bind();
 
-	glEnable(GL_FRAMEBUFFER_SRGB);
+	//glEnable(GL_FRAMEBUFFER_SRGB);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA);
 	Call(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
 	glDisable(GL_BLEND);
-	glDisable(GL_FRAMEBUFFER_SRGB);
+	//glDisable(GL_FRAMEBUFFER_SRGB);
 }
