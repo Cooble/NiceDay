@@ -26,6 +26,7 @@ private:
 	bool m_dirty;//if this flag is set in next update chunk graphics will be reloaded into chunkrenderer
 	friend class World;
 	friend class WorldIO::Session;
+	friend class WorldGen;
 	int m_biome;
 
 public:

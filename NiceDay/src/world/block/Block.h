@@ -1,89 +1,46 @@
 #pragma once
 #include "ndpch.h"
-
-/*
-#define BLOCK_STATE_FULL				0
+//STATES=========================================================
+//is air counterclockwise start from up(=lsb) (up left down right)
+constexpr int BLOCK_STATE_FULL = 0;
 //		  ______________
 //		 <              >
 //		 >			    <
 //		 <\/\/\/\/\/\/\/>
 //
-#define BLOCK_STATE_LINE_UP				1
-#define BLOCK_STATE_LINE_DOWN			2
-#define BLOCK_STATE_LINE_LEFT			3
-#define BLOCK_STATE_LINE_RIGHT			4
+constexpr int BLOCK_STATE_LINE_UP = BIT(0);
+constexpr int BLOCK_STATE_LINE_DOWN = BIT(2);
+constexpr int BLOCK_STATE_LINE_LEFT = BIT(1);
+constexpr int BLOCK_STATE_LINE_RIGHT = BIT(3);
 
 //     ____
 //    |      \     
 //    |		    \
 //    |__________|
 //
-#define BLOCK_STATE_CORNER_UP_LEFT		5
-#define BLOCK_STATE_CORNER_UP_RIGHT		6
-#define BLOCK_STATE_CORNER_DOWN_LEFT	7
-#define BLOCK_STATE_CORNER_DOWN_RIGHT	8
+constexpr int BLOCK_STATE_CORNER_UP_LEFT = (BLOCK_STATE_LINE_UP | BLOCK_STATE_LINE_LEFT);
+constexpr int BLOCK_STATE_CORNER_UP_RIGHT = (BLOCK_STATE_LINE_UP | BLOCK_STATE_LINE_RIGHT);
+constexpr int BLOCK_STATE_CORNER_DOWN_LEFT = (BLOCK_STATE_LINE_DOWN | BLOCK_STATE_LINE_LEFT);
+constexpr int BLOCK_STATE_CORNER_DOWN_RIGHT = (BLOCK_STATE_LINE_DOWN | BLOCK_STATE_LINE_RIGHT);
 
-#define BLOCK_STATE_BIT					9
+constexpr int BLOCK_STATE_BIT = (BLOCK_STATE_CORNER_UP_LEFT | BLOCK_STATE_CORNER_DOWN_RIGHT);
 //		  ______________
 //		 <              >
 //		 >			    <
 //		 <______________>
 //
-#define BLOCK_STATE_LINE_HORIZONTAL		10
-#define BLOCK_STATE_LINE_VERTICAL		11
+constexpr int BLOCK_STATE_LINE_HORIZONTAL = (BLOCK_STATE_LINE_UP | BLOCK_STATE_LINE_DOWN);
+constexpr int BLOCK_STATE_LINE_VERTICAL = (BLOCK_STATE_LINE_LEFT | BLOCK_STATE_LINE_RIGHT);
 
 //______________
 //              \
 //				|
 //______________/
 //
-#define BLOCK_STATE_LINE_END_UP			12
-#define BLOCK_STATE_LINE_END_LEFT		13
-#define BLOCK_STATE_LINE_END_DOWN		14
-#define BLOCK_STATE_LINE_END_RIGHT		15
-*/
-
-//MASKS=================================================
-//is air counterclockwise start from up (up left down right)
-#define BLOCK_STATE_FULL				0
-//		  ______________
-//		 <              >
-//		 >			    <
-//		 <\/\/\/\/\/\/\/>
-//
-#define BLOCK_STATE_LINE_UP				BIT(0)
-#define BLOCK_STATE_LINE_DOWN			BIT(2)
-#define BLOCK_STATE_LINE_LEFT			BIT(1)
-#define BLOCK_STATE_LINE_RIGHT			BIT(3)
-
-//     ____
-//    |      \     
-//    |		    \
-//    |__________|
-//
-#define BLOCK_STATE_CORNER_UP_LEFT		(BLOCK_STATE_LINE_UP | BLOCK_STATE_LINE_LEFT)
-#define BLOCK_STATE_CORNER_UP_RIGHT		(BLOCK_STATE_LINE_UP | BLOCK_STATE_LINE_RIGHT)
-#define BLOCK_STATE_CORNER_DOWN_LEFT	(BLOCK_STATE_LINE_DOWN | BLOCK_STATE_LINE_LEFT)
-#define BLOCK_STATE_CORNER_DOWN_RIGHT	(BLOCK_STATE_LINE_DOWN | BLOCK_STATE_LINE_RIGHT)
-
-#define BLOCK_STATE_BIT					(BLOCK_STATE_CORNER_UP_LEFT | BLOCK_STATE_CORNER_DOWN_RIGHT)
-//		  ______________
-//		 <              >
-//		 >			    <
-//		 <______________>
-//
-#define BLOCK_STATE_LINE_HORIZONTAL		(BLOCK_STATE_LINE_UP | BLOCK_STATE_LINE_DOWN)
-#define BLOCK_STATE_LINE_VERTICAL		(BLOCK_STATE_LINE_LEFT | BLOCK_STATE_LINE_RIGHT)
-
-//______________
-//              \
-//				|
-//______________/
-//
-#define BLOCK_STATE_LINE_END_UP			(BLOCK_STATE_LINE_VERTICAL | BLOCK_STATE_LINE_UP)
-#define BLOCK_STATE_LINE_END_LEFT		(BLOCK_STATE_LINE_HORIZONTAL | BLOCK_STATE_LINE_LEFT)
-#define BLOCK_STATE_LINE_END_DOWN		(BLOCK_STATE_LINE_VERTICAL | BLOCK_STATE_LINE_DOWN)
-#define BLOCK_STATE_LINE_END_RIGHT		(BLOCK_STATE_LINE_HORIZONTAL | BLOCK_STATE_LINE_RIGHT)
+constexpr int BLOCK_STATE_LINE_END_UP = (BLOCK_STATE_LINE_VERTICAL | BLOCK_STATE_LINE_UP);
+constexpr int BLOCK_STATE_LINE_END_LEFT = (BLOCK_STATE_LINE_HORIZONTAL | BLOCK_STATE_LINE_LEFT);
+constexpr int BLOCK_STATE_LINE_END_DOWN = (BLOCK_STATE_LINE_VERTICAL | BLOCK_STATE_LINE_DOWN);
+constexpr int BLOCK_STATE_LINE_END_RIGHT = (BLOCK_STATE_LINE_HORIZONTAL | BLOCK_STATE_LINE_RIGHT);
 
 struct BlockStruct {
 
@@ -176,6 +133,8 @@ public:
 
 	//returns true if this block was changed as well
 	virtual bool onNeighbourBlockChange(World* world, int x, int y) const;
+
+	virtual void onBlockPlaced(World* w, int x, int y, BlockStruct& b) const {}
 
 #ifdef ND_DEBUG
 	inline virtual std::string toString() const { return "UNDEFINED_BLOCK"; }

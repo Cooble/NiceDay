@@ -102,7 +102,6 @@ void WorldGen::gen(int seed, World* w, Chunk& c)
 				block.block_id = BLOCK_STONE;
 				block.setWall(WALL_STONE);
 			}
-			block.setCustomBit(true);
 		}
 	}
 	//update block states

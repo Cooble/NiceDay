@@ -151,16 +151,14 @@
     <ClInclude Include="src\event\KeyEvent.h" />
     <ClInclude Include="src\event\MouseEvent.h" />
     <ClInclude Include="src\event\WindowEvent.h" />
-    <ClInclude Include="src\graphics\Program.h" />
     <ClInclude Include="src\graphics\Renderable2D.h" />
     <ClInclude Include="src\graphics\Renderer.h" />
+    <ClInclude Include="src\graphics\Shader.h" />
     <ClInclude Include="src\graphics\Sprite2D.h" />
     <ClInclude Include="src\graphics\Texture.h" />
+    <ClInclude Include="src\graphics\buffer\Buffer.h" />
     <ClInclude Include="src\graphics\buffer\FrameBuffer.h" />
-    <ClInclude Include="src\graphics\buffer\IndexBuffer.h" />
     <ClInclude Include="src\graphics\buffer\VertexArray.h" />
-    <ClInclude Include="src\graphics\buffer\VertexBuffer.h" />
-    <ClInclude Include="src\graphics\buffer\VertexBufferLayout.h" />
     <ClInclude Include="src\layer\ImGuiLayer.h" />
     <ClInclude Include="src\layer\Layer.h" />
     <ClInclude Include="src\layer\LayerStack.h" />
@@ -168,15 +166,15 @@
     <ClInclude Include="src\layer\WorldLayer.h" />
     <ClInclude Include="src\layer\imguiplotvar.h" />
     <ClInclude Include="src\ndpch.h" />
-    <ClInclude Include="src\world\block\basic_walls.h" />
-    <ClInclude Include="src\world\block\block_datas.h" />
+    <ClInclude Include="src\platform\OpenGL\OpenGLBuffer.h" />
+    <ClInclude Include="src\platform\OpenGL\OpenGLFrameBuffer.h" />
+    <ClInclude Include="src\platform\OpenGL\OpenGLVertexArray.h" />
     <ClInclude Include="src\world\ChunkLoader.h" />
     <ClInclude Include="src\world\ChunkMesh.h" />
-    <ClInclude Include="src\world\entity\ICollidable.h" />
     <ClInclude Include="src\world\ITickable.h" />
     <ClInclude Include="src\world\LightCalculator.h" />
     <ClInclude Include="src\world\World.h" />
-    <ClInclude Include="src\world\entity\WorldEntity.h" />
+    <ClInclude Include="src\world\WorldGen.h" />
     <ClInclude Include="src\world\WorldIO.h" />
     <ClInclude Include="src\world\WorldRenderManager.h" />
     <ClInclude Include="src\world\biome\Biome.h" />
@@ -188,6 +186,9 @@
     <ClInclude Include="src\world\block\Block.h" />
     <ClInclude Include="src\world\block\BlockRegistry.h" />
     <ClInclude Include="src\world\block\basic_blocks.h" />
+    <ClInclude Include="src\world\block\basic_walls.h" />
+    <ClInclude Include="src\world\block\block_datas.h" />
+    <ClInclude Include="src\world\entity\WorldEntity.h" />
     <ClInclude Include="vendor\glm\glm\common.hpp" />
     <ClInclude Include="vendor\glm\glm\detail\_features.hpp" />
     <ClInclude Include="vendor\glm\glm\detail\_fixes.hpp" />
@@ -562,15 +563,13 @@
     <ClCompile Include="src\State.cpp" />
     <ClCompile Include="src\Window.cpp" />
     <ClCompile Include="src\entity\Camera.cpp" />
-    <ClCompile Include="src\graphics\Program.cpp" />
     <ClCompile Include="src\graphics\Renderer.cpp" />
+    <ClCompile Include="src\graphics\Shader.cpp" />
     <ClCompile Include="src\graphics\Sprite2D.cpp" />
     <ClCompile Include="src\graphics\Texture.cpp" />
+    <ClCompile Include="src\graphics\buffer\Buffer.cpp" />
     <ClCompile Include="src\graphics\buffer\FrameBuffer.cpp" />
-    <ClCompile Include="src\graphics\buffer\IndexBuffer.cpp" />
     <ClCompile Include="src\graphics\buffer\VertexArray.cpp" />
-    <ClCompile Include="src\graphics\buffer\VertexBuffer.cpp" />
-    <ClCompile Include="src\graphics\buffer\VertexBufferLayout.cpp" />
     <ClCompile Include="src\layer\ImGuiBuild.cpp" />
     <ClCompile Include="src\layer\ImGuiLayer.cpp" />
     <ClCompile Include="src\layer\Layer.cpp" />
@@ -582,13 +581,14 @@
     <ClCompile Include="src\ndpch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="src\world\block\basic_walls.cpp" />
+    <ClCompile Include="src\platform\OpenGL\OpenGLBuffer.cpp" />
+    <ClCompile Include="src\platform\OpenGL\OpenGLFrameBuffer.cpp" />
+    <ClCompile Include="src\platform\OpenGL\OpenGLVertexArray.cpp" />
     <ClCompile Include="src\world\ChunkLoader.cpp" />
     <ClCompile Include="src\world\ChunkMesh.cpp" />
-    <ClCompile Include="src\world\entity\ICollidable.cpp" />
     <ClCompile Include="src\world\LightCalculator.cpp" />
     <ClCompile Include="src\world\World.cpp" />
-    <ClCompile Include="src\world\entity\WorldEntity.cpp" />
+    <ClCompile Include="src\world\WorldGen.cpp" />
     <ClCompile Include="src\world\WorldIO.cpp" />
     <ClCompile Include="src\world\WorldRenderManager.cpp" />
     <ClCompile Include="src\world\biome\Biome.cpp" />
@@ -600,6 +600,8 @@
     <ClCompile Include="src\world\block\Block.cpp" />
     <ClCompile Include="src\world\block\BlockRegistry.cpp" />
     <ClCompile Include="src\world\block\basic_blocks.cpp" />
+    <ClCompile Include="src\world\block\basic_walls.cpp" />
+    <ClCompile Include="src\world\entity\WorldEntity.cpp" />
     <ClCompile Include="vendor\stb_image\stb_image.cpp" />
   </ItemGroup>
   <ItemGroup>

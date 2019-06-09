@@ -19,6 +19,12 @@
     <Filter Include="src\layer">
       <UniqueIdentifier>{D9A595B5-4510-4A2C-8E4E-FBD1FAF72781}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\platform">
+      <UniqueIdentifier>{41663D6D-2DC9-CC11-D64E-05C8C2909894}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\platform\OpenGL">
+      <UniqueIdentifier>{555C82A0-C1BD-5FAE-4A2B-A660B68B966D}</UniqueIdentifier>
+    </Filter>
     <Filter Include="src\world">
       <UniqueIdentifier>{C44364B6-30AE-182D-79EC-C9D2E595F681}</UniqueIdentifier>
     </Filter>
@@ -27,6 +33,9 @@
     </Filter>
     <Filter Include="src\world\block">
       <UniqueIdentifier>{FEFBADD3-6A87-1B98-7398-9E8CDFA27798}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\world\entity">
+      <UniqueIdentifier>{B0FF9350-9CF8-B2A2-C52A-9827B18292AE}</UniqueIdentifier>
     </Filter>
     <Filter Include="vendor">
       <UniqueIdentifier>{B3738122-9F15-ACF8-88D0-BF4C74113349}</UniqueIdentifier>
@@ -96,13 +105,13 @@
     <ClInclude Include="src\event\WindowEvent.h">
       <Filter>src\event</Filter>
     </ClInclude>
-    <ClInclude Include="src\graphics\Program.h">
-      <Filter>src\graphics</Filter>
-    </ClInclude>
     <ClInclude Include="src\graphics\Renderable2D.h">
       <Filter>src\graphics</Filter>
     </ClInclude>
     <ClInclude Include="src\graphics\Renderer.h">
+      <Filter>src\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\graphics\Shader.h">
       <Filter>src\graphics</Filter>
     </ClInclude>
     <ClInclude Include="src\graphics\Sprite2D.h">
@@ -111,19 +120,13 @@
     <ClInclude Include="src\graphics\Texture.h">
       <Filter>src\graphics</Filter>
     </ClInclude>
+    <ClInclude Include="src\graphics\buffer\Buffer.h">
+      <Filter>src\graphics\buffer</Filter>
+    </ClInclude>
     <ClInclude Include="src\graphics\buffer\FrameBuffer.h">
       <Filter>src\graphics\buffer</Filter>
     </ClInclude>
-    <ClInclude Include="src\graphics\buffer\IndexBuffer.h">
-      <Filter>src\graphics\buffer</Filter>
-    </ClInclude>
     <ClInclude Include="src\graphics\buffer\VertexArray.h">
-      <Filter>src\graphics\buffer</Filter>
-    </ClInclude>
-    <ClInclude Include="src\graphics\buffer\VertexBuffer.h">
-      <Filter>src\graphics\buffer</Filter>
-    </ClInclude>
-    <ClInclude Include="src\graphics\buffer\VertexBufferLayout.h">
       <Filter>src\graphics\buffer</Filter>
     </ClInclude>
     <ClInclude Include="src\layer\ImGuiLayer.h">
@@ -147,7 +150,19 @@
     <ClInclude Include="src\ndpch.h">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="src\platform\OpenGL\OpenGLBuffer.h">
+      <Filter>src\platform\OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="src\platform\OpenGL\OpenGLFrameBuffer.h">
+      <Filter>src\platform\OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="src\platform\OpenGL\OpenGLVertexArray.h">
+      <Filter>src\platform\OpenGL</Filter>
+    </ClInclude>
     <ClInclude Include="src\world\ChunkLoader.h">
+      <Filter>src\world</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world\ChunkMesh.h">
       <Filter>src\world</Filter>
     </ClInclude>
     <ClInclude Include="src\world\ITickable.h">
@@ -157,6 +172,9 @@
       <Filter>src\world</Filter>
     </ClInclude>
     <ClInclude Include="src\world\World.h">
+      <Filter>src\world</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world\WorldGen.h">
       <Filter>src\world</Filter>
     </ClInclude>
     <ClInclude Include="src\world\WorldIO.h">
@@ -191,6 +209,15 @@
     </ClInclude>
     <ClInclude Include="src\world\block\basic_blocks.h">
       <Filter>src\world\block</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world\block\basic_walls.h">
+      <Filter>src\world\block</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world\block\block_datas.h">
+      <Filter>src\world\block</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world\entity\WorldEntity.h">
+      <Filter>src\world\entity</Filter>
     </ClInclude>
     <ClInclude Include="vendor\glm\glm\common.hpp">
       <Filter>vendor\glm\glm</Filter>
@@ -1287,13 +1314,6 @@
     <ClInclude Include="vendor\stb_image\stb_image.h">
       <Filter>vendor\stb_image</Filter>
     </ClInclude>
-    <ClInclude Include="src\world\block\block_datas.h" />
-    <ClInclude Include="src\world\ChunkMesh.h">
-      <Filter>src\world</Filter>
-    </ClInclude>
-    <ClInclude Include="src\world\block\basic_walls.h" />
-    <ClInclude Include="src\world\entity\WorldEntity.h" />
-    <ClInclude Include="src\world\entity\ICollidable.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\EntryPoint.cpp">
@@ -1317,10 +1337,10 @@
     <ClCompile Include="src\entity\Camera.cpp">
       <Filter>src\entity</Filter>
     </ClCompile>
-    <ClCompile Include="src\graphics\Program.cpp">
+    <ClCompile Include="src\graphics\Renderer.cpp">
       <Filter>src\graphics</Filter>
     </ClCompile>
-    <ClCompile Include="src\graphics\Renderer.cpp">
+    <ClCompile Include="src\graphics\Shader.cpp">
       <Filter>src\graphics</Filter>
     </ClCompile>
     <ClCompile Include="src\graphics\Sprite2D.cpp">
@@ -1329,19 +1349,13 @@
     <ClCompile Include="src\graphics\Texture.cpp">
       <Filter>src\graphics</Filter>
     </ClCompile>
+    <ClCompile Include="src\graphics\buffer\Buffer.cpp">
+      <Filter>src\graphics\buffer</Filter>
+    </ClCompile>
     <ClCompile Include="src\graphics\buffer\FrameBuffer.cpp">
       <Filter>src\graphics\buffer</Filter>
     </ClCompile>
-    <ClCompile Include="src\graphics\buffer\IndexBuffer.cpp">
-      <Filter>src\graphics\buffer</Filter>
-    </ClCompile>
     <ClCompile Include="src\graphics\buffer\VertexArray.cpp">
-      <Filter>src\graphics\buffer</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\buffer\VertexBuffer.cpp">
-      <Filter>src\graphics\buffer</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\buffer\VertexBufferLayout.cpp">
       <Filter>src\graphics\buffer</Filter>
     </ClCompile>
     <ClCompile Include="src\layer\ImGuiBuild.cpp">
@@ -1371,13 +1385,28 @@
     <ClCompile Include="src\ndpch.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\platform\OpenGL\OpenGLBuffer.cpp">
+      <Filter>src\platform\OpenGL</Filter>
+    </ClCompile>
+    <ClCompile Include="src\platform\OpenGL\OpenGLFrameBuffer.cpp">
+      <Filter>src\platform\OpenGL</Filter>
+    </ClCompile>
+    <ClCompile Include="src\platform\OpenGL\OpenGLVertexArray.cpp">
+      <Filter>src\platform\OpenGL</Filter>
+    </ClCompile>
     <ClCompile Include="src\world\ChunkLoader.cpp">
+      <Filter>src\world</Filter>
+    </ClCompile>
+    <ClCompile Include="src\world\ChunkMesh.cpp">
       <Filter>src\world</Filter>
     </ClCompile>
     <ClCompile Include="src\world\LightCalculator.cpp">
       <Filter>src\world</Filter>
     </ClCompile>
     <ClCompile Include="src\world\World.cpp">
+      <Filter>src\world</Filter>
+    </ClCompile>
+    <ClCompile Include="src\world\WorldGen.cpp">
       <Filter>src\world</Filter>
     </ClCompile>
     <ClCompile Include="src\world\WorldIO.cpp">
@@ -1413,14 +1442,14 @@
     <ClCompile Include="src\world\block\basic_blocks.cpp">
       <Filter>src\world\block</Filter>
     </ClCompile>
+    <ClCompile Include="src\world\block\basic_walls.cpp">
+      <Filter>src\world\block</Filter>
+    </ClCompile>
+    <ClCompile Include="src\world\entity\WorldEntity.cpp">
+      <Filter>src\world\entity</Filter>
+    </ClCompile>
     <ClCompile Include="vendor\stb_image\stb_image.cpp">
       <Filter>vendor\stb_image</Filter>
     </ClCompile>
-    <ClCompile Include="src\world\ChunkMesh.cpp">
-      <Filter>src\world</Filter>
-    </ClCompile>
-    <ClCompile Include="src\world\block\basic_walls.cpp" />
-    <ClCompile Include="src\world\entity\WorldEntity.cpp" />
-    <ClCompile Include="src\world\entity\ICollidable.cpp" />
   </ItemGroup>
 </Project>
