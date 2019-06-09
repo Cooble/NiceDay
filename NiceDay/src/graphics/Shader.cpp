@@ -1,6 +1,7 @@
 #include "ndpch.h"
-#include "Program.h"
+#include "Shader.h"
 #include "Renderer.h"
+#include <glad/glad.h>
 
 
 
@@ -21,7 +22,7 @@ static void shaderTypeToString(unsigned int t)
 }
 
 
-static Program::ShaderProgramSources parseShader(const std::string &file_path) {
+static Shader::ShaderProgramSources parseShader(const std::string &file_path) {
 	s_current_file = file_path.c_str();
 	std::ifstream stream(file_path);
 
@@ -80,7 +81,7 @@ static unsigned int compileShader(unsigned int type, const std::string& src) {
 	return id;
 }
 
-static unsigned int buildProgram(const Program::ShaderProgramSources& src) {
+static unsigned int buildProgram(const Shader::ShaderProgramSources& src) {
 	Call(unsigned int program = glCreateProgram());
 	unsigned int vs = compileShader(GL_VERTEX_SHADER, src.vertexSrc);
 	unsigned int fs = compileShader(GL_FRAGMENT_SHADER, src.fragmentSrc);
@@ -106,53 +107,53 @@ static unsigned int buildProgram(const Program::ShaderProgramSources& src) {
 	return program;
 }
 
-Program::Program(const Program::ShaderProgramSources& src) :m_id(0) {
+Shader::Shader(const Shader::ShaderProgramSources& src) :m_id(0) {
 	m_id = buildProgram(src);
 }
 
-Program::Program(const std::string &file_path) : m_id(0) {
-	Program::ShaderProgramSources& s = parseShader(file_path);
+Shader::Shader(const std::string &file_path) : m_id(0) {
+	Shader::ShaderProgramSources& s = parseShader(file_path);
 	m_id = buildProgram(s);
 }
 
-void Program::bind() const {
+void Shader::bind() const {
 	Call(glUseProgram(m_id));
 }
 
-void Program::unbind() const {
+void Shader::unbind() const {
 	glUseProgram(0);
 }
 
-void Program::setUniformMat4(const std::string& name, glm::mat4 matrix)
+void Shader::setUniformMat4(const std::string& name, glm::mat4 matrix)
 {
 	glUniformMatrix4fv(getUniformLocation(name), 1, false, glm::value_ptr(matrix));
 }
 
-void Program::setUniform4f(const std::string& name, float f0, float f1, float f2, float f3)
+void Shader::setUniform4f(const std::string& name, float f0, float f1, float f2, float f3)
 {
 	glUniform4f(getUniformLocation(name), f0, f1, f2, f3);
 }
-void Program::setUniformVec4f(const std::string& name, glm::vec4 vec) {
+void Shader::setUniformVec4f(const std::string& name, glm::vec4 vec) {
 	setUniform4f(name, vec[0], vec[1], vec[2], vec[3]);
 }
 
 
-void Program::setUniform1f(const std::string & name, float f0)
+void Shader::setUniform1f(const std::string & name, float f0)
 {
 	glUniform1f(getUniformLocation(name), f0);
 }
-void Program::setUniform2f(const std::string & name, float f0, float f1)
+void Shader::setUniform2f(const std::string & name, float f0, float f1)
 {
 	glUniform2f(getUniformLocation(name), f0, f1);
 }
 
-void Program::setUniform1i(const std::string & name, int v)
+void Shader::setUniform1i(const std::string & name, int v)
 {
 	glUniform1i(getUniformLocation(name), v);
 
 }
 
-int Program::getUniformLocation(const std::string& name)
+int Shader::getUniformLocation(const std::string& name)
 {
 	if (cache.find(name) != cache.end()) {
 		return cache[name];
@@ -165,7 +166,7 @@ int Program::getUniformLocation(const std::string& name)
 	return out;
 }
 
-Program::~Program()
+Shader::~Shader()
 {
 	glDeleteProgram(m_id);
 }

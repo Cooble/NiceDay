@@ -17,6 +17,7 @@ constexpr int BLOCK_ADAMANTITE =	4;
 constexpr int BLOCK_PLATFORM =		5;
 constexpr int BLOCK_GRASS =			6;
 constexpr int BLOCK_GLASS =			7;
+constexpr int BLOCK_TORCH =			8;
 
 //=======================WALL IDs=======================
 
@@ -51,16 +52,34 @@ const half_int BLOCK_CORNERS_DIRT[16] = {
 	half_int(4,5),//03 BLOCK_STATE_CORNER_UP_LEFT
 	half_int(0,5),//04 BLOCK_STATE_LINE_DOWN
 	half_int(5,6),//05 BLOCK_STATE_LINE_HORIZONTAL
-	half_int(4,4),//06 BLOCK_STATE_CORNER_DOWN_LEFT
+	half_int(6,5),//06 BLOCK_STATE_CORNER_DOWN_LEFT
 	half_int(5,7),//07 BLOCK_STATE_LINE_END_LEFT
 	half_int(0,3),//08 BLOCK_STATE_LINE_RIGHT
 	half_int(5,5),//09 BLOCK_STATE_CORNER_UP_RIGHT
 	half_int(4,6),//10 BLOCK_STATE_LINE_VERTICAL
 	half_int(4,7),//11 BLOCK_STATE_LINE_END_UP
-	half_int(5,4),//12 BLOCK_STATE_CORNER_DOWN_RIGHT
+	half_int(7,5),//12 BLOCK_STATE_CORNER_DOWN_RIGHT
 	half_int(7,7),//13 BLOCK_STATE_LINE_END_RIGHT
 	half_int(6,7),//14 BLOCK_STATE_LINE_END_DOWN
 	half_int(0,7),//15 BLOCK_STATE_BIT
+};
+const half_int BLOCK_CORNERS_GLASS[16] = {
+	half_int(0,0),//00 BLOCK_STATE_FULL
+	half_int(2,6),//01 BLOCK_STATE_LINE_UP
+	half_int(2,4),//02 BLOCK_STATE_LINE_LEFT
+	half_int(4,2),//03 BLOCK_STATE_CORNER_UP_LEFT
+	half_int(2,5),//04 BLOCK_STATE_LINE_DOWN
+	half_int(5,3),//05 BLOCK_STATE_LINE_HORIZONTAL
+	half_int(6,2),//06 BLOCK_STATE_CORNER_DOWN_LEFT
+	half_int(5,4),//07 BLOCK_STATE_LINE_END_LEFT
+	half_int(2,3),//08 BLOCK_STATE_LINE_RIGHT
+	half_int(5,2),//09 BLOCK_STATE_CORNER_UP_RIGHT
+	half_int(4,3),//10 BLOCK_STATE_LINE_VERTICAL
+	half_int(4,4),//11 BLOCK_STATE_LINE_END_UP
+	half_int(7,2),//12 BLOCK_STATE_CORNER_DOWN_RIGHT
+	half_int(7,4),//13 BLOCK_STATE_LINE_END_RIGHT
+	half_int(6,4),//14 BLOCK_STATE_LINE_END_DOWN
+	half_int(2,7),//15 BLOCK_STATE_BIT
 };
 const half_int WALL_CORNERS_DIRT[16] = {
 	half_int(0,0),//00 BLOCK_STATE_FULL

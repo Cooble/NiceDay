@@ -40,7 +40,7 @@ struct StructChunkID
 class WorldRenderManager
 {
 private:
-	Program* m_sky_program;
+	Shader* m_sky_program;
 
 	//whole_screen_quad
 	VertexArray* m_full_screen_quad_VAO;
@@ -60,8 +60,8 @@ private:
 	Texture* m_light_texture;
 	Texture* m_light_simple_texture;
 
-	Program* m_light_program;
-	Program* m_light_simple_program;
+	Shader* m_light_program;
+	Shader* m_light_simple_program;
 
 	VertexBuffer* m_light_VBO;
 	VertexArray* m_light_VAO;

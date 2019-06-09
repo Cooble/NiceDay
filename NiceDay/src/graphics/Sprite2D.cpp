@@ -4,7 +4,7 @@
 
 VertexBuffer* Sprite2D::s_vbo=nullptr;
 VertexArray* Sprite2D::s_vao;
-Program* Sprite2D::s_program;
+Shader* Sprite2D::s_program;
 
 void Sprite2D::init()//todo dont forget to destruct
 {
@@ -16,13 +16,13 @@ void Sprite2D::init()//todo dont forget to destruct
 		0, 0,
 		0, 1,
 	};
-	s_vbo = new VertexBuffer(quad, sizeof(quad));
+	s_vbo = VertexBuffer::create(quad, sizeof(quad),GL_STATIC_DRAW);
 	VertexBufferLayout l;
 	l.push<float>(2);
-	s_vao = new VertexArray();
+	s_vao = VertexArray::create();
 	s_vao->addBuffer(*s_vbo, l);
 
-	s_program = new Program("res/shaders/Sprite2D.shader");
+	s_program = new Shader("res/shaders/Sprite2D.shader");
 	s_program->bind();
 	s_program->setUniform1i("u_texture", 0);
 	s_program->unbind();

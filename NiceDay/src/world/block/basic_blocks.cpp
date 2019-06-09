@@ -2,6 +2,7 @@
 #include "basic_blocks.h"
 #include "world/World.h"
 #include "block_datas.h"
+#include "entity/Camera.h"
 
 //AIR=======================================
 BlockAir::BlockAir()
@@ -28,6 +29,7 @@ BlockStone::BlockStone()
 	m_corner_translate_array = BLOCK_CORNERS_DIRT;
 	m_block_connect_group = BIT(BLOCK_GROUP_DIRT_BIT);
 }
+
 
 //DIRT========================================
 BlockDirt::BlockDirt()
@@ -133,6 +135,9 @@ bool BlockGrass::onNeighbourBlockChange(World* world, int x, int y) const
 	BlockStruct& block = world->editBlock(x, y);
 	int lastid = block.block_id;
 	int lastCorner = block.block_corner;
+	bool custombit = (lastCorner&BIT(4)) != 0;//perserve custombit
+	block.block_corner &= ~BIT(4);
+
 	Block::onNeighbourBlockChange(world, x, y);//update corner state
 	if (block.block_corner == BLOCK_STATE_FULL
 		|| block.block_corner == BLOCK_STATE_LINE_DOWN
@@ -147,13 +152,13 @@ bool BlockGrass::onNeighbourBlockChange(World* world, int x, int y) const
 	}
 	else if (block.block_corner == BLOCK_STATE_CORNER_UP_LEFT
 		|| block.block_corner == BLOCK_STATE_LINE_END_LEFT)
-		block.block_metadata = half_int(std::rand() % 2, 12).i;
+		block.block_metadata = half_int(x&1, 12).i;
 	else if (block.block_corner == BLOCK_STATE_CORNER_UP_RIGHT
 		|| block.block_corner == BLOCK_STATE_LINE_END_RIGHT)
-		block.block_metadata = half_int(2 + std::rand() % 2, 12).i;
+		block.block_metadata = half_int((x&1)+2, 12).i;
 	else
 		block.block_metadata = half_int(x & 3, 13).i;
-
+	block.block_corner |= custombit << 4;//put back custombit
 	return lastCorner != block.block_corner || lastid != block.block_id;//we have a change (or not)
 
 }
@@ -165,7 +170,7 @@ BlockGlass::BlockGlass()
 {
 	m_opacity = 0.05f;
 	m_texture_pos = { 0,14 };
-	m_corner_translate_array = BLOCK_CORNERS_DIRT;
+	m_corner_translate_array = BLOCK_CORNERS_GLASS;
 
 }
 
@@ -182,3 +187,77 @@ bool BlockGlass::onNeighbourBlockChange(World* world, int x, int y) const
 	e.block_metadata &= 3;
 	return c;
 }
+
+
+//up 0 left 1 down 2 right 3
+BlockTorch::BlockTorch()
+: Block(BLOCK_TORCH)
+{
+	m_opacity = 0.05f;
+
+}
+
+int BlockTorch::getTextureOffset(int x, int y, const BlockStruct& b) const
+{
+	return half_int(b.block_corner, 11).i;
+}
+
+int BlockTorch::getCornerOffset(int x, int y, const BlockStruct&) const
+{
+	return 0;
+}
+bool BlockTorch::isInTorchGroup(World* world, int x, int y) const
+{
+	int id = BLOCK_AIR;
+	auto p = world->getLoadedBlockPointer(x, y);
+	if (p)
+		id = p->block_id;
+	
+	return id != BLOCK_TORCH && id != BLOCK_AIR;
+}
+bool BlockTorch::onNeighbourBlockChange(World* world, int x, int y) const
+{
+	BlockStruct& s = world->editBlock(x, y);
+	int lastCorner = s.block_corner;
+	
+	int mask = 0;
+	mask |= (isInTorchGroup(world, x - 1, y) & 1) << 0;
+	mask |= (isInTorchGroup(world, x, y - 1) & 1) << 1;
+	mask |= (isInTorchGroup(world, x + 1, y) & 1) << 2;
+	mask |= (!s.isWallFree()) << 3;//can be placed on wall
+
+	if ((BIT(lastCorner)&mask)==0)
+	{
+		if((mask&BIT(0))!=0)
+		{
+			s.block_corner = 0;
+		}
+		else if ((mask&BIT(1)) != 0)
+		{
+			s.block_corner = 1;
+		}
+		else if ((mask&BIT(2)) != 0)
+		{
+			s.block_corner = 2;
+		}
+		else if ((mask&BIT(3)) != 0)
+		{
+			s.block_corner = 3;
+		}
+		else
+		{
+			world->setBlock(x, y, BLOCK_AIR);//torch cannot float
+		}
+	}
+	return lastCorner != s.block_corner;
+}
+
+void BlockTorch::onBlockPlaced(World* w, int x, int y, BlockStruct& b) const
+{
+	auto c = new Camera();
+	c->setPosition(glm::vec2(x,y));
+	w->getLightCalculator().registerLight(c);//memory leak as fuck :D
+}
+
+
+

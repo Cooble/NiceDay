@@ -1,9 +1,9 @@
 #pragma once
 #include "ndpch.h"//todo add glm to ndpch
 
-#include "buffer/VertexBuffer.h"
+#include "buffer/Buffer.h"
 #include "buffer/VertexArray.h"
-#include "Program.h"
+#include "Shader.h"
 #include "Texture.h"
 
 class Sprite2D
@@ -11,12 +11,12 @@ class Sprite2D
 private:
 	static VertexBuffer* s_vbo;
 	static VertexArray* s_vao;
-	static Program* s_program;
+	static Shader* s_program;
 
 public:
 	
 	static void init();
-	static inline Program& getProgramStatic() { return *s_program; }
+	static inline Shader& getProgramStatic() { return *s_program; }
 	static inline VertexArray& getVAOStatic() { return *s_vao; }
 
 private:
@@ -37,7 +37,7 @@ public:
 	Sprite2D(const char* texture_path);
 	~Sprite2D();
 
-	inline Program& getProgram() { return *s_program; }
+	inline Shader& getProgram() { return *s_program; }
 	inline VertexArray& getVAO() { return *s_vao; }
 	inline void setModelMatrix(const glm::mat4& m)
 	{

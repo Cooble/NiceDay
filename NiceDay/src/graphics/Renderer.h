@@ -1,14 +1,14 @@
 #pragma once
 #include <glad/glad.h>
-#include <GLFW/glfw3.h>
 
 #include "buffer/VertexArray.h"
-#include "buffer/IndexBuffer.h"
 #include "Sprite2D.h"
 
-#include "Program.h"
+#include "Shader.h"
 #ifndef LOADED_CALL_G
 
+class IndexBuffer;
+class VertexBuffer;
 //this enables glGetError()
 
 void checkGLError(int line, const char* method_name, const char* file);
@@ -26,18 +26,29 @@ void checkGLError(int line, const char* method_name, const char* file);
 #endif // LOADED_CALL_G
 
 	
-
+enum class GraphicsAPI
+{
+	None =0,
+	OpenGL,
+	Direct3D
+	
+};
 
 
 
 class Renderer
 {
+private:
+	static GraphicsAPI s_api;
 public:
+	inline static GraphicsAPI getAPI()
+	{
+		return s_api;
+	}
 	Renderer();
 	~Renderer();
 
-	void draw(const VertexArray& vao, const Program& shader, const IndexBuffer& ibo);
+	void draw(const VertexArray& vao, const Shader& shader, const IndexBuffer& ibo);
 	void draw(glm::mat4 trans,Sprite2D& sprite);
 	void clear();
 };
-

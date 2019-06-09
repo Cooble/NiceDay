@@ -1,5 +1,5 @@
 ﻿#pragma once
-#include "Block.h"
+#include "Block.h" 
 
 class BlockAir:public Block
 {
@@ -58,5 +58,15 @@ public:
 	int getTextureOffset(int x, int y, const BlockStruct&) const override;
 	bool onNeighbourBlockChange(World* world, int x, int y) const override;
 	TO_STRING(BlockGlass)
-	//bool onNeighbourBlockChange(World* world, int x, int y) const override;
+};
+class BlockTorch :public Block
+{
+public:
+	BlockTorch();
+	TO_STRING(BlockTorch)
+	int getTextureOffset(int x, int y, const BlockStruct&) const override;
+	int getCornerOffset(int x, int y, const BlockStruct&) const override;
+	bool isInTorchGroup(World* world, int x, int y)const;
+	bool onNeighbourBlockChange(World* world, int x, int y) const override;
+	void onBlockPlaced(World* w, int x, int y, BlockStruct& b) const override;
 };

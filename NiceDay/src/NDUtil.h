@@ -26,15 +26,12 @@ namespace NDUtil
 		inline int getSize() const { return m_size; }
 		inline bool empty() const { return getSize() == 0; }
 		void clear();
-
-
 	};
 
 	template <class T>
 	FifoList<T>::FifoList(int size)
-		:m_head(0), m_size(0), m_max_size(size), m_src(new T[size])
+		: m_head(0), m_size(0), m_max_size(size), m_src(new T[size])
 	{
-
 	}
 
 	template <class T>
@@ -48,9 +45,8 @@ namespace NDUtil
 	{
 		if (m_head == m_max_size)
 		{
-
 			T* newRay = new T[m_max_size * 2];
-			memcpy(newRay, m_src, sizeof(T)*m_max_size);
+			memcpy(newRay, m_src, sizeof(T) * m_max_size);
 
 			delete[] m_src;
 			m_src = newRay;
@@ -62,8 +58,6 @@ namespace NDUtil
 
 		++m_head;
 		++m_size;
-
-
 	}
 
 	template <class T>
@@ -89,98 +83,260 @@ namespace NDUtil
 		m_head = 0;
 		m_size = 0;
 	}
-
 }
+
 struct half_int
 {
 	union
 	{
 		uint32_t i;
+
 		struct
 		{
-			uint16_t x;//lsb
-			uint16_t y;//msb
+			uint16_t x; //lsb
+			uint16_t y; //msb
 		};
 	};
-	half_int(){}
-	half_int(int in) :i(in) {}
-	half_int(int xx, int yy) :x((short)xx), y((short)yy) {}
+
+	half_int()
+	{
+	}
+
+	half_int(int in) : i(in)
+	{
+	}
+
+	half_int(int xx, int yy) : x((short)xx), y((short)yy)
+	{
+	}
+
 	half_int plus(half_int v) const
 	{
 		return half_int(x + v.x, y + v.y);
 	}
+
 	half_int operator+(half_int v) const
 	{
 		return plus(v);
 	}
-
 };
+
 struct Vector2D
 {
 	float x, y;
-	Vector2D()
-		:x(0), y(0)
-	{}
-	Vector2D(float v)
-		:x(v), y(v)
-	{}
-	Vector2D(float xx, float yy)
-		:x(xx), y(yy)
-	{}
 
-	
+	Vector2D()
+		: x(0), y(0)
+	{
+	}
+
+	Vector2D(float v)
+		: x(v), y(v)
+	{
+	}
+
+	Vector2D(float xx, float yy)
+		: x(xx), y(yy)
+	{
+	}
+
+
 	inline Vector2D operator+(const Vector2D& vector) const
 	{
-		return { x + vector.x,y + vector.y };
+		return {x + vector.x, y + vector.y};
 	}
+
 	inline Vector2D operator-(const Vector2D& vector) const
 	{
-		return { x - vector.x,y - vector.y };
+		return {x - vector.x, y - vector.y};
 	}
+
 	inline Vector2D operator*(const Vector2D& vector) const
 	{
-		return { x * vector.x,y * vector.y };
+		return {x * vector.x, y * vector.y};
 	}
+
 	inline Vector2D operator/(const Vector2D& vector) const
 	{
-		return { x / vector.x,y / vector.y };
+		return {x / vector.x, y / vector.y};
 	}
 
 	inline float length() const
 	{
 		return std::sqrt(x * x + y * y);
 	}
+
 	inline float lengthSquared() const
 	{
 		return x * x + y * y;
 	}
+
+
 	inline void plus(const Vector2D& vector)
 	{
 		x += vector.x;
 		y += vector.y;
 	}
+
 	inline void minus(const Vector2D& vector)
 	{
 		x -= vector.x;
 		y -= vector.y;
 	}
+
 	inline void multiply(const Vector2D& vector)
 	{
 		x *= vector.x;
 		y *= vector.y;
 	}
+
 	inline void divide(const Vector2D& vector)
 	{
 		x /= vector.x;
 		y /= vector.y;
 	}
-
 };
+
 inline bool operator==(const Vector2D& f0, const Vector2D& f1)
 {
-	return f0.x == f1.x&&f0.y == f1.y;
+	return f0.x == f1.x && f0.y == f1.y;
 }
+
 inline bool operator!=(const Vector2D& f0, const Vector2D& f1)
 {
 	return !(f0 == f1);
 }
+
+struct iVec2D
+{
+	int x, y;
+
+	iVec2D()
+		: x(0), y(0)
+	{
+	}
+
+	iVec2D(int v)
+		: x(v), y(v)
+	{
+	}
+
+	iVec2D(int xx, int yy)
+		: x(xx), y(yy)
+	{
+	}
+
+
+	inline iVec2D operator+(const iVec2D& vector) const
+	{
+		return { x + vector.x, y + vector.y };
+	}
+
+	inline iVec2D operator-(const iVec2D& vector) const
+	{
+		return { x - vector.x, y - vector.y };
+	}
+
+	inline iVec2D operator*(const iVec2D& vector) const
+	{
+		return { x * vector.x, y * vector.y };
+	}
+
+	inline iVec2D operator/(const iVec2D& vector) const
+	{
+		return { x / vector.x, y / vector.y };
+	}
+
+	inline int length() const
+	{
+		return abs(x)+abs(y);
+	}
+
+	inline void plus(const iVec2D& vector)
+	{
+		x += vector.x;
+		y += vector.y;
+	}
+
+	inline void minus(const iVec2D& vector)
+	{
+		x -= vector.x;
+		y -= vector.y;
+	}
+
+	inline void multiply(const iVec2D& vector)
+	{
+		x *= vector.x;
+		y *= vector.y;
+	}
+
+	inline void divide(const iVec2D& vector)
+	{
+		x /= vector.x;
+		y /= vector.y;
+	}
+};
+
+inline bool operator==(const iVec2D& f0, const iVec2D& f1)
+{
+	return f0.x == f1.x && f0.y == f1.y;
+}
+
+inline bool operator!=(const iVec2D& f0, const iVec2D& f1)
+{
+	return !(f0 == f1);
+}
+
+struct Rect
+{
+private:
+	inline bool collideInner(const Rect& r) const {
+		return
+			contains({ r.x, r.y }) ||
+			contains({ r.x +r.w, r.y }) ||
+			contains({ r.x, r.y +r.h}) ||
+			contains({ r.x +r.w, r.y +r.h});
+	}
+public:
+	union
+	{
+		Vector2D pos;
+		struct
+		{
+		float x, y;
+		};
+	};
+	union
+	{
+		Vector2D size;
+		struct
+		{
+			float w, h;
+		};
+	};
+
+	Rect(float x, float y, float width, float height)
+		: pos({x, y}), size({width,height})
+	{
+	}
+	Rect(const Vector2D& pos,const Vector2D& size)
+		: pos(pos), size(size)
+	{
+	}
+	inline bool contains(const Vector2D& p)  const {
+
+		return p.x >= x && p.x <= x + w && p.y >= y && p.y <= y + h;
+	}
+	inline bool collides(const Rect& rec) const
+	{
+		return collideInner(rec) || rec.collideInner(*this);
+	}
+
+};
+template <typename T>
+constexpr T ipow(T num, unsigned int pow)
+{
+	return (pow >= sizeof(unsigned int) * 8) ? 0 :
+		pow == 0 ? 1 : num * ipow(num, pow - 1);
+}
+

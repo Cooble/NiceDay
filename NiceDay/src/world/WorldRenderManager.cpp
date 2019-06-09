@@ -18,15 +18,15 @@ WorldRenderManager::WorldRenderManager(Camera* cam, World* world)
 	m_camera(cam)
 {
 	//setup sky
-	m_sky_program = new Program("res/shaders/Sky.shader");
+	m_sky_program = new Shader("res/shaders/Sky.shader");
 
 	//setup bg
-	m_bg_FBO = new FrameBuffer();
-	m_bg_layer_FBO = new FrameBuffer();
+	m_bg_FBO = FrameBuffer::create();
+	m_bg_layer_FBO = FrameBuffer::create();
 
 	//setup main light texture
-	m_light_frame_FBO = new FrameBuffer();
-	m_light_program = new Program("res/shaders/Light.shader");
+	m_light_frame_FBO = FrameBuffer::create();
+	m_light_program = new Shader("res/shaders/Light.shader");
 	m_light_program->bind();
 	m_light_program->setUniform1i("u_texture", 0);
 	m_light_program->unbind();
@@ -36,14 +36,14 @@ WorldRenderManager::WorldRenderManager(Camera* cam, World* world)
 		0,0,
 		0,1,
 	};
-	m_light_VBO = new VertexBuffer(quad, sizeof(quad));
+	m_light_VBO = VertexBuffer::create(quad, sizeof(quad),GL_STATIC_DRAW);
 	VertexBufferLayout l;
 	l.push<float>(2);
-	m_light_VAO = new VertexArray();
+	m_light_VAO = VertexArray::create();
 	m_light_VAO->addBuffer(*m_light_VBO, l);
 
 	//setup simple light texture
-	m_light_simple_program = new Program("res/shaders/LightTexturePiece.shader");
+	m_light_simple_program = new Shader("res/shaders/LightTexturePiece.shader");
 	m_light_simple_program->bind();
 	m_light_simple_program->setUniform1i("u_texture", 0);
 	m_light_simple_program->unbind();
@@ -54,8 +54,8 @@ WorldRenderManager::WorldRenderManager(Camera* cam, World* world)
 		-1, 1,
 
 	};
-	m_full_screen_quad_VBO = new VertexBuffer(simpleQuad, sizeof(simpleQuad));
-	m_full_screen_quad_VAO = new VertexArray();
+	m_full_screen_quad_VBO = VertexBuffer::create(simpleQuad, sizeof(simpleQuad), GL_STATIC_DRAW);
+	m_full_screen_quad_VAO = VertexArray::create();
 	m_full_screen_quad_VAO->addBuffer(*m_full_screen_quad_VBO, l);
 	onScreenResize();
 }
@@ -174,7 +174,8 @@ BiomeDistances calculateBiomeDistances(Camera* cam, World* w)
 			if (c == nullptr)
 				continue;
 			int biome = c->getBiome();
-			float length = glm::length(cam->getPosition() - glm::vec2((cx + x + 0.5f)*WORLD_CHUNK_SIZE, (cy + y + 0.5f)*WORLD_CHUNK_SIZE));
+
+			float length = glm::length(cam->getPosition() - glm::vec2((cx + x + 0.5f)*WORLD_CHUNK_SIZE, (cy + y + 0.5f)*WORLD_CHUNK_SIZE));//todo this seems fishy
 			if (length <= WORLD_CHUNK_SIZE)//we care only about close chunks radius of chunks is 
 				map[biome] = minim(map.find(biome) != map.end() ? map[biome] : 100000, length / (WORLD_CHUNK_SIZE));
 		}
@@ -511,10 +512,10 @@ void WorldRenderManager::renderMainLightMap()
 	m_light_texture->bind(0);
 	m_light_VAO->bind();
 
-	//glEnable(GL_FRAMEBUFFER_SRGB);
+	glEnable(GL_FRAMEBUFFER_SRGB);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA);
 	Call(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
 	glDisable(GL_BLEND);
-	//glDisable(GL_FRAMEBUFFER_SRGB);
+	glDisable(GL_FRAMEBUFFER_SRGB);
 }

@@ -12,7 +12,7 @@ VertexBufferLayout ChunkMesh::s_pos_layout;
 VertexBufferLayout ChunkMesh::s_offset_buffer_layout;
 VertexBuffer* ChunkMesh::s_position_vbo;
 VertexBuffer* ChunkMesh::s_wall_position_vbo;
-Program* ChunkMesh::s_program;
+Shader* ChunkMesh::s_program;
 Texture* ChunkMesh::s_texture;
 Texture* ChunkMesh::s_texture_corners;
 
@@ -30,7 +30,7 @@ void ChunkMesh::init()
 		s_texture = new Texture(info.path("res/images/atlas/newatlas.png").filterMode(GL_NEAREST));
 		s_texture_corners = new Texture(info.path("res/images/atlas/corners.png"));
 
-		s_program = new Program("res/shaders/Chunk.shader");
+		s_program = new Shader("res/shaders/Chunk.shader");
 		s_program->bind();
 		s_program->setUniform1i("u_texture", 0);
 		s_program->setUniform1i("u_corners", 1);
@@ -52,7 +52,7 @@ void ChunkMesh::init()
 				*(float*)(&ray[(y * WORLD_CHUNK_SIZE + x) * 2 * sizeof(float) + sizeof(float)]) = (float)y;
 			}
 		}
-		s_position_vbo = new VertexBuffer(ray, WORLD_CHUNK_AREA * 2 * sizeof(float));
+		s_position_vbo = VertexBuffer::create(ray, WORLD_CHUNK_AREA * 2 * sizeof(float), GL_STATIC_DRAW);
 
 		//wall pos
 		for (int y = 0; y < WORLD_CHUNK_SIZE * 2; y++) {
@@ -62,7 +62,7 @@ void ChunkMesh::init()
 				*(float*)(&ray[(y * WORLD_CHUNK_SIZE * 2 + x) * 2 * sizeof(float) + sizeof(float)]) = (float)y;
 			}
 		}
-		s_wall_position_vbo = new VertexBuffer(ray, WORLD_CHUNK_AREA * 4 * 2 * sizeof(float));
+		s_wall_position_vbo = VertexBuffer::create(ray, WORLD_CHUNK_AREA * 4 * 2 * sizeof(float), GL_STATIC_DRAW);
 
 		delete[] ray;
 
@@ -72,6 +72,7 @@ void ChunkMesh::init()
 
 ChunkMeshInstance::ChunkMeshInstance() :m_enabled(false)
 {
+	m_light_cache = new uint8_t[WORLD_CHUNK_AREA];
 	const int BUFF_SIZE = WORLD_CHUNK_AREA * sizeof(int) * 2;
 	const int WALL_BUFF_SIZE = WORLD_CHUNK_AREA * sizeof(int) * 2 * 4;
 	m_buff = new char[BUFF_SIZE];
@@ -79,14 +80,14 @@ ChunkMeshInstance::ChunkMeshInstance() :m_enabled(false)
 	m_wall_buff = new char[WALL_BUFF_SIZE];
 	memset(m_wall_buff, 0, WALL_BUFF_SIZE);
 
-	m_vao = new VertexArray();
-	m_vbo = new VertexBuffer(m_buff, BUFF_SIZE, true);
+	m_vao = VertexArray::create();
+	m_vbo = VertexBuffer::create(m_buff, BUFF_SIZE, GL_DYNAMIC_DRAW);
 
 	m_vao->addBuffer(*ChunkMesh::getVBO(), ChunkMesh::getPosLayout());
 	m_vao->addBuffer(*m_vbo, ChunkMesh::getOffsetLayout());
 
-	m_wall_vao = new VertexArray();
-	m_wall_vbo = new VertexBuffer(m_wall_buff, WALL_BUFF_SIZE, true);
+	m_wall_vao = VertexArray::create();
+	m_wall_vbo = VertexBuffer::create(m_wall_buff, WALL_BUFF_SIZE, GL_DYNAMIC_DRAW);
 
 	m_wall_vao->addBuffer(*ChunkMesh::getWallVBO(), ChunkMesh::getPosLayout());
 	m_wall_vao->addBuffer(*m_wall_vbo, ChunkMesh::getOffsetLayout());
@@ -132,6 +133,7 @@ void ChunkMeshInstance::updateMesh(const World& world, const Chunk& chunk)
 
 ChunkMeshInstance::~ChunkMeshInstance()
 {
+	delete[] m_light_cache;
 	delete m_vao;
 	delete[] m_buff;
 	delete m_vbo;

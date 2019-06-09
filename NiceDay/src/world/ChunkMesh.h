@@ -1,10 +1,9 @@
 #pragma once
 #include "ndpch.h"
 #include  "world/World.h"
-#include "graphics/Program.h"
+#include "graphics/Shader.h"
 #include "graphics/Texture.h"
-#include "graphics/buffer/VertexBufferLayout.h"
-#include "graphics/buffer/VertexBuffer.h"
+#include "graphics/buffer/Buffer.h"
 #include "graphics/buffer/VertexArray.h"
 
 constexpr unsigned int BLOCK_TEXTURE_ATLAS_SIZE =16;//icons in row
@@ -31,7 +30,7 @@ private:
 	static VertexBuffer* s_position_vbo;
 	static VertexBuffer* s_wall_position_vbo;
 	
-	static Program* s_program;
+	static Shader* s_program;
 	
 	static Texture* s_texture;
 	static Texture* s_texture_corners;
@@ -40,7 +39,7 @@ public:
 	static void init();
 	static inline const VertexBufferLayout& getPosLayout() { return s_pos_layout; }
 	static inline const VertexBufferLayout& getOffsetLayout() { return s_offset_buffer_layout; }
-	static inline Program* getProgram() { return s_program; }
+	static inline Shader* getProgram() { return s_program; }
 	static inline VertexBuffer* getVBO() { return s_position_vbo; }
 	static inline VertexBuffer* getWallVBO() { return s_wall_position_vbo; }
 	static inline Texture* getAtlas() { return s_texture; }
@@ -53,6 +52,8 @@ public:
 class ChunkMeshInstance
 {
 private:
+	uint8_t* m_light_cache;
+
 	VertexArray* m_vao;
 	VertexArray* m_wall_vao;
 	VertexBuffer* m_vbo;
@@ -70,6 +71,7 @@ public:
 	inline glm::vec2& getPos() { return m_pos; }
 	inline VertexArray& getVAO() { return *m_vao; }
 	inline VertexArray& getWallVAO() { return *m_wall_vao; }
+	inline uint8_t* getLightCache() { return m_light_cache; }
 
 	~ChunkMeshInstance();
 

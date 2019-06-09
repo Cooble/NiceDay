@@ -4,6 +4,8 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+GraphicsAPI Renderer::s_api = GraphicsAPI::OpenGL;
+
 void checkGLError(int line, const char* method_name, const char* file) {
 	while (auto e = glGetError() != GL_NO_ERROR) {
 		ND_ERROR("[OpenGL Error]: {}, {},	Line: {}, File: {} ", (GLenum)e, method_name, line, file);
@@ -15,7 +17,7 @@ Renderer::Renderer() = default;
 
 Renderer::~Renderer()= default;
 
-void Renderer::draw(const VertexArray& vao, const Program& shader, const IndexBuffer& ibo)
+void Renderer::draw(const VertexArray& vao, const Shader& shader, const IndexBuffer& ibo)
 {
 	vao.bind();
 	shader.bind();

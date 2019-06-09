@@ -1,13 +1,12 @@
 #pragma once
 
 #include "ndpch.h"
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
+
 
 #define BREAK_IF_SHADER_COMPILE_ERROR 1
 
 static const char* s_current_file="null";
-class Program
+class Shader
 {
 private:
 	unsigned int m_id;
@@ -23,9 +22,9 @@ public:
 			:vertexSrc(vertex), fragmentSrc(fragment),geometrySrc(geometry) {}
 
 	};
-	Program(const ShaderProgramSources& src);
-	Program(const std::string &file_path);
-	~Program();
+	Shader(const ShaderProgramSources& src);
+	Shader(const std::string &file_path);
+	~Shader();
 
 	void bind() const;
 	void unbind() const;

@@ -9,6 +9,7 @@ class Biome
 {
 private:
 	const int m_id;
+
 protected:
 	Sprite2D** m_sprites;
 	int m_sprites_size;
