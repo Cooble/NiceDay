@@ -13,7 +13,7 @@ const glm::vec2& Camera::getPosition() const
 	return m_position;
 }
 
-int Camera::getChunkRadius() const
+half_int Camera::getChunkRadius() const
 {
 	return m_chunk_radius;
 }

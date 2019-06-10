@@ -121,6 +121,15 @@ struct half_int
 	}
 };
 
+inline bool operator!=(const half_int& f0, const half_int& f1)
+{
+	return !(f0.i == f1.i);
+}
+inline bool operator==(const half_int& f0, const half_int& f1)
+{
+	return f0.i == f1.i;
+}
+
 struct Vector2D
 {
 	float x, y;

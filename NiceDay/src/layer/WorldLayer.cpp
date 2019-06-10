@@ -62,14 +62,13 @@ WorldLayer::WorldLayer()
 	info.terrain_level = (info.chunk_height - 2)*WORLD_CHUNK_SIZE;
 
 
-	bool genW = false;
+	bool genW = true;
 
 
 	if (genW) {
 		auto stream = WorldIO::Session(info.world_name + ".world", true, true);
 		m_world = stream.genWorldFile(info);
 		stream.close();
-		m_world->genWorld(info.seed);
 	}
 	else
 	{
@@ -87,7 +86,7 @@ WorldLayer::WorldLayer()
 	m_cam = new Camera();
 	glm::vec2 po = { m_world->getInfo().chunk_width*WORLD_CHUNK_SIZE / 2,m_world->getInfo().terrain_level };
 	m_cam->setPosition(po);
-	m_cam->setChunkRadius(4);
+	m_cam->setChunkRadius({4,3});
 
 	m_chunk_loader->registerEntity(dynamic_cast<IChunkLoaderEntity*>(m_cam));
 	m_chunk_loader->onUpdate();
@@ -112,6 +111,7 @@ void WorldLayer::onAttach()
 }
 void WorldLayer::onDetach()
 {
+	m_world->getLightCalculator().stop();
 	m_chunk_loader->clearEntities();
 	m_chunk_loader->onUpdate();//this will unload all chunks
 
@@ -144,11 +144,9 @@ void WorldLayer::onUpdate()
 
 	if (m_world->isValidBlock(CURSOR_X, CURSOR_Y))
 	{
-
-	}
 	CURRENT_BLOCK = &m_world->getBlock(CURSOR_X, CURSOR_Y);
 	CURRENT_BLOCK_ID = BlockRegistry::get().getBlock(m_world->getBlock(CURSOR_X, CURSOR_Y).block_id).toString();
-
+	}
 
 	if (Game::get().getInput().isMousePressed(GLFW_MOUSE_BUTTON_1))
 		if (BLOCK_OR_WALL_SELECTED) {
@@ -240,6 +238,8 @@ void WorldLayer::onImGuiRender()
 		if (!l) m_world->getLightCalculator().run();
 		else m_world->getLightCalculator().stop();
 	}
+	if(Stats::light_enable)
+		ImGui::PlotVar("Light millis", Stats::light_millis);
 	ImGui::Checkbox(Stats::move_through_blocks_enable ? "Move through Blocks Enabled" : "Move through Blocks Disabled", &Stats::move_through_blocks_enable);
 	l = BLOCK_OR_WALL_SELECTED;
 	ImGui::Checkbox(BLOCK_OR_WALL_SELECTED ? "BLOCK mode" : "WALL mode", &BLOCK_OR_WALL_SELECTED);
@@ -256,7 +256,8 @@ void WorldLayer::onImGuiRender()
 	ImGui::Text("Cam Y: %.2f", CAM_POS_Y);
 	ImGui::Text("Cursor X: %.2f", CURSOR_X);
 	ImGui::Text("Cursor y: %.2f", CURSOR_Y);
-	if (CURRENT_BLOCK) {
+	if (auto current = m_world->getLoadedBlockPointer(CURSOR_X, CURSOR_Y)) {
+		CURRENT_BLOCK = current;
 		ImGui::Text("Current Block: %s (id: %d, corner: %d)", CURRENT_BLOCK_ID.c_str(), CURRENT_BLOCK->block_id, CURRENT_BLOCK->block_corner);
 		int wallid = CURRENT_BLOCK->wall_id[0];
 		if (!CURRENT_BLOCK->isWallOccupied())

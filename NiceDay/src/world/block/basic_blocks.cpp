@@ -75,6 +75,7 @@ BlockPlatform::BlockPlatform()
 {
 	m_block_connect_group = BIT(BLOCK_GROUP_PLATFORM_BIT);
 	m_texture_pos = { 0,15 };
+	m_opacity = 0.05f;
 }
 bool BlockPlatform::onNeighbourBlockChange(World* world, int x, int y) const
 {

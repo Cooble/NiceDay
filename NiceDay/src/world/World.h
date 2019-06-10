@@ -2,6 +2,7 @@
 #include "ndpch.h"
 #include "WorldIO.h"
 #include "LightCalculator.h"
+#include "WorldGen.h"
 #include "block/Block.h"
 
 #define CHUNK_NOT_EXIST -1
@@ -76,7 +77,9 @@ public:
 	}
 private:
 	friend class WorldIO::Session;
+	friend class WorldGen;
 	LightCalculator  m_light_calc;
+	WorldGen m_gen;
 	std::vector<Chunk> m_chunks;
 
 	WorldInfo m_info;
@@ -100,9 +103,8 @@ public:
 	inline bool isChunkLoaded(int x, int y) const { return m_local_offset_map.find(Chunk::getChunkIDFromChunkPos(x, y)) != m_local_offset_map.end(); }
 	void unloadChunk(Chunk&);
 	void unloadChunks(std::set<int>& chunk_ids);
+	void updateChunkBounds(int x, int y);
 	void loadChunks(std::set<int>& chunk_ids);
-	void saveChunks(std::set<int>& chunk_ids);
-	void saveChunk(Chunk&);
 
 	bool isValidBlock(int x, int y) const;
 
@@ -114,7 +116,6 @@ public:
 	};
 	//==============CHUNK METHODS========================================================================
 
-	void saveAllChunks();
 	Chunk& getChunk(int x, int y);
 
 	//return nullptr if chunk is not loaded or invalid coords 
@@ -171,4 +172,5 @@ public:
 	inline const std::string& getFilePath() const { return m_file_path; }
 
 };
+
 

@@ -1,21 +1,24 @@
 ﻿#include "ndpch.h"
 #include "LightCalculator.h"
 #include "World.h"
+#include "Stats.h"
 
-template<typename T>
-void clear(std::queue<T> &q)
+constexpr int DEFAULT_POS_LIST_SIZE = 500;
+
+template <typename T>
+void clear(std::queue<T>& q)
 {
 	std::queue<T> empty;
 	std::swap(q, empty);
 }
 
-struct Pos
-{
-	int x, y;
-};
-
 LightCalculator::LightCalculator(World* world)
-	:m_running(false), m_world(world),m_map(nullptr),m_done_map(nullptr)
+	: m_light_list0(DEFAULT_POS_LIST_SIZE),
+	  m_light_list1(DEFAULT_POS_LIST_SIZE),
+	  m_running(false),
+	  m_world(world),
+	  m_map(nullptr),
+	  m_done_map(nullptr)
 {
 }
 
@@ -26,8 +29,8 @@ LightCalculator::~LightCalculator()
 }
 
 
+void LightCalculator::registerLight(LightSource* light) { m_sources.push_back(light); }
 
-void LightCalculator::registerLight(LightSource* light){m_sources.push_back(light);}
 void LightCalculator::removeLight(LightSource* light)
 {
 	for (int i = 0; i < m_sources.size(); i++)
@@ -39,16 +42,19 @@ void LightCalculator::removeLight(LightSource* light)
 		}
 	}
 }
+
 void LightCalculator::setChunkOffset(int x, int y)
 {
 	m_chunk_offset_x = x;
 	m_chunk_offset_y = y;
 }
+
 void LightCalculator::setDimensions(int chunkWidth, int chunkHeight)
 {
 	m_chunk_width = chunkWidth;
 	m_chunk_height = chunkHeight;
 }
+
 void LightCalculator::snapshot()
 {
 	std::lock_guard<std::mutex> guard(m_snapshot_queue_mutex);
@@ -67,7 +73,7 @@ void LightCalculator::snapshot()
 	{
 		auto pos = light->getLightPosition();
 
-		snap.push_back({ light->getIntensity(), pos.first, pos.second });
+		snap.push_back({light->getIntensity(), pos.first, pos.second});
 	}
 	sn->offsetX = m_chunk_offset_x;
 	sn->offsetY = m_chunk_offset_y;
@@ -75,34 +81,35 @@ void LightCalculator::snapshot()
 	sn->chunkHeight = m_chunk_height;
 
 	m_snapshot_queue.push(sn);
-
 }
-
 
 
 //threading ==========================================================================
 void LightCalculator::run()
 {
 	std::thread t(&LightCalculator::runInner, this);
-	t.detach();//fly little birdie daemon, fly
+	t.detach(); //fly little birdie daemon, fly
 }
 
 void LightCalculator::runInner()
 {
 	m_running = true;
-	while (m_running) {
+	while (m_running)
+	{
 		if (m_chunk_width != m_snap_width || m_chunk_height != m_snap_height)
 		{
 			std::unique_lock<std::mutex> guard(m_snapshot_queue_mutex);
-			clear(m_snapshot_queue);//change in dimensions means throw away all previous snapshots
+			clear(m_snapshot_queue); //change in dimensions means throw away all previous snapshots
 			guard.unlock();
 			m_snap_width = m_chunk_width;
 			m_snap_height = m_chunk_height;
-			setDimensionsInner();//create new maps
+			setDimensionsInner(); //create new maps
 		}
 
 		if (!m_snapshot_queue.empty())
 		{
+			using namespace std::chrono;
+
 			//make copy of snapshot
 			//nobody will modify queue when I'm copying
 			std::unique_lock<std::mutex> guard(m_snapshot_queue_mutex);
@@ -112,6 +119,7 @@ void LightCalculator::runInner()
 			delete originalSnap;
 			guard.unlock();
 
+			auto last = system_clock::now();
 			computeLight(snap);
 
 			//swap buffers
@@ -119,9 +127,10 @@ void LightCalculator::runInner()
 			m_done_map = m_map;
 			m_map = t;
 			m_done_ch_offset = std::make_pair(snap.offsetX, snap.offsetY);
-			m_is_fresh_map = true;//notify that new map was rendered
+			m_is_fresh_map = true; //notify that new map was rendered
+			Stats::light_millis = duration_cast<milliseconds>(system_clock::now() - last).count();
 		}
-		std::this_thread::sleep_for(std::chrono::milliseconds(10));//take a nap
+		//std::this_thread::sleep_for(std::chrono::milliseconds(10));//take a nap. never:D
 	}
 }
 
@@ -144,15 +153,16 @@ void LightCalculator::computeLight(Snapshot& sn)
 {
 	const half minLevel = 0.05f;
 	const int defaultListSize = 500;
-	memset(m_map, 0, sn.chunkWidth*sn.chunkHeight*WORLD_CHUNK_AREA * sizeof(half));
+	memset(m_map, 0, sn.chunkWidth * sn.chunkHeight * WORLD_CHUNK_AREA * sizeof(half));
 
 	int blockOffsetX = sn.offsetX * WORLD_CHUNK_SIZE;
 	int blockOffsetY = sn.offsetY * WORLD_CHUNK_SIZE;
 
-	NDUtil::FifoList<Pos> list(defaultListSize);
-	NDUtil::FifoList<Pos> newList(defaultListSize);
-	auto current_list = &list;
-	auto new_list = &newList;
+	m_light_list0.clear();
+	m_light_list1.clear();
+
+	auto current_list = &m_light_list0;
+	auto new_list = &m_light_list1;
 
 	int maxX = m_chunk_width * WORLD_CHUNK_SIZE;
 	int maxY = m_chunk_height * WORLD_CHUNK_SIZE;
@@ -161,11 +171,12 @@ void LightCalculator::computeLight(Snapshot& sn)
 	for (auto& light : sn.data)
 	{
 		lightValue(light.x - blockOffsetX, light.y - blockOffsetY) = light.intensity;
-		current_list->push({ light.x - blockOffsetX, light.y - blockOffsetY });
+		current_list->push({light.x - blockOffsetX, light.y - blockOffsetY});
 	}
 
 	int runs = 0;
-	while (!current_list->empty()) {
+	while (!current_list->empty())
+	{
 		current_list->popMode();
 		while (!current_list->empty())
 		{
@@ -174,7 +185,8 @@ void LightCalculator::computeLight(Snapshot& sn)
 			int x = p.x;
 			int y = p.y;
 
-			half l = lightValue(x, y) - getBlockOpacity(x + blockOffsetX, y + blockOffsetY);
+		half l = lightValue(x, y) - getBlockOpacity(x + blockOffsetX, y + blockOffsetY);
+		//	half l = lightValue(x, y) - 0.05f;
 			if (l < minLevel)
 				continue;
 			half newLightPower = l;
@@ -184,9 +196,10 @@ void LightCalculator::computeLight(Snapshot& sn)
 			if (xm1 > 0)
 			{
 				half& v = lightValue(xm1, y);
-				if (v < newLightPower) {
+				if (v < newLightPower)
+				{
 					v = newLightPower;
-					new_list->push({ xm1, y });
+					new_list->push({xm1, y});
 				}
 			}
 			//down
@@ -194,9 +207,10 @@ void LightCalculator::computeLight(Snapshot& sn)
 			if (ym1 > 0)
 			{
 				half& v = lightValue(x, ym1);
-				if (v < newLightPower) {
+				if (v < newLightPower)
+				{
 					v = newLightPower;
-					new_list->push({ x, ym1 });
+					new_list->push({x, ym1});
 				}
 			}
 			//right
@@ -204,9 +218,10 @@ void LightCalculator::computeLight(Snapshot& sn)
 			if (x1 < maxX)
 			{
 				half& v = lightValue(x1, y);
-				if (v < newLightPower) {
+				if (v < newLightPower)
+				{
 					v = newLightPower;
-					new_list->push({ x1, y });
+					new_list->push({x1, y});
 				}
 			}
 			//up
@@ -214,9 +229,10 @@ void LightCalculator::computeLight(Snapshot& sn)
 			if (y1 < maxY)
 			{
 				half& v = lightValue(x, y1);
-				if (v < newLightPower) {
+				if (v < newLightPower)
+				{
 					v = newLightPower;
-					new_list->push({ x, y1 });
+					new_list->push({x, y1});
 				}
 			}
 		}
@@ -235,6 +251,6 @@ void LightCalculator::setDimensionsInner()
 	if (m_done_map)
 		delete[] m_done_map;
 
-	m_map = new half[m_snap_width*m_snap_height*WORLD_CHUNK_AREA];
-	m_done_map = new half[m_snap_width*m_snap_height*WORLD_CHUNK_AREA];
+	m_map = new half[m_snap_width * m_snap_height * WORLD_CHUNK_AREA];
+	m_done_map = new half[m_snap_width * m_snap_height * WORLD_CHUNK_AREA];
 }

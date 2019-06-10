@@ -12,7 +12,7 @@ protected:
 	//size of view
 	glm::vec2 m_dimension;
 
-	int m_chunk_radius;
+	half_int m_chunk_radius;
 
 public:
 	float m_light_intensity = 1.5f;
@@ -25,9 +25,9 @@ public:
 	}
 	inline float getIntensity() const override { return m_light_intensity; }
 	inline const glm::vec2& getPosition() const override;
-	inline int getChunkRadius() const override;
+	inline half_int getChunkRadius() const override;
 
-	inline void setChunkRadius(int rad) { m_chunk_radius = rad; }
+	inline void setChunkRadius(half_int rad) { m_chunk_radius = rad; }
 
 	inline void setPosition(const glm::vec2& vec) { m_position = vec; }
 

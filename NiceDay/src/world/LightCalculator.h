@@ -55,6 +55,14 @@ public:
 
 
 private:
+
+	struct Pos
+	{
+		int x, y;
+	};
+
+	NDUtil::FifoList<Pos> m_light_list0;
+	NDUtil::FifoList<Pos> m_light_list1;
 	volatile bool m_running=false;
 	volatile bool m_is_fresh_map=false;
 	struct LightData

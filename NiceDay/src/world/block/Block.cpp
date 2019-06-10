@@ -37,7 +37,7 @@ int Block::getCornerOffset(int x, int y, const BlockStruct& b) const
 
 bool Block::isInGroup(World* w, int x, int y, int group) const
 {
-	const BlockStruct* b = w->getBlockPointer(x, y);
+	const BlockStruct* b = w->getLoadedBlockPointer(x, y);
 	if (b)
 	{
 		auto& bl = BlockRegistry::get().getBlock(b->block_id);
@@ -90,7 +90,7 @@ int Wall::getCornerOffset(int wx, int wy, const BlockStruct& b) const
 
 static bool isWallFree(World* w, int x, int y)
 {
-	auto b = w->getBlockPointer(x, y);
+	auto b = w->getLoadedBlockPointer(x, y);
 	return b ? b->isWallFree() : false; //if we dont know we will assume is occupied
 }
 
@@ -136,55 +136,46 @@ void Wall::onNeighbourWallChange(World* w, int x, int y) const
 	const BlockStruct* b = nullptr;
 
 	//corner left up
-	b = w->getBlockPointer(x - 1, y + 1);
-	if (b)
+
+	if (isWallFree(w, x - 1, y + 1)
+		&& isWallFree(w, x - 1, y)
+		&& isWallFree(w, x, y + 1))
 	{
-		if (isWallFree(w, x - 1, y + 1)
-			&& w->getBlock(x - 1, y).isWallFree()
-			&& w->getBlock(x, y + 1).isWallFree())
-		{
-			BlockStruct& b = w->editBlock(x - 1, y + 1);
-			b.wall_id[1] = m_id;
-			b.wall_corner[1] = BLOCK_STATE_CORNER_UP_LEFT;
-		}
+		BlockStruct& b = w->editBlock(x - 1, y + 1);
+		b.wall_id[1] = m_id;
+		b.wall_corner[1] = BLOCK_STATE_CORNER_UP_LEFT;
 	}
+
 	//corner left down
-	b = w->getBlockPointer(x - 1, y - 1);
-	if (b)
+
+	if (isWallFree(w, x - 1, y - 1)
+		&& isWallFree(w, x - 1, y)
+		&& isWallFree(w, x, y - 1))
 	{
-		if (isWallFree(w, x - 1, y - 1)
-			&& w->getBlock(x - 1, y).isWallFree()
-			&& w->getBlock(x, y - 1).isWallFree())
-		{
-			BlockStruct& b = w->editBlock(x - 1, y - 1);
-			b.wall_id[3] = m_id;
-			b.wall_corner[3] = BLOCK_STATE_CORNER_DOWN_LEFT;
-		}
+		BlockStruct& b = w->editBlock(x - 1, y - 1);
+		b.wall_id[3] = m_id;
+		b.wall_corner[3] = BLOCK_STATE_CORNER_DOWN_LEFT;
 	}
+
 	//corner right up
-	b = w->getBlockPointer(x + 1, y + 1);
-	if (b)
+
+	if (isWallFree(w, x + 1, y + 1)
+		&& isWallFree(w, x + 1, y)
+		&& isWallFree(w, x, y + 1))
 	{
-		if (isWallFree(w, x + 1, y + 1)
-			&& w->getBlock(x + 1, y).isWallFree()
-			&& w->getBlock(x, y + 1).isWallFree())
-		{
-			BlockStruct& b = w->editBlock(x + 1, y + 1);
-			b.wall_id[0] = m_id;
-			b.wall_corner[0] = BLOCK_STATE_CORNER_UP_RIGHT;
-		}
+		BlockStruct& b = w->editBlock(x + 1, y + 1);
+		b.wall_id[0] = m_id;
+		b.wall_corner[0] = BLOCK_STATE_CORNER_UP_RIGHT;
 	}
+
 	//corner right down
-	b = w->getBlockPointer(x + 1, y - 1);
-	if (b)
+
+	if (isWallFree(w, x + 1, y - 1)
+		&& isWallFree(w, x + 1, y)
+		&& isWallFree(w, x, y - 1))
 	{
-		if (isWallFree(w, x + 1, y - 1)
-			&& w->getBlock(x + 1, y).isWallFree()
-			&& w->getBlock(x, y - 1).isWallFree())
-		{
-			BlockStruct& b = w->editBlock(x + 1, y - 1);
-			b.wall_id[2] = m_id;
-			b.wall_corner[2] = BLOCK_STATE_CORNER_DOWN_RIGHT;
-		}
+		BlockStruct& b = w->editBlock(x + 1, y - 1);
+		b.wall_id[2] = m_id;
+		b.wall_corner[2] = BLOCK_STATE_CORNER_DOWN_RIGHT;
 	}
 }

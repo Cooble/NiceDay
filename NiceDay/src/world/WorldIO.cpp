@@ -27,6 +27,8 @@ static bool checkDebugState(std::fstream* stream) {
 		ND_ERROR("WorldIO: failbit");
 		fv = true;
 	}
+	//if (fv)
+	//	ASSERT(false, "");
 	return fv;
 }
 

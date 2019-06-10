@@ -8,13 +8,13 @@ class IChunkLoaderEntity:public I2DLocalable
 public:
 	virtual ~IChunkLoaderEntity() = default;
 	/*Return 0 if no chunk should be updated*/
-	virtual int getChunkRadius() const = 0;
+	virtual half_int getChunkRadius() const = 0;
 };
 
 struct EntityWrapper{
 	IChunkLoaderEntity* e;
 	int last_chunk_id;
-	int last_chunk_radius;
+	half_int last_chunk_radius;
 
 
 };

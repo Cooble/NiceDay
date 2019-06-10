@@ -57,13 +57,14 @@ uint64_t nowTime() {
 
 void Game::start()
 {
+	using namespace std::chrono;
 	ND_TRACE("Game started");
 	m_running = true;
-	auto lastTime = std::chrono::system_clock::now();
+	auto lastTime =system_clock::now();
 	while (m_running) {
 		int over_millis = 1000 / m_target_tps;
-		auto now = std::chrono::system_clock::now();
-		if (std::chrono::duration_cast<std::chrono::milliseconds>(now - lastTime).count() > over_millis) {
+		auto now =system_clock::now();
+		if (duration_cast<milliseconds>(now - lastTime).count() > over_millis) {
 			lastTime = now;
 			update();
 		}
