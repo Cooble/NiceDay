@@ -139,8 +139,8 @@ void WorldLayer::onUpdate()
 	CURSOR_X = pair.first - Game::get().getWindow()->getWidth() / 2;
 	CURSOR_Y = -pair.second + Game::get().getWindow()->getHeight() / 2;
 
-	CURSOR_X = CURSOR_X / BLOCK_PIXEL_SIZE * 2 + m_cam->getPosition().x;
-	CURSOR_Y = CURSOR_Y / BLOCK_PIXEL_SIZE * 2 + m_cam->getPosition().y;
+	CURSOR_X = CURSOR_X / BLOCK_PIXEL_SIZE + m_cam->getPosition().x;
+	CURSOR_Y = CURSOR_Y / BLOCK_PIXEL_SIZE + m_cam->getPosition().y;
 
 	if (m_world->isValidBlock(CURSOR_X, CURSOR_Y))
 	{

@@ -7,6 +7,7 @@
 #include "graphics/buffer/FrameBuffer.h"
 #include "LightCalculator.h"
 #include "graphics/Sprite2D.h"
+#include "graphics/TestQuad.h"
 
 
 struct BiomeDistances
@@ -22,7 +23,7 @@ struct BiomeDistances
 		biomes[3] = -1;
 	}
 };
-const int BLOCK_PIXEL_SIZE = 32;//todo this is fishy blocks should be 16pixels in size on screen and 8pixels on texture
+const int BLOCK_PIXEL_SIZE = 16;//todo this is fishy blocks should be 16pixels in size on screen and 8pixels on texture
 struct StructChunkID
 {
 	union
@@ -40,6 +41,7 @@ struct StructChunkID
 class WorldRenderManager
 {
 private:
+	TestQuad* m_test_quad;
 	Shader* m_sky_program;
 
 	//whole_screen_quad

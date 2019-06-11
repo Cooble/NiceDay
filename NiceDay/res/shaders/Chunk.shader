@@ -30,12 +30,9 @@ out vec2 g_corner_uv_coords;
 
 uniform sampler2D u_texture;
 
-//2 to the n icons in atlas in row
-uniform int u_texture_atlas_width;
-uniform int u_corner_atlas_width;
+uniform int u_texture_atlas_width;//number if block icons in a row
+uniform int u_corner_atlas_width;//number if corner icons in a row
 uniform mat4 u_transform;
-//todo shader chnk
-
 
 void main() {
 	
@@ -89,7 +86,7 @@ void main() {
 uniform sampler2D u_texture;
 uniform sampler2D u_corners;
 uniform int u_texture_atlas_pixel_width;
-uniform int u_texture_atlas_width;
+//uniform int u_texture_atlas_width;//number of icons in a row
 uniform int u_texture_atlas_pixel_width_corner;
 
 

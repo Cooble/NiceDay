@@ -140,6 +140,7 @@
     <ClInclude Include="src\Core.h" />
     <ClInclude Include="src\EntryPoint.h" />
     <ClInclude Include="src\Game.h" />
+    <ClInclude Include="src\graphics\TestQuad.h" />
     <ClInclude Include="src\Input.h" />
     <ClInclude Include="src\Log.h" />
     <ClInclude Include="src\NDUtil.h" />
@@ -558,6 +559,7 @@
   <ItemGroup>
     <ClCompile Include="src\EntryPoint.cpp" />
     <ClCompile Include="src\Game.cpp" />
+    <ClCompile Include="src\graphics\TestQuad.cpp" />
     <ClCompile Include="src\Input.cpp" />
     <ClCompile Include="src\Log.cpp" />
     <ClCompile Include="src\State.cpp" />

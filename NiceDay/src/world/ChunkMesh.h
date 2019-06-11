@@ -8,8 +8,16 @@
 
 constexpr unsigned int BLOCK_TEXTURE_ATLAS_SIZE =16;//icons in row
 constexpr unsigned int BLOCK_CORNER_ATLAS_SIZE = 8;//icons in row
+
 constexpr unsigned int WALL_TEXTURE_ATLAS_SIZE = 16*2;//icons in row
 constexpr unsigned int WALL_CORNER_ATLAS_SIZE = 8*2;//icons in row
+
+constexpr unsigned int BLOCK_ATLAS_PIXEL_WIDTH = BLOCK_TEXTURE_ATLAS_SIZE * 8;//pixel width of texture (block is considered 8 pixels big)
+
+//1 over factor = ratio of bordercolor section to the whole block texture atlas
+constexpr unsigned int BORDER_COLOR_TRANSFORMATION_FACTOR = 4;//how much should i divide texture pos to get to the border color
+
+
 class Renderer;
 
 class ChunkMesh

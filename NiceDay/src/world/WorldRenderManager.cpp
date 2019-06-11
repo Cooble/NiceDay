@@ -17,6 +17,10 @@ WorldRenderManager::WorldRenderManager(Camera* cam, World* world)
 	m_world(world),
 	m_camera(cam)
 {
+	//test quad
+
+	m_test_quad = new TestQuad();
+
 	//setup sky
 	m_sky_program = new Shader("res/shaders/Sky.shader");
 
@@ -85,7 +89,7 @@ void WorldRenderManager::onScreenResize()
 
 	//build world view matrix
 	float ratioo = (float)Game::get().getWindow()->getHeight() / (float)Game::get().getWindow()->getWidth();
-	float chunkheightt = (float)BLOCK_PIXEL_SIZE / (float)Game::get().getWindow()->getHeight();
+	float chunkheightt =2* (float)BLOCK_PIXEL_SIZE / (float)Game::get().getWindow()->getHeight();//this 2 means view is from -1 to 1 and not from 0 to 1
 	m_proj_matrix = glm::scale(glm::mat4(1.0f), glm::vec3(ratioo*chunkheightt, chunkheightt, 1));
 
 	//refresh number of chunks 
@@ -330,8 +334,8 @@ void WorldRenderManager::renderBiomeBackgroundToFBO()
 	using namespace glm;
 
 	vec2 screenDim = vec2(Game::get().getWindow()->getWidth(), Game::get().getWindow()->getHeight());
-	vec2 lowerScreen = m_camera->getPosition() - ((screenDim / (float)BLOCK_PIXEL_SIZE) / 2.0f);
-	vec2 upperScreen = m_camera->getPosition() + ((screenDim / (float)BLOCK_PIXEL_SIZE) / 2.0f);
+	vec2 lowerScreen = m_camera->getPosition() - ((screenDim / (float)BLOCK_PIXEL_SIZE));
+	vec2 upperScreen = m_camera->getPosition() + ((screenDim / (float)BLOCK_PIXEL_SIZE));
 	screenDim = upperScreen - lowerScreen;
 
 	BiomeDistances distances = calculateBiomeDistances(m_camera, m_world);
@@ -459,7 +463,6 @@ void WorldRenderManager::render()
 		auto worldMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(
 			mesh->getPos().x - m_camera->getPosition().x,
 			mesh->getPos().y - m_camera->getPosition().y, 0.0f));
-
 		program.setUniformMat4("u_transform", getProjMatrix()*worldMatrix);
 
 		mesh->getVAO().bind();
@@ -467,7 +470,6 @@ void WorldRenderManager::render()
 
 	}
 	glDisable(GL_BLEND);
-
 
 	//light stuff
 	if (!Stats::light_enable)
