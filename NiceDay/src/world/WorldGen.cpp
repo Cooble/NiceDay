@@ -104,6 +104,7 @@ void WorldGen::gen(int seed, World* w, Chunk& c)
 			}
 		}
 	}
+
 	//this worldgen is lame
 	std::vector<std::pair<int, int>> robs;
 	std::vector<std::pair<int, int>> newRobs;
