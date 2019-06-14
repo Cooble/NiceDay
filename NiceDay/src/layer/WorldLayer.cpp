@@ -56,7 +56,7 @@ WorldLayer::WorldLayer()
 
 	WorldIOInfo info;
 	info.world_name = "NiceWorld";
-	info.chunk_width = 10;
+	info.chunk_width = 200;
 	info.chunk_height = 10;
 	info.seed = 0;
 	info.terrain_level = (info.chunk_height - 2)*WORLD_CHUNK_SIZE;
@@ -142,7 +142,7 @@ void WorldLayer::onUpdate()
 	CURSOR_X = CURSOR_X / BLOCK_PIXEL_SIZE + m_cam->getPosition().x;
 	CURSOR_Y = CURSOR_Y / BLOCK_PIXEL_SIZE + m_cam->getPosition().y;
 
-	if (m_world->isValidBlock(CURSOR_X, CURSOR_Y))
+	if (m_world->isBlockValid(CURSOR_X, CURSOR_Y))
 	{
 	CURRENT_BLOCK = &m_world->getBlock(CURSOR_X, CURSOR_Y);
 	CURRENT_BLOCK_ID = BlockRegistry::get().getBlock(m_world->getBlock(CURSOR_X, CURSOR_Y).block_id).toString();
@@ -230,6 +230,7 @@ void WorldLayer::onImGuiRender()
 		ImGui::Text("* %d, %.2f", d.biomes[i], d.intensities[i]);
 
 	}*/
+	ImGui::PlotVar("Tick Millis", Game::get().getTickMillis());
 	ImGui::PlotVar("FPS", fps);
 	bool l = Stats::light_enable;
 	ImGui::Checkbox(Stats::light_enable ? "Lighting Enabled" : "Lighting Disabled", &Stats::light_enable);
@@ -252,10 +253,10 @@ void WorldLayer::onImGuiRender()
 	ImGui::Text("Chunks Size: (%d/%d)", WORLD_CHUNK_WIDTH, WORLD_CHUNK_HEIGHT);
 	ImGui::Text("Chunks loaded: %d", CHUNKS_LOADED);
 	ImGui::Text("Chunks drawn: %d", CHUNKS_DRAWN);
-	ImGui::Text("Cam X: %.2f", CAM_POS_X);
-	ImGui::Text("Cam Y: %.2f", CAM_POS_Y);
-	ImGui::Text("Cursor X: %.2f", CURSOR_X);
-	ImGui::Text("Cursor y: %.2f", CURSOR_Y);
+	ImGui::Text("Cam X: %.2f (%d)", CAM_POS_X,(int)CAM_POS_X>>WORLD_CHUNK_BIT_SIZE);
+	ImGui::Text("Cam Y: %.2f (%d)", CAM_POS_Y, (int)CAM_POS_Y >> WORLD_CHUNK_BIT_SIZE);
+	ImGui::Text("Cursor X: %.2f (%d)", CURSOR_X, (int)CURSOR_X >> WORLD_CHUNK_BIT_SIZE);
+	ImGui::Text("Cursor y: %.2f (%d)", CURSOR_Y, (int)CURSOR_Y >> WORLD_CHUNK_BIT_SIZE);
 	if (auto current = m_world->getLoadedBlockPointer(CURSOR_X, CURSOR_Y)) {
 		CURRENT_BLOCK = current;
 		ImGui::Text("Current Block: %s (id: %d, corner: %d)", CURRENT_BLOCK_ID.c_str(), CURRENT_BLOCK->block_id, CURRENT_BLOCK->block_corner);

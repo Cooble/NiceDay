@@ -87,11 +87,19 @@ namespace NDUtil
 
 struct half_int
 {
+	inline static int getX(int i)
+	{
+		return ((half_int*)&i)->x;
+	}
+	inline static int getY(int i)
+	{
+		return ((half_int*)&i)->y;
+	}
 	union
 	{
 		uint32_t i;
 
-		struct
+		const struct
 		{
 			uint16_t x; //lsb
 			uint16_t y; //msb
@@ -119,6 +127,11 @@ struct half_int
 	{
 		return plus(v);
 	}
+	inline operator int() const
+	{
+		return i;
+	}
+	
 };
 
 inline bool operator!=(const half_int& f0, const half_int& f1)
@@ -349,3 +362,29 @@ constexpr T ipow(T num, unsigned int pow)
 		pow == 0 ? 1 : num * ipow(num, pow - 1);
 }
 
+#include <unordered_map>
+template<typename Key, typename T, T value = T()>
+class defaultable_map :public std::unordered_map<Key, T>
+{
+public:
+	// inherit std::unordered_map constructors
+	using std::unordered_map<Key, T>::unordered_map;
+
+	T & operator[](const Key & key)
+	{
+		auto it = find(key);
+
+		if (it == end())
+		{
+			// insert default value
+			auto result = insert(std::make_pair(key, value));
+			it = result.first;
+		}
+
+		return it->second;
+	}
+	bool contains(const Key& key)
+	{
+		return find(key) != end();
+	}
+};

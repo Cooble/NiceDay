@@ -144,6 +144,7 @@
     <ClInclude Include="src\Input.h" />
     <ClInclude Include="src\Log.h" />
     <ClInclude Include="src\NDUtil.h" />
+    <ClInclude Include="src\Scheduler.h" />
     <ClInclude Include="src\Stats.h" />
     <ClInclude Include="src\Window.h" />
     <ClInclude Include="src\entity\Camera.h" />
@@ -562,6 +563,7 @@
     <ClCompile Include="src\graphics\TestQuad.cpp" />
     <ClCompile Include="src\Input.cpp" />
     <ClCompile Include="src\Log.cpp" />
+    <ClCompile Include="src\Scheduler.cpp" />
     <ClCompile Include="src\State.cpp" />
     <ClCompile Include="src\Window.cpp" />
     <ClCompile Include="src\entity\Camera.cpp" />

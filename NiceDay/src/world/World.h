@@ -23,8 +23,9 @@ private:
 	//posxy
 
 	BlockStruct m_blocks[WORLD_CHUNK_SIZE*WORLD_CHUNK_SIZE];
-	bool m_loaded;
-	bool m_dirty;//if this flag is set in next update chunk graphics will be reloaded into chunkrenderer
+	bool m_loaded;//todo use flags instead of 32bit bools
+	bool m_dirty;//in next update chunk graphics will be reloaded into chunkrenderer
+	bool m_locked;//dont unload this chunk its being worked on
 	friend class World;
 	friend class WorldIO::Session;
 	friend class WorldGen;
@@ -33,13 +34,16 @@ private:
 public:
 	Chunk();
 	long last_save_time;
-	inline int chunkID() const { return m_y << BITS_FOR_CHUNK_LOC | m_x; }
-	inline bool isLoaded() const { return m_loaded; }
+	inline int chunkID() const { return half_int(m_x,m_y); }
+	inline bool isLoaded() const { return m_loaded; }//this chunk shell contains loaded chunk
+	inline bool isLocked() const { return m_locked; }//cannot unload locked chunk
+	inline bool isGenerated() const { return last_save_time != 0; }//worldgen has generated it
+	inline void lock(bool lock) { m_locked = lock; }
 
 
 	inline BlockStruct& getBlock(int x, int y) { return m_blocks[y << WORLD_CHUNK_BIT_SIZE | x]; }
-	inline void setBlock(int x, int y, BlockStruct& blok) { m_blocks[y << WORLD_CHUNK_BIT_SIZE | x] = blok; }
 	inline const BlockStruct& getBlock(int x, int y) const { return m_blocks[y << WORLD_CHUNK_BIT_SIZE | x]; }
+	inline void setBlock(int x, int y, BlockStruct& blok) { m_blocks[y << WORLD_CHUNK_BIT_SIZE | x] = blok; }
 	inline bool isDirty()const { return m_dirty; }
 	inline void markDirty(bool dirty) { m_dirty = dirty; }
 	inline int getBiome() const { return m_biome; }
@@ -67,14 +71,8 @@ struct WorldInfo {
 class World
 {
 public:
-	inline static int getChunkCoord(float x)
-	{
-		return getChunkCoord((int)x);
-	}
-	inline static int getChunkCoord(int x)
-	{
-		return x >> WORLD_CHUNK_BIT_SIZE;
-	}
+	inline static int getChunkCoord(float x){	return getChunkCoord((int)x);}
+	inline static int getChunkCoord(int x){	return x >> WORLD_CHUNK_BIT_SIZE;}
 private:
 	friend class WorldIO::Session;
 	friend class WorldGen;
@@ -91,6 +89,9 @@ private:
 	void init();
 	void onBlocksChange(int x, int y, int deep);
 	void onWallsChange(int xx, int yy, BlockStruct& blok);
+	int getNextFreeChunkIndex(int startSearchIndex = 0);
+	void genChunks(std::set<int>& toGenChunks);
+
 
 public:
 	World(std::string file_path, const char* name, int chunk_width, int chunk_height);
@@ -100,19 +101,15 @@ public:
 	inline LightCalculator& getLightCalculator() { return m_light_calc; }
 	void onUpdate();
 	void tick();
-	inline bool isChunkLoaded(int x, int y) const { return m_local_offset_map.find(Chunk::getChunkIDFromChunkPos(x, y)) != m_local_offset_map.end(); }
-	void unloadChunk(Chunk&);
-	void unloadChunks(std::set<int>& chunk_ids);
-	void updateChunkBounds(int x, int y);
-	void loadChunks(std::set<int>& chunk_ids);
 
-	bool isValidBlock(int x, int y) const;
+
+	inline bool isBlockValid(int x, int y) const{return x >= 0 && y >= 0 && x < getInfo().chunk_width * WORLD_CHUNK_SIZE && y < getInfo().chunk_height *WORLD_CHUNK_SIZE;}
+	inline bool isChunkValid(int x, int y) const{ return x >= 0 && y >= 0 && x < getInfo().chunk_width && y < getInfo().chunk_height; }
+
 
 	inline int getChunkSaveOffset(int x, int y) const { return y * m_info.chunk_width + x; };
 	inline int getChunkSaveOffset(int id) const {
-		int x, y;
-		Chunk::getChunkPosFromID(id, x, y);
-		return getChunkSaveOffset(x, y);
+		return getChunkSaveOffset(((half_int*)&id)->x, ((half_int*)&id)->y);
 	};
 	//==============CHUNK METHODS========================================================================
 
@@ -124,8 +121,12 @@ public:
 	int getChunkIndex(int x, int y) const;
 	int getChunkIndex(int id) const;
 	Chunk &loadChunk(int x, int y);
-	void genWorld(long seed);//deprecated
 
+	inline bool isChunkLoaded(int x, int y) const { return getChunkIndex(x, y) != -1; }
+	void unloadChunk(Chunk&);
+	void unloadChunks(std::set<int>& chunk_ids);
+	void updateChunkBounds(int x, int y,int bitBounds);
+	void loadChunksAndGen(std::set<int>& toLoadChunks);
 
 	//==============BLOCK METHODS=======================================================================
 
@@ -139,7 +140,7 @@ public:
 
 	//for reading the blocks 
 	//(may cause chunk load)
-	inline const BlockStruct& getBlock(int x, int y);
+	inline const BlockStruct& getBlock(int x, int y){return editBlock(x, y);}
 
 	//return is block at coords is air and true if outside the map
 	//(may cause chunk load)
@@ -172,5 +173,6 @@ public:
 	inline const std::string& getFilePath() const { return m_file_path; }
 
 };
+
 
 

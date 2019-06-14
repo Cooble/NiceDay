@@ -22,7 +22,7 @@ void BiomeTiledTexture::updateSprites(World* m_world, Camera* m_camera)
 	using namespace glm;
 	vec2 screenDim = vec2(Game::get().getWindow()->getWidth(), Game::get().getWindow()->getHeight());
 	vec2 lowerScreen = m_camera->getPosition() - ((screenDim / (float)BLOCK_PIXEL_SIZE) / 2.0f);
-	vec2 upperScreen = m_camera->getPosition() + ((screenDim / (float)BLOCK_PIXEL_SIZE) / 2.0f);
+	vec2 upperScreen = m_camera->getPosition()+  ((screenDim / (float)BLOCK_PIXEL_SIZE) / 2.0f);
 	screenDim = upperScreen - lowerScreen;
 
 	Sprite2D& s = *m_sprites[0];
@@ -36,7 +36,7 @@ void BiomeTiledTexture::updateSprites(World* m_world, Camera* m_camera)
 	vec2 meshUpper = pos + texDim / (float)BLOCK_PIXEL_SIZE;
 	vec2 meshDim = meshUpper - meshLower;
 
-	vec2 delta = m_camera->getPosition() - (meshLower + meshUpper) / 2.0f;//delta of centers
+	vec2 delta = m_camera->getPosition()*2.0f - (meshLower + meshUpper) / 2.0f;//delta of centers
 	//delta = delta / (3.0f - 1);//we dont want wall to move slower than blocks
 
 	auto transl = delta / meshDim;

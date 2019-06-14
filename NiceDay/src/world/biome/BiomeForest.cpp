@@ -42,8 +42,14 @@ void BiomeForest::updateSprites(World* m_world, Camera* m_camera)
 
 		vec2 delta = m_camera->getPosition() - (meshLower + meshUpper) / 2.0f;//delta of centers
 		delta = delta / (3.0f - i);
+		delta.y /= 2.0f;//we need smaller change in y
 
 		auto transl = delta / meshDim;
+
+		if (i == 2)
+		{
+			transl.y += 0.5f;//blocks lower
+		}
 		auto scal = screenDim / meshDim;
 		mat4 t(1.0f);
 		t = glm::translate(t, vec3(transl.x, transl.y, 0));

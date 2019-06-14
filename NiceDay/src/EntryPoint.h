@@ -29,9 +29,6 @@ int main()
 {
 	Log::Init();
 
-
-	
-
 	/*NDUtil::FifoList<int> list(2);
 
 	list.push(1);

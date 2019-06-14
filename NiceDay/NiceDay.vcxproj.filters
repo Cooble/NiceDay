@@ -1315,6 +1315,7 @@
       <Filter>vendor\stb_image</Filter>
     </ClInclude>
     <ClInclude Include="src\graphics\TestQuad.h" />
+    <ClInclude Include="src\Scheduler.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\EntryPoint.cpp">
@@ -1453,5 +1454,6 @@
       <Filter>vendor\stb_image</Filter>
     </ClCompile>
     <ClCompile Include="src\graphics\TestQuad.cpp" />
+    <ClCompile Include="src\Scheduler.cpp" />
   </ItemGroup>
 </Project>

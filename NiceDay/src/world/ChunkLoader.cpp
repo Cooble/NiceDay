@@ -32,8 +32,12 @@ void ChunkLoader::tickInner()
 	
 
 	auto& map = m_world->getMap();
-	for (auto iterator = map.begin(); iterator != map.end(); ++iterator)
+	for (auto iterator = map.begin(); iterator != map.end(); ++iterator) {
+		half_int c = iterator->first;
+		Chunk& g = m_world->getChunk(c.x, c.y);
+		if(!g.isLocked())//cannot unload chunk that is locked
 			toRemoveList.insert(iterator->first);//get all loaded chunks
+	}
 	
 
 	for (EntityWrapper& w : m_loader_entities) {
@@ -56,14 +60,14 @@ void ChunkLoader::tickInner()
 					continue;
 
 				if (!m_world->isChunkLoaded(x, y))
-					toLoadList.insert(Chunk::getChunkIDFromChunkPos(x, y));
+					toLoadList.insert(half_int(x, y));
 
-				toRemoveList.erase(Chunk::getChunkIDFromChunkPos(x, y));
+				toRemoveList.erase(half_int(x, y));
 			}
 		}
 	}
-	m_world->loadChunks(toLoadList);
 	m_world->unloadChunks(toRemoveList);
+	m_world->loadChunksAndGen(toLoadList);
 }
 
 void ChunkLoader::onUpdate()

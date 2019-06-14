@@ -67,6 +67,7 @@ void Game::start()
 		if (duration_cast<milliseconds>(now - lastTime).count() > over_millis) {
 			lastTime = now;
 			update();
+			m_tick_millis = duration_cast<milliseconds>(system_clock::now() - now).count();
 		}
 		render();
 		current_fps++;
@@ -88,6 +89,7 @@ void Game::start()
 void Game::update() {
 	for (Layer* l : m_LayerStack)
 		l->onUpdate();
+	m_scheduler.update();
 
 
 

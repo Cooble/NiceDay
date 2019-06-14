@@ -97,8 +97,8 @@ void WorldRenderManager::onScreenResize()
 	int screenHeight = Game::get().getWindow()->getHeight();
 	float chunkwidth = ((float)screenWidth / (float)BLOCK_PIXEL_SIZE) / (float)WORLD_CHUNK_SIZE;
 	float chunkheight = ((float)screenHeight / (float)BLOCK_PIXEL_SIZE) / (float)WORLD_CHUNK_SIZE;
-	m_chunk_width = ceil(chunkwidth)+3;
-	m_chunk_height = ceil(chunkheight)+3;
+	m_chunk_width = ceil(chunkwidth)+2;
+	m_chunk_height = ceil(chunkheight)+2;
 
 	m_light_calculator.setDimensions(m_chunk_width, m_chunk_height);
 
@@ -206,8 +206,8 @@ BiomeDistances calculateBiomeDistances(Camera* cam, World* w)
 
 void WorldRenderManager::onUpdate()
 {
-	auto cx = round(m_camera->getPosition().x / WORLD_CHUNK_SIZE) - ceil(m_chunk_width / 2.0f);
-	auto cy = round(m_camera->getPosition().y / WORLD_CHUNK_SIZE) - ceil(m_chunk_height / 2.0f);
+	int cx = floor(m_camera->getPosition().x / WORLD_CHUNK_SIZE) - floor(m_chunk_width / 2.0f);
+	int cy = floor(m_camera->getPosition().y / WORLD_CHUNK_SIZE) - floor(m_chunk_height / 2.0f);
 
 	if (cx != last_cx || cy != last_cy)
 	{
