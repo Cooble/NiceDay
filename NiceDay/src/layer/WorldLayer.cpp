@@ -145,7 +145,9 @@ void WorldLayer::onUpdate()
 	if (m_world->isBlockValid(CURSOR_X, CURSOR_Y))
 	{
 	CURRENT_BLOCK = &m_world->getBlock(CURSOR_X, CURSOR_Y);
+#ifdef ND_DEBUG
 	CURRENT_BLOCK_ID = BlockRegistry::get().getBlock(m_world->getBlock(CURSOR_X, CURSOR_Y).block_id).toString();
+#endif
 	}
 
 	if (Game::get().getInput().isMousePressed(GLFW_MOUSE_BUTTON_1))
@@ -257,6 +259,8 @@ void WorldLayer::onImGuiRender()
 	ImGui::Text("Cam Y: %.2f (%d)", CAM_POS_Y, (int)CAM_POS_Y >> WORLD_CHUNK_BIT_SIZE);
 	ImGui::Text("Cursor X: %.2f (%d)", CURSOR_X, (int)CURSOR_X >> WORLD_CHUNK_BIT_SIZE);
 	ImGui::Text("Cursor y: %.2f (%d)", CURSOR_Y, (int)CURSOR_Y >> WORLD_CHUNK_BIT_SIZE);
+#ifdef ND_DEBUG
+
 	if (auto current = m_world->getLoadedBlockPointer(CURSOR_X, CURSOR_Y)) {
 		CURRENT_BLOCK = current;
 		ImGui::Text("Current Block: %s (id: %d, corner: %d)", CURRENT_BLOCK_ID.c_str(), CURRENT_BLOCK->block_id, CURRENT_BLOCK->block_corner);
@@ -279,6 +283,7 @@ void WorldLayer::onImGuiRender()
 		ImGui::Text("Selected Wall -> (%d, %d): corner:%d, %s ", j, i, CURRENT_BLOCK->wall_corner[i * 2 + j], w.toString().c_str());
 
 	}
+
 	ImGui::Separator();
 
 	ImGui::Columns(2, "mycolumns3", false);  // 3-ways, no border
@@ -312,6 +317,7 @@ void WorldLayer::onImGuiRender()
 			ImGui::TreePop();
 		}
 	}
+#endif
 	ImGui::Separator();
 
 	/*ImGui::Text("Drawn Chunks:");
@@ -337,7 +343,8 @@ void WorldLayer::onEvent(Event& e)
 		auto event = dynamic_cast<KeyPressEvent*>(&e);
 
 		if (event->getKey() == GLFW_KEY_ESCAPE) {
-			Game::get().stop();
+			auto e = WindowCloseEvent();
+			Game::get().fireEvent(e);
 			event->handled = true;
 		}
 	}

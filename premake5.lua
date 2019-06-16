@@ -78,6 +78,7 @@ project "NiceDay"
 		defines "ND_DEBUG"
 		runtime "Debug"
 		symbols "On"
+        --[Add here C++/CodeGeneration/BasicRuntimeChecks->Uninitialized vars]
 
 	filter "configurations:Release"
 		defines "ND_RELEASE"

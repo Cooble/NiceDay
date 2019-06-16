@@ -22,7 +22,8 @@ private:
 	int m_x, m_y;
 	//posxy
 
-	BlockStruct m_blocks[WORLD_CHUNK_SIZE*WORLD_CHUNK_SIZE];
+	BlockStruct m_blocks[WORLD_CHUNK_AREA];
+	uint8_t m_light_levels[WORLD_CHUNK_AREA];
 	bool m_loaded;//todo use flags instead of 32bit bools
 	bool m_dirty;//in next update chunk graphics will be reloaded into chunkrenderer
 	bool m_locked;//dont unload this chunk its being worked on
@@ -41,7 +42,16 @@ public:
 	inline void lock(bool lock) { m_locked = lock; }
 
 
-	inline BlockStruct& getBlock(int x, int y) { return m_blocks[y << WORLD_CHUNK_BIT_SIZE | x]; }
+	inline BlockStruct& getBlock(int x, int y)
+	{
+		ASSERT(x >= 0 && x < WORLD_CHUNK_SIZE&&y >= 0 && y < WORLD_CHUNK_SIZE, "Invalid chunk coords!");
+		return m_blocks[y << WORLD_CHUNK_BIT_SIZE | x];
+	}
+	inline uint8_t& getLightLevel(int x,int y)
+	{
+		ASSERT(x >= 0 && x < WORLD_CHUNK_SIZE&&y >= 0 && y < WORLD_CHUNK_SIZE, "Invalid chunk coords!");
+		return m_light_levels[y << WORLD_CHUNK_BIT_SIZE | x];
+	}
 	inline const BlockStruct& getBlock(int x, int y) const { return m_blocks[y << WORLD_CHUNK_BIT_SIZE | x]; }
 	inline void setBlock(int x, int y, BlockStruct& blok) { m_blocks[y << WORLD_CHUNK_BIT_SIZE | x] = blok; }
 	inline bool isDirty()const { return m_dirty; }

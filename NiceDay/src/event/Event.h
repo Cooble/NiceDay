@@ -40,7 +40,7 @@ class EventDispatcher {
 
 	template<typename T>
 	using EventConsumer = std::function<bool(T&)>;
-
+	
 private:
 	Event& m_event;
 public:

@@ -116,6 +116,8 @@ void WorldRenderManager::onScreenResize()
 	if (m_light_simple_texture)
 		delete m_light_simple_texture;
 	TextureInfo info;
+
+	
 	info.size(m_chunk_width*WORLD_CHUNK_SIZE, m_chunk_height*WORLD_CHUNK_SIZE).f_format = GL_RED;
 	m_light_simple_texture = new Texture(info);
 

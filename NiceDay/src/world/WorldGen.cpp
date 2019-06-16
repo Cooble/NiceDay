@@ -64,8 +64,34 @@ float WorldGen::getTerrainHeight(int seed, float x)
 
 }
 
+inline static bool& getFromMap(bool* m, int x, int y)
+{
+	ASSERT(x >= 0 && x < 2*WORLD_CHUNK_SIZE&&y >= 0 && y < 2*WORLD_CHUNK_SIZE, "Invalid chunkgen coords!");
+	return m[y*WORLD_CHUNK_SIZE * 2 + x];
+}
+static int getNeighbourCount(bool* map,int x,int y)
+{
+	int out = 0;
+	for (int xx = x-1; xx < x+2; ++xx)
+	{
+		for (int yy = y - 1; yy < y + 2; ++yy)
+		{
+			if(xx==0||yy==0)
+				continue;
+			if(xx<0||xx>=2*WORLD_CHUNK_SIZE|| yy < 0 || yy>=2 * WORLD_CHUNK_SIZE )
+				continue;
+			out+= getFromMap(map,xx,yy)?0:1;
+			
+		}
+	}
+	return out;
+}
+
 void WorldGen::gen(int seed, World* w, Chunk& c)
 {
+	static bool* map0 = new bool[WORLD_CHUNK_AREA * 4];
+	static bool* map1 = new bool[WORLD_CHUNK_AREA * 4];
+
 	auto& info = w->getInfo();
 	c.m_biome = BIOME_UNDERGROUND;
 	if ((c.m_y + 1) * WORLD_CHUNK_SIZE > (info.terrain_level - 1))
@@ -105,7 +131,51 @@ void WorldGen::gen(int seed, World* w, Chunk& c)
 		}
 	}
 
-	//this worldgen is lame
+	int offsetX = c.m_x * WORLD_CHUNK_SIZE;
+	int offsetY = c.m_y * WORLD_CHUNK_SIZE;
+
+	//prepare map
+	for (int x = 0; x < WORLD_CHUNK_SIZE*2; ++x)
+	{
+		for (int y = 0; y < WORLD_CHUNK_SIZE*2; ++y)
+		{
+			int xxxx = (x + offsetX - WORLD_CHUNK_SIZE / 2);
+			int yyyy = (y + offsetY - WORLD_CHUNK_SIZE / 2);
+			std::srand(123456*xxxx + 5645646*yyyy+ xxxx* yyyy);//sranda innit?
+			getFromMap(map0,x,y) = (std::rand() % 10)>5;
+		}
+	}
+	bool* curMap = map0;
+	bool* nextMap = map1;
+		//time for cellular automata
+	for (int i = 0; i < 3; ++i)
+	{
+		for (int x = 0; x < WORLD_CHUNK_SIZE * 2; ++x)
+		{
+			for (int y = 0; y < WORLD_CHUNK_SIZE * 2; ++y)
+			{
+				int ieger = getNeighbourCount(curMap, x, y);
+				getFromMap(nextMap, x, y) = ieger < 7;
+			}
+		}
+		auto matic = curMap;
+		curMap = nextMap;
+		nextMap = matic;
+	}
+	for (int x = WORLD_CHUNK_SIZE/2; x < WORLD_CHUNK_SIZE*1.5; ++x)
+	{
+		for (int y = WORLD_CHUNK_SIZE/2; y < WORLD_CHUNK_SIZE*1.5; ++y)
+		{
+			if (!getFromMap(curMap,x,y))
+				c.getBlock(x - WORLD_CHUNK_SIZE / 2, y - WORLD_CHUNK_SIZE / 2).block_id = BLOCK_AIR;
+		}
+	}
+	
+
+
+
+
+	/*//this worldgen is lame
 	std::vector<std::pair<int, int>> robs;
 	std::vector<std::pair<int, int>> newRobs;
 	auto r1 = &robs;
@@ -141,10 +211,9 @@ void WorldGen::gen(int seed, World* w, Chunk& c)
 		r2 = t;
 		
 		
-	}
+	}*/
 
-	int offsetX = c.m_x * WORLD_CHUNK_SIZE;
-	int offsetY = c.m_y * WORLD_CHUNK_SIZE;
+	
 	//update block states
 	for (int x = 1; x < WORLD_CHUNK_SIZE-1; x++)//boundaries will be updated after all other adjacent chunks are generated
 	{

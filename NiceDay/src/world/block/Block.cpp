@@ -9,14 +9,14 @@ Block::Block(int id)
 	  m_texture_pos(0),
 	  m_corner_translate_array(nullptr),
 	  m_has_big_texture(false),
-	  m_opacity(0.25f),
+	  m_opacity(5),
 	  m_block_connect_group(0)
 {
 }
 
 Block::~Block() = default;
 
-float Block::getOpacity(const BlockStruct&) const
+uint8_t Block::getOpacity(const BlockStruct&) const
 {
 	return m_opacity;
 }

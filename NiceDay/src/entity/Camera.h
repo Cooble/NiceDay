@@ -15,7 +15,7 @@ protected:
 	half_int m_chunk_radius;
 
 public:
-	float m_light_intensity = 1.5f;
+	uint8_t m_light_intensity = 23;
 	Camera();
 	virtual ~Camera() = default;
 
@@ -23,7 +23,7 @@ public:
 	{
 		return std::make_pair((int)m_position.x, (int)m_position.y);
 	}
-	inline float getIntensity() const override { return m_light_intensity; }
+	inline uint8_t getIntensity() const override { return m_light_intensity; }
 	inline const glm::vec2& getPosition() const override;
 	inline half_int getChunkRadius() const override;
 

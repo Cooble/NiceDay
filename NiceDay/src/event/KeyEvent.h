@@ -12,8 +12,8 @@ public:
 		m_key(key), m_number(number)
 	{
 	}
-	inline const int getKey() const { return m_key; }
-	inline const int getNumber() const { return m_number; }
+	inline int getKey() const { return m_key; }
+	inline int getNumber() const { return m_number; }
 	EVENT_TYPE_BUILD(KeyPress)
 	EVENT_CATEGORY_BUILD(EventCategoryKey)
 

@@ -191,7 +191,7 @@ void World::genChunks(std::set<int>& toGenChunks)
 		int y = half_int::getY(id);
 		if (!isChunkValid(x,y))
 		{
-			ND_INFO("erasing {}, {}", x, y);
+			//ND_INFO("erasing {}, {}", x, y);
 
 			toErase.push_back(id);
 			continue;
@@ -209,7 +209,7 @@ void World::genChunks(std::set<int>& toGenChunks)
 			if (!c.isGenerated() && toGenChunks.find(id) == toGenChunks.end())
 			{
 				c.m_loaded = false;
-				ND_INFO("erasing {}, {}",x,y);
+				//ND_INFO("erasing {}, {}",x,y);
 				toErase.push_back(id);
 				continue;
 			}
@@ -224,10 +224,6 @@ void World::genChunks(std::set<int>& toGenChunks)
 	for (int id : toErase)//remove invalid and nevergenerated (excluding toGenChunks)
 		toupdateChunks.erase(toupdateChunks.find(id));
 	//load section done============================================================================
-	for (auto id : toupdateChunks)
-	{
-		ND_INFO("WILL UPDATE: {}, {}", half_int::getX(id.first), half_int::getY(id.first));
-	}
 
 	int genIndex = 0;
 	int upIndex = 0;
@@ -273,7 +269,7 @@ void World::genChunks(std::set<int>& toGenChunks)
 				c.lock(false); //unlock chunks so they can be unloaded
 				c.markDirty(true); //need render after change
 			}
-			ND_INFO("we are done with {} chunks", toupdateChunks.size());
+			//ND_INFO("we are done with {} chunks", toupdateChunks.size());
 			taskActive = false;
 			return true;
 		}, 1);

@@ -90,5 +90,6 @@ public:
 	~Texture();
 	
 	void setPixels(float* light_map);//todo add template anotation to enable more than jut floats
+	void setPixels(uint8_t* light_map);//todo add template anotation to enable more than jut floats
 };
 

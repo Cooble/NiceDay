@@ -22,6 +22,7 @@ public:
 	void render();
 	void stop();
 	bool onWindowClose(WindowCloseEvent&);
+	void fireEvent(Event& e);
 
 	inline static Game& get() { return *s_Instance; }
 	inline Window* getWindow() { return m_Window; }

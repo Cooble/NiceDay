@@ -24,7 +24,7 @@ namespace NDUtil
 		const T& pop();
 		void popMode();
 		inline int getSize() const { return m_size; }
-		inline bool empty() const { return getSize() == 0; }
+		inline bool empty() const { return m_size == 0; }
 		void clear();
 	};
 
@@ -41,7 +41,7 @@ namespace NDUtil
 	}
 
 	template <class T>
-	void FifoList<T>::push(const T& v)
+	inline void FifoList<T>::push(const T& v)
 	{
 		if (m_head == m_max_size)
 		{
@@ -61,7 +61,7 @@ namespace NDUtil
 	}
 
 	template <class T>
-	const T& FifoList<T>::pop()
+	inline const T& FifoList<T>::pop()
 	{
 		T& t = m_src[m_head++];
 		--m_size;
@@ -72,13 +72,13 @@ namespace NDUtil
 	}
 
 	template <class T>
-	void FifoList<T>::popMode()
+	inline void FifoList<T>::popMode()
 	{
 		m_head = 0;
 	}
 
 	template <class T>
-	void FifoList<T>::clear()
+	inline void FifoList<T>::clear()
 	{
 		m_head = 0;
 		m_size = 0;

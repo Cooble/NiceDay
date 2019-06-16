@@ -37,6 +37,11 @@ static void eventCallback(Event& e) {
 			break;
 	}
 }
+void Game::fireEvent(Event& e)
+{
+	eventCallback(e);
+}
+
 
 void Game::init()
 {

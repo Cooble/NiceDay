@@ -9,7 +9,7 @@ BlockAir::BlockAir()
 	:Block(BLOCK_AIR)
 {
 	m_block_connect_group = BIT(BLOCK_GROUP_AIR_BIT);
-	m_opacity = 0.05f;
+	m_opacity = 1;
 	m_texture_pos = -1;
 }
 int BlockAir::getTextureOffset(int x, int y, const BlockStruct&)const { return -1; }
@@ -88,19 +88,19 @@ bool BlockPlatform::onNeighbourBlockChange(World* world, int x, int y) const
 
 	if (leftPlat && rightPlat)
 	{
-		block.block_metadata = half_int(1, 15).i;
+		block.block_metadata = half_int(1, 15);
 	}
 	else if (leftPlat)
 	{
-		block.block_metadata = half_int(3, 15).i;
+		block.block_metadata = half_int(3, 15);
 	}
 	else if (rightPlat)
 	{
-		block.block_metadata = half_int(2, 15).i;
+		block.block_metadata = half_int(2, 15);
 	}
 	else
 	{
-		block.block_metadata = half_int(0, 15).i;
+		block.block_metadata = half_int(0, 15);
 	}
 
 
@@ -153,12 +153,12 @@ bool BlockGrass::onNeighbourBlockChange(World* world, int x, int y) const
 	}
 	else if (block.block_corner == BLOCK_STATE_CORNER_UP_LEFT
 		|| block.block_corner == BLOCK_STATE_LINE_END_LEFT)
-		block.block_metadata = half_int(x&1, 12).i;
+		block.block_metadata = half_int(x&1, 12);
 	else if (block.block_corner == BLOCK_STATE_CORNER_UP_RIGHT
 		|| block.block_corner == BLOCK_STATE_LINE_END_RIGHT)
-		block.block_metadata = half_int((x&1)+2, 12).i;
+		block.block_metadata = half_int((x&1)+2, 12);
 	else
-		block.block_metadata = half_int(x & 3, 13).i;
+		block.block_metadata = half_int(x & 3, 13);
 	block.block_corner |= custombit << 4;//put back custombit
 	return lastCorner != block.block_corner || lastid != block.block_id;//we have a change (or not)
 
@@ -169,7 +169,7 @@ bool BlockGrass::onNeighbourBlockChange(World* world, int x, int y) const
 BlockGlass::BlockGlass()
 	:Block(BLOCK_GLASS)
 {
-	m_opacity = 0.05f;
+	m_opacity = 1;
 	m_texture_pos = { 0,14 };
 	m_corner_translate_array = BLOCK_CORNERS_GLASS;
 
@@ -177,7 +177,7 @@ BlockGlass::BlockGlass()
 
 int BlockGlass::getTextureOffset(int x, int y, const BlockStruct& s) const
 {
-	return (m_texture_pos + half_int(s.block_metadata, 0)).i;
+	return (m_texture_pos + half_int(s.block_metadata, 0));
 }
 
 bool BlockGlass::onNeighbourBlockChange(World* world, int x, int y) const
@@ -194,13 +194,13 @@ bool BlockGlass::onNeighbourBlockChange(World* world, int x, int y) const
 BlockTorch::BlockTorch()
 : Block(BLOCK_TORCH)
 {
-	m_opacity = 0.05f;
+	m_opacity = 0;
 
 }
 
 int BlockTorch::getTextureOffset(int x, int y, const BlockStruct& b) const
 {
-	return half_int(b.block_corner, 11).i;
+	return half_int(b.block_corner, 11);
 }
 
 int BlockTorch::getCornerOffset(int x, int y, const BlockStruct&) const

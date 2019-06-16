@@ -48,6 +48,12 @@ void Texture::setPixels(float* light_map)
 	Call(glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_width, m_height, m_format, GL_FLOAT, light_map));
 	Call(glBindTexture(GL_TEXTURE_2D, 0));
 }
+void Texture::setPixels(uint8_t* light_map)
+{
+	Call(glBindTexture(GL_TEXTURE_2D, m_id));
+	Call(glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_width, m_height, m_format, GL_UNSIGNED_BYTE, light_map));
+	Call(glBindTexture(GL_TEXTURE_2D, 0));
+}
 
 void Texture::bind(unsigned int slot) const {
 	Call(glActiveTexture(GL_TEXTURE0 + slot));

@@ -141,7 +141,7 @@ half& LightCalculator::lightValue(int x, int y)
 	return m_map[y * m_snap_width * WORLD_CHUNK_SIZE + x];
 }
 
-float LightCalculator::getBlockOpacity(int x, int y)
+half LightCalculator::getBlockOpacity(int x, int y)
 {
 	auto b = m_world->getLoadedBlockPointer(x, y);
 	if (b)
@@ -151,7 +151,7 @@ float LightCalculator::getBlockOpacity(int x, int y)
 
 void LightCalculator::computeLight(Snapshot& sn)
 {
-	const half minLevel = 0.05f;
+	const half minLevel = 1;
 	const int defaultListSize = 500;
 	memset(m_map, 0, sn.chunkWidth * sn.chunkHeight * WORLD_CHUNK_AREA * sizeof(half));
 
@@ -182,13 +182,16 @@ void LightCalculator::computeLight(Snapshot& sn)
 		{
 			runs++;
 			auto& p = current_list->pop();
-			int x = p.x;
-			int y = p.y;
+			const int& x = p.x;
+			const int& y = p.y;
 
-		half l = lightValue(x, y) - getBlockOpacity(x + blockOffsetX, y + blockOffsetY);
-		//	half l = lightValue(x, y) - 0.05f;
-			if (l < minLevel)
+			auto val = lightValue(x, y);
+			auto opacity = getBlockOpacity(x + blockOffsetX, y + blockOffsetY);
+			half l = val - opacity;
+
+			if (val<opacity)//we had overflow -> dark is coming for us all
 				continue;
+
 			half newLightPower = l;
 
 			//left

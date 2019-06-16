@@ -12,11 +12,11 @@ class LightSource
 {
 public:
 	virtual std::pair<int, int> getLightPosition() const = 0;//position in blocks
-	virtual float getIntensity() const = 0;
+	virtual uint8_t getIntensity() const = 0;
 	virtual ~LightSource() = default;
 };
 
-typedef float half;//maybe in future replace with half float to save space
+typedef uint8_t half;//maybe in future replace with half float to save space
 typedef std::pair<int, int> ChunkPos;
 class World;
 
@@ -67,7 +67,7 @@ private:
 	volatile bool m_is_fresh_map=false;
 	struct LightData
 	{
-		float intensity;
+		uint8_t intensity;
 		int x, y;
 	};
 	struct Snapshot
@@ -100,7 +100,7 @@ private:
 	ChunkPos m_done_ch_offset;
 
 	inline half& lightValue(int x, int y);
-	inline float getBlockOpacity(int x, int y);
+	inline half getBlockOpacity(int x, int y);
 
 	void computeLight(Snapshot& snapshot);
 	void runInner();
