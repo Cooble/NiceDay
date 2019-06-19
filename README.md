@@ -10,7 +10,7 @@ Basic tile render (03_05_2019)
 Corner tile render (06_05_2019)
 ![Alt text](screenshots/06_05_2019.png?raw=false "")
 
-Lighting with water-spill-algorithm (18_05_2019)
+Lighting prototype with water-spill-algorithm (18_05_2019)
 ![Alt text](screenshots/18_05_2019.png?raw=false "")
 
 Platforms, grass, sky (20_05_2019)
@@ -21,4 +21,9 @@ Blocks, Walls, Background -> milestone reached (26_05_2019)
 
 Colorful block corners, glass, procedural chunk generation (14_06_2019)
 ![Alt text](screenshots/14_06_2019.png?raw=false "")
+
+Dynamic and Cached lighting system (19_06_2019)
+Only monochromatic :(
+Cached lighting is only calculated onBlockChange
+![Alt text](screenshots/19_06_2019.png?raw=false "")
 

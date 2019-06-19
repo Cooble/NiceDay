@@ -6,7 +6,7 @@
 BiomeForest::BiomeForest()
 	:Biome(BIOME_FOREST)
 {
-	m_background_light = 1;
+	m_background_light = 5;
 	m_sprites_size = 3;
 	m_sprites = new Sprite2D*[m_sprites_size];
 	for (int i = 0; i < m_sprites_size; i++)
