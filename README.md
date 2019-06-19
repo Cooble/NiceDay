@@ -19,3 +19,6 @@ Platforms, grass, sky (20_05_2019)
 Blocks, Walls, Background -> milestone reached (26_05_2019)
 ![Alt text](screenshots/26_05_2019.png?raw=false "")
 
+Colorful block corners, glass, procedural chunk generation (14_06_2019)
+![Alt text](screenshots/14_06_2019.png?raw=false "")
+
