@@ -3,7 +3,8 @@
 
 //todo destruct textures in sprites
 Biome::Biome(int id)
-:m_id(id)
+:m_id(id),
+m_background_light(0)
 {
 }
 

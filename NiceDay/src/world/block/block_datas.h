@@ -24,6 +24,7 @@ constexpr int BLOCK_TORCH =			8;
 constexpr int WALL_AIR =			0;
 constexpr int WALL_DIRT =			1;
 constexpr int WALL_STONE =			2;
+constexpr int WALL_GLASS =			3;
 
 //=======================BLOCKSTATE Ids=======================
 //00 BLOCK_STATE_FULL
@@ -98,4 +99,23 @@ const half_int WALL_CORNERS_DIRT[16] = {
 	half_int(0,0),//13 BLOCK_STATE_LINE_END_RIGHT INVALID
 	half_int(0,0),//14 BLOCK_STATE_LINE_END_DOWN INVALID
 	half_int(0,0),//15 BLOCK_STATE_BIT INVALID
+};
+
+const half_int WALL_CORNERS_GLASS[16] = {
+	half_int(0+0,0),//00 BLOCK_STATE_FULL
+	half_int(6+3,2),//01 BLOCK_STATE_LINE_UP
+	half_int(6+2,1),//02 BLOCK_STATE_LINE_LEFT
+	half_int(6+2,2),//03 BLOCK_STATE_CORNER_UP_LEFT
+	half_int(6+3,0),//04 BLOCK_STATE_LINE_DOWN
+	half_int(6+0,0),//05 BLOCK_STATE_LINE_HORIZONTAL INVALID
+	half_int(6+2,0),//06 BLOCK_STATE_CORNER_DOWN_LEFT
+	half_int(6+0,0),//07 BLOCK_STATE_LINE_END_LEFT INVALID
+	half_int(6+4,1),//08 BLOCK_STATE_LINE_RIGHT
+	half_int(6+4,2),//09 BLOCK_STATE_CORNER_UP_RIGHT
+	half_int(6+0,0),//10 BLOCK_STATE_LINE_VERTICAL INVALID
+	half_int(6+0,0),//11 BLOCK_STATE_LINE_END_UP INVALID
+	half_int(6+4,0),//12 BLOCK_STATE_CORNER_DOWN_RIGHT
+	half_int(6+0,0),//13 BLOCK_STATE_LINE_END_RIGHT INVALID
+	half_int(6+0,0),//14 BLOCK_STATE_LINE_END_DOWN INVALID
+	half_int(6+0,0),//15 BLOCK_STATE_BIT INVALID
 };

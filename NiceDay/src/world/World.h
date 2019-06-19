@@ -6,7 +6,7 @@
 #include "block/Block.h"
 
 #define CHUNK_NOT_EXIST -1
-#define CHUNK_BUFFER_LENGTH 20 //5*4
+#define CHUNK_BUFFER_LENGTH 50 //5*4
 
 
 
@@ -47,12 +47,17 @@ public:
 		ASSERT(x >= 0 && x < WORLD_CHUNK_SIZE&&y >= 0 && y < WORLD_CHUNK_SIZE, "Invalid chunk coords!");
 		return m_blocks[y << WORLD_CHUNK_BIT_SIZE | x];
 	}
+	inline const BlockStruct& getBlock(int x, int y) const { return m_blocks[y << WORLD_CHUNK_BIT_SIZE | x]; }
 	inline uint8_t& getLightLevel(int x,int y)
 	{
 		ASSERT(x >= 0 && x < WORLD_CHUNK_SIZE&&y >= 0 && y < WORLD_CHUNK_SIZE, "Invalid chunk coords!");
 		return m_light_levels[y << WORLD_CHUNK_BIT_SIZE | x];
 	}
-	inline const BlockStruct& getBlock(int x, int y) const { return m_blocks[y << WORLD_CHUNK_BIT_SIZE | x]; }
+	inline uint8_t getLightLevel(int x,int y) const
+	{
+		ASSERT(x >= 0 && x < WORLD_CHUNK_SIZE&&y >= 0 && y < WORLD_CHUNK_SIZE, "Invalid chunk coords!");
+		return m_light_levels[y << WORLD_CHUNK_BIT_SIZE | x];
+	}
 	inline void setBlock(int x, int y, BlockStruct& blok) { m_blocks[y << WORLD_CHUNK_BIT_SIZE | x] = blok; }
 	inline bool isDirty()const { return m_dirty; }
 	inline void markDirty(bool dirty) { m_dirty = dirty; }
@@ -128,6 +133,7 @@ public:
 	//return nullptr if chunk is not loaded or invalid coords 
 	//(won't cause chunk load)
 	const Chunk* getLoadedChunkPointer(int x,int y) const;
+	Chunk* getLoadedChunkPointerNoConst(int cx, int cy);
 	int getChunkIndex(int x, int y) const;
 	int getChunkIndex(int id) const;
 	Chunk &loadChunk(int x, int y);

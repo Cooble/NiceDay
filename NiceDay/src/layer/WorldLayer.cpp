@@ -38,6 +38,7 @@ static bool BLOCK_OR_WALL_SELECTED = true;
 WorldLayer::WorldLayer()
 	:Layer("WorldLayer")
 {
+	//blocks
 	BlockRegistry::get().registerBlock(new BlockAir());
 	BlockRegistry::get().registerBlock(new BlockStone());
 	BlockRegistry::get().registerBlock(new BlockDirt());
@@ -46,10 +47,15 @@ WorldLayer::WorldLayer()
 	BlockRegistry::get().registerBlock(new BlockPlatform());
 	BlockRegistry::get().registerBlock(new BlockGrass());
 	BlockRegistry::get().registerBlock(new BlockGlass());
+	BlockRegistry::get().registerBlock(new BlockTorch());
+
+	//walls
 	BlockRegistry::get().registerWall(new WallAir());
 	BlockRegistry::get().registerWall(new WallDirt());
 	BlockRegistry::get().registerWall(new WallStone());
+	BlockRegistry::get().registerWall(new WallGlass());
 
+	//biomes
 	BiomeRegistry::get().registerBiome(new BiomeForest());
 	BiomeRegistry::get().registerBiome(new BiomeUnderground());
 	BiomeRegistry::get().registerBiome(new BiomeDirt());

@@ -53,10 +53,10 @@ void ChunkLoader::tickInner()
 		int cy = (int)pos.y >> WORLD_CHUNK_BIT_SIZE;
 
 		for (int x = cx - newRadius.x; x < cx + newRadius.x; x++) {
-			if ((x < 0) || (x > m_world->getInfo().chunk_width - 1))
+			if ((x < 0) || (x >= m_world->getInfo().chunk_width))
 				continue;
 			for (int y = cy - newRadius.y; y < cy + newRadius.y; y++) {
-				if ((y < 0) || (y > m_world->getInfo().chunk_height - 1))
+				if ((y < 0) || (y >= m_world->getInfo().chunk_height))
 					continue;
 
 				if (!m_world->isChunkLoaded(x, y))

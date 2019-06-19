@@ -2,7 +2,7 @@
 #include "ndpch.h"
 
 #include "block/BlockRegistry.h"
-
+#include "WorldGen.h"
 
 
 #define MAX_SNAPSHOT_NUMBER 5
@@ -51,7 +51,16 @@ public:
 
 
 	void registerLight(LightSource* light); //it doesn't take ownership, need remove()
-	void removeLight(LightSource* light); 
+	void removeLight(LightSource* light);
+
+	//clears all light data and recalculates the chunk lighting (without affecting or being affected by others)
+	//(chunks passed should be locked) maybe
+	void computeChunk(Chunk& c);
+	//floods light from all external boundary blocks (block that are around the chunk but not within)
+	//(chunks passed should be locked) maybe
+	void computeChunkBorders(Chunk& c);
+	//recalculates all light within specific radius (=max light radius)
+	void computeChange(int x, int y);
 
 
 private:
@@ -63,6 +72,9 @@ private:
 
 	NDUtil::FifoList<Pos> m_light_list0;
 	NDUtil::FifoList<Pos> m_light_list1;
+
+	NDUtil::FifoList<Pos> m_light_list0_main_thread;
+	NDUtil::FifoList<Pos> m_light_list1_main_thread;
 	volatile bool m_running=false;
 	volatile bool m_is_fresh_map=false;
 	struct LightData
@@ -101,9 +113,15 @@ private:
 
 	inline half& lightValue(int x, int y);
 	inline half getBlockOpacity(int x, int y);
+	uint8_t& blockLightLevel(int x, int y);
+	uint8_t& blockLightLevelDefault0(int x, int y);
+	void computeLightOld(Snapshot& sn);
+
 
 	void computeLight(Snapshot& snapshot);
 	void runInner();
+	void updateMap(Snapshot& sn);
+	void darken(Snapshot& sn);
 	void setDimensionsInner();
 	
 };

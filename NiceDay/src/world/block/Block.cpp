@@ -9,17 +9,13 @@ Block::Block(int id)
 	  m_texture_pos(0),
 	  m_corner_translate_array(nullptr),
 	  m_has_big_texture(false),
-	  m_opacity(5),
-	  m_block_connect_group(0)
+	  m_opacity(4),
+	  m_block_connect_group(0),
+	  m_light_src(0)
 {
 }
 
 Block::~Block() = default;
-
-uint8_t Block::getOpacity(const BlockStruct&) const
-{
-	return m_opacity;
-}
 
 int Block::getTextureOffset(int x, int y, const BlockStruct&) const
 {
@@ -65,13 +61,11 @@ Wall::Wall(int id)
 	: m_id(id),
 	  m_texture_pos(0),
 	  m_corner_translate_array(nullptr),
-	  m_opaque(false)
+	  m_transparent(false)
 {
 }
 
 Wall::~Wall() = default;
-
-bool Wall::isOpaque(const BlockStruct&) const { return m_opaque; }
 
 int Wall::getTextureOffset(int wx, int wy, const BlockStruct&) const
 {

@@ -114,6 +114,9 @@ protected:
 	//0		-> consumes no light (you probably dont want that)
 	uint8_t m_opacity;
 
+	//0 if not radiating any light
+	uint8_t m_light_src;
+
 	int m_block_connect_group;
 	bool isInGroup(World* w, int x, int y, int group) const;
 public:
@@ -123,7 +126,12 @@ public:
 	virtual ~Block();
 	inline int getID() const { return m_id; };
 	inline int getConnectGroup() const { return m_block_connect_group; }
-	virtual uint8_t getOpacity(const BlockStruct&) const;
+	inline uint8_t getLightSrcVal() const
+	{
+		return m_light_src;
+	}
+	inline uint8_t getOpacity()const {return m_opacity;}
+
 
 	inline bool isInConnectGroup(int groups) const { return (groups & m_block_connect_group) != 0; }//they have group in common 
 
@@ -155,15 +163,14 @@ protected:
 	half_int m_texture_pos;
 	//array[BLOCK_STATE]=TEXTURE_OFFSET
 	const half_int* m_corner_translate_array;
-
-	bool m_opaque;
+	bool m_transparent;
 public:
 	Wall(int id);
 	Wall(const Wall& c) = delete;
 	void operator=(Wall const&) = delete;
 	virtual ~Wall();
 	inline int getID() const { return m_id; };
-	virtual bool isOpaque(const BlockStruct&) const;
+	inline bool isTransparent() const { return m_transparent; }
 
 	//returns -1 if not render
 	virtual int getTextureOffset(int wx, int wy, const BlockStruct&) const;

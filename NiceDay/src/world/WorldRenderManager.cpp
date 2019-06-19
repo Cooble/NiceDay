@@ -213,7 +213,22 @@ void WorldRenderManager::onUpdate()
 
 	if (cx != last_cx || cy != last_cy)
 	{
-		m_light_calculator.setChunkOffset(cx, cy);
+		int lcx = cx;
+		int lcy= cy;
+		/*ND_INFO("Y {}", cy);
+		//check if chunks are always valid subset of world chunks
+		if (cy > m_world->getInfo().chunk_height - m_chunk_height)
+			lcy = m_world->getInfo().chunk_height - m_chunk_height;
+		else if (cy < m_chunk_height)
+			lcy = m_chunk_height;
+		ND_INFO("LCY {}", lcy);
+		
+		if (cx > m_world->getInfo().chunk_width - m_chunk_width)
+			lcx = m_world->getInfo().chunk_width - m_chunk_width;
+		else if (cx < m_chunk_width)
+			lcx = m_chunk_width;
+		*/
+		m_light_calculator.setChunkOffset(lcx, lcy);
 		last_cx = cx;
 		last_cy = cy;
 
@@ -234,24 +249,23 @@ void WorldRenderManager::onUpdate()
 					|| targetX >= (m_world->getInfo().chunk_width)
 					|| targetY >= (m_world->getInfo().chunk_height))
 					continue;
-				StructChunkID mid = { Chunk::getChunkIDFromChunkPos(targetX, targetY) };
+				half_int mid = {targetX, targetY};
 				int index = m_world->getChunkIndex(targetX, targetY);
 				if (index == -1)
 				{
 					ND_WARN("Cannot render unloaded chunk {},{}", mid.x, mid.y);
-					toRemoveList.erase(mid.id);
 					continue;
 				}
 
 				Chunk& cc = m_world->getChunk(targetX, targetY);
-				if (m_offset_map.find(mid.id) == m_offset_map.end())
-					toLoadList.insert(mid.id);
+				if (m_offset_map.find(mid) == m_offset_map.end())
+					toLoadList.insert(mid);
 				else if (cc.isDirty())
 				{
-					m_chunks.at(m_offset_map[mid.id])->updateMesh(*m_world, cc);
+					m_chunks.at(m_offset_map[mid])->updateMesh(*m_world, cc);
 					cc.markDirty(false);
 				}
-				toRemoveList.erase(mid.id);
+				toRemoveList.erase(mid);
 			}
 		}
 		for (int removed : toRemoveList)
@@ -262,7 +276,7 @@ void WorldRenderManager::onUpdate()
 		int lastFreeChunk = 0;
 		for (int loade : toLoadList)
 		{
-			StructChunkID loaded = loade;
+			half_int loaded = loade;
 			bool foundFreeChunk = false;
 			for (int i = lastFreeChunk; i < m_chunks.size(); i++)
 			{
@@ -277,7 +291,7 @@ void WorldRenderManager::onUpdate()
 					c.updateMesh(*m_world, m_world->getChunk(loaded.x, loaded.y));
 					
 
-					m_offset_map[loaded.id] = i;
+					m_offset_map[loaded] = i;
 					foundFreeChunk = true;
 					break;
 				}
@@ -289,7 +303,7 @@ void WorldRenderManager::onUpdate()
 	else
 	{
 		for (auto iterator = m_offset_map.begin(); iterator != m_offset_map.end(); ++iterator) {
-			StructChunkID id = iterator->first;
+			half_int id = iterator->first;
 			Chunk& c = m_world->getChunk(id.x, id.y);
 			if (c.isDirty())
 			{
@@ -306,8 +320,8 @@ void WorldRenderManager::onUpdate()
 
 int WorldRenderManager::getChunkIndex(int cx, int cy)
 {
-	StructChunkID id = { (uint16_t)cx, (uint16_t)cy };
-	auto got = m_offset_map.find(id.id);
+	half_int id = { cx, cy };
+	auto got = m_offset_map.find(id);
 	if (got != m_offset_map.end()) {
 		return got->second;
 	}

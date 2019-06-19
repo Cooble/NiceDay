@@ -24,19 +24,6 @@ struct BiomeDistances
 	}
 };
 const int BLOCK_PIXEL_SIZE = 16;//todo this is fishy blocks should be 16pixels in size on screen and 8pixels on texture
-struct StructChunkID
-{
-	union
-	{
-		struct
-		{
-			uint16_t x, y;
-		};
-		int id;
-	};
-	StructChunkID(int idd):id(idd){}
-	StructChunkID(uint16_t xx, uint16_t yy):x(xx),y(yy){}
-};
 
 class WorldRenderManager
 {

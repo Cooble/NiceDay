@@ -22,3 +22,10 @@ public:
 	WallStone();
 	TO_STRING(WallStone)
 };
+class WallGlass :public Wall
+{
+public:
+	WallGlass();
+	TO_STRING(WallGlass)
+	int getCornerOffset(int wx, int wy, const BlockStruct&) const override;
+};

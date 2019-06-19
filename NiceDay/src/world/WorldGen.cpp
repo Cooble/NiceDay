@@ -91,6 +91,7 @@ void WorldGen::gen(int seed, World* w, Chunk& c)
 {
 	static bool* map0 = new bool[WORLD_CHUNK_AREA * 4];
 	static bool* map1 = new bool[WORLD_CHUNK_AREA * 4];
+	srand(c.chunkID() * 123546+5);
 
 	auto& info = w->getInfo();
 	c.m_biome = BIOME_UNDERGROUND;
@@ -98,6 +99,10 @@ void WorldGen::gen(int seed, World* w, Chunk& c)
 		c.m_biome = BIOME_FOREST;
 	if (c.m_x < 2)
 		c.m_biome = BIOME_DIRT;
+	bool torchPlaced = false;
+	int torchX = rand() % WORLD_CHUNK_SIZE;
+	if (rand() % 2 == 0)
+		torchPlaced = true;//skip torch placement in 50% of cases
 	for (int x = 0; x < WORLD_CHUNK_SIZE; x++)
 	{
 		for (int y = 0; y < WORLD_CHUNK_SIZE; y++)
@@ -109,10 +114,19 @@ void WorldGen::gen(int seed, World* w, Chunk& c)
 			int terrain = info.terrain_level + getTerrainHeight(seed, worldx);
 			//if (x == 0 || y == 0)
 			//	block.block_id = 0;
+			if (block.block_id == BLOCK_TORCH)
+				continue;
 			if (worldy > terrain)
 				block.block_id = BLOCK_AIR;
-			else if (worldy == terrain)
+			else if (worldy == terrain) {
+				if(torchX==x&& !torchPlaced)
+					if(y!=WORLD_CHUNK_SIZE-1)
+					{
+						torchPlaced = true;
+						c.getBlock(x, y+1).block_id = BLOCK_TORCH;
+					}
 				block.block_id = BLOCK_GRASS;
+			}
 			else if (worldy == terrain-1)
 				block.block_id = BLOCK_DIRT;
 			else if (worldy > info.terrain_level - 8)
@@ -170,7 +184,21 @@ void WorldGen::gen(int seed, World* w, Chunk& c)
 				c.getBlock(x - WORLD_CHUNK_SIZE / 2, y - WORLD_CHUNK_SIZE / 2).block_id = BLOCK_AIR;
 		}
 	}
-	
+
+	int xxxx = (offsetX);
+	int yyyy = (offsetY);
+	std::srand(564 * xxxx + 78954 * yyyy + xxxx * yyyy);//sranda innit?
+	int randX = std::rand() % 16;
+	int randY = std::rand() % 16;
+	if(c.getBlock(randX,randY).block_id==BLOCK_STONE)
+	{
+		if(randY!=0&& c.getBlock(randX, randY).block_id!=BLOCK_AIR)
+		{
+			c.getBlock(randX, randY).block_id = BLOCK_TORCH;
+		}
+	}
+			
+		
 
 
 

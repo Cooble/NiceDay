@@ -68,5 +68,4 @@ public:
 	int getCornerOffset(int x, int y, const BlockStruct&) const override;
 	bool isInTorchGroup(World* world, int x, int y)const;
 	bool onNeighbourBlockChange(World* world, int x, int y) const override;
-	void onBlockPlaced(World* w, int x, int y, BlockStruct& b) const override;
 };

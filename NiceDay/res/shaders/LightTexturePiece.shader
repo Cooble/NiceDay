@@ -22,7 +22,7 @@ layout(location = 0) out vec4 color;
 
 
 void main() {
-	const float maxLightValue = 16.0f;
+	const float maxLightValue = 8.0f;
 	color = texture2D(u_texture, v_uv_coords).rrrr;
 	color *= 255.0f / maxLightValue;
 

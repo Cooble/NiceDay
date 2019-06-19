@@ -195,6 +195,7 @@ BlockTorch::BlockTorch()
 : Block(BLOCK_TORCH)
 {
 	m_opacity = 0;
+	m_light_src = 9;
 
 }
 
@@ -251,13 +252,6 @@ bool BlockTorch::onNeighbourBlockChange(World* world, int x, int y) const
 		}
 	}
 	return lastCorner != s.block_corner;
-}
-
-void BlockTorch::onBlockPlaced(World* w, int x, int y, BlockStruct& b) const
-{
-	auto c = new Camera();
-	c->setPosition(glm::vec2(x,y));
-	w->getLightCalculator().registerLight(c);//memory leak as fuck :D
 }
 
 

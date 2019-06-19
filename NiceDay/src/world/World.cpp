@@ -53,7 +53,6 @@ void World::onUpdate()
 	if (!taskActive && !loadQueue.empty())
 	{
 		taskActive = true;
-		ND_INFO("Yes another one can start");
 		genChunks(loadQueue.front());
 		loadQueue.pop();
 	}
@@ -79,6 +78,13 @@ Chunk& World::getChunk(int cx, int cy)
 }
 
 const Chunk* World::getLoadedChunkPointer(int cx, int cy) const
+{
+	int index = getChunkIndex(cx, cy);
+	if (index == -1)
+		return nullptr;
+	return &m_chunks[index];
+}
+Chunk* World::getLoadedChunkPointerNoConst(int cx, int cy)//todo really rename it man its terrible
 {
 	int index = getChunkIndex(cx, cy);
 	if (index == -1)
@@ -117,17 +123,13 @@ void World::loadChunksAndGen(std::set<int>& toLoadChunks)
 	int lastFreeChunk = 0;
 	for (int chunkId : toLoadChunks) //need load everything and lock it because genTask will be working on it
 	{
-		int x = half_int::getX(chunkId), y = half_int::getY(chunkId);
-		//ND_INFO("LOADING {}, {}", x, y);
+		int x = half_int::getX(chunkId);
+		int y = half_int::getY(chunkId);
 
 		ASSERT(isChunkValid(x, y), "Invalid chunk pos");
 
 		if (isChunkLoaded(x, y))
-		{
-			//ND_INFO("LOADED {}, {}", x, y);
-
 			continue;
-		}
 
 		int chunkIndex = getNextFreeChunkIndex(lastFreeChunk);
 		lastFreeChunk = chunkIndex + 1;
@@ -191,8 +193,6 @@ void World::genChunks(std::set<int>& toGenChunks)
 		int y = half_int::getY(id);
 		if (!isChunkValid(x,y))
 		{
-			//ND_INFO("erasing {}, {}", x, y);
-
 			toErase.push_back(id);
 			continue;
 		}
@@ -237,8 +237,9 @@ void World::genChunks(std::set<int>& toGenChunks)
 			std::advance(genIt, genIndex);
 			while (genIt != toGenChunks.end())
 			{
-				this->m_gen.gen(this->m_info.seed, this, m_chunks[getChunkIndex(*genIt)]);
-
+				Chunk& c = m_chunks[getChunkIndex(*genIt)];
+				this->m_gen.gen(this->m_info.seed, this, c);
+				m_light_calc.computeChunk(c);
 				++genIndex;
 				++genIt;
 				++numberOfGens;
@@ -250,8 +251,10 @@ void World::genChunks(std::set<int>& toGenChunks)
 			std::advance(upIt, upIndex);
 			while (upIt != toupdateChunks.end())
 			{
+
 				int id = (*upIt).first;
 				int mask = (*upIt).second;
+				m_light_calc.computeChunkBorders(m_chunks[getChunkIndex(id)]);
 				if (mask != 0) {//check if chunk is not only for readonly purposes
 					this->updateChunkBounds(half_int::getX(id), half_int::getY(id), mask);
 				}
@@ -533,8 +536,10 @@ void World::setWall(int x, int y, int wall_id)
 	if (!blok.isWallOccupied() && wall_id == 0) //cannot erase other blocks parts on this shared block
 		return;
 	blok.setWall(wall_id);
-
 	onWallsChange(x, y, blok);
+	//if (BiomeRegistry::get().getBiome(c->getBiome()).getBackgroundLight() != 0)
+		m_light_calc.computeChange(x, y);
+
 	c->markDirty(true);
 }
 
@@ -547,7 +552,7 @@ void World::setBlock(int x, int y, BlockStruct& blok)
 		ND_WARN("Set block with invalid position");
 		return;
 	}
-	if (x > getInfo().chunk_width * WORLD_CHUNK_SIZE - 1 || y > getInfo().chunk_height * WORLD_CHUNK_SIZE - 1)
+	if (x >= getInfo().chunk_width * WORLD_CHUNK_SIZE || y >= getInfo().chunk_height * WORLD_CHUNK_SIZE)
 	{
 		ND_WARN("Set block with invalid position");
 		return;
@@ -570,5 +575,6 @@ void World::setBlock(int x, int y, BlockStruct& blok)
 	c->setBlock(x & (WORLD_CHUNK_SIZE - 1), y & (WORLD_CHUNK_SIZE - 1), blok);
 	BlockRegistry::get().getBlock(blok.block_id).onNeighbourBlockChange(this, x, y);
 	onBlocksChange(x, y);
+	m_light_calc.computeChange(x, y);//refresh light around the block
 	c->markDirty(true);
 }

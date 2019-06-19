@@ -13,6 +13,7 @@ private:
 protected:
 	Sprite2D** m_sprites;
 	int m_sprites_size;
+	uint8_t m_background_light;
 	Biome(int id);
 	virtual void updateSprites(World* m_world, Camera* m_camera);
 public:
@@ -21,6 +22,7 @@ public:
 	inline int getID() const { return m_id; }
 	int getBGSpritesSize() { return m_sprites_size; }
 	inline Sprite2D** getBGSprites() { return m_sprites; }
+	virtual uint8_t getBackgroundLight() { return m_background_light; }
 
 	
 };
