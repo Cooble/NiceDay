@@ -2,6 +2,8 @@
 #include "ndpch.h"
 #include "Biome.h"
 
+#define ND_REGISTER_BIOME(biome)\
+	BiomeRegistry::get().registerBiome(biome);
 class BiomeRegistry
 {
 

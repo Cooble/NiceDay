@@ -65,7 +65,7 @@ namespace WorldIO {
 
 		Chunk* cc = new Chunk();
 		memset(cc, 0,  sizeof(Chunk));
-		cc->m_loaded = false;
+		cc->setLoaded(false);
 		cc->last_save_time = 0;
 		//writing blank chunks
 		for (int y = 0; y < info.chunk_height; y++)

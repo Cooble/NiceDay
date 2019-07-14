@@ -1,49 +1,73 @@
 #pragma once
-#include <utility>
 #include "ndpch.h"
 #include "glad/glad.h"
 
+enum class TextureWrapMode
+{
+	REPEAT = GL_REPEAT,
+	CLAMP_TO_EDGE = GL_CLAMP_TO_EDGE,
+	CLAMP_TO_BORDER = GL_CLAMP_TO_BORDER,
+};
+
+enum class TextureFilterMode
+{
+	NEAREST = GL_NEAREST,
+	LINEAR = GL_LINEAR
+};
+
+enum class TextureFormat
+{
+	RGBA = GL_RGBA,
+	RGB = GL_RGB,
+	RED = GL_RED
+};
+
 struct TextureInfo
 {
-	float border_color[4] = {0,0,0,0};//transparent color outside of image
-	int width=0, height=0;
+	float border_color[4] = {0, 0, 0, 0}; //transparent color outside of image
+	int width = 0, height = 0;
 	std::string file_path;
-	GLenum filter_mode_min=GL_LINEAR;
-	GLenum filter_mode_max= GL_LINEAR;
-	GLenum wrap_mode_s=GL_REPEAT;
-	GLenum wrap_mode_t= GL_REPEAT;
-	GLenum f_format = GL_RGBA;
+	TextureFilterMode filter_mode_min = TextureFilterMode::LINEAR;
+	TextureFilterMode filter_mode_max = TextureFilterMode::LINEAR;
 
-	TextureInfo& filterMode(GLenum mode)
+	TextureWrapMode wrap_mode_s = TextureWrapMode::REPEAT;
+	TextureWrapMode wrap_mode_t = TextureWrapMode::REPEAT;
+	TextureFormat f_format = TextureFormat::RGBA;
+
+	inline TextureInfo& filterMode(TextureFilterMode mode)
 	{
 		filter_mode_min = mode;
-		filter_mode_max= mode;
+		filter_mode_max = mode;
 		return *this;
 	}
-	TextureInfo& wrapMode(GLenum mode)
+
+	inline TextureInfo& wrapMode(TextureWrapMode mode)
 	{
 		wrap_mode_s = mode;
 		wrap_mode_t = mode;
 		return *this;
 	}
-	TextureInfo& path(const std::string& s)
+
+	inline TextureInfo& path(const std::string& s)
 	{
 		file_path = s;
 		return *this;
 	}
 
-	TextureInfo& size(int w, int h)
+	inline TextureInfo& size(int w, int h)
 	{
 		width = w;
 		height = h;
 		return *this;
 	}
-	TextureInfo& format(GLenum form)
+
+	inline TextureInfo& format(TextureFormat form)
 	{
 		f_format = form;
 		return *this;
 	}
-	TextureInfo& borderColor(float r,float g,float b,float a)
+
+	inline TextureInfo& borderColor(float r, float g, float b, float a)
 	{
 		border_color[0] = r;
 		border_color[1] = g;
@@ -57,39 +81,33 @@ struct TextureInfo
 	{
 		file_path = "";
 	}
+
 	TextureInfo(const std::string& string)
 	{
 		file_path = string;
 	}
+
 	TextureInfo(const char* string)
 	{
 		file_path = string;
 	}
-
 };
+
 class Texture
 {
-private:
-	unsigned int m_id;
-	int m_BPP;//channels
-	unsigned char* m_buffer;
-	int m_width, m_height;
-	GLenum m_format;
-	std::string m_filePath;
-
 public:
-	Texture(const TextureInfo& info);
+	virtual ~Texture() = default;
 
-	void bind(unsigned int slot = 0) const;
-	void unbind() const;
+	virtual void bind(unsigned int slot = 0) const = 0;
+	virtual void unbind() const = 0;
 
-	inline int getWidth() const { return m_width; }
-	inline int getHeight() const { return m_height; }
-	inline unsigned int getID() const { return m_id; }
+	virtual int getWidth() const = 0;
+	virtual int getHeight() const = 0;
+	virtual unsigned int getID() const = 0;
 
-	~Texture();
-	
-	void setPixels(float* light_map);//todo add template anotation to enable more than jut floats
-	void setPixels(uint8_t* light_map);//todo add template anotation to enable more than jut floats
+
+	virtual void setPixels(float* light_map) = 0; //todo add template anotation to enable more than jut floats
+	virtual void setPixels(uint8_t* light_map) =0; //todo add template anotation to enable more than jut bytes
+public:
+	static Texture* create(TextureInfo&);
 };
-

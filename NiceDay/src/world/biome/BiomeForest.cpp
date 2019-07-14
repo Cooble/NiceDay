@@ -12,9 +12,9 @@ BiomeForest::BiomeForest()
 	for (int i = 0; i < m_sprites_size; i++)
 	{
 		TextureInfo info(std::string("res/images/bg/forest_") + std::to_string(i) + std::string(".png"));
-		info.wrap_mode_s = GL_REPEAT;
-		info.wrap_mode_t = GL_CLAMP_TO_BORDER;
-		m_sprites[i] = new Sprite2D(new Texture(info));
+		info.wrap_mode_s = TextureWrapMode::REPEAT;
+		info.wrap_mode_t = TextureWrapMode::CLAMP_TO_BORDER;
+		m_sprites[i] = new Sprite2D(Texture::create(info));
 		m_sprites[i]->setPosition(glm::vec2(-1, -1));
 		m_sprites[i]->setScale(glm::vec2(2, 2));
 	}

@@ -4,15 +4,24 @@
 #include "world/ChunkLoader.h"
 #include "world/WorldRenderManager.h"
 #include "entity/Camera.h"
+#include "graphics/Sprite.h"
+#include "world/entity/componentManager.h"
+#include "world/entity/ssystem.h"
 
+
+class BatchRenderer2D;
 class WorldLayer : public Layer
 {
 private:
+	std::vector<Sprite*> m_sprites;
+	BatchRenderer2D* m_batch_renderer;
 	World* m_world;
 	ChunkLoader* m_chunk_loader;
 	//ChunkMeshInstance* m_mesh;
 	WorldRenderManager* m_render_manager;
+	Sprite* chunkOfSprites;
 	Camera* m_cam;
+
 public:
 	WorldLayer();
 	~WorldLayer();

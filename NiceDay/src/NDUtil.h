@@ -1,4 +1,5 @@
 #pragma once
+#include <bitset>
 
 namespace NDUtil
 {
@@ -83,6 +84,36 @@ namespace NDUtil
 		m_head = 0;
 		m_size = 0;
 	}
+
+
+	class Bitset
+	{
+	private:
+		std::vector<std::bitset<32>> m_bits;
+
+	public:
+		Bitset() = default;
+
+		inline void resize(size_t bits)
+		{
+			if(bits%32!=0)
+				bits = (bits / 32) * 32 + 32;
+			m_bits.resize(bits / 32);
+		}
+		inline bool get(size_t index)
+		{
+			return m_bits[index >> 5][index&((1 << 5) - 1)];
+		}
+		inline void set(size_t index,bool val)
+		{
+			m_bits[index >> 5][index&((1 << 5) - 1)]=val;
+		}
+		inline bool operator[](size_t index)
+		{
+			return get(index);
+		}
+
+	};
 }
 
 struct half_int

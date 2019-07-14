@@ -1,28 +1,40 @@
 ﻿#pragma once
 #include "ndpch.h"
+#include "EntityManager.h"
+#include "graphics/IBatchRenderable2D.h"
+#include "graphics/Sprite.h"
 
-constexpr int ENTITY_BOULDER = 0;
+
+
+constexpr int EFLAG_TEMPORARY =		BIT(0);//will be killed on chunk unload
+constexpr int EFLAG_CHUNK_LOADER =	BIT(1);//will keep chunks around loaded (usually Player)
 
 class World;
 
-class WorldEntity
+class WorldEntity: public NBTSaveable
 {
-private:
-	int m_id;// each entity instance has unique id
-	int m_entity_type;// e.g. Player, Zombie, Skeleton etc.
 protected:
-	bool m_is_temporary;//should be destroyed or saved upon unload
-	bool m_is_chunk_loader;//can keep chunks loaded
-	Vector2D m_pos;//world pos
-	WorldEntity(int id,int entityTypeId);
-public:
+	EntityID m_id;// each entity instance has unique id
+protected:
+	uint64_t m_flags;
+	glm::vec2 m_pos;//world pos
+protected:
+	WorldEntity() = default;
 	virtual ~WorldEntity() = default;
-	inline bool isChunkLoader() const { return m_is_chunk_loader; }//keeps chunks loaded
-	inline bool isTemporary() const { return m_is_temporary; }//should be destroyed or saved upon unload
-	inline int getID() const { return m_id; }
-	inline int getEntityType() const { return m_entity_type; }
-	inline const Vector2D& getPosition() const { return m_pos; }
 
-	virtual void update(World* w);
+public:
+	inline bool hasFlag(uint64_t flags) const { return (m_flags & flags)==flags; }
+
+	inline EntityID getID() const { return m_id; }
+	
+	virtual int getEntityType() const = 0;
+
+	inline const glm::vec2& getPosition() const { return m_pos; }
+
+	virtual void update(World* w) {};
+
+	void save(NBT& src) override;
+	void load(NBT& src) override;
 
 };
+

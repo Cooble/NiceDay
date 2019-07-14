@@ -6,7 +6,7 @@ VertexBuffer* Sprite2D::s_vbo=nullptr;
 VertexArray* Sprite2D::s_vao;
 Shader* Sprite2D::s_program;
 
-void Sprite2D::init()//todo dont forget to destruct
+void Sprite2D::init()
 {
 	if (s_vbo)//dont want to reinit
 		return;
@@ -16,11 +16,12 @@ void Sprite2D::init()//todo dont forget to destruct
 		0, 0,
 		0, 1,
 	};
-	s_vbo = VertexBuffer::create(quad, sizeof(quad),GL_STATIC_DRAW);
+	s_vbo = VertexBuffer::create(quad, sizeof(quad), BufferUsage::STATIC_DRAW);
 	VertexBufferLayout l;
 	l.push<float>(2);
 	s_vao = VertexArray::create();
-	s_vao->addBuffer(*s_vbo, l);
+	s_vbo->setLayout(l);
+	s_vao->addBuffer(*s_vbo);
 
 	s_program = new Shader("res/shaders/Sprite2D.shader");
 	s_program->bind();
@@ -54,7 +55,7 @@ Sprite2D::Sprite2D(Texture* t)
 }
 
 Sprite2D::Sprite2D(const char* texture_path)
-	:Sprite2D(new Texture(texture_path))
+	:Sprite2D(Texture::create(TextureInfo(texture_path)))
 {
 
 }
@@ -64,19 +65,19 @@ Sprite2D::~Sprite2D()
 	delete m_texture;
 }
 
-void Sprite2D::setPosition(glm::vec2 v)
+void Sprite2D::setPosition(const glm::vec2& v)
 {
 	m_position = v;
 	m_stale_model_matrix = true;
 }
 
-void Sprite2D::setScale(glm::vec2 v)
+void Sprite2D::setScale(const glm::vec2& v)
 {
 	m_scale = v;
 	m_stale_model_matrix = true;
 }
 
-void Sprite2D::setCutout(glm::vec4 v)
+void Sprite2D::setCutout(const glm::vec4& v)
 {
 	m_cutout = v;
 	m_stale_uv_matrix = true;

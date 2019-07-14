@@ -20,6 +20,9 @@
 #include "world/block/basic_blocks.h"
 #include "world/block/basic_walls.h"
 
+#include "graphics/BatchRenderer2D.h"
+#include "graphics/Sprite.h"
+
 const char* WORLD_FILE_PATH;
 int CHUNKS_LOADED;
 int CHUNKS_DRAWN;
@@ -35,43 +38,46 @@ float CAM_POS_Y;
 
 static int BLOCK_PALLETE_SELECTED = 0;
 static bool BLOCK_OR_WALL_SELECTED = true;
+
+//static Entity m_player_handle;
 WorldLayer::WorldLayer()
-	:Layer("WorldLayer")
+	: Layer("WorldLayer"), chunkOfSprites(nullptr)
 {
 	//blocks
-	BlockRegistry::get().registerBlock(new BlockAir());
-	BlockRegistry::get().registerBlock(new BlockStone());
-	BlockRegistry::get().registerBlock(new BlockDirt());
-	BlockRegistry::get().registerBlock(new BlockGold());
-	BlockRegistry::get().registerBlock(new BlockAdamantite());
-	BlockRegistry::get().registerBlock(new BlockPlatform());
-	BlockRegistry::get().registerBlock(new BlockGrass());
-	BlockRegistry::get().registerBlock(new BlockGlass());
-	BlockRegistry::get().registerBlock(new BlockTorch());
+	ND_REGISTER_BLOCK(new BlockAir());
+	ND_REGISTER_BLOCK(new BlockStone());
+	ND_REGISTER_BLOCK(new BlockDirt());
+	ND_REGISTER_BLOCK(new BlockGold());
+	ND_REGISTER_BLOCK(new BlockAdamantite());
+	ND_REGISTER_BLOCK(new BlockPlatform());
+	ND_REGISTER_BLOCK(new BlockGrass());
+	ND_REGISTER_BLOCK(new BlockGlass());
+	ND_REGISTER_BLOCK(new BlockTorch());
 
 	//walls
-	BlockRegistry::get().registerWall(new WallAir());
-	BlockRegistry::get().registerWall(new WallDirt());
-	BlockRegistry::get().registerWall(new WallStone());
-	BlockRegistry::get().registerWall(new WallGlass());
+	ND_REGISTER_WALL(new WallAir());
+	ND_REGISTER_WALL(new WallDirt());
+	ND_REGISTER_WALL(new WallStone());
+	ND_REGISTER_WALL(new WallGlass());
 
 	//biomes
-	BiomeRegistry::get().registerBiome(new BiomeForest());
-	BiomeRegistry::get().registerBiome(new BiomeUnderground());
-	BiomeRegistry::get().registerBiome(new BiomeDirt());
+	ND_REGISTER_BIOME(new BiomeForest());
+	ND_REGISTER_BIOME(new BiomeUnderground());
+	ND_REGISTER_BIOME(new BiomeDirt());
 
 	WorldIOInfo info;
 	info.world_name = "NiceWorld";
 	info.chunk_width = 200;
 	info.chunk_height = 10;
 	info.seed = 0;
-	info.terrain_level = (info.chunk_height - 2)*WORLD_CHUNK_SIZE;
+	info.terrain_level = (info.chunk_height - 2) * WORLD_CHUNK_SIZE;
 
 
 	bool genW = true;
 
 
-	if (genW) {
+	if (genW)
+	{
 		auto stream = WorldIO::Session(info.world_name + ".world", true, true);
 		m_world = stream.genWorldFile(info);
 		stream.close();
@@ -83,16 +89,17 @@ WorldLayer::WorldLayer()
 		stream.close();
 	}
 
-	if (!m_world) {
+	if (!m_world)
+	{
 		ND_ERROR("cannot load world file corrputed");
 	}
 
 
 	m_chunk_loader = new ChunkLoader(m_world);
 	m_cam = new Camera();
-	glm::vec2 po = { m_world->getInfo().chunk_width*WORLD_CHUNK_SIZE / 2,m_world->getInfo().terrain_level };
+	glm::vec2 po = {m_world->getInfo().chunk_width * WORLD_CHUNK_SIZE / 2, m_world->getInfo().terrain_level};
 	m_cam->setPosition(po);
-	m_cam->setChunkRadius({4,3});
+	m_cam->setChunkRadius({4, 3});
 
 	m_chunk_loader->registerEntity(dynamic_cast<IChunkLoaderEntity*>(m_cam));
 	m_chunk_loader->onUpdate();
@@ -101,14 +108,34 @@ WorldLayer::WorldLayer()
 	LightCalculator& c = m_world->getLightCalculator();
 	c.registerLight(dynamic_cast<LightSource*>(m_cam));
 	m_render_manager = new WorldRenderManager(m_cam, m_world);
+	/*Texture* t = Texture::create(TextureInfo("res/images/bg/dirt.png"));
+	Texture* t2 = Texture::create(TextureInfo("res/images/icon.png"));
+	for (int i = 0; i < 4; ++i)
+	{
+		auto sprite = new Sprite(t2);
+		sprite->setRectangle(glm::vec3(0, 10, 0), glm::vec2(10, 10));
+		m_sprites.push_back(sprite);
+	}
+	chunkOfSprites = (Sprite*)malloc(sizeof(Sprite) * 1000);
+	for (int i = 0; i < 1000; ++i)
+	{
+		auto sprite = new(chunkOfSprites+i) Sprite(t);
+		sprite->setRectangle(glm::vec3(i/100.0f, 0, 0), glm::vec2(6, 6));
+		*/
 
-
+	m_batch_renderer = new BatchRenderer2D();
 }
 
 WorldLayer::~WorldLayer() {
 	delete m_chunk_loader;
 	delete m_world;
-
+	delete m_batch_renderer;
+	delete m_render_manager;
+	/*for (auto s:m_sprites)
+	{
+		delete s;
+	}*/
+	//free(chunkOfSprites);
 }
 
 void WorldLayer::onAttach()
@@ -129,6 +156,8 @@ void WorldLayer::onDetach()
 static int fpsCount;
 void WorldLayer::onUpdate()
 {
+
+
 	m_cam->m_light_intensity = Stats::player_light_intensity;
 	fpsCount++;
 	static int lightCalcDelay = 0;
@@ -209,10 +238,36 @@ void WorldLayer::onUpdate()
 	m_world->onUpdate();
 	m_chunk_loader->onUpdate();
 	m_render_manager->onUpdate();
+
+
+	//m_physics_system->proccess(m_physics_manager);
 }
 void WorldLayer::onRender()
 {
-	m_render_manager->render();
+	/*m_render_manager->render();
+	m_mesh_system->proccess(m_mesh_manager, m_physics_manager);
+*/
+/*
+	m_batch_renderer->begin();
+	m_batch_renderer->push(m_render_manager->getProjMatrix());
+	static float rot = 0;
+	rot += 0.01f;
+	static float rot2 = 0;
+	rot2 += 0.02f;
+	auto m = glm::rotate(glm::mat4(1.0f), rot,glm::vec3(0, 0, 1));
+	auto m2 = glm::translate(glm::mat4(1.0f), glm::vec3(15, 16, 0));
+	 m2 = glm::rotate(m2, rot2,glm::vec3(0, 0, 1));
+	m_batch_renderer->push(m);
+	for (int i = 0; i < m_sprites.size(); ++i)
+	{
+		m_batch_renderer->submit(*m_sprites[i]);
+	}
+	m_batch_renderer->push(m2);
+	m_batch_renderer->submit(*m_sprites[m_sprites.size()/7]);
+	m_batch_renderer->pop();
+	m_batch_renderer->pop();
+	m_batch_renderer->pop();
+	m_batch_renderer->flush();*/
 
 }
 void WorldLayer::onImGuiRender()
@@ -256,6 +311,10 @@ void WorldLayer::onImGuiRender()
 		BLOCK_PALLETE_SELECTED = 0;
 	ImGui::InputFloat("Player speed: ", &Stats::player_speed);
 	ImGui::InputFloat("Light Intensity: ", &Stats::player_light_intensity);
+	ImGui::InputFloat("Debug X: ", &Stats::debug_x);
+	
+	ImGui::SliderFloat("slider float", &Stats::debug_x, -1.0f, 1.0f, "ratio = %.3f");
+
 
 	ImGui::Text("World filepath: %s", WORLD_FILE_PATH);
 	ImGui::Text("Chunks Size: (%d/%d)", WORLD_CHUNK_WIDTH, WORLD_CHUNK_HEIGHT);
@@ -342,6 +401,8 @@ void WorldLayer::onImGuiRender()
 	ImGui::Separator();*/
 
 	ImGui::End();
+	static bool op = false;
+	ImGui::ShowDemoWindow(&op);
 }
 void WorldLayer::onEvent(Event& e)
 {

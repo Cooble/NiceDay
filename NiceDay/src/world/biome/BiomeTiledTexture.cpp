@@ -10,9 +10,9 @@ BiomeTiledTexture::BiomeTiledTexture(int id, const std::string& texture_path)
 	m_sprites = new Sprite2D*[m_sprites_size];
 
 	TextureInfo info(texture_path);
-	info.wrap_mode_s = GL_REPEAT;
-	info.wrap_mode_t = GL_REPEAT;
-	m_sprites[0] = new Sprite2D(new Texture(info));
+	info.wrapMode(TextureWrapMode::REPEAT);
+	
+	m_sprites[0] = new Sprite2D(Texture::create(info));
 	m_sprites[0]->setPosition(glm::vec2(-1, -1));
 	m_sprites[0]->setScale(glm::vec2(2, 2));
 }

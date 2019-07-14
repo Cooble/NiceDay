@@ -10,7 +10,7 @@ private:
 public:
 	OpenGLVertexArray();
 	~OpenGLVertexArray();
-	void addBuffer(const VertexBuffer& vbo, const VertexBufferLayout& layout) override;
+	void addBuffer(const VertexBuffer& vbo) override;
 
 	void bind() const override;
 	void unbind() const override;

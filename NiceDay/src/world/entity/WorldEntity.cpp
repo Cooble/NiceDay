@@ -1,11 +1,13 @@
 ﻿#include "ndpch.h"
 #include "WorldEntity.h"
 
-WorldEntity::WorldEntity(int id, int entityTypeId)
-	:m_id(id),m_entity_type(entityTypeId)
+
+void WorldEntity::save(NBT& src)
 {
+	src.set("entityID",m_id);
 }
 
-void WorldEntity::update(World* w)
+void WorldEntity::load(NBT& src)
 {
+	m_id = src.get<EntityID>("entityID");
 }

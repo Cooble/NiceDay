@@ -75,7 +75,7 @@ BlockPlatform::BlockPlatform()
 {
 	m_block_connect_group = BIT(BLOCK_GROUP_PLATFORM_BIT);
 	m_texture_pos = { 0,15 };
-	m_opacity = 0.05f;
+	m_opacity = 1;
 }
 bool BlockPlatform::onNeighbourBlockChange(World* world, int x, int y) const
 {
@@ -136,7 +136,7 @@ bool BlockGrass::onNeighbourBlockChange(World* world, int x, int y) const
 	BlockStruct& block = world->editBlock(x, y);
 	int lastid = block.block_id;
 	int lastCorner = block.block_corner;
-	bool custombit = (lastCorner&BIT(4)) != 0;//perserve custombit
+	bool custombit = (lastCorner&BIT(4));//perserve custombit
 	block.block_corner &= ~BIT(4);
 
 	Block::onNeighbourBlockChange(world, x, y);//update corner state

@@ -37,6 +37,7 @@ public:
 	void setUniform1f(const std::string& name, float f0);
 	void setUniform2f(const std::string& name, float f0, float f1);
 	void setUniform1i(const std::string& name, int v);
+	void setUniform1iv(const std::string& name,int count, int* v);
 
 
 

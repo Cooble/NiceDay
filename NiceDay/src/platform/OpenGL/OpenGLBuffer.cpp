@@ -1,31 +1,30 @@
 #include  "ndpch.h"
 #include "OpenGLBuffer.h"
-#include <glad/glad.h>
-#include "graphics/Renderer.h"
+#include "OpenGLRenderer.h"
 
 /////////////////////////////////////////////////////////////////////////////////
 //VertexBuffer //////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////
-OpenGLVertexBuffer::OpenGLVertexBuffer(void* data, uint32_t size,uint32_t usage)
+OpenGLVertexBuffer::OpenGLVertexBuffer(void* data, uint32_t size,BufferUsage usage)
 	:m_size(size),m_id(0)
 {
-	Call(glGenBuffers(1, &m_id));
-	Call(glBindBuffer(GL_ARRAY_BUFFER, m_id));
-	Call(glBufferData(GL_ARRAY_BUFFER, size, data, usage));
+	GLCall(glGenBuffers(1, &m_id));
+	GLCall(glBindBuffer(GL_ARRAY_BUFFER, m_id));
+	GLCall(glBufferData(GL_ARRAY_BUFFER, size, data, (int)usage));
 }
 
 OpenGLVertexBuffer::~OpenGLVertexBuffer()
 {
-	Call(glDeleteBuffers(1, &m_id));
+	GLCall(glDeleteBuffers(1, &m_id));
 }
 
 void OpenGLVertexBuffer::bind() const
 {
-	Call(glBindBuffer(GL_ARRAY_BUFFER, m_id));
+	GLCall(glBindBuffer(GL_ARRAY_BUFFER, m_id));
 }
 void OpenGLVertexBuffer::unbind() const
 {
-	Call(glBindBuffer(GL_ARRAY_BUFFER, 0));
+	GLCall(glBindBuffer(GL_ARRAY_BUFFER, 0));
 }
 
 uint32_t OpenGLVertexBuffer::getSize() const
@@ -33,35 +32,48 @@ uint32_t OpenGLVertexBuffer::getSize() const
 	return m_size;
 }
 
+void* OpenGLVertexBuffer::mapPointer()
+{
+	void* out;
+	GLCall(out= glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY));
+	ASSERT(out, "[OpenGLVertexBuffer]: Cannot get map pointer to VBO, is it currently bound?");
+	return out;
+}
+
+void OpenGLVertexBuffer::unMapPointer()
+{
+	GLCall(glUnmapBuffer(GL_ARRAY_BUFFER));
+}
+
 void OpenGLVertexBuffer::changeData(char* buff, uint32_t size, uint32_t offset)
 {
-	Call(glBindBuffer(GL_ARRAY_BUFFER, m_id));
-	Call(glBufferSubData(GL_ARRAY_BUFFER, offset, size, buff));
+	GLCall(glBindBuffer(GL_ARRAY_BUFFER, m_id));
+	GLCall(glBufferSubData(GL_ARRAY_BUFFER, offset, size, buff));
 }
 
 /////////////////////////////////////////////////////////////////////////////////
 //IndexBuffer////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////
-OpenGLIndexBuffer::OpenGLIndexBuffer(uint32_t* data, uint32_t count)
+OpenGLIndexBuffer::OpenGLIndexBuffer(uint32_t* data, uint32_t count,BufferUsage usage)
 	:m_count(count)
 {
-	Call(glGenBuffers(1, &m_id));
-	Call(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_id));
-	Call(glBufferData(GL_ELEMENT_ARRAY_BUFFER, count*sizeof(uint32_t), data, GL_STATIC_DRAW));
+	GLCall(glGenBuffers(1, &m_id));
+	GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_id));
+	GLCall(glBufferData(GL_ELEMENT_ARRAY_BUFFER, count*sizeof(uint32_t), data, (int)usage));
 }
 
 OpenGLIndexBuffer::~OpenGLIndexBuffer()
 {
-	Call(glDeleteBuffers(1, &m_id));
+	GLCall(glDeleteBuffers(1, &m_id));
 }
 
 void OpenGLIndexBuffer::bind() const
 {
-	Call(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_id));
+	GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_id));
 }
 void OpenGLIndexBuffer::unbind() const
 {
-	Call(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
+	GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
 }
 
 uint32_t OpenGLIndexBuffer::getCount() const

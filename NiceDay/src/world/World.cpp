@@ -5,11 +5,12 @@
 #include "WorldIO.h"
 #include "block/BlockRegistry.h"
 #include "biome/BiomeRegistry.h"
-#include "block/block_datas.h"
 #include "Game.h"
 
-Chunk::Chunk() : m_loaded(false), m_locked(false)
+Chunk::Chunk() 
 {
+	setLoaded(false);
+	lock(false);
 }
 
 void World::init()
@@ -138,7 +139,7 @@ void World::loadChunksAndGen(std::set<int>& toLoadChunks)
 		int saveOffset = getChunkSaveOffset(x, y);
 		stream.loadChunk(&c, saveOffset);
 		m_local_offset_map[c.chunkID()] = chunkIndex;
-		c.m_loaded = true;
+		c.setLoaded(true);
 		if (!c.isGenerated())
 		{
 			//fresh chunk -> need to generate it
@@ -208,7 +209,7 @@ void World::genChunks(std::set<int>& toGenChunks)
 			stream.loadChunk(&c, saveOffset);
 			if (!c.isGenerated() && toGenChunks.find(id) == toGenChunks.end())
 			{
-				c.m_loaded = false;
+				c.setLoaded(false);
 				//ND_INFO("erasing {}, {}",x,y);
 				toErase.push_back(id);
 				continue;
@@ -216,7 +217,7 @@ void World::genChunks(std::set<int>& toGenChunks)
 			else
 			{
 				m_local_offset_map[c.chunkID()] = index;
-				c.m_loaded = true;
+				c.setLoaded(true);
 			}
 		}
 		m_chunks[index].lock(true);
@@ -237,12 +238,28 @@ void World::genChunks(std::set<int>& toGenChunks)
 			std::advance(genIt, genIndex);
 			while (genIt != toGenChunks.end())
 			{
-				Chunk& c = m_chunks[getChunkIndex(*genIt)];
-				this->m_gen.gen(this->m_info.seed, this, c);
-				m_light_calc.computeChunk(c);
+				//todo remove this multithreaded attempt try to separate gen in more ticks instead
+				Chunk* c = &m_chunks[getChunkIndex(*genIt)];
+				std::thread t([this,c]()//gen 2 chunks at once using multithreading
+				{
+					this->m_gen.gen(this->m_info.seed, this, *c);
+				});
+
 				++genIndex;
 				++genIt;
 				++numberOfGens;
+				
+				if (genIt != toGenChunks.end()) {
+					Chunk& c2 = m_chunks[getChunkIndex(*genIt)];
+					this->m_gen.gen(this->m_info.seed, this, c2);
+					m_light_calc.computeChunk(c2);
+					++genIndex;
+					++genIt;
+					++numberOfGens;
+				}
+				t.join();
+				this->m_light_calc.computeChunk(*c);
+
 				if (numberOfGens >= 1)
 					return false;
 			}
@@ -365,7 +382,7 @@ void World::unloadChunks(std::set<int>& chunk_ids)
 			continue;
 		//ND_INFO("Unloaded chunk {},{}", half_int(chunkId).x, half_int(chunkId).y);
 		m_local_offset_map.erase(chunkId); //is complexity bad?
-		c.m_loaded = false;
+		c.setLoaded(false);
 		c.last_save_time = getTime();
 		stream.saveChunk(&c, getChunkSaveOffset(c.chunkID()));
 	}
@@ -434,28 +451,28 @@ void World::onBlocksChange(int x, int y, int deep = 0)
 	if (isBlockValid(x, y + 1) && BlockRegistry::get()
 	                              .getBlock(getBlock(x, y + 1).block_id).onNeighbourBlockChange(this, x, y + 1))
 	{
-		getChunk(World::getChunkCoord(x), World::getChunkCoord(y + 1)).markDirty(true);
+		getChunk(World::toChunkCoord(x), World::toChunkCoord(y + 1)).markDirty(true);
 		onBlocksChange(x, y + 1, deep);
 	}
 
 	if (isBlockValid(x, y - 1) && BlockRegistry::get()
 	                              .getBlock(getBlock(x, y - 1).block_id).onNeighbourBlockChange(this, x, y - 1))
 	{
-		getChunk(World::getChunkCoord(x), World::getChunkCoord(y - 1)).markDirty(true);
+		getChunk(World::toChunkCoord(x), World::toChunkCoord(y - 1)).markDirty(true);
 		onBlocksChange(x, y - 1, deep);
 	}
 
 	if (isBlockValid(x + 1, y) && BlockRegistry::get()
 	                              .getBlock(getBlock(x + 1, y).block_id).onNeighbourBlockChange(this, x + 1, y))
 	{
-		getChunk(World::getChunkCoord(x + 1), World::getChunkCoord(y)).markDirty(true);
+		getChunk(World::toChunkCoord(x + 1), World::toChunkCoord(y)).markDirty(true);
 		onBlocksChange(x + 1, y, deep);
 	}
 
 	if (isBlockValid(x - 1, y) && BlockRegistry::get()
 	                              .getBlock(getBlock(x - 1, y).block_id).onNeighbourBlockChange(this, x - 1, y))
 	{
-		getChunk(World::getChunkCoord(x - 1), World::getChunkCoord(y)).markDirty(true);
+		getChunk(World::toChunkCoord(x - 1), World::toChunkCoord(y)).markDirty(true);
 		onBlocksChange(x - 1, y, deep);
 	}
 }
@@ -493,7 +510,7 @@ void World::onWallsChange(int xx, int yy, BlockStruct& blok)
 				{
 					//i cannot call this method on some foreign wall pieces
 					BlockRegistry::get().getWall(b.wallID()).onNeighbourWallChange(this, x + xx, y + yy);
-					Chunk& c = getChunk(getChunkCoord(x + xx), getChunkCoord(y + yy));
+					Chunk& c = getChunk(toChunkCoord(x + xx), toChunkCoord(y + yy));
 					c.markDirty(true); //mesh needs to be updated
 				}
 			}

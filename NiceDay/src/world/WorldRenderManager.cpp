@@ -8,6 +8,8 @@
 
 #include "biome/BiomeForest.h"
 #include "biome/biomes.h"
+#include "platform/OpenGL/OpenGLRenderer.h"
+#include "biome/BiomeRegistry.h"
 
 
 WorldRenderManager::WorldRenderManager(Camera* cam, World* world)
@@ -40,11 +42,12 @@ WorldRenderManager::WorldRenderManager(Camera* cam, World* world)
 		0,0,
 		0,1,
 	};
-	m_light_VBO = VertexBuffer::create(quad, sizeof(quad),GL_STATIC_DRAW);
+	m_light_VBO = VertexBuffer::create(quad, sizeof(quad));
 	VertexBufferLayout l;
 	l.push<float>(2);
 	m_light_VAO = VertexArray::create();
-	m_light_VAO->addBuffer(*m_light_VBO, l);
+	m_light_VBO->setLayout(l);
+	m_light_VAO->addBuffer(*m_light_VBO);
 
 	//setup simple light texture
 	m_light_simple_program = new Shader("res/shaders/LightTexturePiece.shader");
@@ -58,9 +61,11 @@ WorldRenderManager::WorldRenderManager(Camera* cam, World* world)
 		-1, 1,
 
 	};
-	m_full_screen_quad_VBO = VertexBuffer::create(simpleQuad, sizeof(simpleQuad), GL_STATIC_DRAW);
+	m_full_screen_quad_VBO = VertexBuffer::create(simpleQuad, sizeof(simpleQuad));
+	m_full_screen_quad_VBO->setLayout(l);
 	m_full_screen_quad_VAO = VertexArray::create();
-	m_full_screen_quad_VAO->addBuffer(*m_full_screen_quad_VBO, l);
+
+	m_full_screen_quad_VAO->addBuffer(*m_full_screen_quad_VBO);
 	onScreenResize();
 }
 
@@ -118,8 +123,8 @@ void WorldRenderManager::onScreenResize()
 	TextureInfo info;
 
 	
-	info.size(m_chunk_width*WORLD_CHUNK_SIZE, m_chunk_height*WORLD_CHUNK_SIZE).f_format = GL_RED;
-	m_light_simple_texture = new Texture(info);
+	info.size(m_chunk_width*WORLD_CHUNK_SIZE, m_chunk_height*WORLD_CHUNK_SIZE).f_format = TextureFormat::RED;
+	m_light_simple_texture = Texture::create(info);
 
 
 	//made main light map texture with 4 channels
@@ -127,24 +132,24 @@ void WorldRenderManager::onScreenResize()
 		delete m_light_texture;
 
 	info = TextureInfo();
-	info.size(m_chunk_width*WORLD_CHUNK_SIZE * 2, m_chunk_height*WORLD_CHUNK_SIZE * 2).filterMode(GL_NEAREST).format(GL_RGBA);
+	info.size(m_chunk_width*WORLD_CHUNK_SIZE * 2, m_chunk_height*WORLD_CHUNK_SIZE * 2).filterMode(TextureFilterMode::NEAREST).format(TextureFormat::RGBA);
 
-	m_light_texture = new Texture(info);
+	m_light_texture = Texture::create(info);
 	m_light_frame_FBO->bind();
 	m_light_frame_FBO->attachTexture(m_light_texture->getID());
 	m_light_frame_FBO->unbind();
 
 	//bg
 	info = TextureInfo();
-	info.size(screenWidth / 2, screenHeight / 2).filterMode(GL_NEAREST).format(GL_RGBA);
+	info.size(screenWidth / 2, screenHeight / 2).filterMode(TextureFilterMode::NEAREST).format(TextureFormat::RGBA);
 
-	m_bg_texture = new Texture(info);
+	m_bg_texture = Texture::create(info);
 	m_bg_FBO->bind();
 	m_bg_FBO->attachTexture(m_bg_texture->getID());
 	m_bg_FBO->unbind();
 
 	//bg2
-	m_bg_layer_texture = new Texture(info);
+	m_bg_layer_texture = Texture::create(info);
 	m_bg_layer_FBO->bind();
 	m_bg_layer_FBO->attachTexture(m_bg_layer_texture->getID());
 	m_bg_layer_FBO->unbind();
@@ -391,7 +396,7 @@ void WorldRenderManager::renderBiomeBackgroundToFBO()
 			sprite.getProgram().setUniformMat4("u_uv_transform", sprite.getUVMatrix());
 
 			sprite.getTexture().bind(0);
-			Call(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
+			GLCall(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
 		}
 		glEnable(GL_BLEND);
 		glBlendEquation(GL_FUNC_ADD);
@@ -408,7 +413,7 @@ void WorldRenderManager::renderBiomeBackgroundToFBO()
 		Sprite2D::getProgramStatic().setUniformMat4("u_model_transform", m);
 		Sprite2D::getProgramStatic().setUniformMat4("u_uv_transform", glm::mat4(1.0f));
 		m_bg_layer_texture->bind(0);
-		Call(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
+		GLCall(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
 
 	}
 
@@ -419,7 +424,6 @@ void WorldRenderManager::renderBiomeBackgroundToFBO()
 
 void WorldRenderManager::render()
 {
-
 	//sky render
 	float CURSOR_Y = Game::get().getWindow()->getHeight() / BLOCK_PIXEL_SIZE + m_camera->getPosition().y;
 	float CURSOR_YY = -(float)Game::get().getWindow()->getHeight() / BLOCK_PIXEL_SIZE + m_camera->getPosition().y;
@@ -429,7 +433,7 @@ void WorldRenderManager::render()
 	m_sky_program->setUniform4f("u_up_color", upColor.r, upColor.g, upColor.b, upColor.a);
 	m_sky_program->setUniform4f("u_down_color", downColor.r, downColor.g, downColor.b, downColor.a);
 	m_full_screen_quad_VAO->bind();
-	Call(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
+	GLCall(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
 
 
 	//background
@@ -443,7 +447,7 @@ void WorldRenderManager::render()
 	Sprite2D::getProgramStatic().setUniformMat4("u_model_transform", m);
 	Sprite2D::getProgramStatic().setUniformMat4("u_uv_transform", glm::mat4(1.0f));
 	m_bg_texture->bind(0);
-	Call(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
+	GLCall(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
 
 	//chunk render
 	auto& program = *ChunkMesh::getProgram();
@@ -465,7 +469,7 @@ void WorldRenderManager::render()
 		program.setUniformMat4("u_transform", getProjMatrix()*worldMatrix);
 
 		mesh->getWallVAO().bind();
-		Call(glDrawArrays(GL_POINTS, 0, WORLD_CHUNK_AREA*4));
+		GLCall(glDrawArrays(GL_POINTS, 0, WORLD_CHUNK_AREA*4));
 
 	}
 	//blocks
@@ -482,7 +486,7 @@ void WorldRenderManager::render()
 		program.setUniformMat4("u_transform", getProjMatrix()*worldMatrix);
 
 		mesh->getVAO().bind();
-		Call(glDrawArrays(GL_POINTS, 0, WORLD_CHUNK_AREA));
+		GLCall(glDrawArrays(GL_POINTS, 0, WORLD_CHUNK_AREA));
 
 	}
 	glDisable(GL_BLEND);
@@ -505,14 +509,14 @@ void WorldRenderManager::renderLightMap()
 
 	m_light_frame_FBO->bind();
 	{
-		Call(glViewport(0, 0, m_chunk_width*WORLD_CHUNK_SIZE * 2, m_chunk_height*WORLD_CHUNK_SIZE * 2));
-		Call(glClearColor(0.5f, 0.5f, 0.5f, 1));
-		Call(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+		GLCall(glViewport(0, 0, m_chunk_width*WORLD_CHUNK_SIZE * 2, m_chunk_height*WORLD_CHUNK_SIZE * 2));
+		GLCall(glClearColor(0.5f, 0.5f, 0.5f, 1));
+		GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 		m_light_simple_program->bind();
 		m_light_simple_texture->bind(0);
 		m_full_screen_quad_VAO->bind();
-		Call(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
-		Call(glViewport(0, 0, Game::get().getWindow()->getWidth(), Game::get().getWindow()->getHeight()));
+		GLCall(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
+		GLCall(glViewport(0, 0, Game::get().getWindow()->getWidth(), Game::get().getWindow()->getHeight()));
 	}
 	m_light_frame_FBO->unbind();
 }
@@ -533,7 +537,7 @@ void WorldRenderManager::renderMainLightMap()
 	glEnable(GL_FRAMEBUFFER_SRGB);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA);
-	Call(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
+	GLCall(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
 	glDisable(GL_BLEND);
 	glDisable(GL_FRAMEBUFFER_SRGB);
 }

@@ -49,11 +49,11 @@ public:
 		m_uv_matrix = m;
 		m_stale_uv_matrix = false;
 	}
-	void setPosition(glm::vec2);
-	void setScale(glm::vec2);
+	void setPosition(const glm::vec2&);
+	void setScale(const glm::vec2&);
 
 	//rectangle x1 y1 x2 y2
-	void setCutout(glm::vec4);
+	void setCutout(const glm::vec4&);
 	//reset cutout to whole texture
 	void setCutout();
 	

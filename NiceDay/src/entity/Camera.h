@@ -9,9 +9,6 @@ protected:
 	//worldpos
 	glm::vec2 m_position;
 
-	//size of view
-	glm::vec2 m_dimension;
-
 	half_int m_chunk_radius;
 
 public:
@@ -30,8 +27,5 @@ public:
 	inline void setChunkRadius(half_int rad) { m_chunk_radius = rad; }
 
 	inline void setPosition(const glm::vec2& vec) { m_position = vec; }
-
-
-	glm::vec2& getDimension();
 };
 

@@ -35,8 +35,8 @@ inline TimerStaper::TimerStaper(std::string name): namee(std::move(name)),
 inline void TimerStaper::time(const std::string& s)
 {
 	stop = true;
-	long millis = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - start).count();
-	ND_TRACE("[{}] {} It took {}ms", namee.c_str(), s.c_str(),millis);
+	long millis = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() - start).count();
+	ND_TRACE("[{}] {} It took {}ms", namee.c_str(), s.c_str(),millis/1000.0f);
 }
 
 inline TimerStaper::~TimerStaper()

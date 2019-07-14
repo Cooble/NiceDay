@@ -5,6 +5,7 @@
 #include "event/KeyEvent.h"
 #include "event/WindowEvent.h"
 #include "graphics/Renderer.h"
+#include "platform/OpenGL/OpenGLRenderer.h"
 
 static void blankFun(Event& e) {}
 static bool is_glfw_initialized = false;
@@ -23,8 +24,8 @@ Window::Window(int width, int height, const char* title) :
 	}
 
 	
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 	// glfw window creation
@@ -51,7 +52,7 @@ Window::Window(int width, int height, const char* title) :
 	//window events
 	glfwSetFramebufferSizeCallback(m_window, [](GLFWwindow * window, int width, int height) {
 		WindowData& d = *(WindowData*)glfwGetWindowUserPointer(window);
-		Call(glViewport(0, 0, width, height));
+		GLCall(glViewport(0, 0, width, height));
 		d.width = width;
 		d.height = height;
 		WindowResizeEvent e(width, height);
@@ -112,8 +113,15 @@ Window::Window(int width, int height, const char* title) :
 
 	//GLint i = 0;
 	//glad_glGetIntegerv(GL_MAX_TEXTURE_SIZE, &i);
-
-
+	const GLubyte* vendor = glad_glGetString(GL_VENDOR); // Returns the vendor
+	const GLubyte* renderer = glad_glGetString(GL_RENDERER); // Returns a hint to the model
+	const GLubyte* gl = glad_glGetString(GL_VERSION); // Returns a hint to the model
+	const GLubyte* glsl = glad_glGetString(GL_SHADING_LANGUAGE_VERSION); // Returns a hint to the model
+	ND_INFO("Graphics card info:");
+	ND_INFO((char*)vendor);
+	ND_INFO((char*)renderer);
+	ND_INFO("GL version: {}", gl);
+	ND_INFO("GLSL version: {}", glsl);
 }
 
 

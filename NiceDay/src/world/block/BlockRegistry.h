@@ -1,6 +1,11 @@
 #pragma once
 #include "ndpch.h"
 #include "Block.h"
+
+#define ND_REGISTER_BLOCK(block)\
+	BlockRegistry::get().registerBlock(block);
+#define ND_REGISTER_WALL(wall)\
+	BlockRegistry::get().registerWall(wall);
 class BlockRegistry
 {
 

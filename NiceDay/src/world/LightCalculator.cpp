@@ -663,7 +663,7 @@ void LightCalculator::computeLight(Snapshot& sn)
 			int xm1 = x - 1;
 			if (xm1 >= 0)
 			{
-				half& v = lightValue(xm1, y);
+				half& v = lightValue(xm1, y);//todo try optimize it using 4 fifolists each for specific light direction (should be like 25% faster)
 				if (v < newLightPower)
 				{
 					v = newLightPower;

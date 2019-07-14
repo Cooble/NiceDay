@@ -2,8 +2,6 @@
 #include "ndpch.h"
 #include "ChunkMesh.h"
 #include "entity/Camera.h"
-#include "block/BlockRegistry.h"
-#include "biome/BiomeRegistry.h"
 #include "graphics/buffer/FrameBuffer.h"
 #include "LightCalculator.h"
 #include "graphics/Sprite2D.h"

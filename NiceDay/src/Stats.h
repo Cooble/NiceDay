@@ -8,5 +8,6 @@ public:
 	static bool move_through_blocks_enable;
 	static float player_speed;
 	static float player_light_intensity;
+	static float debug_x;
 	static BiomeDistances biome_distances;
 };

@@ -1,33 +1,33 @@
 ﻿#include "ndpch.h"
 #include "OpenGLVertexArray.h"
-#include "graphics/Renderer.h"
+#include "OpenGLRenderer.h"
 
 OpenGLVertexArray::OpenGLVertexArray()
 	:m_atrib_point_index(0)
 {
-	Call(glGenVertexArrays(1, &m_id));
+	GLCall(glGenVertexArrays(1, &m_id));
 }
 
 OpenGLVertexArray::~OpenGLVertexArray()
 {
-	Call(glDeleteVertexArrays(1,&m_id));
+	GLCall(glDeleteVertexArrays(1,&m_id));
 }
 
-void OpenGLVertexArray::addBuffer(const VertexBuffer& vbo, const VertexBufferLayout& layout)
+void OpenGLVertexArray::addBuffer(const VertexBuffer& vbo)
 {
 	bind();
 	vbo.bind();
 	unsigned int offset = 0;
-	std::vector<VertexBufferElement> ray = layout.getElements();
+	std::vector<VertexBufferElement> ray = vbo.getLayout().getElements();
 
 	for (unsigned int i = 0; i < ray.size(); i++) {
 		auto& e = ray[i];
-		Call(glEnableVertexAttribArray(m_atrib_point_index + i));
+		GLCall(glEnableVertexAttribArray(m_atrib_point_index + i));
 		if (e.isIType()) {
-			Call(glVertexAttribIPointer(m_atrib_point_index + i, e.count, e.type, layout.getStride(), (const void*)offset));
+			GLCall(glVertexAttribIPointer(m_atrib_point_index + i, e.count, e.type, vbo.getLayout().getStride(), (const void*)offset));
 		}
 		else {
-			Call(glVertexAttribPointer(m_atrib_point_index + i, e.count, e.type, e.normalized, layout.getStride(), (const void*)offset));
+			GLCall(glVertexAttribPointer(m_atrib_point_index + i, e.count, e.type, e.normalized, vbo.getLayout().getStride(), (const void*)offset));
 		}
 
 		offset += e.count*VertexBufferElement::getByteCount(e.type);
@@ -37,11 +37,11 @@ void OpenGLVertexArray::addBuffer(const VertexBuffer& vbo, const VertexBufferLay
 
 void OpenGLVertexArray::bind() const
 {
-	Call(glBindVertexArray(m_id));
+	GLCall(glBindVertexArray(m_id));
 }
 
 void OpenGLVertexArray::unbind() const
 {
-	Call(glBindVertexArray(0));
+	GLCall(glBindVertexArray(0));
 
 }

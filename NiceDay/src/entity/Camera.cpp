@@ -3,7 +3,7 @@
 
 
 Camera::Camera()
-	:m_position({ 0,0 }),m_dimension({1,1}),m_chunk_radius(0)
+	:m_position({ 0,0 }),m_chunk_radius(0)
 {
 	
 }
@@ -19,7 +19,3 @@ half_int Camera::getChunkRadius() const
 }
 
 
-glm::vec2& Camera::getDimension()
-{
-	return m_dimension;
-}

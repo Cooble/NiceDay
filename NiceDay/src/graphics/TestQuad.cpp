@@ -1,6 +1,7 @@
 ﻿#include "ndpch.h"
 #include "TestQuad.h"
 #include "Renderer.h"
+#include "platform/OpenGL/OpenGLRenderer.h"
 
 TestQuad::TestQuad(bool centered)
 {
@@ -16,11 +17,12 @@ TestQuad::TestQuad(bool centered)
 		-1, -1,
 		-1, 1
 	};
-	vbo = VertexBuffer::create(centered?quadCentered:quad,sizeof(float)*8,GL_STATIC_DRAW);
+	vbo = VertexBuffer::create(centered?quadCentered:quad,sizeof(float)*8, BufferUsage::STATIC_DRAW);
 	vao = VertexArray::create();
 	VertexBufferLayout l;
 	l.push<float>(2);
-	vao->addBuffer(*vbo, l);
+	vbo->setLayout(l);
+	vao->addBuffer(*vbo);
 	shader = new Shader("res/shaders/Test.shader");
 }
 
@@ -36,7 +38,7 @@ void TestQuad::render(const glm::mat4& transform)
 	shader->bind();
 	shader->setUniformMat4("u_transform", transform);
 	vao->bind();
-	Call(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
+	GLCall(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
 	shader->unbind();
 	vao->unbind();
 }

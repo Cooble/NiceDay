@@ -14,6 +14,12 @@ void main() {
 	v_corner_offset = corner_offset;
 }
 
+
+//The geometry shader is run on every primitive(triangle, line, point) and can discard it or output more primitives than came in.
+//This is similar to the tessellation shader, but much more flexible.
+//However, it is not used much in today's applications
+//!! because the performance is not that good on most graphics cards except for Intel's integrated GPUs.!!
+
 #shader geometry////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #version 330 core
@@ -62,18 +68,18 @@ void main() {
 
 	g_corner_uv_coords = vec2(corner_x + 1, corner_y) * corner_co;
 	g_uv_coords = vec2(x + 1, y) * co;
-	gl_Position = u_transform * (gl_in[0].gl_Position + vec2(1.0f, 0.0f));
+	gl_Position = u_transform * (gl_in[0].gl_Position + vec4(1.0f, 0.0f,0,0));
 	EmitVertex();
 
 
 	g_corner_uv_coords = vec2(corner_x, corner_y + 1) * corner_co;
 	g_uv_coords = vec2(x, y + 1) * co;
-	gl_Position = u_transform * (gl_in[0].gl_Position + vec2(0.0f, 1.0f));
+	gl_Position = u_transform * (gl_in[0].gl_Position + vec4(0.0f, 1.0f,0,0));
 	EmitVertex();
 
 	g_corner_uv_coords = vec2(corner_x + 1, corner_y + 1) * corner_co;
 	g_uv_coords = vec2(x +1, y + 1) * co;
-	gl_Position = u_transform * (gl_in[0].gl_Position + vec2(1.0f, 1.0f));
+	gl_Position = u_transform * (gl_in[0].gl_Position + vec4(1.0f, 1.0f,0,0));
 	EmitVertex();
 
 
