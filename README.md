@@ -22,8 +22,7 @@ Blocks, Walls, Background -> milestone reached (26_05_2019)
 Colorful block corners, glass, procedural chunk generation (14_06_2019)
 ![Alt text](screenshots/14_06_2019.png?raw=false "")
 
-Dynamic and Cached lighting system (19_06_2019)
-Only monochromatic :(
+Dynamic and Cached monochromatic lighting system (19_06_2019)  
 Cached lighting is only calculated onBlockChange
 ![Alt text](screenshots/19_06_2019.png?raw=false "")
 
