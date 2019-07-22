@@ -141,6 +141,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\graphics\TextureManager.h" />
+    <ClInclude Include="src\metaprogramming\Header.h" />
     <ClInclude Include="src\nbt\NBT.h" />
     <ClInclude Include="src\Core.h" />
     <ClInclude Include="src\EntryPoint.h" />
@@ -156,6 +158,7 @@
     <ClInclude Include="src\NDUtil.h" />
     <ClInclude Include="src\platform\OpenGL\OpenGLRenderer.h" />
     <ClInclude Include="src\platform\OpenGL\OpenGLTexture.h" />
+    <ClInclude Include="src\physShapes.h" />
     <ClInclude Include="src\Scheduler.h" />
     <ClInclude Include="src\Stats.h" />
     <ClInclude Include="src\Window.h" />
@@ -187,6 +190,7 @@
     <ClInclude Include="src\world\entity\entities.h" />
     <ClInclude Include="src\world\entity\EntityManager.h" />
     <ClInclude Include="src\world\entity\entity_datas.h" />
+    <ClInclude Include="src\world\entity\PathTracer.h" />
     <ClInclude Include="src\world\entity\ssystem.h" />
     <ClInclude Include="src\world\entity\componentManager.h" />
     <ClInclude Include="src\world\entity\Pool.h" />
@@ -576,6 +580,7 @@
     <ClInclude Include="vendor\stb_image\stb_image.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\graphics\TextureManager.cpp" />
     <ClCompile Include="src\nbt\NBT.cpp" />
     <ClCompile Include="src\EntryPoint.cpp" />
     <ClCompile Include="src\Game.cpp" />
@@ -589,6 +594,7 @@
     <ClCompile Include="src\Log.cpp" />
     <ClCompile Include="src\platform\OpenGL\OpenGLRenderer.cpp" />
     <ClCompile Include="src\platform\OpenGL\OpenGLTexture.cpp" />
+    <ClCompile Include="src\physShapes.cpp" />
     <ClCompile Include="src\Scheduler.cpp" />
     <ClCompile Include="src\State.cpp" />
     <ClCompile Include="src\Window.cpp" />
@@ -618,6 +624,7 @@
     <ClCompile Include="src\world\ChunkMesh.cpp" />
     <ClCompile Include="src\world\entity\entities.cpp" />
     <ClCompile Include="src\world\entity\EntityManager.cpp" />
+    <ClCompile Include="src\world\entity\PathTracer.cpp" />
     <ClCompile Include="src\world\entity\ssystem.cpp" />
     <ClCompile Include="src\world\entity\componentManager.cpp" />
     <ClCompile Include="src\world\entity\Pool.cpp" />

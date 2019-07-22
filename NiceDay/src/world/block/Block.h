@@ -1,5 +1,6 @@
 #pragma once
 #include "ndpch.h"
+#include "physShapes.h"
 //STATES=========================================================
 //is air counterclockwise start from up(=lsb) (up left down right)
 constexpr int BLOCK_STATE_FULL = 0;
@@ -108,6 +109,10 @@ protected:
 	//if yes the texturepos will be added based on location of block in chunk
 	bool m_has_big_texture;
 
+	const Phys::Polygon* m_bounds;
+	int m_bounds_size;
+
+
 	//how much light will be consumed by this block 
 	//32	-> consumes all light
 	//1		-> consumes one light level
@@ -119,6 +124,8 @@ protected:
 
 	int m_block_connect_group;
 	bool isInGroup(World* w, int x, int y, int group) const;
+	void setNoBounds();
+
 public:
 	Block(int id);
 	Block(const Block& c) = delete;
@@ -132,6 +139,8 @@ public:
 	}
 	inline uint8_t getOpacity()const {return m_opacity;}
 
+	virtual const Phys::Polygon& getBounds(int x, int y, const BlockStruct b) const;
+	bool hasBounds() const;
 
 	inline bool isInConnectGroup(int groups) const { return (groups & m_block_connect_group) != 0; }//they have group in common 
 

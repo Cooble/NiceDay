@@ -27,7 +27,7 @@ public:
 template <typename T>
 Pool<T>::Pool(int defaultSize) : m_size(defaultSize), m_foreign_allocation(false)
 {
-	m_src = malloc(defaultSize * sizeof(T));
+	m_src =(T*)malloc(defaultSize * sizeof(T));
 	for (int i = 0; i < defaultSize; ++i)
 		m_free_list.push(m_src + i);
 }

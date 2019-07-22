@@ -32,6 +32,15 @@ LightCalculator::~LightCalculator()
 	delete[] m_done_map;
 }
 
+void LightCalculator::assignComputeChange(int x, int y)
+{
+	{
+		std::lock_guard<std::mutex> l(m_cached_light_assign_mutex);
+		Pos p = { x, y };
+		m_cached_light_assignments.emplace(p);
+	}
+	m_wait_condition_variable.notify_one();
+}
 
 void LightCalculator::registerLight(LightSource* light) { m_sources.push_back(light); }
 
@@ -55,36 +64,44 @@ void LightCalculator::setChunkOffset(int x, int y)
 
 void LightCalculator::setDimensions(int chunkWidth, int chunkHeight)
 {
-	m_chunk_width = chunkWidth;
-	m_chunk_height = chunkHeight;
+	if (m_chunk_width != chunkWidth || m_chunk_height != chunkHeight) {
+		m_chunk_width = chunkWidth;
+		m_chunk_height = chunkHeight;
+		m_wait_condition_variable.notify_one();
+	}
 }
 
 void LightCalculator::snapshot()
 {
-	std::lock_guard<std::mutex> guard(m_snapshot_queue_mutex);
-
-	//clear buffer to max size
-	while (m_snapshot_queue.size() > MAX_SNAPSHOT_NUMBER - 1)
 	{
-		auto poin = m_snapshot_queue.front();
-		m_snapshot_queue.pop();
-		delete poin;
+		std::lock_guard<std::mutex> guard(m_snapshot_queue_mutex);
+
+		//clear buffer to max size
+		while (m_snapshot_queue.size() > MAX_SNAPSHOT_NUMBER - 1)
+		{
+			auto poin = m_snapshot_queue.front();
+			m_snapshot_queue.pop();
+			delete poin;
+		}
+
+		auto sn = new Snapshot();
+		auto& snap = sn->data;
+		for (auto light : m_sources)
+		{
+			auto pos = light->getLightPosition();
+
+			//snap.push_back({light->getIntensity(), pos.first, pos.second});
+			snap.push_back({ light->getIntensity(), pos.first, pos.second });
+		}
+		sn->offsetX = m_chunk_offset_x;
+		sn->offsetY = m_chunk_offset_y;
+		sn->chunkWidth = m_chunk_width;
+		sn->chunkHeight = m_chunk_height;
+
+		m_snapshot_queue.push(sn);
 	}
-
-	auto sn = new Snapshot();
-	auto& snap = sn->data;
-	for (auto light : m_sources)
-	{
-		auto pos = light->getLightPosition();
-
-		snap.push_back({light->getIntensity(), pos.first, pos.second});
-	}
-	sn->offsetX = m_chunk_offset_x;
-	sn->offsetY = m_chunk_offset_y;
-	sn->chunkWidth = m_chunk_width;
-	sn->chunkHeight = m_chunk_height;
-
-	m_snapshot_queue.push(sn);
+	m_wait_condition_variable.notify_one();//we have to notify light thread that changes were made
+	
 }
 
 
@@ -97,9 +114,12 @@ void LightCalculator::run()
 
 void LightCalculator::runInner()
 {
+	std::mutex waitMutex;
+	std::unique_lock<std::mutex> loopLock(waitMutex);
 	m_running = true;
 	while (m_running)
 	{
+		m_wait_condition_variable.wait(loopLock);
 		if (m_chunk_width != m_snap_width || m_chunk_height != m_snap_height)
 		{
 			std::unique_lock<std::mutex> guard(m_snapshot_queue_mutex);
@@ -134,11 +154,15 @@ void LightCalculator::runInner()
 			m_is_fresh_map = true; //notify that new map was rendered
 			Stats::light_millis = duration_cast<milliseconds>(system_clock::now() - last).count();
 		}
-		//std::this_thread::sleep_for(std::chrono::milliseconds(10));//take a nap. never:D
+		//std::this_thread::sleep_for(std::chrono::milliseconds(1));//take a nap. never:D
 	}
 }
 
-void LightCalculator::stop() { m_running = false; }
+void LightCalculator::stop()
+{
+	m_running = false;
+	m_wait_condition_variable.notify_one();
+}
 
 half& LightCalculator::lightValue(int x, int y)
 {
@@ -163,9 +187,10 @@ uint8_t& LightCalculator::blockLightLevel(int x, int y)
 		return b->getLightLevel(x & (WORLD_CHUNK_SIZE - 1), y & (WORLD_CHUNK_SIZE - 1));
 	return lasagne; //outside map -> no light
 }
+
 uint8_t& LightCalculator::blockLightLevelDefault0(int x, int y)
 {
-	static uint8_t lasagne = 0;//if not loaded return 0
+	static uint8_t lasagne = 0; //if not loaded return 0
 	//todo this lasagna is causing problems because it is seen as light src on boundary ...we know
 	//just to prevent problems with not loaded chunks/return so high light that no other updates will be neccessary
 	auto b = m_world->getLoadedChunkPointerNoConst(x >> WORLD_CHUNK_BIT_SIZE, y >> WORLD_CHUNK_BIT_SIZE);
@@ -308,7 +333,8 @@ void LightCalculator::computeChunk(Chunk& c) //will be called on chunkgeneration
 				auto& bl = BlockRegistry::get().getBlock(b.block_id);
 				uint8_t val = bl.getLightSrcVal();
 				//check if ambient light will be there
-				if (bl.getOpacity() <= 1 && val < backLight && (b.isWallFree()||BlockRegistry::get().getWall(b.wallID()).isTransparent()))
+				if (bl.getOpacity() <= 1 && val < backLight && (b.isWallFree() || BlockRegistry::get()
+				                                                                  .getWall(b.wallID()).isTransparent()))
 				{
 					c.getLightLevel(x, y) = backLight;
 					current_list->push({x, y});
@@ -489,11 +515,55 @@ void LightCalculator::computeChunkBorders(Chunk& c)
 	}
 }
 
+
+LightCalculator::ChunkQuadro LightCalculator::computeQuadro(int wx, int wy)
+{
+	ChunkQuadro out;
+	int chunkX = wx >> WORLD_CHUNK_BIT_SIZE;
+	int chunkY = wy >> WORLD_CHUNK_BIT_SIZE;
+	if (wx < WORLD_CHUNK_SIZE / 2)
+	{
+		if (wy < WORLD_CHUNK_SIZE / 2)
+		{
+			out[0] = std::make_pair(chunkX, chunkY);
+			out[1] = std::make_pair(chunkX - 1, chunkY);
+			out[2] = std::make_pair(chunkX, chunkY - 1);
+			out[3] = std::make_pair(chunkX - 1, chunkY - 1);
+		}
+		else
+		{
+			out[0] = std::make_pair(chunkX, chunkY + 1);
+			out[1] = std::make_pair(chunkX - 1, chunkY + 1);
+			out[2] = std::make_pair(chunkX, chunkY);
+			out[3] = std::make_pair(chunkX - 1, chunkY);
+		}
+	}
+	else
+	{
+		if (wy < WORLD_CHUNK_SIZE / 2)
+		{
+			out[0] = std::make_pair(chunkX + 1, chunkY);
+			out[1] = std::make_pair(chunkX, chunkY);
+			out[2] = std::make_pair(chunkX + 1, chunkY - 1);
+			out[3] = std::make_pair(chunkX, chunkY - 1);
+		}
+		else
+		{
+			out[0] = std::make_pair(chunkX + 1, chunkY + 1);
+			out[1] = std::make_pair(chunkX, chunkY + 1);
+			out[2] = std::make_pair(chunkX + 1, chunkY);
+			out[3] = std::make_pair(chunkX, chunkY);
+		}
+	}
+	return out;
+}
+
 void LightCalculator::computeChange(int xx, int yy)
 {
-	constexpr int maxLightRadius = 17; //true refresh area is one less
-	auto current_list = &m_light_list0_main_thread;
-	auto new_list = &m_light_list1_main_thread;
+	//oughta be WORLD_CHUNK_SIZE / 2
+	constexpr int maxLightRadius = 16; //true refresh area is one less
+	auto current_list = &m_light_list0;
+	auto new_list = &m_light_list1;
 
 	current_list->clear();
 	new_list->clear();
@@ -516,10 +586,10 @@ void LightCalculator::computeChange(int xx, int yy)
 
 			Chunk* c = m_world->getLoadedChunkPointerNoConst(worldX >> WORLD_CHUNK_BIT_SIZE,
 			                                                 worldY >> WORLD_CHUNK_BIT_SIZE);
-			if (c==nullptr)
+			if (c == nullptr)
 				continue;
 
-			uint8_t backLight = BiomeRegistry::get(). getBiome(c->getBiome()).getBackgroundLight();
+			uint8_t backLight = BiomeRegistry::get().getBiome(c->getBiome()).getBackgroundLight();
 
 			int chunkX = worldX & (BIT(WORLD_CHUNK_BIT_SIZE) - 1);
 			int chunkY = worldY & (BIT(WORLD_CHUNK_BIT_SIZE) - 1);
@@ -529,17 +599,18 @@ void LightCalculator::computeChange(int xx, int yy)
 			auto& bl = BlockRegistry::get().getBlock(b.block_id);
 			uint8_t val = bl.getLightSrcVal();
 			//check if ambient light will be there
-			if (bl.getOpacity() <= 1 && val < backLight && (b.isWallFree() || BlockRegistry::get().getWall(b.wallID()).isTransparent()))
+			if (bl.getOpacity() <= 1 && val < backLight && (b.isWallFree() || BlockRegistry::get()
+			                                                                  .getWall(b.wallID()).isTransparent()))
 			{
 				c->getLightLevel(chunkX, chunkY) = backLight;
-				current_list->push({ worldX, worldY });
+				current_list->push({worldX, worldY});
 			}
 			else
 			{
 				c->getLightLevel(chunkX, chunkY) = val;
 				if (val == 0)
 					continue;
-				current_list->push({ worldX, worldY });
+				current_list->push({worldX, worldY});
 			}
 		}
 	}
@@ -609,7 +680,43 @@ void LightCalculator::computeChange(int xx, int yy)
 
 void LightCalculator::computeLight(Snapshot& sn)
 {
-	updateMap(sn);//set map content to cached chunk light
+	//first we need to update all cached light because that has priority
+	m_cached_light_assign_mutex.lock();
+	bool goOn = !m_cached_light_assignments.empty();
+	m_cached_light_assign_mutex.unlock();
+
+	std::set<std::pair<int, int>> acquiredResources;
+
+	while (goOn)
+	{
+		m_cached_light_assign_mutex.lock();
+
+		auto pop = m_cached_light_assignments.front();
+		m_cached_light_assignments.pop();
+		goOn = !m_cached_light_assignments.empty();
+
+		m_cached_light_assign_mutex.unlock();
+
+		auto chunkacquiredResources = computeQuadro(pop.x, pop.y);
+		for (auto s : chunkacquiredResources.src)
+			if (m_world->isChunkValid(s.first, s.second))
+				if (!m_world->isChunkLoaded(s.first, s.second)) {
+					ASSERT(false, "shit somehthing fishy is going on");
+				}
+				else if (!m_world->getChunk(s.first, s.second).isLocked()) {
+					if (m_world->isChunkGenerated(s.first, s.second))
+						ASSERT(false, "shit again");
+				}
+
+		computeChange(pop.x, pop.y);
+
+		// keep track of all resources
+		for (auto s : chunkacquiredResources.src)
+			if (m_world->isChunkValid(s.first, s.second))
+				m_world->getChunk(s.first, s.second).lightUnlock();
+		
+	}
+	updateMap(sn); //set map content to cached chunk light
 
 	//add dynamic lighting
 	m_light_list0.clear();
@@ -625,18 +732,18 @@ void LightCalculator::computeLight(Snapshot& sn)
 	int maxY = minY + m_chunk_height * WORLD_CHUNK_SIZE;
 
 	int width = m_chunk_width * WORLD_CHUNK_SIZE;
-	int height = m_chunk_height* WORLD_CHUNK_SIZE;
+	int height = m_chunk_height * WORLD_CHUNK_SIZE;
 
 	//add dynamic light sources to map
 	for (auto& light : sn.data)
 	{
 		if (light.x >= minX && light.x < maxX && light.y >= minY && light.y < maxY)
 		{
-			auto& l = lightValue(light.x- minX, light.y-minY);
-			if(l<light.intensity)
+			auto& l = lightValue(light.x - minX, light.y - minY);
+			if (l < light.intensity)
 			{
 				l = light.intensity;
-				current_list->push({light.x - minX, light.y - minY });
+				current_list->push({light.x - minX, light.y - minY});
 			}
 		}
 	}
@@ -653,7 +760,7 @@ void LightCalculator::computeLight(Snapshot& sn)
 			const int& y = p.y;
 
 			auto val = lightValue(x, y);
-			auto opacity = getBlockOpacity(minX+x, minY+y);
+			auto opacity = getBlockOpacity(minX + x, minY + y);
 			half newLightPower = val - opacity;
 
 			if (val < opacity) //we had overflow -> dark is coming for us all
@@ -663,7 +770,8 @@ void LightCalculator::computeLight(Snapshot& sn)
 			int xm1 = x - 1;
 			if (xm1 >= 0)
 			{
-				half& v = lightValue(xm1, y);//todo try optimize it using 4 fifolists each for specific light direction (should be like 25% faster)
+				half& v = lightValue(xm1, y);
+				//todo try optimize it using 4 fifolists each for specific light direction (should be like 25% faster)
 				if (v < newLightPower)
 				{
 					v = newLightPower;
@@ -741,7 +849,7 @@ void LightCalculator::updateMap(Snapshot& sn)
 	}
 }
 
-void LightCalculator::darken(Snapshot& sn)//deprecated
+void LightCalculator::darken(Snapshot& sn) //deprecated
 {
 	//todo this needs to use memcpy or death will feast upon us all
 	for (int cx = 0; cx < sn.chunkWidth; ++cx)

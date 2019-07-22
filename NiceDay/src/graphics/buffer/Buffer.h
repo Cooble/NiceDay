@@ -45,7 +45,7 @@ public:
 	void push(unsigned int count)
 	{
 		ND_WARN("Shit ....");
-		ASSERT(false);
+		ASSERT(false,"fuk");
 	}
 
 	template <>

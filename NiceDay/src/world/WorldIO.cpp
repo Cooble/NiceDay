@@ -107,6 +107,8 @@ namespace WorldIO {
 	void Session::loadChunk(Chunk* chunk, int offset) {
 		m_stream->seekg(HEADER_SIZE + sizeof(Chunk)*offset, std::ios::beg);
 		m_stream->read((char*)chunk, sizeof(Chunk));
+		chunk->m_main_thread_fence = 0;
+		chunk->m_light_thread_fence = 0;
 		CHECK_STREAM_STATE(m_stream);
 	}
 

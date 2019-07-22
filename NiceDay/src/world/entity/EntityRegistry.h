@@ -9,20 +9,23 @@
 	static WorldEntity* factoryMethod(void* pointer){return new(pointer) className();}
 
 typedef WorldEntity*(*FactoryMethod)(void*);
+//typedef void (*InitMethod)(void*);
 
 class EntityRegistry
 {
 public:
-	struct EntityBucket
+	struct EntityTemplate
 	{
 		EntityType entity_type;
-		FactoryMethod method;
+		FactoryMethod factory_method;
+		//InitMethod init_method;
 		std::string name;
 		size_t byte_size;
 
-		EntityBucket(EntityType type, FactoryMethod method, size_t size, std::string name)
+		EntityTemplate(EntityType type, FactoryMethod method, size_t size, std::string name)
 			: entity_type(type),
-			  method(method),
+			  factory_method(method),
+			//  init_method(initm),
 			  name(std::move(name)),
 			  byte_size(size)
 		{
@@ -30,7 +33,7 @@ public:
 	};
 
 private:
-	std::vector<EntityBucket> m_entity_buckets;
+	std::vector<EntityTemplate> m_entity_templates;
 
 public:
 
@@ -47,6 +50,7 @@ public:
 	}
 
 
-	const EntityBucket& getBucket(EntityType type) const;
-	inline const std::vector<EntityBucket>& getData() const { return m_entity_buckets; }
+	const EntityTemplate& getBucket(EntityType type) const;
+
+	inline const std::vector<EntityTemplate>& getData() const { return m_entity_templates; }
 };

@@ -9,6 +9,8 @@ class WorldEntity;
 typedef uint32_t EntityID;
 typedef uint32_t EntityType;
 
+constexpr EntityID ENTITY_ID_INVALID=std::numeric_limits<EntityID>::max();
+
 class EntityManager
 {
 private:
@@ -35,9 +37,8 @@ public:
 	inline WorldEntity* entity(EntityID e)
 	{
 		auto idx = index(e);
-		if (!m_loaded[idx]) //check if entity is loaded (otherwise it would output pointer to invalid location)
-			return nullptr;
-		return m_p_entities[idx];
+		//this complete utter mess is used instead of if statement to avoid branch misprediction, yay we have saved maybe 5ns :D (and maybe it is even slower) i dont want to check it
+		return (WorldEntity*)(((size_t)m_p_entities[idx])*m_loaded[idx]);//check if entity is loaded (otherwise it would output pointer to invalid location)
 	}
 
 	// returns entity pointer no matter if it was unloaded or not (pointer might reference to invalid location!)

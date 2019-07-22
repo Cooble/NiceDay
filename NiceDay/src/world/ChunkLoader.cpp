@@ -32,11 +32,12 @@ void ChunkLoader::tickInner()
 	
 
 	auto& map = m_world->getMap();
-	for (auto iterator = map.begin(); iterator != map.end(); ++iterator) {
-		half_int c = iterator->first;
+	for (auto& iterator : map)
+	{
+		half_int c = iterator.first;
 		Chunk& g = m_world->getChunk(c.x, c.y);
 		if(!g.isLocked())//cannot unload chunk that is locked
-			toRemoveList.insert(iterator->first);//get all loaded chunks
+			toRemoveList.insert(iterator.first);//get all loaded chunks
 	}
 	
 

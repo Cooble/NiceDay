@@ -15,3 +15,4 @@ private:
 #define ND_WARN(...)     Log::GetCoreLogger()->warn(__VA_ARGS__)
 #define ND_ERROR(...)    Log::GetCoreLogger()->error(__VA_ARGS__)
 #define ND_FATAL(...)    Log::GetCoreLogger()->fatal(__VA_ARGS__)
+#define ND_WAIT_FOR_INPUT std::cin.get()

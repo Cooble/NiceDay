@@ -12,7 +12,9 @@ EntityID EntityManager::createEntity()
 	}
 	else
 	{
+		m_loaded.push_back(true);
 		m_generations.push_back(0);
+		m_p_entities.push_back(nullptr);
 		ASSERT(m_generations.size() <= EE_ENTITY_MAXIMAL_SIZE, "Too many entities");
 		idx = m_generations.size() - 1;
 	}

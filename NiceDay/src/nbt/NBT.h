@@ -1,5 +1,6 @@
 #pragma once
 
+#include "physShapes.h"
 struct NBT;
 
 class NBTSaveable //todo those methods should be inlined
@@ -8,14 +9,14 @@ class NBTSaveable //todo those methods should be inlined
 	virtual void load(NBT& src) = 0;
 };
 
-#define NBT_BUILD_FUNC(typeName,listName)\
+#define NBT_BUILD_FUNC(typeName,listName,internalListType)\
 	template <>\
 	typeName& get<>(const std::string& s, const typeName& defaultVal)\
 	{\
 		auto it = listName.find(s);\
 		if (it != listName.end())\
 			return *((typeName*)&it->second);\
-		listName[s] = defaultVal;\
+		listName[s] = *(internalListType*)&defaultVal;\
 		return *((typeName*)&listName[s]);\
 	}\
 	template <>\
@@ -35,7 +36,7 @@ class NBTSaveable //todo those methods should be inlined
 	template <>\
 	void set<typeName>(const std::string& s,const typeName& value)\
 	{\
-		listName[s] = value; \
+		listName[s] = *(internalListType*)&value; \
 	}
 
 struct NBT
@@ -193,29 +194,30 @@ public:
 
 	//nbt =======================================
 
-	NBT_BUILD_FUNC(NBT, m_nbts)
+	NBT_BUILD_FUNC(NBT, m_nbts,NBT)
 
 	//string=====================================
 
-	NBT_BUILD_FUNC(std::string, m_strings)
+	NBT_BUILD_FUNC(std::string, m_strings,std::string)
 
 	//1byte=====================================
 
-	NBT_BUILD_FUNC(uint8_t, m_bytes)
-	NBT_BUILD_FUNC(int8_t, m_bytes)
+	NBT_BUILD_FUNC(uint8_t, m_bytes, int8_t)
+	NBT_BUILD_FUNC(int8_t, m_bytes, int8_t)
 
 	//4bytes======================================
 
-	NBT_BUILD_FUNC(uint32_t, m_ints)
-	NBT_BUILD_FUNC(float, m_ints)
-	NBT_BUILD_FUNC(int32_t, m_ints)
+	NBT_BUILD_FUNC(uint32_t, m_ints, int32_t)
+	NBT_BUILD_FUNC(float, m_ints, int32_t)
+	NBT_BUILD_FUNC(int32_t, m_ints, int32_t)
 
 
 	//8bytes======================================
 
-	NBT_BUILD_FUNC(uint64_t, m_longs)
-	NBT_BUILD_FUNC(int64_t, m_longs)
-
+	NBT_BUILD_FUNC(uint64_t, m_longs, int64_t)
+	NBT_BUILD_FUNC(int64_t, m_longs, int64_t)
+	NBT_BUILD_FUNC(Phys::Vect, m_longs, int64_t)
+	NBT_BUILD_FUNC(glm::vec2, m_longs, int64_t)
 
 	~NBT() = default;
 };

@@ -8,9 +8,11 @@
 BlockAir::BlockAir()
 	:Block(BLOCK_AIR)
 {
+	setNoBounds();
 	m_block_connect_group = BIT(BLOCK_GROUP_AIR_BIT);
 	m_opacity = 1;
 	m_texture_pos = -1;
+	
 }
 int BlockAir::getTextureOffset(int x, int y, const BlockStruct&)const { return -1; }
 
@@ -194,6 +196,7 @@ bool BlockGlass::onNeighbourBlockChange(World* world, int x, int y) const
 BlockTorch::BlockTorch()
 : Block(BLOCK_TORCH)
 {
+	setNoBounds();
 	m_opacity = 0;
 	m_light_src = 9;
 

@@ -132,6 +132,8 @@ void BatchRenderer2D::submit(const Renderable2D& renderable)
 	auto& size = renderable.getSize();
 	auto& uv = renderable.getUV();
 
+	//m_back = glm::mat4(1.0f);
+
 	m_vertex_data->position = (m_back) * pos;
 	m_vertex_data->uv = uv.uv[0];
 	m_vertex_data->textureSlot = textureSlot;
@@ -177,7 +179,9 @@ void BatchRenderer2D::flush()
 
 	for (int i = 0; i < m_textures.size(); ++i)
 		m_textures[i]->bind(i);
-	
+
+	GLCall(glEnable(GL_BLEND));
+	GLCall(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
 	GLCall(glDrawElements(GL_TRIANGLES, m_indices_count, GL_UNSIGNED_INT, nullptr));
 
 }

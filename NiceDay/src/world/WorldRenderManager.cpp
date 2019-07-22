@@ -480,10 +480,10 @@ void WorldRenderManager::render()
 		if (!(mesh->m_enabled))
 			continue;
 
-		auto worldMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(
+		auto world_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(
 			mesh->getPos().x - m_camera->getPosition().x,
 			mesh->getPos().y - m_camera->getPosition().y, 0.0f));
-		program.setUniformMat4("u_transform", getProjMatrix()*worldMatrix);
+		program.setUniformMat4("u_transform", getProjMatrix()*world_matrix);
 
 		mesh->getVAO().bind();
 		GLCall(glDrawArrays(GL_POINTS, 0, WORLD_CHUNK_AREA));

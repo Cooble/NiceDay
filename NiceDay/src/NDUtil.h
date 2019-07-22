@@ -90,6 +90,7 @@ namespace NDUtil
 	{
 	private:
 		std::vector<std::bitset<32>> m_bits;
+		size_t m_last_size=0;
 
 	public:
 		Bitset() = default;
@@ -98,7 +99,8 @@ namespace NDUtil
 		{
 			if(bits%32!=0)
 				bits = (bits / 32) * 32 + 32;
-			m_bits.resize(bits / 32);
+			if (m_bits.size() < (bits/32))
+				m_bits.resize(bits / 32);
 		}
 		inline bool get(size_t index)
 		{
@@ -112,8 +114,23 @@ namespace NDUtil
 		{
 			return get(index);
 		}
+		inline void push_back(bool val)
+		{
+			++m_last_size;
+			resize(m_last_size);
+			set(m_last_size - 1,val);
+		}
 
+		inline size_t size() { return m_bits.size() * 32; }
 	};
+
+	template <typename T>
+	static void eraseKeepPacked(std::vector<T>& t,size_t indexToErase)
+	{
+		auto& tt = t[t.size() - 1];
+		t[indexToErase] = tt;
+		t.erase(t.end() - 1);
+	}
 }
 
 struct half_int

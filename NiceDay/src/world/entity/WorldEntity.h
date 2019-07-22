@@ -13,11 +13,12 @@ class World;
 
 class WorldEntity: public NBTSaveable
 {
+	friend World;
 protected:
 	EntityID m_id;// each entity instance has unique id
 protected:
 	uint64_t m_flags;
-	glm::vec2 m_pos;//world pos
+	Phys::Vect m_pos;//world pos
 protected:
 	WorldEntity() = default;
 	virtual ~WorldEntity() = default;
@@ -27,14 +28,24 @@ public:
 
 	inline EntityID getID() const { return m_id; }
 	
-	virtual int getEntityType() const = 0;
+	virtual EntityType getEntityType() const = 0;
 
-	inline const glm::vec2& getPosition() const { return m_pos; }
+	inline const Phys::Vect& getPosition() const { return m_pos; }
+	inline Phys::Vect& getPosition() { return m_pos; }
 
 	virtual void update(World* w) {};
 
 	void save(NBT& src) override;
 	void load(NBT& src) override;
+
+#ifdef ND_DEBUG
+	inline virtual std::string toString() const { return "UNDEFINED_ENTITY"; }
+
+#define TO_ENTITY_STRING(x)\
+	inline std::string toString() const override {return #x;}
+#else
+#define TO_STRING(X)
+#endif
 
 };
 

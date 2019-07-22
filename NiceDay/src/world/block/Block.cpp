@@ -2,6 +2,7 @@
 
 #include "world/World.h"
 #include "Block.h"
+#include "block_datas.h"
 
 
 Block::Block(int id)
@@ -9,13 +10,27 @@ Block::Block(int id)
 	  m_texture_pos(0),
 	  m_corner_translate_array(nullptr),
 	  m_has_big_texture(false),
+	  m_bounds(BLOCK_BOUNDS_DEFAULT),
+	  m_bounds_size(sizeof(BLOCK_BOUNDS_DEFAULT) / sizeof(Phys::Polygon)),
 	  m_opacity(4),
-	  m_block_connect_group(0),
-	  m_light_src(0)
+	  m_light_src(0),
+	  m_block_connect_group(0)
 {
 }
+void Block::setNoBounds()
+{
+	m_bounds = nullptr;
+	m_bounds_size = 0;
+}
+
 
 Block::~Block() = default;
+
+const Phys::Polygon& Block::getBounds(int x, int y, const BlockStruct b)const
+{
+	return m_bounds[0];
+}
+bool Block::hasBounds() const { return m_bounds_size != 0; }
 
 int Block::getTextureOffset(int x, int y, const BlockStruct&) const
 {

@@ -119,3 +119,7 @@ const half_int WALL_CORNERS_GLASS[16] = {
 	half_int(6+0,0),//14 BLOCK_STATE_LINE_END_DOWN INVALID
 	half_int(6+0,0),//15 BLOCK_STATE_BIT INVALID
 };
+
+const Phys::Polygon BLOCK_BOUNDS_DEFAULT[1] = {
+	Phys::Polygon({{0,0},{1,0},{1,1},{0,1}}),//00 BLOCK_STATE_FULL
+};

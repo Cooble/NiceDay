@@ -7,6 +7,8 @@
 #include "graphics/Sprite.h"
 #include "world/entity/componentManager.h"
 #include "world/entity/ssystem.h"
+#include "world/entity/entities.h"
+#include "world/entity/Pool.h"
 
 
 class BatchRenderer2D;
@@ -19,11 +21,11 @@ private:
 	ChunkLoader* m_chunk_loader;
 	//ChunkMeshInstance* m_mesh;
 	WorldRenderManager* m_render_manager;
-	Sprite* chunkOfSprites;
 	Camera* m_cam;
 
 public:
 	WorldLayer();
+	EntityPlayer& getPlayer();
 	~WorldLayer();
 
 	virtual void onAttach() override;

@@ -7,7 +7,7 @@
 #include "biome/BiomeRegistry.h"
 #include "Game.h"
 
-Chunk::Chunk() 
+Chunk::Chunk()
 {
 	setLoaded(false);
 	lock(false);
@@ -28,7 +28,8 @@ World::World(std::string file_path, const char* name, int chunk_width, int chunk
 	: m_light_calc(this),
 	  m_info({0, chunk_width, chunk_height, 0}),
 	  m_file_path(std::move(file_path)),
-	  m_air_block(0) //seed,width,height,time
+	  m_air_block(0),
+	  m_edit_buffer_enable(false) //seed,width,height,time
 {
 	strcpy_s(m_info.name, name); //name
 	init();
@@ -38,7 +39,9 @@ World::World(std::string file_path, const WorldInfo* info)
 	: m_light_calc(this),
 	  m_info(*info),
 	  m_file_path(std::move(file_path)),
-	  m_air_block(0)
+	  m_air_block(0),
+
+	  m_edit_buffer_enable(false)
 {
 	init();
 }
@@ -62,8 +65,34 @@ void World::onUpdate()
 void World::tick()
 {
 	m_info.time++;
+	for (int i = m_entity_array.size() - 1; i >= 0; --i)
+	{
+		WorldEntity* entity = m_entity_manager.entity(m_entity_array[i]);
+		ASSERT(entity, "Entity null why... its unloaded or destoyed but still loaded in world");
+		entity->update(this);
+	}
 }
 
+bool World::isChunkGenerated(int x, int y)
+{
+	if (!isChunkValid(x, y))
+		return false;
+	if (isChunkLoaded(x, y))
+		return getChunk(x, y).isGenerated();
+
+	//todo dont load whole just just to see if it has been generated
+	auto stream = WorldIO::Session(m_file_path, true);
+
+	int chunkIndex = getNextFreeChunkIndex(0);
+
+	Chunk& c = m_chunks[chunkIndex];
+	int saveOffset = getChunkSaveOffset(x, y);
+	stream.loadChunk(&c, saveOffset);
+	bool isGen = c.isGenerated();
+	c.setLoaded(false);
+	stream.close();
+	return isGen;
+}
 
 Chunk& World::getChunk(int cx, int cy)
 {
@@ -85,7 +114,8 @@ const Chunk* World::getLoadedChunkPointer(int cx, int cy) const
 		return nullptr;
 	return &m_chunks[index];
 }
-Chunk* World::getLoadedChunkPointerNoConst(int cx, int cy)//todo really rename it man its terrible
+
+Chunk* World::getLoadedChunkPointerNoConst(int cx, int cy) //todo really rename it man its terrible
 {
 	int index = getChunkIndex(cx, cy);
 	if (index == -1)
@@ -192,12 +222,12 @@ void World::genChunks(std::set<int>& toGenChunks)
 		int id = chunkId.first;
 		int x = half_int::getX(id);
 		int y = half_int::getY(id);
-		if (!isChunkValid(x,y))
+		if (!isChunkValid(x, y))
 		{
 			toErase.push_back(id);
 			continue;
 		}
-		
+
 		int index = getChunkIndex(id);
 		if (index == -1)
 		{
@@ -205,8 +235,9 @@ void World::genChunks(std::set<int>& toGenChunks)
 			lastFreeChunk = index + 1;
 
 			Chunk& c = m_chunks[index];
-			int saveOffset = getChunkSaveOffset(x,y);
+			int saveOffset = getChunkSaveOffset(x, y);
 			stream.loadChunk(&c, saveOffset);
+			//checking if we have not-generated chunk that is not set to be generated
 			if (!c.isGenerated() && toGenChunks.find(id) == toGenChunks.end())
 			{
 				c.setLoaded(false);
@@ -222,7 +253,7 @@ void World::genChunks(std::set<int>& toGenChunks)
 		}
 		m_chunks[index].lock(true);
 	}
-	for (int id : toErase)//remove invalid and nevergenerated (excluding toGenChunks)
+	for (int id : toErase) //remove invalid and nevergenerated (excluding toGenChunks)
 		toupdateChunks.erase(toupdateChunks.find(id));
 	//load section done============================================================================
 
@@ -240,7 +271,7 @@ void World::genChunks(std::set<int>& toGenChunks)
 			{
 				//todo remove this multithreaded attempt try to separate gen in more ticks instead
 				Chunk* c = &m_chunks[getChunkIndex(*genIt)];
-				std::thread t([this,c]()//gen 2 chunks at once using multithreading
+				std::thread t([this,c]() //gen 2 chunks at once using multithreading
 				{
 					this->m_gen.gen(this->m_info.seed, this, *c);
 				});
@@ -248,8 +279,9 @@ void World::genChunks(std::set<int>& toGenChunks)
 				++genIndex;
 				++genIt;
 				++numberOfGens;
-				
-				if (genIt != toGenChunks.end()) {
+
+				if (genIt != toGenChunks.end())
+				{
 					Chunk& c2 = m_chunks[getChunkIndex(*genIt)];
 					this->m_gen.gen(this->m_info.seed, this, c2);
 					m_light_calc.computeChunk(c2);
@@ -268,17 +300,19 @@ void World::genChunks(std::set<int>& toGenChunks)
 			std::advance(upIt, upIndex);
 			while (upIt != toupdateChunks.end())
 			{
-
 				int id = (*upIt).first;
 				int mask = (*upIt).second;
 				m_light_calc.computeChunkBorders(m_chunks[getChunkIndex(id)]);
-				if (mask != 0) {//check if chunk is not only for readonly purposes
+				if (mask != 0)
+				{
+					//check if chunk is not only for readonly purposes
 					this->updateChunkBounds(half_int::getX(id), half_int::getY(id), mask);
 				}
 				++upIndex;
 				++upIt;
 				++numberOfUps;
-				if (numberOfUps >= 1) {
+				if (numberOfUps >= 1)
+				{
 					return false;
 				}
 			}
@@ -293,6 +327,26 @@ void World::genChunks(std::set<int>& toGenChunks)
 			taskActive = false;
 			return true;
 		}, 1);
+}
+
+void World::loadLightResources(int x, int y)
+{
+	auto resources = LightCalculator::computeQuadro(x, y);
+	for (int i = 0; i < 4; ++i)
+	{
+		auto p = resources[i];
+		if (isChunkValid(p.first, p.second))
+		{
+			if (!isChunkLoaded(p.first, p.second))
+			{
+				loadChunk(p.first, p.second);
+			}
+			//if(!getChunk(p.first,p.second).isLightLocked())
+			//	ND_INFO("Lightlocked chunk: {},{} :", p.first, p.second, getChunk(p.first, p.second).isLightLocked());
+			
+			getChunk(p.first, p.second).lightLock();
+		}
+	}
 }
 
 int World::getNextFreeChunkIndex(int startSearchIndex)
@@ -315,22 +369,22 @@ int World::getNextFreeChunkIndex(int startSearchIndex)
 	return out;
 }
 
-void World::updateChunkBounds(int xx, int yy,int bitBounds)
+void World::updateChunkBounds(int xx, int yy, int bitBounds)
 {
 	Chunk& c = getChunk(xx, yy);
 	int wx = c.m_x * WORLD_CHUNK_SIZE;
 	int wy = c.m_y * WORLD_CHUNK_SIZE;
-	if((bitBounds&maskUp)!=0)
+	if ((bitBounds & maskUp) != 0)
 		for (int x = 0; x < WORLD_CHUNK_SIZE; x++)
 		{
-				auto& block = c.getBlock(x, WORLD_CHUNK_SIZE - 1);
-				auto worldx = wx + x;
-				auto worldy = wy + WORLD_CHUNK_SIZE-1;
-				BlockRegistry::get().getBlock(block.block_id).onNeighbourBlockChange(this, worldx, worldy);
-				if (block.isWallOccupied())
-					BlockRegistry::get().getWall(block.wallID()).onNeighbourWallChange(this, worldx, worldy);
+			auto& block = c.getBlock(x, WORLD_CHUNK_SIZE - 1);
+			auto worldx = wx + x;
+			auto worldy = wy + WORLD_CHUNK_SIZE - 1;
+			BlockRegistry::get().getBlock(block.block_id).onNeighbourBlockChange(this, worldx, worldy);
+			if (block.isWallOccupied())
+				BlockRegistry::get().getWall(block.wallID()).onNeighbourWallChange(this, worldx, worldy);
 		}
-	if ((bitBounds&maskDown) != 0)
+	if ((bitBounds & maskDown) != 0)
 		for (int x = 0; x < WORLD_CHUNK_SIZE; x++)
 		{
 			auto& block = c.getBlock(x, 0);
@@ -340,7 +394,7 @@ void World::updateChunkBounds(int xx, int yy,int bitBounds)
 			if (block.isWallOccupied())
 				BlockRegistry::get().getWall(block.wallID()).onNeighbourWallChange(this, worldx, worldy);
 		}
-	if ((bitBounds&maskLeft) != 0)
+	if ((bitBounds & maskLeft) != 0)
 		for (int y = 0; y < WORLD_CHUNK_SIZE; y++)
 		{
 			auto& block = c.getBlock(0, y);
@@ -350,11 +404,11 @@ void World::updateChunkBounds(int xx, int yy,int bitBounds)
 			if (block.isWallOccupied())
 				BlockRegistry::get().getWall(block.wallID()).onNeighbourWallChange(this, worldx, worldy);
 		}
-	if ((bitBounds&maskRight) != 0)
+	if ((bitBounds & maskRight) != 0)
 		for (int y = 0; y < WORLD_CHUNK_SIZE; y++)
 		{
-			auto& block = c.getBlock(WORLD_CHUNK_SIZE-1, y);
-			auto worldx = wx +WORLD_CHUNK_SIZE-1;
+			auto& block = c.getBlock(WORLD_CHUNK_SIZE - 1, y);
+			auto worldx = wx + WORLD_CHUNK_SIZE - 1;
 			auto worldy = wy + y;
 			BlockRegistry::get().getBlock(block.block_id).onNeighbourBlockChange(this, worldx, worldy);
 			if (block.isWallOccupied())
@@ -409,6 +463,23 @@ const BlockStruct* World::getLoadedBlockPointer(int x, int y) const
 	return nullptr;
 }
 
+void World::flushBlockSet()
+{
+	m_edit_buffer_enable = false;
+	while (!m_edit_buffer.empty())
+	{
+		auto pair = m_edit_buffer.front();
+		m_edit_buffer.pop();
+		BlockRegistry::get().getBlock(getBlock(pair.first, pair.second).block_id).onNeighbourBlockChange(
+			this, pair.first, pair.second);
+		onBlocksChange(pair.first, pair.second);
+
+		//todo this is big bullshit we will need to separate it somehow to update in batches
+		loadLightResources(pair.first, pair.second);
+		m_light_calc.assignComputeChange(pair.first, pair.second); //refresh light around the block
+	}
+}
+
 BlockStruct& World::editBlock(int x, int y)
 {
 #ifdef ND_DEBUG
@@ -434,15 +505,17 @@ BlockStruct& World::editBlock(int x, int y)
 
 bool World::isAir(int x, int y)
 {
+	if (!isBlockValid(x, y))
+		return true;
 	return getBlock(x, y).isAir();
 }
 
 #define MAX_BLOCK_UPDATE_DEPTH 20
 
-void World::onBlocksChange(int x, int y, int deep = 0)
+void World::onBlocksChange(int x, int y, int deep)
 {
 	//todo fix bug when blocks at corners of the world dont set right corner
-	deep++;
+	++deep;
 	if (deep >= MAX_BLOCK_UPDATE_DEPTH)
 	{
 		ND_WARN("Block update too deep! protecting stack");
@@ -555,11 +628,21 @@ void World::setWall(int x, int y, int wall_id)
 	blok.setWall(wall_id);
 	onWallsChange(x, y, blok);
 	//if (BiomeRegistry::get().getBiome(c->getBiome()).getBackgroundLight() != 0)
-		m_light_calc.computeChange(x, y);
+	loadLightResources(x, y);
+	m_light_calc.assignComputeChange(x, y);
 
 	c->markDirty(true);
 }
 
+EntityID World::spawnEntity(WorldEntity* pEntity)
+{
+	auto id = m_entity_manager.createEntity();
+	pEntity->m_id = id;
+	m_entity_manager.setEntityPointer(id, pEntity);
+	m_entity_manager.setLoaded(id, true);
+	m_entity_array.push_back(id);
+	return id;
+}
 
 void World::setBlock(int x, int y, BlockStruct& blok)
 {
@@ -590,8 +673,15 @@ void World::setBlock(int x, int y, BlockStruct& blok)
 	memcpy(blok.wall_corner, block.wall_corner, sizeof(blok.wall_corner));
 
 	c->setBlock(x & (WORLD_CHUNK_SIZE - 1), y & (WORLD_CHUNK_SIZE - 1), blok);
-	BlockRegistry::get().getBlock(blok.block_id).onNeighbourBlockChange(this, x, y);
-	onBlocksChange(x, y);
-	m_light_calc.computeChange(x, y);//refresh light around the block
-	c->markDirty(true);
+	if (!m_edit_buffer_enable)
+	{
+		BlockRegistry::get().getBlock(blok.block_id).onNeighbourBlockChange(this, x, y);
+		onBlocksChange(x, y);
+
+		loadLightResources(x, y);
+		m_light_calc.assignComputeChange(x, y); //refresh light around the block
+	}
+	else
+		m_edit_buffer.emplace(x, y);
+	c->markDirty(true); //always mark renderefresh
 }

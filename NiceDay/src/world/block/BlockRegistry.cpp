@@ -10,7 +10,7 @@ void BlockRegistry::registerBlock(Block* block)
 
 void BlockRegistry::registerWall(Wall* wall)
 {
-	m_walls.resize(wall->getID() + 1);
+	m_walls.resize(wall->getID()+1);
 	m_walls[wall->getID()] = wall;
 }
 

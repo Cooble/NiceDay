@@ -32,8 +32,11 @@ uint32_t OpenGLVertexBuffer::getSize() const
 	return m_size;
 }
 
+static bool OPENGL_MAPPING_BUFF_ACTIVE=false;
 void* OpenGLVertexBuffer::mapPointer()
 {
+	ASSERT(!OPENGL_MAPPING_BUFF_ACTIVE, "Already mapping!");
+	OPENGL_MAPPING_BUFF_ACTIVE = true;
 	void* out;
 	GLCall(out= glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY));
 	ASSERT(out, "[OpenGLVertexBuffer]: Cannot get map pointer to VBO, is it currently bound?");
@@ -43,6 +46,7 @@ void* OpenGLVertexBuffer::mapPointer()
 void OpenGLVertexBuffer::unMapPointer()
 {
 	GLCall(glUnmapBuffer(GL_ARRAY_BUFFER));
+	OPENGL_MAPPING_BUFF_ACTIVE = false;
 }
 
 void OpenGLVertexBuffer::changeData(char* buff, uint32_t size, uint32_t offset)

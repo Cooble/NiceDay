@@ -10,7 +10,7 @@ void BiomeRegistry::registerBiome(Biome* b)
 
 Biome& BiomeRegistry::getBiome(int biome_id)
 {
-	ASSERT(m_biomes.size() > biome_id, "Invalid biome id");
+	ASSERT(m_biomes.size() > biome_id && biome_id >=0, "Invalid biome id");
 	return *m_biomes[biome_id];
 }
 

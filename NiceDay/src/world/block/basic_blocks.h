@@ -8,6 +8,7 @@ public:
 	int getTextureOffset(int x, int y, const BlockStruct&) const override;
 	int getCornerOffset(int x, int y, const BlockStruct&) const override;
 	bool onNeighbourBlockChange(World* world, int x, int y) const override;
+	
 	TO_STRING(BlockAir)
 };
 class BlockStone :public Block

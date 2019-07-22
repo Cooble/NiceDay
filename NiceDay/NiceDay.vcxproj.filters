@@ -1328,6 +1328,10 @@
     <ClInclude Include="src\world\entity\entities.h" />
     <ClInclude Include="src\world\entity\EntityRegistry.h" />
     <ClInclude Include="src\nbt\NBT.h" />
+    <ClInclude Include="src\graphics\TextureManager.h" />
+    <ClInclude Include="src\physShapes.h" />
+    <ClInclude Include="src\metaprogramming\Header.h" />
+    <ClInclude Include="src\world\entity\PathTracer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\EntryPoint.cpp">
@@ -1481,5 +1485,8 @@
     <ClCompile Include="src\world\entity\entities.cpp" />
     <ClCompile Include="src\world\entity\EntityRegistry.cpp" />
     <ClCompile Include="src\nbt\NBT.cpp" />
+    <ClCompile Include="src\graphics\TextureManager.cpp" />
+    <ClCompile Include="src\physShapes.cpp" />
+    <ClCompile Include="src\world\entity\PathTracer.cpp" />
   </ItemGroup>
 </Project>

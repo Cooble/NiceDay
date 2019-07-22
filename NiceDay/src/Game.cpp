@@ -92,12 +92,10 @@ void Game::start()
 }
 
 void Game::update() {
+	m_Input.update();
 	for (Layer* l : m_LayerStack)
 		l->onUpdate();
 	m_scheduler.update();
-
-
-
 }
 void Game::render() {
 	m_Window->update();

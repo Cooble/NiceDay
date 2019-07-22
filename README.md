@@ -26,3 +26,15 @@ Dynamic and Cached monochromatic lighting system (19_06_2019)
 Cached lighting is only calculated onBlockChange
 ![Alt text](screenshots/19_06_2019.png?raw=false "")
 
+Multithreaded lights,  Inheritance Entity System (maybe will change to ECS in the future)(22_07_2019)  
+Added NBT to save and load entities. (No entity saving yet, though.)  
+Added basic physics system with polygon collision detection.  
+
+In the pic: The first entity after Player was (who would have guessed...) TNT!  
+![Alt Text](screenshots/22_07_2019_00.gif?raw=false "")  
+
+In the pic: red Zombie attacks black Player.  (and then mysteriously disappears up in the sky)  
+![Alt Text](screenshots/22_07_2019_01.gif?raw=false "")  
+  
+
+

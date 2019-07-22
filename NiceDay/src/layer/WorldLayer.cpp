@@ -22,6 +22,10 @@
 
 #include "graphics/BatchRenderer2D.h"
 #include "graphics/Sprite.h"
+#include "world/entity/EntityRegistry.h"
+#include "world/entity/entity_datas.h"
+#include "world/entity/entities.h"
+#include "graphics/TextureManager.h"
 
 const char* WORLD_FILE_PATH;
 int CHUNKS_LOADED;
@@ -37,11 +41,15 @@ float CAM_POS_X;
 float CAM_POS_Y;
 
 static int BLOCK_PALLETE_SELECTED = 0;
+static int ENTITY_PALLETE_SELECTED = 0;
 static bool BLOCK_OR_WALL_SELECTED = true;
+static void* playerBuff;
+static EntityID playerID;
+static SpriteSheetResource* res;
 
-//static Entity m_player_handle;
+
 WorldLayer::WorldLayer()
-	: Layer("WorldLayer"), chunkOfSprites(nullptr)
+	: Layer("WorldLayer")
 {
 	//blocks
 	ND_REGISTER_BLOCK(new BlockAir());
@@ -64,6 +72,12 @@ WorldLayer::WorldLayer()
 	ND_REGISTER_BIOME(new BiomeForest());
 	ND_REGISTER_BIOME(new BiomeUnderground());
 	ND_REGISTER_BIOME(new BiomeDirt());
+
+	//entities
+	ND_REGISTER_ENTITY(ENTITY_TYPE_PLAYER, EntityPlayer);
+	ND_REGISTER_ENTITY(ENTITY_TYPE_TNT, EntityTNT);
+	ND_REGISTER_ENTITY(ENTITY_TYPE_ZOMBIE, EntityZombie);
+
 
 	WorldIOInfo info;
 	info.world_name = "NiceWorld";
@@ -124,9 +138,30 @@ WorldLayer::WorldLayer()
 		*/
 
 	m_batch_renderer = new BatchRenderer2D();
+
+	playerBuff = malloc(EntityRegistry::get().getBucket(ENTITY_TYPE_PLAYER).byte_size);
+	EntityRegistry::get().createInstance(ENTITY_TYPE_PLAYER, playerBuff);
+
+	playerID = m_world->spawnEntity((WorldEntity*)playerBuff);
+	getPlayer().getPosition() = m_cam->getPosition();
+
+	//texture thingies
+	/*res = new SpriteSheetResource(Texture::create(TextureInfo("res/images/player.png")), 4,4);
+	getPlayer().getSprite() = Sprite(res);
+	getPlayer().getSprite().setSpriteIndex(0, 3);
+	getPlayer().getSprite().setEnabled(true);
+	glm::vec2 si = { 5.0f,5.f };
+	getPlayer().getSprite().setSize(si);
+	*/
 }
 
-WorldLayer::~WorldLayer() {
+EntityPlayer& WorldLayer::getPlayer()
+{
+	return *dynamic_cast<EntityPlayer*>(m_world->getEntityManager().entity(playerID));
+}
+
+WorldLayer::~WorldLayer()
+{
 	delete m_chunk_loader;
 	delete m_world;
 	delete m_batch_renderer;
@@ -136,37 +171,38 @@ WorldLayer::~WorldLayer() {
 		delete s;
 	}*/
 	//free(chunkOfSprites);
+	free(playerBuff);
 }
 
 void WorldLayer::onAttach()
 {
-
 }
+
 void WorldLayer::onDetach()
 {
 	m_world->getLightCalculator().stop();
 	m_chunk_loader->clearEntities();
-	m_chunk_loader->onUpdate();//this will unload all chunks
+	m_chunk_loader->onUpdate(); //this will unload all chunks
 
 	auto s = WorldIO::Session(m_world->getFilePath(), true);
 	s.saveWorld(m_world);
 	ND_INFO("Saving world {}", m_world->getFilePath());
 	s.close();
 }
+
 static int fpsCount;
+
 void WorldLayer::onUpdate()
 {
-
-
 	m_cam->m_light_intensity = Stats::player_light_intensity;
 	fpsCount++;
 	static int lightCalcDelay = 0;
 	if (lightCalcDelay)
 	{
 		lightCalcDelay--;
-
 	}
-	else {
+	else
+	{
 		m_world->getLightCalculator().snapshot();
 		lightCalcDelay = 1;
 	}
@@ -179,53 +215,93 @@ void WorldLayer::onUpdate()
 
 	if (m_world->isBlockValid(CURSOR_X, CURSOR_Y))
 	{
-	CURRENT_BLOCK = &m_world->getBlock(CURSOR_X, CURSOR_Y);
+		CURRENT_BLOCK = &m_world->getBlock(CURSOR_X, CURSOR_Y);
 #ifdef ND_DEBUG
-	CURRENT_BLOCK_ID = BlockRegistry::get().getBlock(m_world->getBlock(CURSOR_X, CURSOR_Y).block_id).toString();
+		CURRENT_BLOCK_ID = BlockRegistry::get().getBlock(m_world->getBlock(CURSOR_X, CURSOR_Y).block_id).toString();
 #endif
 	}
 
+	bool istsunderBlock = !m_world->isAir(m_cam->getPosition().x, m_cam->getPosition().y - 1);
+
+
+	bool tntenable = true;
+	constexpr int maxDeltaBum = 2;
+	static int deltaBum = 0;
+	if (Game::get().getInput().isKeyPressed(GLFW_KEY_T))
+	{
+		if (tntenable)
+		{
+			if (deltaBum-- == 0)
+			{
+				deltaBum = maxDeltaBum;
+				auto t = Phys::asVect(m_cam->getPosition()).copy();
+				t.plus({0, 3});
+				Phys::Vect throwVect = Phys::Vect(CURSOR_X, CURSOR_Y) - t;
+				throwVect.normalize();
+				throwVect *= 10.f;
+				throwVect += getPlayer().getVelocity();
+				auto tnt = (EntityTNT*)malloc(sizeof(EntityTNT));
+				EntityRegistry::get().createInstance(ENTITY_TYPE_TNT, tnt);
+				tnt->getPosition() = m_cam->getPosition();
+				tnt->getPosition().y += 3;
+				tnt->getVelocity() = throwVect.asGLM();
+				m_world->spawnEntity(tnt);
+				//tnt->getAcceleration() = glm::vec2(0,-9.8)
+			}
+		}
+	}
+	if (Game::get().getInput().isKeyFreshlyPressed(GLFW_KEY_E))
+	{
+	
+		auto t = Phys::asVect(m_cam->getPosition()).copy();
+		
+		auto entityBuff = malloc(EntityRegistry::get().getBucket(ENTITY_PALLETE_SELECTED).byte_size);
+		EntityRegistry::get().createInstance(ENTITY_PALLETE_SELECTED, entityBuff);
+
+		((WorldEntity*)entityBuff)->getPosition() = m_cam->getPosition();
+		((WorldEntity*)entityBuff)->getPosition().y += 10;
+		m_world->spawnEntity((WorldEntity*)entityBuff);
+	}
+	
 	if (Game::get().getInput().isMousePressed(GLFW_MOUSE_BUTTON_1))
-		if (BLOCK_OR_WALL_SELECTED) {
+	{
+		if (BLOCK_OR_WALL_SELECTED)
+		{
 			if (m_world->getBlock(CURSOR_X, CURSOR_Y).block_id != BLOCK_PALLETE_SELECTED)
 				m_world->setBlock(CURSOR_X, CURSOR_Y, BLOCK_PALLETE_SELECTED);
 		}
 		else
 		{
-			if (m_world->getBlock(CURSOR_X, CURSOR_Y).isWallOccupied()) {
+			if (m_world->getBlock(CURSOR_X, CURSOR_Y).isWallOccupied())
+			{
 				if (m_world->getBlock(CURSOR_X, CURSOR_Y).wallID() != BLOCK_PALLETE_SELECTED)
 					m_world->setWall(CURSOR_X, CURSOR_Y, BLOCK_PALLETE_SELECTED);
-
 			}
 			else
 				m_world->setWall(CURSOR_X, CURSOR_Y, BLOCK_PALLETE_SELECTED);
 		}
+	}
 
-	auto pos = m_cam->getPosition();
-	float speed = Stats::player_speed;
+	glm::vec2 accel = glm::vec2(0, 0);
+	accel.y = -9.8f / 60;
+	glm::vec2& velocity = getPlayer().getVelocity().asGLM();
+	float acc = 0.3f;
+
 
 	if (Game::get().getInput().isKeyPressed(GLFW_KEY_RIGHT))
-		pos.x += speed;
+		accel.x = acc;
 	if (Game::get().getInput().isKeyPressed(GLFW_KEY_LEFT))
-		pos.x -= speed;
+		accel.x = -acc;
 	if (Game::get().getInput().isKeyPressed(GLFW_KEY_UP))
-		pos.y += speed;
-	if (Game::get().getInput().isKeyPressed(GLFW_KEY_DOWN))
-		pos.y -= speed;
-
-	if (pos.x < 0)
-		pos.x = 0;
-	if (pos.y < 0)
-		pos.y = 0;
-	if (pos.x > m_world->getInfo().chunk_width*WORLD_CHUNK_SIZE - 1)
-		pos.x = m_world->getInfo().chunk_width*WORLD_CHUNK_SIZE - 1;
-	if (pos.y > m_world->getInfo().chunk_height*WORLD_CHUNK_SIZE - 1)
-		pos.y = m_world->getInfo().chunk_height*WORLD_CHUNK_SIZE - 1;
-	if (!Stats::move_through_blocks_enable) {
-		if (m_world->isAir((int)pos.x, (int)pos.y))
-			m_cam->setPosition(pos);
+	{
+		//if (istsunderBlock)
+		velocity.y = 10;
 	}
-	else m_cam->setPosition(pos);
+
+	getPlayer().getAcceleration() = accel;
+	//std::cout << "Acceleration: " << Phys::asVect(accel) << "\n";
+	m_cam->setPosition(getPlayer().getPosition().asGLM());
+
 
 	CAM_POS_X = (m_cam->getPosition().x);
 	CAM_POS_Y = (m_cam->getPosition().y);
@@ -242,34 +318,27 @@ void WorldLayer::onUpdate()
 
 	//m_physics_system->proccess(m_physics_manager);
 }
+
 void WorldLayer::onRender()
 {
-	/*m_render_manager->render();
-	m_mesh_system->proccess(m_mesh_manager, m_physics_manager);
-*/
-/*
+	m_render_manager->render();
+
 	m_batch_renderer->begin();
 	m_batch_renderer->push(m_render_manager->getProjMatrix());
-	static float rot = 0;
-	rot += 0.01f;
-	static float rot2 = 0;
-	rot2 += 0.02f;
-	auto m = glm::rotate(glm::mat4(1.0f), rot,glm::vec3(0, 0, 1));
-	auto m2 = glm::translate(glm::mat4(1.0f), glm::vec3(15, 16, 0));
-	 m2 = glm::rotate(m2, rot2,glm::vec3(0, 0, 1));
-	m_batch_renderer->push(m);
-	for (int i = 0; i < m_sprites.size(); ++i)
+	auto worldMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(-m_cam->getPosition().x, -m_cam->getPosition().y, 0));
+	m_batch_renderer->push(worldMatrix);
+	for (auto it = m_world->beginEntities(); it != m_world->endEntities(); ++it)
 	{
-		m_batch_renderer->submit(*m_sprites[i]);
+		WorldEntity* entity = m_world->getLoadedEntity(*it);
+		auto ren = dynamic_cast<IBatchRenderable2D*>(entity);
+		if (ren)
+			ren->render(*m_batch_renderer);
 	}
-	m_batch_renderer->push(m2);
-	m_batch_renderer->submit(*m_sprites[m_sprites.size()/7]);
-	m_batch_renderer->pop();
-	m_batch_renderer->pop();
-	m_batch_renderer->pop();
-	m_batch_renderer->flush();*/
-
+	m_batch_renderer->pop(); //world matrix
+	m_batch_renderer->pop(); //proj matrix
+	m_batch_renderer->flush();
 }
+
 void WorldLayer::onImGuiRender()
 {
 	float fps = FLT_MAX;
@@ -277,7 +346,6 @@ void WorldLayer::onImGuiRender()
 	{
 		fpsCount = 0;
 		fps = Game::get().getFPS();
-
 	}
 	static bool show = true;
 
@@ -293,7 +361,18 @@ void WorldLayer::onImGuiRender()
 		ImGui::Text("* %d, %.2f", d.biomes[i], d.intensities[i]);
 
 	}*/
+	static int maxMillis = 0;
+	constexpr int MAX_maxmillisUpdateInterval = 60 * 2; //evry two sec will reset the max millis tick duiration checkr
+	static int maxMillisUpdateInterval = MAX_maxmillisUpdateInterval;
+	if (maxMillisUpdateInterval-- == 0)
+	{
+		maxMillisUpdateInterval = MAX_maxmillisUpdateInterval;
+		maxMillis = 0;
+	}
+	maxMillis = max(maxMillis, Game::get().getTickMillis());
+
 	ImGui::PlotVar("Tick Millis", Game::get().getTickMillis());
+	ImGui::Text("Max millis: %d", maxMillis);
 	ImGui::PlotVar("FPS", fps);
 	bool l = Stats::light_enable;
 	ImGui::Checkbox(Stats::light_enable ? "Lighting Enabled" : "Lighting Disabled", &Stats::light_enable);
@@ -302,9 +381,10 @@ void WorldLayer::onImGuiRender()
 		if (!l) m_world->getLightCalculator().run();
 		else m_world->getLightCalculator().stop();
 	}
-	if(Stats::light_enable)
+	if (Stats::light_enable)
 		ImGui::PlotVar("Light millis", Stats::light_millis);
-	ImGui::Checkbox(Stats::move_through_blocks_enable ? "Move through Blocks Enabled" : "Move through Blocks Disabled", &Stats::move_through_blocks_enable);
+	ImGui::Checkbox(Stats::move_through_blocks_enable ? "Move through Blocks Enabled" : "Move through Blocks Disabled",
+	                &Stats::move_through_blocks_enable);
 	l = BLOCK_OR_WALL_SELECTED;
 	ImGui::Checkbox(BLOCK_OR_WALL_SELECTED ? "BLOCK mode" : "WALL mode", &BLOCK_OR_WALL_SELECTED);
 	if (l != BLOCK_OR_WALL_SELECTED)
@@ -312,7 +392,7 @@ void WorldLayer::onImGuiRender()
 	ImGui::InputFloat("Player speed: ", &Stats::player_speed);
 	ImGui::InputFloat("Light Intensity: ", &Stats::player_light_intensity);
 	ImGui::InputFloat("Debug X: ", &Stats::debug_x);
-	
+
 	ImGui::SliderFloat("slider float", &Stats::debug_x, -1.0f, 1.0f, "ratio = %.3f");
 
 
@@ -320,40 +400,45 @@ void WorldLayer::onImGuiRender()
 	ImGui::Text("Chunks Size: (%d/%d)", WORLD_CHUNK_WIDTH, WORLD_CHUNK_HEIGHT);
 	ImGui::Text("Chunks loaded: %d", CHUNKS_LOADED);
 	ImGui::Text("Chunks drawn: %d", CHUNKS_DRAWN);
-	ImGui::Text("Cam X: %.2f (%d)", CAM_POS_X,(int)CAM_POS_X>>WORLD_CHUNK_BIT_SIZE);
+	ImGui::Text("Cam X: %.2f (%d)", CAM_POS_X, (int)CAM_POS_X >> WORLD_CHUNK_BIT_SIZE);
 	ImGui::Text("Cam Y: %.2f (%d)", CAM_POS_Y, (int)CAM_POS_Y >> WORLD_CHUNK_BIT_SIZE);
 	ImGui::Text("Cursor X: %.2f (%d)", CURSOR_X, (int)CURSOR_X >> WORLD_CHUNK_BIT_SIZE);
 	ImGui::Text("Cursor y: %.2f (%d)", CURSOR_Y, (int)CURSOR_Y >> WORLD_CHUNK_BIT_SIZE);
 #ifdef ND_DEBUG
 
-	if (auto current = m_world->getLoadedBlockPointer(CURSOR_X, CURSOR_Y)) {
+	if (auto current = m_world->getLoadedBlockPointer(CURSOR_X, CURSOR_Y))
+	{
 		CURRENT_BLOCK = current;
-		ImGui::Text("Current Block: %s (id: %d, corner: %d)", CURRENT_BLOCK_ID.c_str(), CURRENT_BLOCK->block_id, CURRENT_BLOCK->block_corner);
+		ImGui::Text("Current Block: %s (id: %d, corner: %d)", CURRENT_BLOCK_ID.c_str(), CURRENT_BLOCK->block_id,
+		            CURRENT_BLOCK->block_corner);
 		int wallid = CURRENT_BLOCK->wall_id[0];
 		if (!CURRENT_BLOCK->isWallOccupied())
 			wallid = -1;
-		ImGui::Text("Current Wall: %s (id: %d)", BlockRegistry::get().getWall(CURRENT_BLOCK->wall_id[0]).toString().c_str(), wallid);
+		ImGui::Text("Current Wall: %s (id: %d)",
+		            BlockRegistry::get().getWall(CURRENT_BLOCK->wall_id[0]).toString().c_str(), wallid);
 
 		for (int i = 0; i < 2; ++i)
 			for (int j = 0; j < 2; ++j)
 			{
 				const Wall& w = BlockRegistry::get().getWall(CURRENT_BLOCK->wall_id[i * 2 + j]);
-				ImGui::Text(" -> (%d, %d): corner:%d, %s ", j, i, CURRENT_BLOCK->wall_corner[i * 2 + j], w.toString().c_str());
+				ImGui::Text(" -> (%d, %d): corner:%d, %s ", j, i, CURRENT_BLOCK->wall_corner[i * 2 + j],
+				            w.toString().c_str());
 			}
 		int ccx = CURSOR_X;
 		int ccy = CURSOR_Y;
-		int j = CURSOR_X - ccx < 0.5f?0:1;
-		int i = CURSOR_Y - ccy < 0.5f?0:1;
+		int j = CURSOR_X - ccx < 0.5f ? 0 : 1;
+		int i = CURSOR_Y - ccy < 0.5f ? 0 : 1;
 		const Wall& w = BlockRegistry::get().getWall(CURRENT_BLOCK->wall_id[i * 2 + j]);
-		ImGui::Text("Selected Wall -> (%d, %d): corner:%d, %s ", j, i, CURRENT_BLOCK->wall_corner[i * 2 + j], w.toString().c_str());
-
+		ImGui::Text("Selected Wall -> (%d, %d): corner:%d, %s ", j, i, CURRENT_BLOCK->wall_corner[i * 2 + j],
+		            w.toString().c_str());
 	}
 
 	ImGui::Separator();
 
-	ImGui::Columns(2, "mycolumns3", false);  // 3-ways, no border
+	ImGui::Columns(2, "mycolumns3", false); // 3-ways, no border
 	ImGui::Separator();
-	if (BLOCK_OR_WALL_SELECTED) {
+	if (BLOCK_OR_WALL_SELECTED)
+	{
 		if (ImGui::TreeNode("Block Selection"))
 		{
 			auto& blocks = BlockRegistry::get().getBlocks();
@@ -382,6 +467,19 @@ void WorldLayer::onImGuiRender()
 			ImGui::TreePop();
 		}
 	}
+	if (ImGui::TreeNode("Entity Selection"))
+	{
+		auto& blocks = EntityRegistry::get().getData();
+
+		for (int n = 0; n < blocks.size(); n++)
+		{
+			char buf[32];
+			sprintf(buf, "%s", blocks[n].name.c_str());
+			if (ImGui::Selectable(buf, ENTITY_PALLETE_SELECTED == n))
+				ENTITY_PALLETE_SELECTED = n;
+		}
+		ImGui::TreePop();
+	}
 #endif
 	ImGui::Separator();
 
@@ -401,31 +499,37 @@ void WorldLayer::onImGuiRender()
 	ImGui::Separator();*/
 
 	ImGui::End();
-	static bool op = false;
-	ImGui::ShowDemoWindow(&op);
+	//static bool op = false;
+	//ImGui::ShowDemoWindow(&op);
 }
+
 void WorldLayer::onEvent(Event& e)
 {
-	if (e.getEventType() == Event::EventType::KeyPress) {
+	if (e.getEventType() == Event::EventType::KeyPress)
+	{
 		auto event = dynamic_cast<KeyPressEvent*>(&e);
 
-		if (event->getKey() == GLFW_KEY_ESCAPE) {
+		if (event->getKey() == GLFW_KEY_ESCAPE)
+		{
 			auto e = WindowCloseEvent();
 			Game::get().fireEvent(e);
 			event->handled = true;
 		}
 	}
 
-	if (e.getEventType() == Event::EventType::WindowResize) {
+	if (e.getEventType() == Event::EventType::WindowResize)
+	{
 		auto event = dynamic_cast<WindowResizeEvent*>(&e);
 		m_render_manager->onScreenResize();
 	}
 
-	if (e.getEventType() == Event::EventType::MousePress) {
+	if (e.getEventType() == Event::EventType::MousePress)
+	{
 		auto event = dynamic_cast<MousePressEvent*>(&e);
 		if (event->getButton() == GLFW_MOUSE_BUTTON_2)
 		{
-			if (BLOCK_OR_WALL_SELECTED) {
+			if (BLOCK_OR_WALL_SELECTED)
+			{
 				BLOCK_PALLETE_SELECTED = m_world->getBlock(CURSOR_X, CURSOR_Y).block_id;
 			}
 			else
@@ -435,5 +539,4 @@ void WorldLayer::onEvent(Event& e)
 			event->handled = true;
 		}
 	}
-
 }
