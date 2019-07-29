@@ -77,6 +77,7 @@ WorldLayer::WorldLayer()
 	ND_REGISTER_ENTITY(ENTITY_TYPE_PLAYER, EntityPlayer);
 	ND_REGISTER_ENTITY(ENTITY_TYPE_TNT, EntityTNT);
 	ND_REGISTER_ENTITY(ENTITY_TYPE_ZOMBIE, EntityZombie);
+	ND_REGISTER_ENTITY(ENTITY_TYPE_ROUND_BULLET, EntityRoundBullet);
 
 
 	WorldIOInfo info;
@@ -102,6 +103,7 @@ WorldLayer::WorldLayer()
 		m_world = stream.loadWorld();
 		stream.close();
 	}
+	m_world->getNBTSaver().init();
 
 	if (!m_world)
 	{
@@ -145,14 +147,36 @@ WorldLayer::WorldLayer()
 	playerID = m_world->spawnEntity((WorldEntity*)playerBuff);
 	getPlayer().getPosition() = m_cam->getPosition();
 
-	//texture thingies
-	/*res = new SpriteSheetResource(Texture::create(TextureInfo("res/images/player.png")), 4,4);
-	getPlayer().getSprite() = Sprite(res);
-	getPlayer().getSprite().setSpriteIndex(0, 3);
-	getPlayer().getSprite().setEnabled(true);
-	glm::vec2 si = { 5.0f,5.f };
-	getPlayer().getSprite().setSize(si);
-	*/
+	std::string random_string = "Karel je proste kanec to si nebudumeme myslel ze taky je to tak super kfy"
+	"je tu nekdko kdo si ropzmumi gogoogogoggogo monika youre the est doki in the wholee world";
+	auto& saver = m_world->getNBTSaver();
+
+	/*saver.beginSession();
+		saver.setWriteChunkID(10);
+			saver.write(random_string.c_str(), random_string.size()+1);
+			saver.write("josef", 6);
+			saver.write("etc", 4);
+		saver.flushWrite();
+
+		saver.setWriteChunkID(11);
+			saver.write("smankote tohle je zajimave, ze", 20);
+		saver.flushWrite();
+	saver.endSession();*/
+	
+	saver.beginSession();
+	ND_INFO("segment count: {}", saver.getSegmentCount());
+	if(saver.setReadChunkID(10))
+	{
+		char* buff = new char[random_string.size() + 1];
+		saver.read(buff, random_string.size() + 1);
+		ND_INFO("read was: {}",std::string(buff));
+		delete[] buff;
+		
+	}
+	else ND_INFO("shit not wokrign 10");
+
+	saver.endSession();
+
 }
 
 EntityPlayer& WorldLayer::getPlayer()
@@ -166,11 +190,7 @@ WorldLayer::~WorldLayer()
 	delete m_world;
 	delete m_batch_renderer;
 	delete m_render_manager;
-	/*for (auto s:m_sprites)
-	{
-		delete s;
-	}*/
-	//free(chunkOfSprites);
+
 	free(playerBuff);
 }
 
@@ -250,6 +270,10 @@ void WorldLayer::onUpdate()
 			}
 		}
 	}
+	if (Game::get().getInput().isKeyFreshlyPressed(GLFW_KEY_C)) {
+		Stats::fly_enable = !Stats::fly_enable;
+		ND_INFO("Fly mode: {}", Stats::fly_enable);
+	}
 	if (Game::get().getInput().isKeyFreshlyPressed(GLFW_KEY_E))
 	{
 	
@@ -262,10 +286,25 @@ void WorldLayer::onUpdate()
 		((WorldEntity*)entityBuff)->getPosition().y += 10;
 		m_world->spawnEntity((WorldEntity*)entityBuff);
 	}
-	
+
 	if (Game::get().getInput().isMousePressed(GLFW_MOUSE_BUTTON_1))
 	{
-		if (BLOCK_OR_WALL_SELECTED)
+		if(Stats::gun_enable)
+		{
+			constexpr int BULLET_CADENCE_DELAY = 3;
+			static int counter=0;
+			if(counter++== BULLET_CADENCE_DELAY)
+			{
+				counter = 0;
+				auto buff = malloc(EntityRegistry::get().getBucket(ENTITY_TYPE_ROUND_BULLET).byte_size);
+				EntityRegistry::get().createInstance(ENTITY_TYPE_ROUND_BULLET, buff);
+				auto bullet = (EntityRoundBullet*)buff;
+				bullet->getPosition() = m_cam->getPosition()+Phys::Vect(0,10.f).asGLM();
+				bullet->fire(Phys::Vect(CURSOR_X, CURSOR_Y), 50.f / 60);
+				m_world->spawnEntity(bullet);
+			}
+
+		}else if (BLOCK_OR_WALL_SELECTED)
 		{
 			if (m_world->getBlock(CURSOR_X, CURSOR_Y).block_id != BLOCK_PALLETE_SELECTED)
 				m_world->setBlock(CURSOR_X, CURSOR_Y, BLOCK_PALLETE_SELECTED);
@@ -283,7 +322,7 @@ void WorldLayer::onUpdate()
 	}
 
 	glm::vec2 accel = glm::vec2(0, 0);
-	accel.y = -9.8f / 60;
+	accel.y = -9.0f / 60;
 	glm::vec2& velocity = getPlayer().getVelocity().asGLM();
 	float acc = 0.3f;
 
@@ -294,8 +333,8 @@ void WorldLayer::onUpdate()
 		accel.x = -acc;
 	if (Game::get().getInput().isKeyPressed(GLFW_KEY_UP))
 	{
-		//if (istsunderBlock)
-		velocity.y = 10;
+		if (istsunderBlock||Stats::fly_enable)
+			velocity.y = 10;
 	}
 
 	getPlayer().getAcceleration() = accel;
@@ -389,6 +428,7 @@ void WorldLayer::onImGuiRender()
 	ImGui::Checkbox(BLOCK_OR_WALL_SELECTED ? "BLOCK mode" : "WALL mode", &BLOCK_OR_WALL_SELECTED);
 	if (l != BLOCK_OR_WALL_SELECTED)
 		BLOCK_PALLETE_SELECTED = 0;
+	ImGui::Checkbox(Stats::gun_enable ? "Gun Enabled" : "Gun Disabled",&Stats::gun_enable);
 	ImGui::InputFloat("Player speed: ", &Stats::player_speed);
 	ImGui::InputFloat("Light Intensity: ", &Stats::player_light_intensity);
 	ImGui::InputFloat("Debug X: ", &Stats::debug_x);

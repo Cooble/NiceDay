@@ -33,7 +33,11 @@ public:
 	inline const Phys::Vect& getPosition() const { return m_pos; }
 	inline Phys::Vect& getPosition() { return m_pos; }
 
-	virtual void update(World* w) {};
+	virtual void update(World* w) {}
+
+	virtual void onLoaded(World* w) {}
+	virtual void onUnloaded(World* w) {}
+
 
 	void save(NBT& src) override;
 	void load(NBT& src) override;

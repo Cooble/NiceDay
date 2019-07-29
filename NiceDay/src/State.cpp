@@ -4,6 +4,8 @@
 
 
 bool Stats::light_enable=false;
+bool Stats::gun_enable=false;
+bool Stats::fly_enable=true;
 bool Stats::move_through_blocks_enable =true;
 float Stats::player_speed =0.5f;
 float Stats::player_light_intensity = 1.0f;

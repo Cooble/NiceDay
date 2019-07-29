@@ -8,6 +8,7 @@ inline glm::vec2 toglm(float f) { return glm::vec2(f, f); }
 namespace Phys
 {
 	struct Polygon;
+
 	inline static bool isValidFloat(float f)
 	{
 		return !std::isnan(f) && !std::isinf(f);
@@ -24,12 +25,15 @@ namespace Phys
 		Vect(float x, float y) : x(x), y(y)
 		{
 		}
+
 		Vect(int x, int y) : x(x), y(y)
 		{
 		}
+
 		Vect(int x, float y) : x(x), y(y)
 		{
 		}
+
 		Vect(float x, int y) : x(x), y(y)
 		{
 		}
@@ -37,16 +41,40 @@ namespace Phys
 		Vect(float m) : x(m), y(m)
 		{
 		}
+
 		Vect(const glm::vec2& m) : x(m.x), y(m.y)
 		{
 		}
 
 		inline glm::vec2& asGLM() { return *((glm::vec2*)this); }
 
+		inline float angleDegrees() const
+		{
+			if (x == 0) // special cases
+				return (y > 0)
+					       ? 90
+					       : (y == 0)
+					       ? 0
+					       : 270;
+			else if (y == 0) // special cases
+				return (x >= 0)
+					       ? 0
+					       : 180;
+			float ret = atanf((float)y / x) / 3.14159f * 180;
+			if (x < 0 && y < 0) // quadrant Ⅲ
+				ret = 180 + ret;
+			else if (x < 0) // quadrant Ⅱ
+				ret = 180 + ret; // it actually substracts
+			else if (y < 0) // quadrant Ⅳ
+				ret = 270 + (90 + ret); // it actually substracts
+			return ret;
+		}
+
 		inline glm::vec2& operator()()
 		{
 			return asGLM();
 		}
+
 		inline const glm::vec2& operator()() const
 		{
 			return *(const glm::vec2*)this;
@@ -61,9 +89,10 @@ namespace Phys
 		{
 			return {x - v.x, y - v.y};
 		}
+
 		inline Vect operator-() const
 		{
-			return { -x, -y};
+			return {-x, -y};
 		}
 
 		inline Vect operator*(const Vect& v) const
@@ -98,11 +127,12 @@ namespace Phys
 			x /= v;
 			y /= v;
 		}
-		
+
 		inline void operator+=(const Vect& v)
 		{
 			plus(v);
 		}
+
 		inline void plus(const Vect& v)
 		{
 			x += v.x;
@@ -113,6 +143,7 @@ namespace Phys
 		{
 			minus(v);
 		}
+
 		inline void minus(const Vect& v)
 		{
 			x -= v.x;
@@ -123,6 +154,7 @@ namespace Phys
 		{
 			multiply(v);
 		}
+
 		inline void multiply(const Vect& v)
 		{
 			x *= v.x;
@@ -133,17 +165,19 @@ namespace Phys
 		{
 			divide(v);
 		}
+
 		inline void divide(const Vect& v)
 		{
 			x /= v.x;
 			y /= v.y;
 		}
 
-		
+
 		inline bool operator==(const Vect& other) const
 		{
-			return x == other.x&&y == other.y;
+			return x == other.x && y == other.y;
 		}
+
 		inline bool operator!=(const Vect& other) const
 		{
 			return !operator==(other);
@@ -196,19 +230,32 @@ namespace Phys
 			return *this;
 		}
 	};
-	inline Vect clamp(const Vect& a,const Vect& min,const Vect& max)
+
+	inline Vect vectFromAngle(float rad)
+	{
+		return { cos(rad),sin(rad) };
+	}
+
+	inline Vect clamp(const Vect& a, const Vect& min, const Vect& max)
 	{
 		Vect out;
 		out.x = std::clamp(a.x, min.x, max.x);
 		out.y = std::clamp(a.y, min.y, max.y);
 		return out;
 	}
-	inline Vect operator+(float a, const Phys::Vect& b) { //outside the class
-		return b+a;
+
+	inline Vect operator+(float a, const Phys::Vect& b)
+	{
+		//outside the class
+		return b + a;
 	}
-	inline Vect operator*(float a, const Phys::Vect& b) { //outside the class
+
+	inline Vect operator*(float a, const Phys::Vect& b)
+	{
+		//outside the class
 		return b * a;
 	}
+
 	inline Vect& asVect(glm::vec2& v) { return *(Vect*)&v; }
 	inline const Vect& asVect(const glm::vec2& v) { return *(Vect*)&v; }
 
@@ -222,6 +269,16 @@ namespace Phys
 		return os;
 	}
 
+	constexpr float toRad(float f)
+	{
+		return f / 180.f * 3.14159265f;
+	}
+
+	constexpr float toDeg(float f)
+	{
+		return f / 3.14159265f * 180.f;
+	}
+
 	struct Rectangle
 	{
 		float x0, y0, x1, y1;
@@ -231,8 +288,8 @@ namespace Phys
 			return (x >= x0) && (x <= x1) && (y >= y0) && (y <= y1);
 		}
 
-		inline float width()const { return x1 - x0; }
-		inline float height()const { return y1 - y0; }
+		inline float width() const { return x1 - x0; }
+		inline float height() const { return y1 - y0; }
 
 	private:
 		inline bool intersectsInner(const Rectangle& rect) const
@@ -259,6 +316,7 @@ namespace Phys
 	private:
 		Rectangle bounds;
 	public:
+
 		Polygon(std::vector<Vect> v = {}): vect(std::move(v))
 		{
 			vects = vect.data();
@@ -302,6 +360,7 @@ namespace Phys
 			recalculateBounds();
 			return *this;
 		}
+
 		inline Polygon& minus(const Vect& v)
 		{
 			for (auto& vec : vect)
@@ -319,14 +378,15 @@ namespace Phys
 			return Polygon(vect);
 		}
 	};
+
 	inline Polygon toPolygon(const Rectangle& r)
 	{
 		return Polygon({
-			{r.x0,r.y0},
-			{r.x1,r.y0},
-			{r.x1,r.y1},
-			{r.x0,r.y1}
-			});
+			{r.x0, r.y0},
+			{r.x1, r.y0},
+			{r.x1, r.y1},
+			{r.x0, r.y1}
+		});
 	}
 
 	// lines collisions ================================================================
@@ -378,14 +438,14 @@ namespace Phys
 			isBetween(v.y, pb0.y, pb1.y);
 	}
 
-
 	//polygons =========================================================================
 
 	inline bool isIntersects(const Polygon& a, const Polygon& b)
 	{
-		if (a.getBounds().intersects(b.getBounds()))//first check if it is even worth trying
+		if (a.getBounds().intersects(b.getBounds())) //first check if it is even worth trying
 		{
-			for (int i = 0; i < a.size()-1; ++i)//it is that big because not using modulo for p1,p2 (bigger code - bigger performance)
+			for (int i = 0; i < a.size() - 1; ++i)
+				//it is that big because not using modulo for p1,p2 (bigger code - bigger performance)
 			{
 				auto& p0 = a[i];
 				auto& p1 = a[i + 1];
@@ -403,7 +463,7 @@ namespace Phys
 					return true;
 			}
 
-			auto& p0 = a[a.size()-1];
+			auto& p0 = a[a.size() - 1];
 			auto& p1 = a[0];
 
 			for (int j = 0; j < b.size() - 1; ++j)
@@ -421,11 +481,29 @@ namespace Phys
 		return false;
 	}
 
+	inline bool contains(const Polygon& a, const Vect& point)
+	{
+		Vect secPoint = {std::numeric_limits<float>::max() / 2};
+		int intersections = 0;
+		for (int i = 0; i < a.size(); ++i)
+			//it is that big because not using modulo for p1,p2 (bigger code - bigger performance)
+		{
+			auto& p0 = a[i];
+			auto& p1 = a[(i + 1) % a.size()];
+
+
+			if (isIntersectAbscisses(p0, p1, point, secPoint))
+				++intersections;
+		}
+		return intersections & 1;
+	}
+
 	inline Vect intersects(const Polygon& a, const Polygon& b)
 	{
-		if (a.getBounds().intersects(b.getBounds()))//first check if it is even worth trying
+		if (a.getBounds().intersects(b.getBounds())) //first check if it is even worth trying
 		{
-			for (int i = 0; i < a.size() - 1; ++i)//it is that big because not using modulo for p1,p2 (bigger code - bigger performance)
+			for (int i = 0; i < a.size() - 1; ++i)
+				//it is that big because not using modulo for p1,p2 (bigger code - bigger performance)
 			{
 				auto& p0 = a[i];
 				auto& p1 = a[i + 1];

@@ -15,29 +15,36 @@ Possible errors you might do:
 class World;
 class Chunk;
 
-struct WorldIOInfo {
+struct WorldIOInfo
+{
 	std::string world_name;
 	int chunk_width, chunk_height;
 	long seed;
 	int terrain_level;
 };
-namespace WorldIO {
-	class Session {
+
+namespace WorldIO
+{
+
+	class Session
+	{
 	public:
-		Session(const std::string& path, bool write_mode,bool write_only=false);
+		Session(const std::string& path, bool write_mode, bool write_only = false);
 		~Session();
 	private:
 		std::fstream* m_stream;
 		std::string m_file_path;
 
-		#ifdef ND_DEBUG
+#ifdef ND_DEBUG
 		bool m_write_only;
 		bool m_write_mode;
-		#endif
+#endif
+
+
 	public:
 		World* genWorldFile(const WorldIOInfo& info);
 
-		void saveWorld(World * world);
+		void saveWorld(World* world);
 
 		World* loadWorld();
 
@@ -46,8 +53,135 @@ namespace WorldIO {
 		void saveChunk(Chunk* chunk, int offset);
 
 		void close();
+	};
 
+	struct ChunkSegmentHeader
+	{
+		size_t next_index = std::numeric_limits<size_t>::max();
+
+		inline bool hasNext() const { return next_index != std::numeric_limits<size_t>::max(); }
+	};
+
+	constexpr uint32_t DYNAMIC_SAVER_FREE_SEGMENTS = 10000;
+	constexpr uint32_t DYNAMIC_SAVER_CHUNK_ID_COUNT = 10000;
+	constexpr uint32_t DYNAMIC_SAVER_CHUNK_SEGMENT_BYTE_SIZE = 2000 + sizeof(ChunkSegmentHeader);
+
+	// (uses linked list)
+	// capable of saving objects with different sizes
+	struct pai
+	{
+		int id;
+		uint32_t offset;
+	};
+
+	//	====DynamicSaver=======
+	//	
+	// Capable of saving objects with unique IDs with different sizes to file
+	// (uses linked list mechanism)
+	// No upper limit of how big objects can be
+	// 
+	// NOTE:
+	//		Writing mode completely overwrites previously written data of specific object.
+	//		Appending more data is impossible. (you need to read all, modify, and save all)
+	// 
+	// How to use DynamicSaver:
+	// 	
+	//		init();//only once for instance
+	//		
+	//		beginSession();
+	//		
+	//			// writing
+	//			setWriteChunkID(smth);
+	//				write(smth,somth); ......
+	//				write(smth,somth); ......
+	//			flushWrite();
+	//		
+	//			// reading
+	//			setReadChunkID(smth);
+	//				read(smth,srhthr); .....
+	//				read(smth,srhthr); .....
+	//		
+	//		endSession();
+	class DynamicSaver
+	{
+	
+	private:
+		
+		// offset of start of dynamic data of dynamic saver (starts after DynamicSaverHeader section)
+		uint32_t m_TOTAL_OFFSET;
+		// offset of whole dynamic saver in file
+		uint32_t m_BASE_TOTAL_OFFSET;
+		std::string m_path;
+
+		uint32_t m_p_offset, m_p_byte_reciproc;
+		uint32_t m_g_offset, m_g_byte_reciproc;
+		ChunkSegmentHeader m_write_header;
+		ChunkSegmentHeader m_read_header;
+		std::fstream* m_stream=nullptr;
+		uint32_t m_segment_count=0;
+		int m_writeChunkID=0;
+
+
+		std::deque<uint32_t> m_free_offsets;
+		// <chunkID, offset>
+		std::unordered_map<int, uint32_t> m_chunk_offsets;
+
+		uint32_t getChunkOffset(int chunkID);
+
+		void eraseSegment(uint32_t offset); //kills segment and all his children
+
+		void loadVTable();
+		
+	public:
+		DynamicSaver(std::string path, uint32_t totalOffset=0);
+		~DynamicSaver();
+
+		// to setup everything (will read from file to update its tables)
+		// no beginSession() needed
+		void init();
+
+		// should be called often to save changes to vtable
+		// NOTE: 
+		//		Without table are data completely useless
+		// (called within begin/endSession)
+		void saveVTable();
+
+		
+		// to read/write anything you need use begin() and end()
+		// creates r/w session 
+		void beginSession();
+
+		// to read/write anything you need use begin() and end()
+		// ends r/w session
+		void endSession();
+
+	public:
+		// initiates write mode to specified chunk
+		// NOTE: 
+		//		-> all data on chunkID will be overwritten!
+		//		-> don't forget to call flushWrite() after write()s
+		//
+		// (called within begin/endSession)
+		void setWriteChunkID(int chunkID);
+
+		// very important to call after writing to chunk is done
+		// kills all segment children if they are not used
+		void flushWrite();
+
+		// initiates read mode on specified chunk
+		// returns false if chunk doesn't exist
+		// (called within begin/endSession)
+		bool setReadChunkID(int chunkID);
+
+		// there is no upper limit of how big array can be
+		// it will automaticaly create another segment if currently used one is full
+		void write(const char* b, uint32_t length);
+
+		// returns false if next segment doesn't exist (doesn't care if no other data is available)
+		// when reading you need to know the size of data beforehand 
+		// otherwise you could read random stuff to the end of the segment
+		bool read(char* b, uint32_t length = 1);
+		inline uint32_t getSegmentCount()const { return m_segment_count; }
+		inline uint32_t getFreeSegmentCount()const { return m_free_offsets.size(); };
 	};
 }
-
-

@@ -16,38 +16,43 @@ const int WORLD_CHUNK_AREA = WORLD_CHUNK_SIZE * WORLD_CHUNK_SIZE;
 
 static const int BITS_FOR_CHUNK_LOC = 16;
 
-constexpr int CHUNK_LOADED_FLAG =		BIT(0);
-constexpr int CHUNK_DIRTY_FLAG =		BIT(1); //in next update chunk graphics will be reloaded into chunkrenderer
-constexpr int CHUNK_LOCKED_FLAG =		BIT(2); //dont unload this chunk its being worked on by main thread
+constexpr int CHUNK_LOADED_FLAG = BIT(0);
+constexpr int CHUNK_DIRTY_FLAG = BIT(1); //in next update chunk graphics will be reloaded into chunkrenderer
+constexpr int CHUNK_LOCKED_FLAG = BIT(2); //dont unload this chunk its being worked on by main thread
 constexpr int CHUNK_LIGHT_LOCKED_FLAG = BIT(3); //dont unload this chunk its being worked on by light thread
 
+typedef int ChunkID;
 class Chunk
 {
 private:
-
 	int m_x, m_y;
 	//posxy
 
 	BlockStruct m_blocks[WORLD_CHUNK_AREA];
 	uint8_t m_light_levels[WORLD_CHUNK_AREA];
-	uint16_t m_flags=0;
-	friend class World;
-	friend class WorldIO::Session;
-	friend class WorldGen;
+	uint16_t m_flags = 0;
 	int m_biome;
 
 	//multithreading light
-	uint32_t m_main_thread_fence=0;
-	uint32_t m_light_thread_fence=0;
+	uint32_t m_main_thread_fence = 0;
+	uint32_t m_light_thread_fence = 0;
 
 public:
+	friend class World;
+	friend class WorldIO::Session;
+	friend class WorldGen;
+
 	Chunk();
 	long long last_save_time;
-	inline int chunkID() const { return half_int(m_x, m_y); }
+	inline ChunkID chunkID() const { return half_int(m_x, m_y); }
 	inline bool isLoaded() const { return m_flags & CHUNK_LOADED_FLAG; } //this chunk shell contains loaded chunk
 
 	// cannot unload locked chunk
-	inline bool isLocked() const { return (m_flags & CHUNK_LOCKED_FLAG) | (m_main_thread_fence!=m_light_thread_fence); }
+	inline bool isLocked() const
+	{
+		return (m_flags & CHUNK_LOCKED_FLAG) | (m_main_thread_fence != m_light_thread_fence);
+	}
+
 	inline bool isLightLocked() const { return m_flags & CHUNK_LIGHT_LOCKED_FLAG; }
 	inline bool isDirty() const { return m_flags & CHUNK_DIRTY_FLAG; }
 	inline bool isGenerated() const { return last_save_time != 0; } //worldgen has generated it
@@ -61,7 +66,8 @@ public:
 	inline void lightUnlock() { ++m_light_thread_fence; }
 
 	// used as fence with main-light thread resource sharing
-	inline void lightLock(bool lock){
+	inline void lightLock(bool lock)
+	{
 		if (lock) m_flags |= CHUNK_LIGHT_LOCKED_FLAG;
 		else m_flags &= ~CHUNK_LIGHT_LOCKED_FLAG;
 	}
@@ -145,20 +151,24 @@ private:
 	BlockStruct m_air_block;
 
 	EntityManager m_entity_manager;
+	WorldIO::DynamicSaver m_nbt_saver;
 
 	std::vector<EntityID> m_entity_array;
+	std::vector<EntityID> m_entity_array_buff;
 
 
 	bool m_edit_buffer_enable;
-	std::queue<std::pair<int, int>> m_edit_buffer;//location x,y for editted blocks
+	std::queue<std::pair<int, int>> m_edit_buffer; //location x,y for editted blocks
 
 private:
 	void init();
-	void onBlocksChange(int x, int y, int deep=0);
+	void onBlocksChange(int x, int y, int deep = 0);
 	void onWallsChange(int xx, int yy, BlockStruct& blok);
 	int getNextFreeChunkIndex(int startSearchIndex = 0);
 	void genChunks(std::set<int>& toGenChunks);
 	void loadLightResources(int x, int y);
+
+	//WorldEntity* getEntityOrKilled(EntityID id);
 
 
 public:
@@ -226,7 +236,6 @@ public:
 	//(may cause chunk load)
 	bool isAir(int x, int y);
 
-	
 
 	//any changes wont be visible in graphics ->use setBlock() instead 
 	//(may cause chunk load)
@@ -236,7 +245,7 @@ public:
 	//(may cause chunk load)
 	void setBlock(int x, int y, BlockStruct&);
 
-	
+
 	//automatically calls chunk.markdirty() to update graphics and call onNeighbourBlockChange()
 	//(may cause chunk load)
 	void setBlock(int x, int y, int block_id);
@@ -268,6 +277,7 @@ public:
 
 	//ENTITY============================================================================================
 
+	inline auto& getNBTSaver() { return m_nbt_saver; }
 	inline EntityManager& getEntityManager() { return m_entity_manager; }
 
 	inline WorldEntity* getLoadedEntity(EntityID id)
@@ -276,23 +286,35 @@ public:
 	}
 
 	inline const auto& getLoadedEntities() { return m_entity_array; }
-	
+
 	inline void unloadEntity(EntityID worldEntity)
 	{
 		for (int i = 0; i < m_entity_array.size(); ++i)
-		{
-			if (m_entity_array[i] == worldEntity) {
+		{ 
+			if (m_entity_array[i] == worldEntity)
+			{
+				auto pointer = m_entity_manager.entity(worldEntity);
+				if (pointer)
+					pointer->onUnloaded(this);
+
 				m_entity_array.erase(m_entity_array.begin() + i);
 				return;
 			}
 		}
 	}
 
+	inline void loadEntity(WorldEntity* pEntity)
+	{
+		m_entity_array.push_back(pEntity->getID());
+		pEntity->onLoaded(this);
+	}
+
 	inline void killEntity(EntityID id)
 	{
-		if (m_entity_manager.isLoaded(id)) {
+		if (m_entity_manager.isLoaded(id))
+		{
+			auto pointer = m_entity_manager.entity(id);
 			unloadEntity(id);
-			void* pointer = m_entity_manager.entity(id);
 			free(pointer);
 		}
 		m_entity_manager.killEntity(id);

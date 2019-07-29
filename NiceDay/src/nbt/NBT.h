@@ -39,6 +39,7 @@ class NBTSaveable //todo those methods should be inlined
 		listName[s] = *(internalListType*)&value; \
 	}
 
+
 struct NBT
 {
 	std::unordered_map<std::string, std::string> m_strings;
@@ -47,6 +48,7 @@ struct NBT
 	std::unordered_map<std::string, int64_t> m_longs;
 	std::unordered_map<std::string, NBT> m_nbts;
 public:
+	
 	NBT() = default;
 
 	template <typename T>

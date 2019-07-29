@@ -16,6 +16,7 @@ private:
 	Phys::Vect m_target;
 	EntityID m_entity_target=ENTITY_ID_INVALID;
 
+	Phys::Vect m_last_jump;
 	bool m_running=false;
 public:
 

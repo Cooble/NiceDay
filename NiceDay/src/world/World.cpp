@@ -26,8 +26,9 @@ void World::init()
 
 World::World(std::string file_path, const char* name, int chunk_width, int chunk_height)
 	: m_light_calc(this),
+	  m_nbt_saver(file_path + ".entity"),
 	  m_info({0, chunk_width, chunk_height, 0}),
-	  m_file_path(std::move(file_path)),
+	  m_file_path(file_path),
 	  m_air_block(0),
 	  m_edit_buffer_enable(false) //seed,width,height,time
 {
@@ -38,8 +39,9 @@ World::World(std::string file_path, const char* name, int chunk_width, int chunk
 World::World(std::string file_path, const WorldInfo* info)
 	: m_light_calc(this),
 	  m_info(*info),
-	  m_file_path(std::move(file_path)),
+	  m_file_path(file_path),
 	  m_air_block(0),
+		m_nbt_saver(file_path + ".entity"),
 
 	  m_edit_buffer_enable(false)
 {
@@ -65,11 +67,17 @@ void World::onUpdate()
 void World::tick()
 {
 	m_info.time++;
-	for (int i = m_entity_array.size() - 1; i >= 0; --i)
+
+	//we need a buffer here cause we cant modify array during iteration
+	if (m_entity_array_buff.size() != m_entity_array.size())
+		m_entity_array_buff.resize(m_entity_array.size()); //make sure there is enough space in buff
+	memcpy(m_entity_array_buff.data(), m_entity_array.data(), m_entity_array.size() * sizeof(EntityID));
+
+	for (int i = m_entity_array_buff.size() - 1; i >= 0; --i)
 	{
-		WorldEntity* entity = m_entity_manager.entity(m_entity_array[i]);
-		ASSERT(entity, "Entity null why... its unloaded or destoyed but still loaded in world");
-		entity->update(this);
+		WorldEntity* entity = m_entity_manager.entity(m_entity_array_buff[i]);
+		if (entity)
+			entity->update(this);
 	}
 }
 
@@ -343,7 +351,7 @@ void World::loadLightResources(int x, int y)
 			}
 			//if(!getChunk(p.first,p.second).isLightLocked())
 			//	ND_INFO("Lightlocked chunk: {},{} :", p.first, p.second, getChunk(p.first, p.second).isLightLocked());
-			
+
 			getChunk(p.first, p.second).lightLock();
 		}
 	}
@@ -415,7 +423,6 @@ void World::updateChunkBounds(int xx, int yy, int bitBounds)
 				BlockRegistry::get().getWall(block.wallID()).onNeighbourWallChange(this, worldx, worldy);
 		}
 }
-
 
 void World::unloadChunk(Chunk& c)
 {
@@ -640,7 +647,7 @@ EntityID World::spawnEntity(WorldEntity* pEntity)
 	pEntity->m_id = id;
 	m_entity_manager.setEntityPointer(id, pEntity);
 	m_entity_manager.setLoaded(id, true);
-	m_entity_array.push_back(id);
+	loadEntity(pEntity);
 	return id;
 }
 

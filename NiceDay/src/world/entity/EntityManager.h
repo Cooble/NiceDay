@@ -38,7 +38,7 @@ public:
 	{
 		auto idx = index(e);
 		//this complete utter mess is used instead of if statement to avoid branch misprediction, yay we have saved maybe 5ns :D (and maybe it is even slower) i dont want to check it
-		return (WorldEntity*)(((size_t)m_p_entities[idx])*m_loaded[idx]);//check if entity is loaded (otherwise it would output pointer to invalid location)
+		return (WorldEntity*)(((size_t)m_p_entities[idx]) *(m_loaded[idx] && (m_generations[idx] == generation(e))));//check if entity is loaded (otherwise it would output pointer to invalid location)
 	}
 
 	// returns entity pointer no matter if it was unloaded or not (pointer might reference to invalid location!)

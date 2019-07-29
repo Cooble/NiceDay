@@ -12,6 +12,7 @@ void PathTracer::init(World* world, EntityID physEntity)
 
 TaskResponse PathTracer::update()
 {
+	
 	//get src entity ID
 	auto entityP = m_world->getLoadedEntity(m_phys_entity);
 	if (!entityP) {
@@ -38,14 +39,21 @@ TaskResponse PathTracer::update()
 	{
 		vecto = (m_target - entity->getPosition());
 	}
+	
 
 	if (vecto.lengthSquared() < std::pow(0.5f,2)) {
 		m_running = false;
 		return TaskResponse::SUCCESS;
 	}
-	vecto.normalize();
-	entity->getVelocity() = vecto * 10.f;
-
+	if(entity->isOnFloor()&&(entity->getBlockageState()== PhysEntity::RIGHT||entity->getBlockageState()==PhysEntity::LEFT))
+	{
+		if (m_last_jump.distanceSquared(entity->getPosition())>0.1f) {
+			entity->getVelocity().y = 100;//jmp
+			m_last_jump = entity->getPosition();
+		}
+	}
+	entity->getAcceleration().x = abs(vecto.x)/vecto.x * 20.f;
+	entity->getAcceleration().y = -9.0f / 60;
 	return TaskResponse::RUNNING;
 	
 	
