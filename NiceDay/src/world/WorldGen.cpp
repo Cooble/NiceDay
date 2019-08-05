@@ -107,7 +107,7 @@ void WorldGen::gen(int seed, World* w, Chunk& c)
 	{
 		for (int y = 0; y < WORLD_CHUNK_SIZE; y++)
 		{
-			auto& block = c.getBlock(x, y);
+			auto& block = c.block(x, y);
 
 			auto worldx = c.m_x * WORLD_CHUNK_SIZE + x;
 			auto worldy = c.m_y * WORLD_CHUNK_SIZE + y;
@@ -123,7 +123,7 @@ void WorldGen::gen(int seed, World* w, Chunk& c)
 					if(y!=WORLD_CHUNK_SIZE-1)
 					{
 						torchPlaced = true;
-						c.getBlock(x, y+1).block_id = BLOCK_TORCH;
+						c.block(x, y+1).block_id = BLOCK_TORCH;
 					}
 				block.block_id = BLOCK_GRASS;
 			}
@@ -181,7 +181,7 @@ void WorldGen::gen(int seed, World* w, Chunk& c)
 		for (int y = WORLD_CHUNK_SIZE/2; y < WORLD_CHUNK_SIZE*1.5; ++y)
 		{
 			if (!getFromMap(curMap,x,y))
-				c.getBlock(x - WORLD_CHUNK_SIZE / 2, y - WORLD_CHUNK_SIZE / 2).block_id = BLOCK_AIR;
+				c.block(x - WORLD_CHUNK_SIZE / 2, y - WORLD_CHUNK_SIZE / 2).block_id = BLOCK_AIR;
 		}
 	}
 
@@ -190,11 +190,11 @@ void WorldGen::gen(int seed, World* w, Chunk& c)
 	std::srand(564 * xxxx + 78954 * yyyy + xxxx * yyyy);//sranda innit?
 	int randX = std::rand() % 16;
 	int randY = std::rand() % 16;
-	if(c.getBlock(randX,randY).block_id==BLOCK_STONE)
+	if(c.block(randX,randY).block_id==BLOCK_STONE)
 	{
-		if(randY!=0&& c.getBlock(randX, randY).block_id!=BLOCK_AIR)
+		if(randY!=0&& c.block(randX, randY).block_id!=BLOCK_AIR)
 		{
-			c.getBlock(randX, randY).block_id = BLOCK_TORCH;
+			c.block(randX, randY).block_id = BLOCK_TORCH;
 		}
 	}
 			
@@ -247,7 +247,7 @@ void WorldGen::gen(int seed, World* w, Chunk& c)
 	{
 		for (int y = 1; y < WORLD_CHUNK_SIZE-1; y++)
 		{
-			auto& block = c.getBlock(x, y);
+			auto& block = c.block(x, y);
 
 			auto worldx = offsetX + x;
 			auto worldy = offsetY + y;
@@ -258,5 +258,5 @@ void WorldGen::gen(int seed, World* w, Chunk& c)
 
 		}
 	}
-	c.last_save_time = w->getTime();//mark it as was generated
+	c.last_save_time = w->getWorldTicks();//mark it as was generated
 }

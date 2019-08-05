@@ -33,6 +33,18 @@ const std::string& EntityRegistry::entityTypeToString(EntityType type) const
 	ASSERT(false, "Invalid EntityType");
 }
 
+WorldEntity* EntityRegistry::loadInstance(NBT& nbt) const
+{
+	ASSERT(nbt.exists<EntityType>("entityTypeID"), "Invalid entity nbt");
+	auto type = nbt.get<EntityType>("entityTypeID");
+	auto buff = malloc(getBucket(type).byte_size);
+	auto entity = createInstance(type, buff);
+	entity->load(nbt);
+	return entity;
+}
+
+
+
 const EntityRegistry::EntityTemplate& EntityRegistry::getBucket(EntityType type) const
 {
 	for (auto& entity_bucket : m_entity_templates)

@@ -16,6 +16,7 @@ WorldRenderManager::WorldRenderManager(Camera* cam, World* world)
 	: m_light_calculator(world->getLightCalculator()),
 	m_light_texture(nullptr),
 	m_light_simple_texture(nullptr),
+	m_light_chunkback_simple_texture(nullptr),
 	m_world(world),
 	m_camera(cam)
 {
@@ -52,7 +53,8 @@ WorldRenderManager::WorldRenderManager(Camera* cam, World* world)
 	//setup simple light texture
 	m_light_simple_program = new Shader("res/shaders/LightTexturePiece.shader");
 	m_light_simple_program->bind();
-	m_light_simple_program->setUniform1i("u_texture", 0);
+	m_light_simple_program->setUniform1i("u_texture_first", 0);
+	//m_light_simple_program->setUniform1i("u_texture_second", 1);
 	m_light_simple_program->unbind();
 	float simpleQuad[] = {
 		 1,-1,
@@ -81,6 +83,7 @@ WorldRenderManager::~WorldRenderManager()
 
 	delete m_light_texture;
 	delete m_light_simple_texture;
+	delete m_light_chunkback_simple_texture;
 
 	delete m_light_VAO;
 	delete m_full_screen_quad_VAO;
@@ -120,11 +123,14 @@ void WorldRenderManager::onScreenResize()
 	//made default light texture with 1 channel
 	if (m_light_simple_texture)
 		delete m_light_simple_texture;
+	if (m_light_chunkback_simple_texture)
+		delete m_light_chunkback_simple_texture;
 	TextureInfo info;
 
 	
 	info.size(m_chunk_width*WORLD_CHUNK_SIZE, m_chunk_height*WORLD_CHUNK_SIZE).f_format = TextureFormat::RED;
 	m_light_simple_texture = Texture::create(info);
+	m_light_chunkback_simple_texture = Texture::create(info);
 
 
 	//made main light map texture with 4 channels
@@ -155,7 +161,7 @@ void WorldRenderManager::onScreenResize()
 	m_bg_layer_FBO->unbind();
 
 	last_cx = -1000;
-	onUpdate();
+	//onUpdate();
 }
 #include <algorithm>
 
@@ -504,6 +510,7 @@ void WorldRenderManager::renderLightMap()
 {
 	if (m_light_calculator.isFreshMap()) {
 		m_light_simple_texture->setPixels(m_light_calculator.getCurrentLightMap());
+		//m_light_chunkback_simple_texture->setPixels(m_light_calculator.getCurrentLightMapChunkBack());
 		lightOffset = m_light_calculator.getCurrentOffset();
 	}
 
@@ -513,7 +520,9 @@ void WorldRenderManager::renderLightMap()
 		GLCall(glClearColor(0.5f, 0.5f, 0.5f, 1));
 		GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 		m_light_simple_program->bind();
+		//m_light_simple_program->setUniformVec4f("u_chunkback_color", vec4(0.5f, 0, 0, 1));
 		m_light_simple_texture->bind(0);
+		//m_light_chunkback_simple_texture->bind(1);
 		m_full_screen_quad_VAO->bind();
 		GLCall(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
 		GLCall(glViewport(0, 0, Game::get().getWindow()->getWidth(), Game::get().getWindow()->getHeight()));

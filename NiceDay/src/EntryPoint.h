@@ -10,7 +10,6 @@
 #include "world/entity/entity_datas.h"
 #include "nbt/NBT.h"
 #include "physShapes.h"
-#include "metaprogramming/Header.h"
 #include "world/ChunkLoader.h"
 
 /*template<typename T>

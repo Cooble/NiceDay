@@ -46,6 +46,7 @@ private:
 	
 	Texture* m_light_texture;
 	Texture* m_light_simple_texture;
+	Texture* m_light_chunkback_simple_texture;
 
 	Shader* m_light_program;
 	Shader* m_light_simple_program;

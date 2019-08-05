@@ -1,11 +1,14 @@
 #include "ndpch.h"
-#include "World.h"
 #include <utility>
 #include "block/Block.h"
 #include "WorldIO.h"
 #include "block/BlockRegistry.h"
 #include "biome/BiomeRegistry.h"
 #include "Game.h"
+#include "entity/EntityRegistry.h"
+#include <filesystem>
+
+
 
 Chunk::Chunk()
 {
@@ -24,26 +27,11 @@ void World::init()
 	ND_INFO("Made world instance");
 }
 
-World::World(std::string file_path, const char* name, int chunk_width, int chunk_height)
+World::World(std::string file_path, const WorldInfo& info)
 	: m_light_calc(this),
-	  m_nbt_saver(file_path + ".entity"),
-	  m_info({0, chunk_width, chunk_height, 0}),
+	  m_info(info),
 	  m_file_path(file_path),
-	  m_air_block(0),
-	  m_edit_buffer_enable(false) //seed,width,height,time
-{
-	strcpy_s(m_info.name, name); //name
-	init();
-}
-
-World::World(std::string file_path, const WorldInfo* info)
-	: m_light_calc(this),
-	  m_info(*info),
-	  m_file_path(file_path),
-	  m_air_block(0),
-		m_nbt_saver(file_path + ".entity"),
-
-	  m_edit_buffer_enable(false)
+	  m_nbt_saver(file_path + ".entity")
 {
 	init();
 }
@@ -63,9 +51,11 @@ void World::onUpdate()
 		loadQueue.pop();
 	}
 }
-
+static int light_tick_delay=0;
+constexpr int MAX_LIGHT_TICK_DELAY=60;
 void World::tick()
 {
+
 	m_info.time++;
 
 	//we need a buffer here cause we cant modify array during iteration
@@ -79,6 +69,20 @@ void World::tick()
 		if (entity)
 			entity->update(this);
 	}
+	/*if(light_tick_delay++==MAX_LIGHT_TICK_DELAY)
+	{
+		light_tick_delay = 0;
+		for (auto& chunk : m_chunks)
+		{
+			if(!chunk.isLoaded())
+				continue;
+			auto& biome = BiomeRegistry::get().getBiome(chunk.getBiome());
+			if(biome.hasDynamicLighting())
+			{
+				
+			}
+		}
+	}*/
 }
 
 bool World::isChunkGenerated(int x, int y)
@@ -157,6 +161,8 @@ void World::loadChunksAndGen(std::set<int>& toLoadChunks)
 {
 	//todo problem with chunk lock, loadchunks is called before task finishes -> some task unlocks it faster than second
 	auto stream = WorldIO::Session(m_file_path, true);
+	m_nbt_saver.beginSession();
+
 	std::set<int> toGenChunks;
 
 	int lastFreeChunk = 0;
@@ -186,9 +192,25 @@ void World::loadChunksAndGen(std::set<int>& toLoadChunks)
 		}
 		else
 		{
+			//need to load entities
+
+			if(m_nbt_saver.setReadChunkID(c.chunkID()))
+			{
+				uint32_t numberOfEntities = 0;
+				m_nbt_saver.read(numberOfEntities);
+				for (int i = 0; i < numberOfEntities; ++i)
+				{
+					NBT n;
+					n.deserialize(&m_nbt_saver);
+					auto entity= EntityRegistry::get().loadInstance(n);
+					loadEntity(entity);
+				}
+			}
 			//ND_INFO("LOAD {}, {}", x, y);
 		}
 	}
+	m_nbt_saver.endSession();
+
 	if (!toGenChunks.empty())
 		loadQueue.push(toGenChunks);
 }
@@ -206,7 +228,7 @@ void World::genChunks(std::set<int>& toGenChunks)
 		int x = half_int::getX(chunkId);
 		int y = half_int::getY(chunkId);
 
-		toupdateChunks[half_int(x, y)] |= maskRight | maskLeft | maskUp | maskDown;
+		toupdateChunks[half_int(x, y)] = maskRight | maskLeft | maskUp | maskDown;
 		//yes we need to update even this one
 		toupdateChunks[half_int(x + 1, y)] |= maskLeft;
 		toupdateChunks[half_int(x - 1, y)] |= maskRight;
@@ -277,32 +299,21 @@ void World::genChunks(std::set<int>& toGenChunks)
 			std::advance(genIt, genIndex);
 			while (genIt != toGenChunks.end())
 			{
-				//todo remove this multithreaded attempt try to separate gen in more ticks instead
 				Chunk* c = &m_chunks[getChunkIndex(*genIt)];
-				std::thread t([this,c]() //gen 2 chunks at once using multithreading
-				{
-					this->m_gen.gen(this->m_info.seed, this, *c);
-				});
+
+				this->m_gen.gen(this->m_info.seed, this, *c);
+				
+				c->lightLock();
+				this->m_light_calc.assignComputeChunk(c->getCX(), c->getCY());
 
 				++genIndex;
 				++genIt;
 				++numberOfGens;
 
-				if (genIt != toGenChunks.end())
-				{
-					Chunk& c2 = m_chunks[getChunkIndex(*genIt)];
-					this->m_gen.gen(this->m_info.seed, this, c2);
-					m_light_calc.computeChunk(c2);
-					++genIndex;
-					++genIt;
-					++numberOfGens;
-				}
-				t.join();
-				this->m_light_calc.computeChunk(*c);
-
 				if (numberOfGens >= 1)
 					return false;
 			}
+
 			int numberOfUps = 0;
 			auto upIt = toupdateChunks.begin();
 			std::advance(upIt, upIndex);
@@ -310,10 +321,18 @@ void World::genChunks(std::set<int>& toGenChunks)
 			{
 				int id = (*upIt).first;
 				int mask = (*upIt).second;
-				m_light_calc.computeChunkBorders(m_chunks[getChunkIndex(id)]);
-				if (mask != 0)
+				auto& c = m_chunks[getChunkIndex(id)];
+
+				auto resources = LightCalculator::createQuadroCross(c.getCX(), c.getCY());
+				for (int i = 0; i < 4; ++i) {
+					auto pC = getLoadedChunkPointerNoConst(resources[i].first, resources[i].second);
+					if (pC)
+						pC->lightLock();
+				}
+				
+				m_light_calc.assignComputeChunkBorders(c.getCX(),c.getCY());
+				if (mask != 0)//check if chunk is not only for readonly purposes
 				{
-					//check if chunk is not only for readonly purposes
 					this->updateChunkBounds(half_int::getX(id), half_int::getY(id), mask);
 				}
 				++upIndex;
@@ -339,7 +358,7 @@ void World::genChunks(std::set<int>& toGenChunks)
 
 void World::loadLightResources(int x, int y)
 {
-	auto resources = LightCalculator::computeQuadro(x, y);
+	auto resources = LightCalculator::computeQuadroSquare(x, y);
 	for (int i = 0; i < 4; ++i)
 	{
 		auto p = resources[i];
@@ -385,7 +404,7 @@ void World::updateChunkBounds(int xx, int yy, int bitBounds)
 	if ((bitBounds & maskUp) != 0)
 		for (int x = 0; x < WORLD_CHUNK_SIZE; x++)
 		{
-			auto& block = c.getBlock(x, WORLD_CHUNK_SIZE - 1);
+			auto& block = c.block(x, WORLD_CHUNK_SIZE - 1);
 			auto worldx = wx + x;
 			auto worldy = wy + WORLD_CHUNK_SIZE - 1;
 			BlockRegistry::get().getBlock(block.block_id).onNeighbourBlockChange(this, worldx, worldy);
@@ -395,7 +414,7 @@ void World::updateChunkBounds(int xx, int yy, int bitBounds)
 	if ((bitBounds & maskDown) != 0)
 		for (int x = 0; x < WORLD_CHUNK_SIZE; x++)
 		{
-			auto& block = c.getBlock(x, 0);
+			auto& block = c.block(x, 0);
 			auto worldx = wx + x;
 			auto worldy = wy;
 			BlockRegistry::get().getBlock(block.block_id).onNeighbourBlockChange(this, worldx, worldy);
@@ -405,7 +424,7 @@ void World::updateChunkBounds(int xx, int yy, int bitBounds)
 	if ((bitBounds & maskLeft) != 0)
 		for (int y = 0; y < WORLD_CHUNK_SIZE; y++)
 		{
-			auto& block = c.getBlock(0, y);
+			auto& block = c.block(0, y);
 			auto worldx = wx;
 			auto worldy = wy + y;
 			BlockRegistry::get().getBlock(block.block_id).onNeighbourBlockChange(this, worldx, worldy);
@@ -415,7 +434,7 @@ void World::updateChunkBounds(int xx, int yy, int bitBounds)
 	if ((bitBounds & maskRight) != 0)
 		for (int y = 0; y < WORLD_CHUNK_SIZE; y++)
 		{
-			auto& block = c.getBlock(WORLD_CHUNK_SIZE - 1, y);
+			auto& block = c.block(WORLD_CHUNK_SIZE - 1, y);
 			auto worldx = wx + WORLD_CHUNK_SIZE - 1;
 			auto worldy = wy + y;
 			BlockRegistry::get().getBlock(block.block_id).onNeighbourBlockChange(this, worldx, worldy);
@@ -434,6 +453,8 @@ void World::unloadChunk(Chunk& c)
 void World::unloadChunks(std::set<int>& chunk_ids)
 {
 	WorldIO::Session stream = WorldIO::Session(m_file_path, true);
+	m_nbt_saver.beginSession();
+	std::vector<EntityID> toUnload;
 
 	for (int chunkId : chunk_ids)
 	{
@@ -441,12 +462,37 @@ void World::unloadChunks(std::set<int>& chunk_ids)
 		ASSERT(c.isLoaded(), "unloading not loaded chunks");
 		if (!c.isLoaded())
 			continue;
+		auto rect = c.getChunkRectangle();
 		//ND_INFO("Unloaded chunk {},{}", half_int(chunkId).x, half_int(chunkId).y);
 		m_local_offset_map.erase(chunkId); //is complexity bad?
 		c.setLoaded(false);
-		c.last_save_time = getTime();
+		c.last_save_time = getWorldTicks();
 		stream.saveChunk(&c, getChunkSaveOffset(c.chunkID()));
+		for (EntityID id : m_entity_array)
+		{
+			auto e = m_entity_manager.entityDangerous(id);
+			ASSERT(m_entity_manager.isLoaded(id) && m_entity_manager.isAlive(id), "Shit");
+			if(rect.containsPoint(e->getPosition()))
+				toUnload.push_back(id);
+		}
+		m_nbt_saver.setWriteChunkID(chunkId);
+		uint32_t entityCount = toUnload.size();
+		if(entityCount)
+			m_nbt_saver.write(entityCount);//if chunk is blank no need to write anything
+		NBT nbt;
+		for (auto entity : toUnload)
+		{
+			m_entity_manager.entity(entity)->save(nbt);
+			nbt.serialize(&m_nbt_saver);
+			nbt.clear();
+
+			unloadEntity(entity);
+		}
+		m_nbt_saver.flushWrite();
+		toUnload.clear();
+
 	}
+	m_nbt_saver.endSession();
 }
 
 const BlockStruct* World::getBlockPointer(int x, int y)
@@ -464,7 +510,7 @@ const BlockStruct* World::getLoadedBlockPointer(int x, int y) const
 	int index = getChunkIndex(x >> WORLD_CHUNK_BIT_SIZE, y >> WORLD_CHUNK_BIT_SIZE);
 	if (index != -1)
 	{
-		return &const_cast<BlockStruct&>(m_chunks[index].getBlock(x & (WORLD_CHUNK_SIZE - 1),
+		return &const_cast<BlockStruct&>(m_chunks[index].block(x & (WORLD_CHUNK_SIZE - 1),
 		                                                          y & (WORLD_CHUNK_SIZE - 1)));
 	}
 	return nullptr;
@@ -504,10 +550,10 @@ BlockStruct& World::editBlock(int x, int y)
 	{
 		Chunk& c = loadChunk(cx, cy);
 
-		return c.getBlock(x & (WORLD_CHUNK_SIZE - 1), y & (WORLD_CHUNK_SIZE - 1));
+		return c.block(x & (WORLD_CHUNK_SIZE - 1), y & (WORLD_CHUNK_SIZE - 1));
 	}
 	else
-		return m_chunks[index].getBlock(x & (WORLD_CHUNK_SIZE - 1), y & (WORLD_CHUNK_SIZE - 1));
+		return m_chunks[index].block(x & (WORLD_CHUNK_SIZE - 1), y & (WORLD_CHUNK_SIZE - 1));
 }
 
 bool World::isAir(int x, int y)
@@ -628,7 +674,7 @@ void World::setWall(int x, int y, int wall_id)
 	else c = &m_chunks[index];
 
 	//set block from old block acordingly
-	auto& blok = c->getBlock(x & (WORLD_CHUNK_SIZE - 1), y & (WORLD_CHUNK_SIZE - 1));
+	auto& blok = c->block(x & (WORLD_CHUNK_SIZE - 1), y & (WORLD_CHUNK_SIZE - 1));
 
 	if (!blok.isWallOccupied() && wall_id == 0) //cannot erase other blocks parts on this shared block
 		return;
@@ -645,10 +691,118 @@ EntityID World::spawnEntity(WorldEntity* pEntity)
 {
 	auto id = m_entity_manager.createEntity();
 	pEntity->m_id = id;
-	m_entity_manager.setEntityPointer(id, pEntity);
-	m_entity_manager.setLoaded(id, true);
 	loadEntity(pEntity);
 	return id;
+}
+
+void World::unloadEntity(EntityID worldEntity)
+{
+	for (int i = 0; i < m_entity_array.size(); ++i)
+	{
+		if (m_entity_array[i] == worldEntity)
+		{
+			auto pointer = m_entity_manager.entity(worldEntity);
+			if (pointer) {
+				pointer->onUnloaded(this);
+				free(pointer);
+			}
+			else ND_WARN("Unloading entity that has no instance");
+
+			m_entity_manager.setLoaded(worldEntity, false);
+
+			m_entity_array.erase(m_entity_array.begin() + i);
+			return;
+		}
+	}
+}
+
+void World::killEntity(EntityID id)
+{
+	if (m_entity_manager.isLoaded(id))
+		unloadEntity(id);
+	else
+		ND_WARN("Killing entity thats not loaded! {}", id);
+
+	m_entity_manager.killEntity(id);
+}
+
+bool World::saveWorld()
+{
+	//world metadata
+	auto session = WorldIO::Session(m_file_path, true);
+	session.saveWorldMetadata(&m_info);
+	session.close();
+
+	m_nbt_saver.beginSession();
+
+	//entity manager
+	m_nbt_saver.setWriteChunkID(DYNAMIC_ID_ENITY_MANAGER);
+	m_entity_manager.serialize(&m_nbt_saver);
+	m_nbt_saver.flushWrite();
+
+	//world nbt
+	m_nbt_saver.setWriteChunkID(DYNAMIC_ID_WORLD_NBT);
+	m_world_nbt.serialize(&m_nbt_saver);
+	m_nbt_saver.flushWrite();
+
+	m_nbt_saver.saveVTable();
+	m_nbt_saver.endSession();
+
+	return true;
+
+}
+
+bool World::loadWorld()
+{
+	if (!std::filesystem::exists(m_file_path))
+		return false;
+
+	//load worldinfo
+	auto session = WorldIO::Session(m_file_path, true);
+	if (!session.loadWorldMetadata(&m_info)) {
+		ND_WARN("World file: {} is corrupted", m_file_path);
+		return false;
+	}
+	session.close();
+
+	m_nbt_saver.init();
+	m_nbt_saver.beginSession();
+
+	//load entitymanager
+	if(m_nbt_saver.setReadChunkID(DYNAMIC_ID_ENITY_MANAGER))
+		m_entity_manager.deserialize(&m_nbt_saver);
+	else ND_WARN("World file: {}.entity is corrupted", m_file_path);
+
+	//load worldnbt
+	if(m_nbt_saver.setReadChunkID(DYNAMIC_ID_WORLD_NBT))
+		m_world_nbt.deserialize(&m_nbt_saver);
+	else ND_WARN("World file: {}.entity is corrupted (cannot read worldnbt)", m_file_path);
+
+	m_nbt_saver.endSession();
+	return true;
+}
+
+bool World::genWorld()
+{
+	auto session = WorldIO::Session(m_file_path, true,true);
+	session.genWorldFile(&m_info);
+	session.close();
+
+	m_nbt_saver.clearEverything();
+	m_nbt_saver.init();
+	return true;
+
+}
+
+
+void World::loadEntity(WorldEntity* pEntity)
+{
+	auto id = pEntity->getID();
+	//ASSERT(m_entity_manager.isAlive(id), "Loading dead entity, wtf..?");
+	m_entity_manager.setLoaded(id, true);
+	m_entity_manager.setEntityPointer(id, pEntity);
+	m_entity_array.push_back(id);
+	pEntity->onLoaded(this);
 }
 
 void World::setBlock(int x, int y, BlockStruct& blok)
@@ -675,7 +829,7 @@ void World::setBlock(int x, int y, BlockStruct& blok)
 	else c = &m_chunks[index];
 
 	//set walls from old block acordingly
-	auto& block = c->getBlock(x & (WORLD_CHUNK_SIZE - 1), y & (WORLD_CHUNK_SIZE - 1));
+	auto& block = c->block(x & (WORLD_CHUNK_SIZE - 1), y & (WORLD_CHUNK_SIZE - 1));
 	memcpy(blok.wall_id, block.wall_id, sizeof(blok.wall_id));
 	memcpy(blok.wall_corner, block.wall_corner, sizeof(blok.wall_corner));
 

@@ -47,4 +47,7 @@ public:
 	{
 		return m_p_entities[index(e)];
 	}
+
+	void serialize(IStream* stream);
+	void deserialize(IStream* stream);
 };

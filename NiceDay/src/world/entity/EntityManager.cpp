@@ -18,6 +18,7 @@ EntityID EntityManager::createEntity()
 		ASSERT(m_generations.size() <= EE_ENTITY_MAXIMAL_SIZE, "Too many entities");
 		idx = m_generations.size() - 1;
 	}
+	m_loaded.resize(idx + 1);
 	m_loaded.set(idx, true);
 	return make_entity(idx, m_generations[idx]);
 }
@@ -31,4 +32,41 @@ void EntityManager::killEntity(EntityID e)
 		ASSERT(m_generations[idx] != 0, "We have used one entity slot for MAX_GENERATION times");
 		m_freeList.push_back(idx);
 	}
+}
+
+
+struct MHeader{
+	uint32_t freeListSize;
+	uint32_t generationSize;
+};
+
+void EntityManager::serialize(IStream* stream)
+{
+	MHeader h;
+	h.freeListSize = m_freeList.size();
+	h.generationSize = m_generations.size();
+	stream->write(h);
+	for (uint32_t value : m_freeList)
+		stream->write(value);
+
+	stream->write((char*)m_generations.data(), m_generations.size() * sizeof(uint8_t));
+	
+	
+}
+
+void EntityManager::deserialize(IStream* stream)
+{
+	MHeader h;
+	stream->read(h);
+	uint32_t fre = 0;
+	for (int i = 0; i < h.freeListSize; ++i)
+	{
+		stream->read(fre);
+		m_freeList.push_back(fre);
+	}
+	m_generations.resize(h.generationSize);
+	stream->read((char*)m_generations.data(), h.generationSize * sizeof(uint8_t));
+
+	m_loaded.resize(h.generationSize);
+	m_p_entities.resize(h.generationSize);
 }

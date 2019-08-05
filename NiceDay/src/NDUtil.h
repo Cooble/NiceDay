@@ -120,9 +120,11 @@ namespace NDUtil
 			resize(m_last_size);
 			set(m_last_size - 1,val);
 		}
-
+		inline auto& getSource()const { return m_bits; }
 		inline size_t size() { return m_bits.size() * 32; }
 	};
+
+
 
 	template <typename T>
 	static void eraseKeepPacked(std::vector<T>& t,size_t indexToErase)
@@ -189,92 +191,6 @@ inline bool operator!=(const half_int& f0, const half_int& f1)
 inline bool operator==(const half_int& f0, const half_int& f1)
 {
 	return f0.i == f1.i;
-}
-
-struct Vector2D
-{
-	float x, y;
-
-	Vector2D()
-		: x(0), y(0)
-	{
-	}
-
-	Vector2D(float v)
-		: x(v), y(v)
-	{
-	}
-
-	Vector2D(float xx, float yy)
-		: x(xx), y(yy)
-	{
-	}
-
-
-	inline Vector2D operator+(const Vector2D& vector) const
-	{
-		return {x + vector.x, y + vector.y};
-	}
-
-	inline Vector2D operator-(const Vector2D& vector) const
-	{
-		return {x - vector.x, y - vector.y};
-	}
-
-	inline Vector2D operator*(const Vector2D& vector) const
-	{
-		return {x * vector.x, y * vector.y};
-	}
-
-	inline Vector2D operator/(const Vector2D& vector) const
-	{
-		return {x / vector.x, y / vector.y};
-	}
-
-	inline float length() const
-	{
-		return std::sqrt(x * x + y * y);
-	}
-
-	inline float lengthSquared() const
-	{
-		return x * x + y * y;
-	}
-
-
-	inline void plus(const Vector2D& vector)
-	{
-		x += vector.x;
-		y += vector.y;
-	}
-
-	inline void minus(const Vector2D& vector)
-	{
-		x -= vector.x;
-		y -= vector.y;
-	}
-
-	inline void multiply(const Vector2D& vector)
-	{
-		x *= vector.x;
-		y *= vector.y;
-	}
-
-	inline void divide(const Vector2D& vector)
-	{
-		x /= vector.x;
-		y /= vector.y;
-	}
-};
-
-inline bool operator==(const Vector2D& f0, const Vector2D& f1)
-{
-	return f0.x == f1.x && f0.y == f1.y;
-}
-
-inline bool operator!=(const Vector2D& f0, const Vector2D& f1)
-{
-	return !(f0 == f1);
 }
 
 struct iVec2D
@@ -357,52 +273,6 @@ inline bool operator!=(const iVec2D& f0, const iVec2D& f1)
 	return !(f0 == f1);
 }
 
-struct Rect
-{
-private:
-	inline bool collideInner(const Rect& r) const {
-		return
-			contains({ r.x, r.y }) ||
-			contains({ r.x +r.w, r.y }) ||
-			contains({ r.x, r.y +r.h}) ||
-			contains({ r.x +r.w, r.y +r.h});
-	}
-public:
-	union
-	{
-		Vector2D pos;
-		struct
-		{
-		float x, y;
-		};
-	};
-	union
-	{
-		Vector2D size;
-		struct
-		{
-			float w, h;
-		};
-	};
-
-	Rect(float x, float y, float width, float height)
-		: pos({x, y}), size({width,height})
-	{
-	}
-	Rect(const Vector2D& pos,const Vector2D& size)
-		: pos(pos), size(size)
-	{
-	}
-	inline bool contains(const Vector2D& p)  const {
-
-		return p.x >= x && p.x <= x + w && p.y >= y && p.y <= y + h;
-	}
-	inline bool collides(const Rect& rec) const
-	{
-		return collideInner(rec) || rec.collideInner(*this);
-	}
-
-};
 template <typename T>
 constexpr T ipow(T num, unsigned int pow)
 {

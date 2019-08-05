@@ -10,6 +10,9 @@
 #define CHUNK_BUFFER_LENGTH 100 //5*4
 
 
+constexpr int DYNAMIC_ID_ENITY_MANAGER = std::numeric_limits<int>::max() - 0;
+constexpr int DYNAMIC_ID_WORLD_NBT = std::numeric_limits<int>::max() - 1;
+
 const int WORLD_CHUNK_BIT_SIZE = 5;
 const int WORLD_CHUNK_SIZE = 32;
 const int WORLD_CHUNK_AREA = WORLD_CHUNK_SIZE * WORLD_CHUNK_SIZE;
@@ -44,6 +47,8 @@ public:
 
 	Chunk();
 	long long last_save_time;
+	inline int getCX() const { return m_x; }
+	inline int getCY() const { return m_y; }
 	inline ChunkID chunkID() const { return half_int(m_x, m_y); }
 	inline bool isLoaded() const { return m_flags & CHUNK_LOADED_FLAG; } //this chunk shell contains loaded chunk
 
@@ -78,21 +83,21 @@ public:
 		else m_flags &= ~CHUNK_LOADED_FLAG;
 	}
 
-	inline BlockStruct& getBlock(int x, int y)
+	inline BlockStruct& block(int x, int y)
 	{
 		ASSERT(x >= 0 && x < WORLD_CHUNK_SIZE&&y >= 0 && y < WORLD_CHUNK_SIZE, "Invalid chunk coords!");
 		return m_blocks[y << WORLD_CHUNK_BIT_SIZE | x];
 	}
 
-	inline const BlockStruct& getBlock(int x, int y) const { return m_blocks[y << WORLD_CHUNK_BIT_SIZE | x]; }
+	inline const BlockStruct& block(int x, int y) const { return m_blocks[y << WORLD_CHUNK_BIT_SIZE | x]; }
 
-	inline uint8_t& getLightLevel(int x, int y)
+	inline uint8_t& lightLevel(int x, int y)
 	{
 		ASSERT(x >= 0 && x < WORLD_CHUNK_SIZE&&y >= 0 && y < WORLD_CHUNK_SIZE, "Invalid chunk coords!");
 		return m_light_levels[y << WORLD_CHUNK_BIT_SIZE | x];
 	}
 
-	inline uint8_t getLightLevel(int x, int y) const
+	inline uint8_t lightLevel(int x, int y) const
 	{
 		ASSERT(x >= 0 && x < WORLD_CHUNK_SIZE&&y >= 0 && y < WORLD_CHUNK_SIZE, "Invalid chunk coords!");
 		return m_light_levels[y << WORLD_CHUNK_BIT_SIZE | x];
@@ -110,6 +115,11 @@ public:
 
 	inline void setBiome(int biome_id) { m_biome = biome_id; }
 
+	inline Phys::Rectangle getChunkRectangle() const
+	{
+		return Phys::Rectangle::createFromDimensions(m_x*WORLD_CHUNK_SIZE, m_y*WORLD_CHUNK_SIZE, WORLD_CHUNK_SIZE, WORLD_CHUNK_SIZE);
+	}
+
 	static inline int getChunkIDFromWorldPos(int wx, int wy)
 	{
 		return (wy >> WORLD_CHUNK_BIT_SIZE) << BITS_FOR_CHUNK_LOC | (wx >> WORLD_CHUNK_BIT_SIZE);
@@ -124,13 +134,44 @@ public:
 	}
 };
 
+enum class Day : int
+{
+	MON=0,TUE,WED,THR,FRI,SAT,SUN
+};
+constexpr long TICKS_PER_MINUTE = 1;//every two seconds we have one game minute
+struct WorldTime
+{
+	long long m_ticks;
+	WorldTime(long long ticks):m_ticks(ticks){}
+
+	inline float hours() const
+	{
+		return (float)(m_ticks % (TICKS_PER_MINUTE * 60 * 24)) / TICKS_PER_MINUTE / 60;
+	}
+	inline float minutes() const
+	{
+		return (float)(m_ticks % (TICKS_PER_MINUTE * 60)) / TICKS_PER_MINUTE;
+	}
+	inline Day dayOfWeek() const
+	{
+		return Day((m_ticks % (TICKS_PER_MINUTE * 60 * 24 * 7))/(TICKS_PER_MINUTE * 60 * 24));
+	}
+	
+	inline bool isNight() const
+	{
+		auto hour = hours();
+		return hour > 19.5 || hour < 5.5;
+	}
+};
 struct WorldInfo
 {
 	long seed;
 	int chunk_width, chunk_height;
 	int terrain_level;
-	long time;
+	long long time;
 	char name[100];
+	EntityID player_id;
+	ChunkID playerChunk;
 };
 
 class World
@@ -144,11 +185,12 @@ private:
 	LightCalculator m_light_calc;
 	WorldGen m_gen;
 	std::vector<Chunk> m_chunks;
+	NBT m_world_nbt;
 
 	WorldInfo m_info;
 	std::string m_file_path;
 	std::unordered_map<int, int> m_local_offset_map; //chunkID,offsetInBuffer
-	BlockStruct m_air_block;
+	BlockStruct m_air_block=0;
 
 	EntityManager m_entity_manager;
 	WorldIO::DynamicSaver m_nbt_saver;
@@ -157,7 +199,7 @@ private:
 	std::vector<EntityID> m_entity_array_buff;
 
 
-	bool m_edit_buffer_enable;
+	bool m_edit_buffer_enable = false;
 	std::queue<std::pair<int, int>> m_edit_buffer; //location x,y for editted blocks
 
 private:
@@ -168,12 +210,8 @@ private:
 	void genChunks(std::set<int>& toGenChunks);
 	void loadLightResources(int x, int y);
 
-	//WorldEntity* getEntityOrKilled(EntityID id);
-
-
 public:
-	World(std::string file_path, const char* name, int chunk_width, int chunk_height);
-	World(std::string file_path, const WorldInfo* info);
+	World(std::string file_path, const WorldInfo& info);
 	~World();
 
 	inline LightCalculator& getLightCalculator() { return m_light_calc; }
@@ -266,16 +304,19 @@ public:
 	//(may cause chunk load)
 	void setWall(int x, int y, int wall_id);
 
-	//==================================================================================================
+	//==========INFO==================================================
 
 	inline std::unordered_map<int, int>& getMap() { return m_local_offset_map; }
 
-	inline long getTime() const { return m_info.time; }
+	inline long long getWorldTicks() const { return m_info.time; }
+	inline WorldTime getWorldTime() const { return WorldTime(m_info.time); }
 	inline std::string getName() const { return m_info.name; }
 	inline const WorldInfo& getInfo() const { return m_info; };
 	inline const std::string& getFilePath() const { return m_file_path; }
+	inline auto& modifyInfo() { return m_info; }
+	inline NBT& getWorldNBT() { return m_world_nbt; }
 
-	//ENTITY============================================================================================
+	//================ENTITY========================================
 
 	inline auto& getNBTSaver() { return m_nbt_saver; }
 	inline EntityManager& getEntityManager() { return m_entity_manager; }
@@ -287,40 +328,13 @@ public:
 
 	inline const auto& getLoadedEntities() { return m_entity_array; }
 
-	inline void unloadEntity(EntityID worldEntity)
-	{
-		for (int i = 0; i < m_entity_array.size(); ++i)
-		{ 
-			if (m_entity_array[i] == worldEntity)
-			{
-				auto pointer = m_entity_manager.entity(worldEntity);
-				if (pointer)
-					pointer->onUnloaded(this);
+	void loadEntity(WorldEntity* pEntity);
 
-				m_entity_array.erase(m_entity_array.begin() + i);
-				return;
-			}
-		}
-	}
-
-	inline void loadEntity(WorldEntity* pEntity)
-	{
-		m_entity_array.push_back(pEntity->getID());
-		pEntity->onLoaded(this);
-	}
-
-	inline void killEntity(EntityID id)
-	{
-		if (m_entity_manager.isLoaded(id))
-		{
-			auto pointer = m_entity_manager.entity(id);
-			unloadEntity(id);
-			free(pointer);
-		}
-		m_entity_manager.killEntity(id);
-	}
+	void unloadEntity(EntityID worldEntity);
 
 	EntityID spawnEntity(WorldEntity* pEntity);
+
+	void killEntity(EntityID id);
 
 	inline std::vector<EntityID>::const_iterator beginEntities()
 	{
@@ -342,4 +356,21 @@ public:
 	{
 		return m_entity_array.rend();
 	}
+
+	//==============SERIALIZATION============================
+public:
+	// saves everything except for loaded chunks (and entities in those chunks)
+	// return true if success
+	bool saveWorld();
+
+	// loads everything except for chunks
+	// return true if success
+	bool loadWorld();
+
+	// creates all neccessary world files and stuff
+	// no chunk generation
+	// return true if success
+	bool genWorld();
 };
+
+

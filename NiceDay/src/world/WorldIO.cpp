@@ -41,6 +41,8 @@ static const int HEADER_SIZE = 1000;
 
 namespace WorldIO
 {
+	//=========================StaticSaver========================
+
 	Session::Session(const std::string& path, bool write_mode, bool write_only)
 	:m_file_path(path)
 	{
@@ -55,28 +57,20 @@ namespace WorldIO
 	}
 
 
-	World* Session::genWorldFile(const WorldIOInfo& info)
+	void Session::genWorldFile(const WorldInfo* info)
 	{
-		World* ww = new World(m_file_path, info.world_name.c_str(), info.chunk_width, info.chunk_height);
-		World& w = *ww;
-		w.m_info.terrain_level = info.terrain_level;
-	
-
-		//creating world file
-		m_stream->write((const char*)&w.getInfo(), sizeof(WorldInfo));
-		auto buff = new char[HEADER_SIZE - sizeof(WorldInfo)];
-		memset(buff, 0, HEADER_SIZE - sizeof(WorldInfo));
-		m_stream->write(buff, HEADER_SIZE - sizeof(WorldInfo)); //add some space to fill the HEADER_SIZE
-		delete[] buff;
+		saveWorldMetadata(info);
+		
+		m_stream->seekp(HEADER_SIZE);
 
 		Chunk* cc = new Chunk();
 		memset(cc, 0, sizeof(Chunk));
 		cc->setLoaded(false);
 		cc->last_save_time = 0;
 		//writing blank chunks
-		for (int y = 0; y < info.chunk_height; y++)
+		for (int y = 0; y < info->chunk_height; y++)
 		{
-			for (int x = 0; x < info.chunk_width; x++)
+			for (int x = 0; x < info->chunk_width; x++)
 			{
 				cc->m_x = x;
 				cc->m_y = y;
@@ -85,25 +79,23 @@ namespace WorldIO
 			}
 		}
 		delete cc;
-		return ww;
 	}
 
-	World* Session::loadWorld()
+	bool Session::loadWorldMetadata(WorldInfo* world)
 	{
 		ND_TRACE("Loading world {0}", m_file_path);
-		WorldInfo info;
-		m_stream->read((char*)&info, sizeof(WorldInfo));
+		m_stream->seekg(0,std::ios::end);
+		if (m_stream->tellg() < sizeof(WorldInfo))//this file doesn't seem to exist
+			return false;
+		m_stream->seekp(0);
+		m_stream->read((char*)world, sizeof(WorldInfo));
 		CHECK_STREAM_STATE(m_stream);
-		if (m_stream->rdstate() & std::fstream::failbit) //cannot read file
-			return nullptr;
-		World* ww = new World(m_file_path, &info);
-		return ww;
+		return true;
 	}
 
-	//saves only worldinfo
-	void Session::saveWorld(World* world)
+	void Session::saveWorldMetadata(const WorldInfo* world)
 	{
-		m_stream->write((char*)&world->getInfo(), sizeof(WorldInfo));
+		m_stream->write((char*)world, sizeof(WorldInfo));
 		CHECK_STREAM_STATE(m_stream);
 	}
 
@@ -116,7 +108,7 @@ namespace WorldIO
 		CHECK_STREAM_STATE(m_stream);
 	}
 
-	void Session::saveChunk(Chunk* chunk, int offset)
+	void Session::saveChunk(const Chunk* chunk, int offset)
 	{
 		m_stream->seekp(HEADER_SIZE + sizeof(Chunk) * offset, std::ios::beg);
 		m_stream->write((char*)chunk, sizeof(Chunk));
@@ -128,7 +120,7 @@ namespace WorldIO
 		m_stream->close();
 	}
 
-
+	//========================DynamicSaver========================
 
 	struct BigHeaderHeader
 	{
@@ -428,5 +420,10 @@ namespace WorldIO
 			m_g_byte_reciproc -= length;
 		}
 		return true;
+	}
+
+	void DynamicSaver::clearEverything()
+	{
+		std::filesystem::remove(m_path);
 	}
 }

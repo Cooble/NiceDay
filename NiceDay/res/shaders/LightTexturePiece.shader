@@ -15,16 +15,19 @@ void main() {
 #shader fragment
 #version 330 core
 
-uniform sampler2D u_texture;
+uniform sampler2D u_texture_first;
+//uniform sampler2D u_texture_second;
+//uniform vec4 u_chunkback_color;
 in vec2 v_uv_coords;
 
 layout(location = 0) out vec4 color;
 
 
 void main() {
-	const float maxLightValue = 8.0f;
-	color = texture2D(u_texture, v_uv_coords).rrrr;
+	const float maxLightValue = 16.0f;
+	color = texture2D(u_texture_first, v_uv_coords).rrrr;
 	color *= 255.0f / maxLightValue;
+	//color = max(color, u_chunkback_color*(texture2D(u_texture_second, v_uv_coords).rrrr * 255.0f / maxLightValue));
 
 	//color = vec4(1, 0, 0, 1);
 }

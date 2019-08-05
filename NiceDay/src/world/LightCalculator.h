@@ -4,7 +4,6 @@
 #include "block/BlockRegistry.h"
 #include "WorldGen.h"
 
-
 #define MAX_SNAPSHOT_NUMBER 5
 
 class World;
@@ -31,6 +30,7 @@ public:
 
 
 	void run();//makes a new light computing thread and returns back
+	void stop();//stops light calculating thread
 	inline bool isRunning() const { return m_running; }
 	inline bool isFreshMap()
 	{
@@ -42,23 +42,16 @@ public:
 		return false;
 	}
 
-	void stop();//stops light calculating thread
 
 	void snapshot();//saves current light states to be computed to lightmap later
 
 	inline half* getCurrentLightMap() const { return m_done_map; }
+	inline half* getCurrentLightMapChunkBack() const { return m_done_map_chunkback; }
 	inline ChunkPos getCurrentOffset() const { return m_done_ch_offset; }
 
 
 	void registerLight(LightSource* light); //it doesn't take ownership, need remove()
 	void removeLight(LightSource* light);
-
-	// clears all light data and recalculates the chunk lighting (without affecting or being affected by others)
-	// (chunks passed should be locked) maybe
-	void computeChunk(Chunk& c);
-	// floods light from all external boundary blocks (block that are around the chunk but not within)
-	// (chunks passed should be locked) maybe
-	void computeChunkBorders(Chunk& c);
 
 	struct ChunkQuadro
 	{
@@ -70,37 +63,48 @@ public:
 		}
 
 	};
-
 	// returns 4 chunks that will be needed to proccess cached light change
-	static ChunkQuadro computeQuadro(int wx, int wy);
-
-	// recalculates all light within specific radius (=max light radius)
-	void computeChange(int x, int y);
+	static ChunkQuadro computeQuadroSquare(int wx, int wy);
+	// returns 4 chunks that will be needed to proccess cached light chunkborder change
+	static ChunkQuadro createQuadroCross(int wx, int wy);
 
 	// adds work for light thread and returns
-	// recalculates all light within specific radius (=max light radius)
-	// it is mandatory to load all needed resources before hand! and lock them
-	// those resources will be marked unlocked after change
+	// recalculates all cached light within specific radius (=max light radius)
+	// it is mandatory to load all needed resources beforehand! and lock them using fence
 	void assignComputeChange(int x, int y);
 
+	// adds work for light thread and returns
+	// clears all light data and recalculates the chunk lighting (without affecting or being affected by others)
+	void assignComputeChunk(int cx,int cy);
+
+	// adds work for light thread and returns
+	// floods light from all external boundary blocks (block that are around the chunk but not within)
+	void assignComputeChunkBorders(int cx,int cy);
 
 private:
 	std::condition_variable m_wait_condition_variable;
 
-	struct Pos
+	 
+	struct Assignment
 	{
 		int x, y;
+		enum
+		{
+			CHANGE,
+			CHUNK,
+			BORDERS
+		} type;
 	};
 	std::mutex m_cached_light_assign_mutex;
-	std::queue<Pos> m_cached_light_assignments;
+	std::queue<Assignment> m_cached_light_assignments;// Have I found everybody fun assignment to do today?
 
 
 
-	NDUtil::FifoList<Pos> m_light_list0;
-	NDUtil::FifoList<Pos> m_light_list1;
+	NDUtil::FifoList<Assignment> m_light_list0;
+	NDUtil::FifoList<Assignment> m_light_list1;
 
-	NDUtil::FifoList<Pos> m_light_list0_main_thread;
-	NDUtil::FifoList<Pos> m_light_list1_main_thread;
+	NDUtil::FifoList<Assignment> m_light_list0_main_thread;
+	NDUtil::FifoList<Assignment> m_light_list1_main_thread;
 	volatile bool m_running=false;
 	volatile bool m_is_fresh_map=false;
 	struct LightData
@@ -114,6 +118,7 @@ private:
 		int offsetX,offsetY;
 		int chunkWidth, chunkHeight;
 	};
+	
 	//state set currently by main thread
 	int m_chunk_offset_x, m_chunk_offset_y;
 
@@ -135,19 +140,51 @@ private:
 	half* m_map;//is being written to (by another thread)
 	half* m_done_map;//this is for render purposes
 
+	half* m_map_chunkback;//is being written to (by another thread)
+	half* m_done_map_chunkback;//this is for render purposes
+
 	ChunkPos m_done_ch_offset;
 
 	inline half& lightValue(int x, int y);
+	inline half& buffValue(int x, int y,half* buff);
+	inline void buffClear(half* buff,int cx, int cy);
+	inline half& lightValueChunkBack(int x, int y);
+	template<int DefaultVal=std::numeric_limits<half>::max()>
 	inline half getBlockOpacity(int x, int y);
-	uint8_t& blockLightLevel(int x, int y);
-	uint8_t& blockLightLevelDefault0(int x, int y);
-	void computeLightOld(Snapshot& sn);
+	template<uint8_t DefaultValue=0>
+	inline uint8_t& blockLightLevel(int x, int y);
+
+	// runs flood algorithm using worldblocks' opacity (without blocks' light level) and edits local map
+	// depends only on		map, 
+	//						world opacity,
+	//						current_list
+	void runFloodLocal(int minX, int minY, int width, int height, NDUtil::FifoList<Assignment>* current_list, NDUtil::FifoList<Assignment>* new_list);
 
 
-	void computeLight(Snapshot& snapshot);
-	void runInner();
-	void updateMap(Snapshot& sn);
-	void darken(Snapshot& sn);
-	void setDimensionsInner();
+	void computeLT(Snapshot& snapshot);
+	void runInnerLT();
+	void updateMapLT(Snapshot& sn);
+	void darkenLT(Snapshot& sn);
+	void setDimensionsInnerLT();
+
+	// clears all light data and recalculates the chunk lighting (without affecting or being affected by others)
+	void computeChunk(Chunk& c);
+
+	// floods light from all external boundary blocks (block that are around the chunk but not within)
+	void computeChunkBorders(Chunk& c);
+
+	// clears all light data and recalculates the chunk lighting (without affecting or being affected by others)
+// (chunks passed should be locked) maybe
+	void computeChunkLT(int cx,int cy);
+	// floods light from all external boundary blocks (block that are around the chunk but not within)
+	// (chunks passed should be locked) maybe
+	void computeChunkBordersLT(int cx, int cy);
+
+
+
+	// recalculates all light within specific radius (=max light radius)
+	void computeChangeLT(int x, int y);
+
+
 	
 };

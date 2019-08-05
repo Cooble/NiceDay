@@ -14,14 +14,7 @@ Possible errors you might do:
 
 class World;
 class Chunk;
-
-struct WorldIOInfo
-{
-	std::string world_name;
-	int chunk_width, chunk_height;
-	long seed;
-	int terrain_level;
-};
+class WorldInfo;
 
 namespace WorldIO
 {
@@ -42,15 +35,16 @@ namespace WorldIO
 
 
 	public:
-		World* genWorldFile(const WorldIOInfo& info);
+		void genWorldFile(const WorldInfo* info);
 
-		void saveWorld(World* world);
+		void saveWorldMetadata(const WorldInfo* world);
 
-		World* loadWorld();
+		//return true if success
+		bool loadWorldMetadata(WorldInfo* world);
 
 		void loadChunk(Chunk* chunk, int offset);
 
-		void saveChunk(Chunk* chunk, int offset);
+		void saveChunk(const Chunk* chunk, int offset);
 
 		void close();
 	};
@@ -102,11 +96,11 @@ namespace WorldIO
 	//				read(smth,srhthr); .....
 	//		
 	//		endSession();
-	class DynamicSaver
+	class DynamicSaver :public IStream
 	{
-	
+
 	private:
-		
+
 		// offset of start of dynamic data of dynamic saver (starts after DynamicSaverHeader section)
 		uint32_t m_TOTAL_OFFSET;
 		// offset of whole dynamic saver in file
@@ -117,9 +111,9 @@ namespace WorldIO
 		uint32_t m_g_offset, m_g_byte_reciproc;
 		ChunkSegmentHeader m_write_header;
 		ChunkSegmentHeader m_read_header;
-		std::fstream* m_stream=nullptr;
-		uint32_t m_segment_count=0;
-		int m_writeChunkID=0;
+		std::fstream* m_stream = nullptr;
+		uint32_t m_segment_count = 0;
+		int m_writeChunkID = 0;
 
 
 		std::deque<uint32_t> m_free_offsets;
@@ -131,12 +125,13 @@ namespace WorldIO
 		void eraseSegment(uint32_t offset); //kills segment and all his children
 
 		void loadVTable();
-		
+
 	public:
-		DynamicSaver(std::string path, uint32_t totalOffset=0);
+		DynamicSaver(std::string path, uint32_t totalOffset = 0);
 		~DynamicSaver();
 
 		// to setup everything (will read from file to update its tables)
+		// will create new file if neccessary
 		// no beginSession() needed
 		void init();
 
@@ -146,7 +141,7 @@ namespace WorldIO
 		// (called within begin/endSession)
 		void saveVTable();
 
-		
+
 		// to read/write anything you need use begin() and end()
 		// creates r/w session 
 		void beginSession();
@@ -175,13 +170,27 @@ namespace WorldIO
 
 		// there is no upper limit of how big array can be
 		// it will automaticaly create another segment if currently used one is full
-		void write(const char* b, uint32_t length);
+		virtual void write(const char* b, uint32_t length) override;
 
 		// returns false if next segment doesn't exist (doesn't care if no other data is available)
 		// when reading you need to know the size of data beforehand 
 		// otherwise you could read random stuff to the end of the segment
-		bool read(char* b, uint32_t length = 1);
+		virtual bool read(char* b, uint32_t length) override;
+
+		template<typename T>
+		void write(const T& t)
+		{
+			write((const char*)&t, sizeof(T));
+		}
+		template<typename T>
+		void read(T& t)
+		{
+			read((char*)&t, sizeof(T));
+		}
+
 		inline uint32_t getSegmentCount()const { return m_segment_count; }
-		inline uint32_t getFreeSegmentCount()const { return m_free_offsets.size(); };
+		inline uint32_t getFreeSegmentCount()const { return m_free_offsets.size(); }
+		void clearEverything();
 	};
+
 }

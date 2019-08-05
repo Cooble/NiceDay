@@ -48,7 +48,7 @@ public:
 #define TO_ENTITY_STRING(x)\
 	inline std::string toString() const override {return #x;}
 #else
-#define TO_STRING(X)
+#define TO_ENTITY_STRING(X)
 #endif
 
 };

@@ -142,7 +142,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="src\graphics\TextureManager.h" />
-    <ClInclude Include="src\metaprogramming\Header.h" />
     <ClInclude Include="src\nbt\NBT.h" />
     <ClInclude Include="src\Core.h" />
     <ClInclude Include="src\EntryPoint.h" />

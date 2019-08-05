@@ -13,32 +13,69 @@ class NBTSaveable //todo those methods should be inlined
 	template <>\
 	typeName& get<>(const std::string& s, const typeName& defaultVal)\
 	{\
-		auto it = listName.find(s);\
+		auto ss = s+m_prefix;\
+		auto it = listName.find(ss);\
 		if (it != listName.end())\
 			return *((typeName*)&it->second);\
-		listName[s] = *(internalListType*)&defaultVal;\
-		return *((typeName*)&listName[s]);\
+		listName[ss] = *(internalListType*)&defaultVal;\
+		return *((typeName*)&listName[ss]);\
 	}\
 	template <>\
 		typeName& get<>(const std::string& s)\
 	{\
-		auto it = listName.find(s); \
+		auto ss = s+m_prefix;\
+		auto it = listName.find(ss); \
 		if (it != listName.end())\
 			return *((typeName*)&it->second); \
-		return *((typeName*)&listName[s]); \
+		return *((typeName*)&listName[ss]); \
 	}\
 	template <>\
 	bool exists<typeName>(const std::string& s)\
 	{\
-		auto it = listName.find(s); \
+		auto ss = s+m_prefix;\
+		auto it = listName.find(ss); \
 		return it != listName.end();\
 	}\
 	template <>\
 	void set<typeName>(const std::string& s,const typeName& value)\
 	{\
-		listName[s] = *(internalListType*)&value; \
+		auto ss = s+m_prefix;\
+		listName[ss] = *(internalListType*)&value; \
 	}
 
+class IStream
+{
+public:
+	virtual ~IStream() = default;
+	virtual void write(const char* b, uint32_t length)=0;
+	virtual bool read(char* b, uint32_t length)=0;
+
+	template<typename T>
+	void write(const T& t)
+	{
+		write((const char*)&t, sizeof(T));
+	}
+	template<typename T>
+	void read(T& t)
+	{
+		read((char*)&t, sizeof(T));
+	}
+};
+class BasicIStream:public std::fstream,public IStream
+{
+public:
+	virtual ~BasicIStream() = default;
+	
+	virtual void write(const char* b, uint32_t length) override
+	{
+		std::fstream::write(b, length);
+	}
+	virtual bool read(char* b, uint32_t length) override
+	{
+		std::fstream::read(b, length);
+	}
+
+};
 
 struct NBT
 {
@@ -84,11 +121,26 @@ private:
 		size_t long_count;
 		size_t nbt_count;
 	};
+	std::string m_prefix="";
 
 public:
 
-	void save(std::fstream& stream)
+	inline void setPrefix(std::string prefix) { m_prefix = prefix+":"; }
+	inline void resetPrefix() { m_prefix = ""; }
+	void clear()
 	{
+		m_strings.clear();
+		m_bytes.clear();
+		m_ints.clear();
+		m_longs.clear();
+		m_nbts.clear();
+		resetPrefix();
+	}
+
+	void serialize(IStream* strea)
+	{
+		auto& stream = *strea;
+
 		NBTHeader data = {};
 		data.string_count = m_strings.size();
 		data.bytes_count = m_bytes.size();
@@ -120,12 +172,13 @@ public:
 		for (auto& tt : m_nbts)
 		{
 			stream.write(tt.first.c_str(), tt.first.size()+1);
-			tt.second.save(stream);
+			tt.second.serialize(&stream);
 		}
 	}
 
-	inline void readString(std::fstream& stream, char* buff, size_t& size)
+	inline void readString(IStream& stream, char* buff, size_t& size)
 	{
+
 		size = 0;
 		char c = 0;
 		stream.read(&c, 1);
@@ -140,8 +193,9 @@ public:
 		//buff[size++] = 0; //null character
 	}
 
-	void load(std::fstream& stream, char* buff = nullptr)
+	void deserialize(IStream* strea, char* buff = nullptr)
 	{
+		auto& stream = *strea;
 		bool allocated = false;
 		if (buff == nullptr)
 		{
@@ -167,7 +221,7 @@ public:
 			readString(stream, buff, size);
 			auto key = std::string(buff, buff + size);
 
-			m_bytes[key] = (char)stream.get();
+			stream.read((char*)&m_bytes[key],1);
 		}
 		char bufff[8];
 		for (int i = 0; i < data.ints_count; ++i)
@@ -188,7 +242,7 @@ public:
 		{
 			readString(stream, buff, size);
 			auto key = std::string(buff, buff + size);
-			get<NBT>(key).load(stream, buff);
+			get<NBT>(key).deserialize(&stream, buff);
 		}
 		if (allocated)
 			delete[] buff;

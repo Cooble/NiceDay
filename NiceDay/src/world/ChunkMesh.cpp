@@ -159,7 +159,7 @@ void ChunkMeshInstance::updateMesh(const World& world, const Chunk& chunk)
 		int ylevel = y * WORLD_CHUNK_SIZE;
 		for (int x = 0; x < WORLD_CHUNK_SIZE; x++)
 		{
-			const BlockStruct& bs = chunk.getBlock(x, y);
+			const BlockStruct& bs = chunk.block(x, y);
 			const Block& blok = BlockRegistry::get().getBlock(bs.block_id);
 			auto t_offset = 1 + blok.getTextureOffset(x, y, bs);
 			auto t_corner_offset = blok.getCornerOffset(x, y, bs);
@@ -172,7 +172,7 @@ void ChunkMeshInstance::updateMesh(const World& world, const Chunk& chunk)
 	{
 		for (int x = 0; x < WORLD_CHUNK_SIZE * 2; x++)
 		{
-			const BlockStruct& bs = chunk.getBlock(x / 2, y / 2);
+			const BlockStruct& bs = chunk.block(x / 2, y / 2);
 
 			const Wall& wall = BlockRegistry::get().getWall(bs.wall_id[(y & 1) * 2 + (x & 1)]);
 			auto t_offset = 1 + wall.getTextureOffset(x, y, bs);

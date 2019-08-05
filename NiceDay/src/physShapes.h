@@ -287,9 +287,18 @@ namespace Phys
 		{
 			return (x >= x0) && (x <= x1) && (y >= y0) && (y <= y1);
 		}
+		inline bool containsPoint(const Vect& v) const
+		{
+			return (v.x >= x0) && (v.x <= x1) && (v.y >= y0) && (v.y <= y1);
+		}
 
 		inline float width() const { return x1 - x0; }
 		inline float height() const { return y1 - y0; }
+
+		inline static Rectangle createFromDimensions(float x,float y,float width,float height)
+		{
+			return { x,y,x + width,y + height };
+		}
 
 	private:
 		inline bool intersectsInner(const Rectangle& rect) const
@@ -388,6 +397,7 @@ namespace Phys
 			{r.x0, r.y1}
 		});
 	}
+
 
 	// lines collisions ================================================================
 

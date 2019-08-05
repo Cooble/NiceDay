@@ -5,10 +5,8 @@
 #include "world/WorldRenderManager.h"
 #include "entity/Camera.h"
 #include "graphics/Sprite.h"
-#include "world/entity/componentManager.h"
 #include "world/entity/ssystem.h"
 #include "world/entity/entities.h"
-#include "world/entity/Pool.h"
 
 
 class BatchRenderer2D;

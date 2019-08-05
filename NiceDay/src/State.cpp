@@ -3,7 +3,7 @@
 #include "world/WorldRenderManager.h"
 
 
-bool Stats::light_enable=false;
+bool Stats::light_enable=true;
 bool Stats::gun_enable=false;
 bool Stats::fly_enable=true;
 bool Stats::move_through_blocks_enable =true;

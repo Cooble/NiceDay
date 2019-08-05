@@ -10,7 +10,7 @@ BlockAir::BlockAir()
 {
 	setNoBounds();
 	m_block_connect_group = BIT(BLOCK_GROUP_AIR_BIT);
-	m_opacity = 1;
+	m_opacity = 2;
 	m_texture_pos = -1;
 	
 }
@@ -198,7 +198,7 @@ BlockTorch::BlockTorch()
 {
 	setNoBounds();
 	m_opacity = 0;
-	m_light_src = 9;
+	m_light_src = 14;
 
 }
 

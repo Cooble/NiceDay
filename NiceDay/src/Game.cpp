@@ -77,9 +77,9 @@ void Game::start()
 		render();
 		current_fps++;
 		auto noww = nowTime();
-		if(noww-lastFPSMillis>1000)
+		if(noww-lastFPSMillis>100)
 		{
-			m_fps = current_fps;
+			m_fps = current_fps*10;
 			current_fps = 0;
 			lastFPSMillis = nowTime();
 		}
