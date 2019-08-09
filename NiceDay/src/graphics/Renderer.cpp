@@ -10,6 +10,7 @@ GraphicsAPI Renderer::s_api = GraphicsAPI::OpenGL;
 
 Renderer::Renderer() = default;
 
+
 Renderer::~Renderer()= default;
 
 void Renderer::draw(const VertexArray& vao, const Shader& shader, const IndexBuffer& ibo)

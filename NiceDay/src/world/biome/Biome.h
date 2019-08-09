@@ -5,8 +5,7 @@ const int BIOME_FOREST		= 0;
 const int BIOME_UNDERGROUND = 1;
 const int BIOME_DIRT = 2;
 
-constexpr uint8_t max_light=16;
-constexpr uint8_t min_light = 4;
+
 
 class Biome
 {
@@ -27,16 +26,10 @@ public:
 	int getBGSpritesSize() { return m_sprites_size; }
 	inline Sprite2D** getBGSprites() { return m_sprites; }
 
-	bool hasDynamicLighting() const { return m_normal_lighting_enable; }
+	bool hasSkyLighting() const { return m_normal_lighting_enable; }
 	virtual uint8_t getBackgroundLight(World* w)
 	{
-		if(m_normal_lighting_enable)
-		{
-			auto time = w->getWorldTime();
-			float dayRatio = time.hours() / 24-0.25f;
-			return clamp((int)(sin(dayRatio * 2 * 3.14159)*(max_light-min_light)+min_light),(int)min_light,(int)max_light);
-		}
-		else 
+		
 			return m_background_light;
 	}
 	

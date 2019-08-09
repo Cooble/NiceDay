@@ -167,17 +167,19 @@ void Bullet::update(World* w)
 
 	m_pos += m_velocity;
 	m_angle = m_velocity.angleDegrees();
-	auto& blok = w->getBlock(m_pos.x, m_pos.y);
-
-	if (!blok.isAir())
-	{
-		auto& blokTemplate = BlockRegistry::get().getBlock(blok.block_id);
-		if (blokTemplate.hasBounds())
-			if (Phys::isIntersects(m_bound, blokTemplate.getBounds(m_pos.x, m_pos.y, blok)))
-			{
-				onBlockHit(w, m_pos.x, m_pos.y);
-				return;
-			}
+	auto blokk = w->getLoadedBlockPointer(m_pos.x, m_pos.y);
+	if(blokk){
+		auto& blok = *blokk;
+		if (!blok.isAir())
+		{
+			auto& blokTemplate = BlockRegistry::get().getBlock(blok.block_id);
+			if (blokTemplate.hasBounds())
+				if (Phys::isIntersects(m_bound, blokTemplate.getBounds(m_pos.x, m_pos.y, blok)))
+				{
+					onBlockHit(w, m_pos.x, m_pos.y);
+					return;
+				}
+		}
 	}
 	auto& entities = w->getLoadedEntities();
 

@@ -41,6 +41,7 @@ World::~World() = default;
 static bool taskActive = false;
 static std::queue<std::set<int>> loadQueue;
 
+
 void World::onUpdate()
 {
 	tick();
@@ -83,6 +84,45 @@ void World::tick()
 			}
 		}
 	}*/
+}
+
+
+constexpr float minLight = 0.13f;
+
+constexpr float startRiseHour = 9.5f;
+constexpr float endRiseHour = 11.f;
+
+constexpr float startSetHour = 15.5f;
+constexpr float endSetHour = 16.25f;
+
+static float smootherstep(float x) {
+	// Scale, bias and saturate x to 0..1 range
+	x = clamp(x, 0.0f, 1.0f);
+	// Evaluate polynomial
+	return x * x * x * (x * (x * 6 - 15) + 10);
+}
+
+glm::vec4 World::getSkyColor()
+{
+	auto hour = getWorldTime().hours();
+	float f = 0;
+	if(hour>=startRiseHour&&hour<endRiseHour)
+	{
+		hour -= startRiseHour;
+		hour /= (endRiseHour - startRiseHour);
+		f = minLight + smootherstep(hour)*(1-minLight);
+	}
+	else if(hour >= startSetHour && hour < endSetHour)
+	{
+		hour -= startSetHour;
+		hour /= (endSetHour - startSetHour);
+		f = minLight + (1 - smootherstep(hour))*(1 - minLight);
+	}
+	else if (hour >= endRiseHour&&hour<startSetHour)
+		f = 1;
+	else f = minLight;
+	return glm::vec4( 0,0,0,f);
+
 }
 
 bool World::isChunkGenerated(int x, int y)

@@ -87,17 +87,17 @@ WorldLayer::WorldLayer()
 	info.seed = 0;
 	info.terrain_level = (info.chunk_height - 2) * WORLD_CHUNK_SIZE;
 
-	m_world = new World(std::string(info.name)+ ".world", info);
+	m_world = new World(std::string(info.name) + ".world", info);
 
 
-	bool genW = true;
+	bool genW = false;
 
 
 	if (genW)
 		m_world->genWorld();
 	else
 	{
-		if(!m_world->loadWorld())
+		if (!m_world->loadWorld())
 		{
 			ND_WARN("Cannot load world: {}\nGenerating new one", m_world->getFilePath());
 			m_world->genWorld();
@@ -144,27 +144,30 @@ WorldLayer::~WorldLayer()
 void WorldLayer::onAttach()
 {
 	//load entity manager
-	if(m_world->getWorldNBT().exists<EntityID>("playerID"))
+	if (m_world->getWorldNBT().exists<EntityID>("playerID"))
 	{
 		playerID = m_world->getWorldNBT().get<EntityID>("playerID");
 		ChunkID chunk = m_world->getWorldNBT().get<ChunkID>("player_chunkID");
-		m_world->loadChunk(//load chunk where player is
+		m_world->loadChunk( //load chunk where player is
 			half_int::getX(chunk),
 			half_int::getY(chunk));
-	}else
+	}
+	else
 	{
 		auto buff = malloc(EntityRegistry::get().getBucket(ENTITY_TYPE_PLAYER).byte_size);
 		EntityRegistry::get().createInstance(ENTITY_TYPE_PLAYER, buff);
 
 		playerID = m_world->spawnEntity((WorldEntity*)buff);
-		getPlayer().getPosition() = { m_world->getInfo().chunk_width * WORLD_CHUNK_SIZE / 2, m_world->getInfo().terrain_level };
+		getPlayer().getPosition() = {
+			m_world->getInfo().chunk_width * WORLD_CHUNK_SIZE / 2, m_world->getInfo().terrain_level
+		};
 	}
 
 	LightCalculator& c = m_world->getLightCalculator();
 
 	//add camera
 	m_cam->setPosition(getPlayer().getPosition().asGLM());
-	m_cam->setChunkRadius({ 4, 3 });
+	m_cam->setChunkRadius({4, 3});
 	c.registerLight(dynamic_cast<LightSource*>(m_cam));
 
 	m_chunk_loader->registerEntity(dynamic_cast<IChunkLoaderEntity*>(m_cam));
@@ -176,8 +179,8 @@ void WorldLayer::onDetach()
 	m_world->getLightCalculator().stop();
 
 	auto pos = getPlayer().getPosition();
-	m_world->getWorldNBT().set("player_chunkID",Chunk::getChunkIDFromWorldPos(pos.x, pos.y));
-	m_world->getWorldNBT().set("playerID",playerID);
+	m_world->getWorldNBT().set("player_chunkID", Chunk::getChunkIDFromWorldPos(pos.x, pos.y));
+	m_world->getWorldNBT().set("playerID", playerID);
 
 	m_chunk_loader->clearEntities();
 	m_chunk_loader->onUpdate(); //this will unload all chunks
@@ -262,6 +265,26 @@ void WorldLayer::onUpdate()
 		m_world->spawnEntity((WorldEntity*)entityBuff);
 	}
 
+	if (Game::get().getInput().isKeyPressed(GLFW_KEY_B))
+	{
+		constexpr int BULLET_CADENCE_DELAY = 8;
+		static int counter = 0;
+		if (counter++ == BULLET_CADENCE_DELAY)
+		{
+			counter = 0;
+			const int BULLET_COUNT = 16;
+			for (int i = 0; i < BULLET_COUNT; ++i)
+			{
+				auto buff = malloc(EntityRegistry::get().getBucket(ENTITY_TYPE_ROUND_BULLET).byte_size);
+				EntityRegistry::get().createInstance(ENTITY_TYPE_ROUND_BULLET, buff);
+				auto bullet = (EntityRoundBullet*)buff;
+				bullet->getPosition() = m_cam->getPosition() + Phys::Vect(0, 10.f).asGLM();
+				bullet->fire(3.14159f * 2 / BULLET_COUNT * i, 50.f / 60);
+				m_world->spawnEntity(bullet);
+			}
+		}
+	}
+
 	if (Game::get().getInput().isMousePressed(GLFW_MOUSE_BUTTON_1))
 	{
 		if (Stats::gun_enable)
@@ -330,6 +353,39 @@ void WorldLayer::onUpdate()
 	m_render_manager->onUpdate();
 
 
+	auto chunkP = m_world->getLoadedChunkPointer((int)getPlayer().getPosition().x >> WORLD_CHUNK_BIT_SIZE,
+		(int)getPlayer().getPosition().y >> WORLD_CHUNK_BIT_SIZE);
+	if (chunkP)
+	{
+		auto& biome = BiomeRegistry::get().getBiome(chunkP->getBiome());
+		if (biome.getID() == BIOME_FOREST)
+		{
+			static int counter = 0;
+			static int rainDropDelay = 8;
+			if (counter++ >= rainDropDelay)
+			{
+
+				counter = 0;
+				rainDropDelay = std::rand() % 5 + 5;
+
+				for (int i = 0; i < std::rand()%5+1; ++i)
+				{
+					int x = std::rand() % (4 * WORLD_CHUNK_SIZE);
+					x -= 2 * WORLD_CHUNK_SIZE;
+
+
+					auto buff = malloc(EntityRegistry::get().getBucket(ENTITY_TYPE_ROUND_BULLET).byte_size);
+					EntityRegistry::get().createInstance(ENTITY_TYPE_ROUND_BULLET, buff);
+					auto bullet = (EntityRoundBullet*)buff;
+					bullet->getPosition() = m_cam->getPosition() + Phys::Vect(x, 2 * WORLD_CHUNK_SIZE).asGLM();
+					bullet->fire(2 * 3.14159f * 3.0f / 4 + (((std::rand() % 10) - 5) / 5.f*0.3f), ((std::rand() % 20) + 40.f) / 60);
+					m_world->spawnEntity(bullet);
+				}
+				
+			}
+		}
+	}
+
 	//m_physics_system->proccess(m_physics_manager);
 }
 
@@ -356,7 +412,7 @@ void WorldLayer::onRender()
 void WorldLayer::onImGuiRender()
 {
 	float fps = FLT_MAX;
-	if (fpsCount > Game::get().getTargetTPS()/10)
+	if (fpsCount > Game::get().getTargetTPS() / 10)
 	{
 		fpsCount = 0;
 		fps = Game::get().getFPS();
@@ -398,7 +454,8 @@ void WorldLayer::onImGuiRender()
 		if (!l) m_world->getLightCalculator().run();
 		else m_world->getLightCalculator().stop();
 	}
-	if (Stats::light_enable) {
+	if (Stats::light_enable)
+	{
 		ImGui::PlotVar("Light millis", Stats::light_millis);
 		ImGui::Text("Max millis: %d", maxMillisLight);
 	}
@@ -411,9 +468,9 @@ void WorldLayer::onImGuiRender()
 	ImGui::Checkbox(Stats::gun_enable ? "Gun Enabled" : "Gun Disabled", &Stats::gun_enable);
 	ImGui::InputFloat("Player speed: ", &Stats::player_speed);
 	ImGui::InputFloat("Light Intensity: ", &Stats::player_light_intensity);
-	ImGui::InputFloat("Debug X: ", &Stats::debug_x);
 
-	ImGui::SliderFloat("slider float", &Stats::debug_x, -1.0f, 1.0f, "ratio = %.3f");
+	ImGui::InputFloat("Debug X: ", &Stats::edge_scale);
+	ImGui::SliderFloat("slider float", &Stats::edge_scale, 0.0f, 1.0f, "ratio = %.2f");
 
 
 	ImGui::Text("World filepath: %s", WORLD_FILE_PATH);

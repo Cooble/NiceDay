@@ -12,7 +12,7 @@ Block::Block(int id)
 	  m_has_big_texture(false),
 	  m_bounds(BLOCK_BOUNDS_DEFAULT),
 	  m_bounds_size(sizeof(BLOCK_BOUNDS_DEFAULT) / sizeof(Phys::Polygon)),
-	  m_opacity(4),
+	  m_opacity(3),
 	  m_light_src(0),
 	  m_block_connect_group(0)
 {

@@ -46,7 +46,7 @@ public:
 	void snapshot();//saves current light states to be computed to lightmap later
 
 	inline half* getCurrentLightMap() const { return m_done_map; }
-	inline half* getCurrentLightMapChunkBack() const { return m_done_map_chunkback; }
+	inline half* getCurrentLightMapChunkBack() const { return m_done_map_sky_out; }
 	inline ChunkPos getCurrentOffset() const { return m_done_ch_offset; }
 
 
@@ -95,16 +95,23 @@ private:
 			BORDERS
 		} type;
 	};
+	struct Pos
+	{
+		int x, y;
+	};
 	std::mutex m_cached_light_assign_mutex;
 	std::queue<Assignment> m_cached_light_assignments;// Have I found everybody fun assignment to do today?
 
 
 
-	NDUtil::FifoList<Assignment> m_light_list0;
-	NDUtil::FifoList<Assignment> m_light_list1;
+	NDUtil::FifoList<Pos> m_light_list0;
+	NDUtil::FifoList<Pos> m_light_list1;
 
-	NDUtil::FifoList<Assignment> m_light_list0_main_thread;
-	NDUtil::FifoList<Assignment> m_light_list1_main_thread;
+	NDUtil::FifoList<Pos> m_light_list2;
+	NDUtil::FifoList<Pos> m_light_list3;
+
+	NDUtil::FifoList<Pos> m_light_list0_main_thread;
+	NDUtil::FifoList<Pos> m_light_list1_main_thread;
 	volatile bool m_running=false;
 	volatile bool m_is_fresh_map=false;
 	struct LightData
@@ -137,18 +144,20 @@ private:
 	//snapshots of lights to be drawn
 	std::queue<Snapshot*> m_snapshot_queue;
 
-	half* m_map;//is being written to (by another thread)
-	half* m_done_map;//this is for render purposes
+	half* m_big_buffer;
+	half* m_map;//is being written to (by light thread)
+	half* m_done_map;//swapchain
 
-	half* m_map_chunkback;//is being written to (by another thread)
-	half* m_done_map_chunkback;//this is for render purposes
+	half* m_map_sky;//is being written to (by light thread)
+	half* m_map_sky_out;//swapchain0
+	half* m_done_map_sky_out;//swapchain1
 
 	ChunkPos m_done_ch_offset;
 
 	inline half& lightValue(int x, int y);
 	inline half& buffValue(int x, int y,half* buff);
 	inline void buffClear(half* buff,int cx, int cy);
-	inline half& lightValueChunkBack(int x, int y);
+	inline half& lightValueSky(int x, int y);
 	template<int DefaultVal=std::numeric_limits<half>::max()>
 	inline half getBlockOpacity(int x, int y);
 	template<uint8_t DefaultValue=0>
@@ -158,7 +167,9 @@ private:
 	// depends only on		map, 
 	//						world opacity,
 	//						current_list
-	void runFloodLocal(int minX, int minY, int width, int height, NDUtil::FifoList<Assignment>* current_list, NDUtil::FifoList<Assignment>* new_list);
+	void runFloodLocal(int minX, int minY, int width, int height, NDUtil::FifoList<Pos>* current_list, NDUtil::FifoList<Pos>* new_list);
+	void runFloodSky(int minX, int minY, int width, int height, NDUtil::FifoList<Pos>* current_list,
+	                       NDUtil::FifoList<Pos>* new_list);
 
 
 	void computeLT(Snapshot& snapshot);
@@ -166,12 +177,6 @@ private:
 	void updateMapLT(Snapshot& sn);
 	void darkenLT(Snapshot& sn);
 	void setDimensionsInnerLT();
-
-	// clears all light data and recalculates the chunk lighting (without affecting or being affected by others)
-	void computeChunk(Chunk& c);
-
-	// floods light from all external boundary blocks (block that are around the chunk but not within)
-	void computeChunkBorders(Chunk& c);
 
 	// clears all light data and recalculates the chunk lighting (without affecting or being affected by others)
 // (chunks passed should be locked) maybe
@@ -183,7 +188,7 @@ private:
 
 
 	// recalculates all light within specific radius (=max light radius)
-	void computeChangeLT(int x, int y);
+	void computeChangeLT(int minX, int minY, int maxX, int maxY, int xx, int yy);
 
 
 	

@@ -4,7 +4,7 @@
 #include <stb_image.h>
 #include "platform/OpenGL/OpenGLTexture.h"
 
-Texture* Texture::create(TextureInfo& info)
+Texture* Texture::create(const TextureInfo& info)
 {
 	switch(Renderer::getAPI())
 	{

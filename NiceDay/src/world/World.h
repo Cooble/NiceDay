@@ -229,7 +229,7 @@ public:
 	{
 		return x >= 0 && y >= 0 && x < getInfo().chunk_width && y < getInfo().chunk_height;
 	}
-
+	glm::vec4 getSkyColor();
 	bool isChunkGenerated(int x, int y);
 
 	inline int getChunkSaveOffset(int x, int y) const { return y * m_info.chunk_width + x; }

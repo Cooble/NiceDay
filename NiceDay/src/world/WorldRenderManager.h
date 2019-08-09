@@ -6,6 +6,7 @@
 #include "LightCalculator.h"
 #include "graphics/Sprite2D.h"
 #include "graphics/TestQuad.h"
+#include "graphics/Effect.h"
 
 
 struct BiomeDistances
@@ -29,24 +30,36 @@ private:
 	TestQuad* m_test_quad;
 	Shader* m_sky_program;
 
+	FrameBufferTexturePair* m_fbo_pair;
+	GreenFilter* m_green_filter;
+	GaussianBlurMultiple* m_blur;
+	ScaleEdgesEffect* m_edge;
+	AlphaMaskEffect* m_block_mask;
+
 	//whole_screen_quad
 	VertexArray* m_full_screen_quad_VAO;
 	VertexBuffer* m_full_screen_quad_VBO;
 
 	//background
-	Texture* m_bg_texture;
-	FrameBuffer* m_bg_FBO;
-	Texture* m_bg_layer_texture;
-	FrameBuffer* m_bg_layer_FBO;
+	FrameBufferTexturePair* m_bg_fbo;
+	FrameBufferTexturePair* m_bg_layer_fbo;
+
 
 
 	//light stuff
 	LightCalculator& m_light_calculator;
-	FrameBuffer* m_light_frame_FBO;
 	
-	Texture* m_light_texture;
+	FrameBufferTexturePair* m_light_fbo;
+	FrameBufferTexturePair* m_light_smooth_fbo;
+	FrameBufferTexturePair* m_block_fbo;
+	FrameBufferTexturePair* m_wall_fbo;
+
+	//FrameBuffer* m_light_FBO;
+	
+	//Texture* m_light_texture;
 	Texture* m_light_simple_texture;
-	Texture* m_light_chunkback_simple_texture;
+	Texture* m_light_sky_simple_texture;
+	Texture* m_block_mask_texture;
 
 	Shader* m_light_program;
 	Shader* m_light_simple_program;
@@ -79,7 +92,7 @@ public:
 	void onUpdate();
 	void render();
 	void renderLightMap();
-	void renderMainLightMap();
+	void applyLightMap(Texture* lightmap);
 	inline int getChunksSize() const { return m_chunk_width * m_chunk_height; }
 	inline std::unordered_map<int, int>& getMap() { return m_offset_map; }
 	inline const glm::mat4& getProjMatrix() { return m_proj_matrix; }

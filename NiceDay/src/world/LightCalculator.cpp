@@ -17,22 +17,21 @@ void clear(std::queue<T>& q)
 LightCalculator::LightCalculator(World* world)
 	: m_light_list0(DEFAULT_POS_LIST_SIZE),
 	  m_light_list1(DEFAULT_POS_LIST_SIZE),
+	  m_light_list3(DEFAULT_POS_LIST_SIZE),
+	  m_light_list2(DEFAULT_POS_LIST_SIZE),
 	  m_light_list0_main_thread(DEFAULT_POS_LIST_SIZE),
 	  m_light_list1_main_thread(DEFAULT_POS_LIST_SIZE),
-	  m_running(false),
 	  m_world(world),
+	  m_big_buffer(nullptr),
 	  m_map(nullptr),
-	  m_map_chunkback(nullptr),
 	  m_done_map(nullptr),
-	  m_done_map_chunkback(nullptr)
+	  m_map_sky(nullptr),
+	  m_done_map_sky_out(nullptr),
+	  m_map_sky_out(nullptr)
 {
 }
 
-LightCalculator::~LightCalculator()
-{
-	delete[] m_map;
-	delete[] m_done_map;
-}
+LightCalculator::~LightCalculator() = default;
 
 void LightCalculator::assignComputeChange(int x, int y)
 {
@@ -173,10 +172,10 @@ void LightCalculator::runInnerLT()
 			m_done_map = m_map;
 			m_map = t;
 
-			//swap chunkback buffers
-			t = m_done_map_chunkback;
-			m_done_map_chunkback = m_map_chunkback;
-			m_map_chunkback = t;
+			//swap sky buffers
+			t = m_done_map_sky_out;
+			m_done_map_sky_out = m_map_sky_out;
+			m_map_sky_out = t;
 
 			m_done_ch_offset = std::make_pair(snap.offsetX, snap.offsetY);
 			m_is_fresh_map = true; //notify that new map was rendered
@@ -184,6 +183,8 @@ void LightCalculator::runInnerLT()
 		}
 		//std::this_thread::sleep_for(std::chrono::milliseconds(1));//take a nap. never:D
 	}
+	if (m_big_buffer)
+		delete[] m_big_buffer;
 }
 
 void LightCalculator::stop()
@@ -210,9 +211,9 @@ void LightCalculator::buffClear(half* buff, int cx, int cy)
 	}
 }
 
-half& LightCalculator::lightValueChunkBack(int x, int y)
+half& LightCalculator::lightValueSky(int x, int y)
 {
-	return m_map_chunkback[y * m_snap_width * WORLD_CHUNK_SIZE + x];
+	return m_map_sky[y * m_snap_width * WORLD_CHUNK_SIZE + x];
 }
 
 template <int DefaultVal>
@@ -237,8 +238,9 @@ uint8_t& LightCalculator::blockLightLevel(int x, int y)
 }
 
 void LightCalculator::runFloodLocal(int minX, int minY, int width, int height,
-                                    NDUtil::FifoList<Assignment>* current_list, NDUtil::FifoList<Assignment>* new_list)
+                                    NDUtil::FifoList<Pos>* current_list, NDUtil::FifoList<Pos>* new_list)
 {
+	new_list->clear();
 	int runs = 0;
 	while (!current_list->empty())
 	{
@@ -309,60 +311,11 @@ void LightCalculator::runFloodLocal(int minX, int minY, int width, int height,
 	}
 }
 
-void LightCalculator::computeChunk(Chunk& c) //will be called on chunkgeneration
+void LightCalculator::runFloodSky(int minX, int minY, int width, int height,
+                                  NDUtil::FifoList<Pos>* current_list, NDUtil::FifoList<Pos>* new_list)
 {
-	auto current_list = &m_light_list0_main_thread;
-	auto new_list = &m_light_list1_main_thread;
-
-	current_list->clear();
 	new_list->clear();
-
-	uint8_t backLight = BiomeRegistry::get().getBiome(c.getBiome()).getBackgroundLight(m_world);
-	//set whole chunk to dark and find lightsources
-	if (backLight == 0)
-	{
-		for (int x = 0; x < WORLD_CHUNK_SIZE; ++x)
-		{
-			for (int y = 0; y < WORLD_CHUNK_SIZE; ++y)
-			{
-				BlockStruct& b = c.block(x, y);
-				uint8_t val = BlockRegistry::get().getBlock(b.block_id).getLightSrcVal();
-				c.lightLevel(x, y) = val;
-				if (val != 0)
-					current_list->push({x, y});
-			}
-		}
-	}
-	else
-	{
-		for (int x = 0; x < WORLD_CHUNK_SIZE; ++x)
-		{
-			for (int y = 0; y < WORLD_CHUNK_SIZE; ++y)
-			{
-				auto& b = c.block(x, y);
-				auto& bl = BlockRegistry::get().getBlock(b.block_id);
-				uint8_t val = bl.getLightSrcVal();
-
-
-				//check if ambient light will be there
-				if (bl.getOpacity() <= 2 && val < backLight && (b.isWallFree() || BlockRegistry::get()
-				                                                                  .getWall(b.wallID()).isTransparent()))
-				{
-					c.lightLevel(x, y) = backLight;
-					current_list->push({x, y});
-				}
-				else
-				{
-					c.lightLevel(x, y) = val;
-					if (val != 0)
-						current_list->push({x, y});
-				}
-			}
-		}
-	}
 	int runs = 0;
-
-	//lets flood the chunk with eternal light
 	while (!current_list->empty())
 	{
 		current_list->popMode();
@@ -373,9 +326,8 @@ void LightCalculator::computeChunk(Chunk& c) //will be called on chunkgeneration
 			const int& x = p.x;
 			const int& y = p.y;
 
-			auto val = c.lightLevel(x, y);
-
-			auto opacity = BlockRegistry::get().getBlock(c.block(x, y).block_id).getOpacity();
+			auto val = lightValueSky(x, y);
+			auto opacity = getBlockOpacity(minX + x, minY + y);
 			half newLightPower = val - opacity;
 
 			if (val < opacity) //we had overflow -> dark is coming for us all
@@ -385,7 +337,7 @@ void LightCalculator::computeChunk(Chunk& c) //will be called on chunkgeneration
 			int xm1 = x - 1;
 			if (xm1 >= 0)
 			{
-				half& v = c.lightLevel(xm1, y);
+				half& v = lightValueSky(xm1, y);
 				if (v < newLightPower)
 				{
 					v = newLightPower;
@@ -396,7 +348,7 @@ void LightCalculator::computeChunk(Chunk& c) //will be called on chunkgeneration
 			int ym1 = y - 1;
 			if (ym1 >= 0)
 			{
-				half& v = c.lightLevel(x, ym1);
+				half& v = lightValueSky(x, ym1);
 				if (v < newLightPower)
 				{
 					v = newLightPower;
@@ -405,9 +357,9 @@ void LightCalculator::computeChunk(Chunk& c) //will be called on chunkgeneration
 			}
 			//right
 			int x1 = x + 1;
-			if (x1 < WORLD_CHUNK_SIZE)
+			if (x1 < width)
 			{
-				half& v = c.lightLevel(x1, y);
+				half& v = lightValueSky(x1, y);
 				if (v < newLightPower)
 				{
 					v = newLightPower;
@@ -416,105 +368,14 @@ void LightCalculator::computeChunk(Chunk& c) //will be called on chunkgeneration
 			}
 			//up
 			int y1 = y + 1;
-			if (y1 < WORLD_CHUNK_SIZE)
+			if (y1 < height)
 			{
-				half& v = c.lightLevel(x, y1);
+				half& v = lightValueSky(x, y1);
 				if (v < newLightPower)
 				{
 					v = newLightPower;
 					new_list->push({x, y1});
 				}
-			}
-		}
-		auto t = current_list;
-		t->clear();
-		current_list = new_list;
-		new_list = t;
-	}
-}
-
-void LightCalculator::computeChunkBorders(Chunk& c)
-{
-	auto current_list = &m_light_list0_main_thread;
-	auto new_list = &m_light_list1_main_thread;
-
-	current_list->clear();
-	new_list->clear();
-
-	int cx = half_int::getX(c.chunkID());
-	int cy = half_int::getY(c.chunkID());
-	int minX = cx * WORLD_CHUNK_SIZE;
-	int minY = cy * WORLD_CHUNK_SIZE;
-
-	Chunk* up = m_world->getLoadedChunkPointerNoConst(cx, cy + 1);
-	Chunk* down = m_world->getLoadedChunkPointerNoConst(cx, cy - 1);
-	Chunk* left = m_world->getLoadedChunkPointerNoConst(cx - 1, cy);
-	Chunk* right = m_world->getLoadedChunkPointerNoConst(cx + 1, cy);
-	//add all external boundary light blocks
-	if (up)
-		for (int i = 0; i < WORLD_CHUNK_SIZE; ++i)
-			current_list->push({minX + i, minY + WORLD_CHUNK_SIZE + 0});
-	if (down)
-		for (int i = 0; i < WORLD_CHUNK_SIZE; ++i)
-			current_list->push({minX + i, minY - 1});
-	if (left)
-		for (int i = 0; i < WORLD_CHUNK_SIZE; ++i)
-			current_list->push({minX - 1, minY + i});
-	if (right)
-		for (int i = 0; i < WORLD_CHUNK_SIZE; ++i)
-			current_list->push({minX + WORLD_CHUNK_SIZE, minY + i});
-
-	int runs = 0;
-	while (!current_list->empty())
-	{
-		current_list->popMode();
-		while (!current_list->empty())
-		{
-			runs++;
-			auto& p = current_list->pop();
-			auto& x = p.x;
-			auto& y = p.y;
-
-			auto val = blockLightLevel(x, y);
-			auto opacity = getBlockOpacity(x, y);
-			half newLightPower = val - opacity;
-
-			if (val < opacity) //we had overflow -> dark is coming for us all
-				continue;
-
-			//left
-			int xm1 = x - 1;
-
-			auto& v = blockLightLevel(xm1, y);
-			if (v < newLightPower)
-			{
-				v = newLightPower;
-				new_list->push({xm1, y});
-			}
-
-			//down
-			int ym1 = y - 1;
-			v = blockLightLevel(x, ym1);
-			if (v < newLightPower)
-			{
-				v = newLightPower;
-				new_list->push({x, ym1});
-			}
-			//right
-			int x1 = x + 1;
-			v = blockLightLevel(x1, y);
-			if (v < newLightPower)
-			{
-				v = newLightPower;
-				new_list->push({x1, y});
-			}
-			//up
-			int y1 = y + 1;
-			v = blockLightLevel(x, y1);
-			if (v < newLightPower)
-			{
-				v = newLightPower;
-				new_list->push({x, y1});
 			}
 		}
 		auto t = current_list;
@@ -534,13 +395,16 @@ void LightCalculator::computeChunkLT(int cx, int cy) //will be called on chunkge
 	new_list->clear();
 	//todo maybe lock chunk to prevent main thread from unloading it while working
 
-	uint8_t backLight = BiomeRegistry::get().getBiome(c.getBiome()).getBackgroundLight(m_world);
+	auto& biome = BiomeRegistry::get().getBiome(c.getBiome());
+	uint8_t backLight = biome.getBackgroundLight(m_world);
+	bool hasSky = biome.hasSkyLighting();
 	//set whole chunk to dark and find lightsources
-	if (backLight == 0)
+
+	for (int x = 0; x < WORLD_CHUNK_SIZE; ++x)
 	{
-		for (int x = 0; x < WORLD_CHUNK_SIZE; ++x)
+		for (int y = 0; y < WORLD_CHUNK_SIZE; ++y)
 		{
-			for (int y = 0; y < WORLD_CHUNK_SIZE; ++y)
+			if (backLight == 0)
 			{
 				BlockStruct& b = c.block(x, y);
 				uint8_t val = BlockRegistry::get().getBlock(b.block_id).getLightSrcVal();
@@ -549,20 +413,15 @@ void LightCalculator::computeChunkLT(int cx, int cy) //will be called on chunkge
 					continue;
 				current_list->push({x, y});
 			}
-		}
-	}
-	else
-	{
-		for (int x = 0; x < WORLD_CHUNK_SIZE; ++x)
-		{
-			for (int y = 0; y < WORLD_CHUNK_SIZE; ++y)
+			else
 			{
 				auto& b = c.block(x, y);
 				auto& bl = BlockRegistry::get().getBlock(b.block_id);
 				uint8_t val = bl.getLightSrcVal();
 				//check if ambient light will be there
-				if (bl.getOpacity() <= 2 && val < backLight && (b.isWallFree() || BlockRegistry::get()
-				                                                                  .getWall(b.wallID()).isTransparent()))
+				if (!hasSky && bl.getOpacity() <= 2 && val < backLight && (b.isWallFree() || BlockRegistry::get()
+				                                                                             .getWall(b.wallID()).
+				                                                                             isTransparent()))
 				{
 					c.lightLevel(x, y) = backLight;
 					current_list->push({x, y});
@@ -577,6 +436,7 @@ void LightCalculator::computeChunkLT(int cx, int cy) //will be called on chunkge
 			}
 		}
 	}
+
 	int runs = 0;
 
 	//lets flood the chunk with eternal light
@@ -796,15 +656,21 @@ LightCalculator::ChunkQuadro LightCalculator::createQuadroCross(int cx, int cy)
 	return out;
 }
 
-void LightCalculator::computeChangeLT(int xx, int yy)
+void LightCalculator::computeChangeLT(int minX, int minY, int maxX, int maxY, int xx, int yy)
 {
 	//oughta be WORLD_CHUNK_SIZE / 2
 	constexpr int maxLightRadius = 16; //true refresh area is one less
 	auto current_list = &m_light_list0;
 	auto new_list = &m_light_list1;
 
+	auto current_list_sky = &m_light_list2;
+	auto new_list_sky = &m_light_list3;
+
 	current_list->clear();
 	new_list->clear();
+
+	current_list_sky->clear();
+	new_list_sky->clear();
 	//todo maybe lock chunk to prevent main thread from unloading it while working
 	xx -= maxLightRadius;
 	//set whole chunk to dark and find lightsources
@@ -815,19 +681,25 @@ void LightCalculator::computeChangeLT(int xx, int yy)
 		for (int y = -yrad; y < yrad + 1; ++y)
 		{
 			int worldY = yy + y;
+			bool isRendered = worldX >= minX && worldX < maxX && worldY >= minY && worldY < maxY;
+
 			if (y == -yrad || y == yrad)
 			{
 				//todo maybe check if lightsrcval == 0
 				current_list->push({worldX, worldY}); //add external boundary light
+				if (isRendered)
+					current_list_sky->push({worldX - minX, worldY - minY});
 				continue;
 			}
 
-			Chunk* c = m_world->getLoadedChunkPointerNoConst(worldX >> WORLD_CHUNK_BIT_SIZE,
-			                                                 worldY >> WORLD_CHUNK_BIT_SIZE);
+			int cx = worldX >> WORLD_CHUNK_BIT_SIZE;
+			int cy = worldY >> WORLD_CHUNK_BIT_SIZE;
+			Chunk* c = m_world->getLoadedChunkPointerNoConst(cx, cy);
 			if (c == nullptr)
 				continue;
 
-			uint8_t backLight = BiomeRegistry::get().getBiome(c->getBiome()).getBackgroundLight(m_world);
+			auto& biome = BiomeRegistry::get().getBiome(c->getBiome());
+			uint8_t backLight = biome.getBackgroundLight(m_world);
 
 			int chunkX = worldX & (BIT(WORLD_CHUNK_BIT_SIZE) - 1);
 			int chunkY = worldY & (BIT(WORLD_CHUNK_BIT_SIZE) - 1);
@@ -836,19 +708,30 @@ void LightCalculator::computeChangeLT(int xx, int yy)
 
 			auto& bl = BlockRegistry::get().getBlock(b.block_id);
 			uint8_t val = bl.getLightSrcVal();
-			//check if ambient light will be there
-			if (bl.getOpacity() <= 2 && val < backLight && (b.isWallFree() || BlockRegistry::get()
-			                                                                  .getWall(b.wallID()).isTransparent()))
+
+			bool isTransparentBlock = bl.getOpacity() <= 2 && (b.isWallFree() || BlockRegistry::get()
+			                                                                     .getWall(b.wallID()).isTransparent());
+			auto& skyValueRef = lightValueSky(worldX - minX, worldY - minY);
+			skyValueRef = 0; //set to zero to clear previous data
+
+			if (biome.hasSkyLighting() && isTransparentBlock)
+			{
+				skyValueRef = backLight;
+				backLight = 0; //forbid to add this light down to cached light
+				current_list_sky->push({worldX - minX, worldY - minY});
+			}
+
+			if (isTransparentBlock && backLight > val)
 			{
 				c->lightLevel(chunkX, chunkY) = backLight;
-				current_list->push({worldX, worldY});
+				if (backLight)
+					current_list->push({worldX, worldY});
 			}
 			else
 			{
 				c->lightLevel(chunkX, chunkY) = val;
-				if (val == 0)
-					continue;
-				current_list->push({worldX, worldY});
+				if (val)
+					current_list->push({worldX, worldY});
 			}
 		}
 	}
@@ -914,6 +797,8 @@ void LightCalculator::computeChangeLT(int xx, int yy)
 		current_list = new_list;
 		new_list = t;
 	}
+
+	runFloodSky(minX, minY, maxX - minX, maxY - minY, current_list_sky, new_list_sky);
 }
 
 static struct SnapshotDim
@@ -924,62 +809,72 @@ static struct SnapshotDim
 
 void LightCalculator::computeLT(Snapshot& sn)
 {
-	/*if (sn.chunkHeight != lastDim.chunkHeight
+	int minX = sn.offsetX * WORLD_CHUNK_SIZE;
+	int minY = sn.offsetY * WORLD_CHUNK_SIZE;
+
+	int width = sn.chunkWidth * WORLD_CHUNK_SIZE;
+	int height = sn.chunkHeight * WORLD_CHUNK_SIZE;
+
+	int maxX = minX + width;
+	int maxY = minY + height;
+
+	if (sn.chunkHeight != lastDim.chunkHeight
 		|| sn.chunkWidth != lastDim.chunkWidth
 		|| sn.offsetX != lastDim.offsetX
 		|| sn.offsetY != lastDim.offsetY
 	)
 	{
-		m_light_list0.clear();
-		m_light_list1.clear();
-
-		auto current_list = &m_light_list0;
-		auto new_list = &m_light_list1;
+		//memset(m_map_sky, 0, WORLD_CHUNK_AREA * lastDim.chunkWidth * lastDim.chunkHeight * sizeof(half));
+		//clear everything
 
 		lastDim.chunkWidth = sn.chunkWidth;
 		lastDim.chunkHeight = sn.chunkHeight;
 		lastDim.offsetX = sn.offsetX;
 		lastDim.offsetY = sn.offsetY;
 
+		m_light_list0.clear();
+		m_light_list1.clear();
+
+		auto current_list = &m_light_list0;
+		auto new_list = &m_light_list1;
+
+		memset(m_map_sky, 0, sn.chunkWidth * sn.chunkHeight * WORLD_CHUNK_AREA * sizeof(half));
+
 		for (int cx = 0; cx < sn.chunkWidth; ++cx)
 		{
 			for (int cy = 0; cy < sn.chunkHeight; ++cy)
 			{
 				auto c = m_world->getLoadedChunkPointer(cx + sn.offsetX, cy + sn.offsetY);
-				if (c)
-				{
-					auto& biome = BiomeRegistry::get().getBiome(c->getBiome());
-					if (biome.hasDynamicLighting())
-					{
-						uint8_t backLight = biome.getBackgroundLight(m_world);
+				if (c == nullptr)
+					continue;
+				auto& biome = BiomeRegistry::get().getBiome(c->getBiome());
+				if (!biome.hasSkyLighting())
+					continue;
+				uint8_t backLight = biome.getBackgroundLight(m_world);
 
-						for (int x = 0; x < WORLD_CHUNK_SIZE; ++x)
+				for (int y = 0; y < WORLD_CHUNK_SIZE; ++y)
+				{
+					for (int x = 0; x < WORLD_CHUNK_SIZE; ++x)
+					{
+						auto& b = c->block(x, y);
+						auto& bl = BlockRegistry::get().getBlock(b.block_id);
+						if (bl.getOpacity() <= 2 && (b.isWallFree() || BlockRegistry::get()
+						                                               .getWall(b.wallID()).isTransparent()))
 						{
-							for (int y = 0; y < WORLD_CHUNK_SIZE; ++y)
-							{
-								auto& b = m_world->getBlock((cx + sn.offsetX) * WORLD_CHUNK_SIZE + x,
-								                            (cx + sn.offsetX) * WORLD_CHUNK_SIZE + x);
-								auto& bl = BlockRegistry::get().getBlock(b.block_id);
-								if (bl.getOpacity() <= 2 && (b.isWallFree() || BlockRegistry::get()
-								                                               .getWall(b.wallID()).isTransparent()))
-								{
-									auto xx = cx * WORLD_CHUNK_SIZE + x;
-									auto yy = cy * WORLD_CHUNK_SIZE + y;
-									lightValueChunkBack(xx, yy) = backLight;
-									current_list->push({xx, yy});
-								}
-							}
+							auto xx = cx * WORLD_CHUNK_SIZE + x;
+							auto yy = cy * WORLD_CHUNK_SIZE + y;
+							lightValueSky(xx, yy) = backLight;
+							current_list->push({xx, yy});
 						}
 					}
-					else
-						buffClear(m_map_chunkback, cx, cy);
 				}
-				else
-					buffClear(m_map_chunkback, cx, cy);
 			}
 		}
-	}*/
-	//first we need to update all cached light because that has priority
+
+		runFloodSky(minX, minY, width, height, current_list, new_list);
+	}
+
+	//first we need to updatre all cached light because that has priority
 	m_cached_light_assign_mutex.lock();
 	bool goOn = !m_cached_light_assignments.empty();
 	m_cached_light_assign_mutex.unlock();
@@ -1001,7 +896,7 @@ void LightCalculator::computeLT(Snapshot& sn)
 			{
 				auto chunkacquiredResources = computeQuadroSquare(pop.x, pop.y);
 
-				computeChangeLT(pop.x, pop.y);
+				computeChangeLT(minX, minY, maxX, maxY, pop.x, pop.y);
 
 				// keep track of all resources
 				for (auto s : chunkacquiredResources.src)
@@ -1026,13 +921,16 @@ void LightCalculator::computeLT(Snapshot& sn)
 				for (auto s : chunkacquiredResources.src)
 				{
 					auto chunk = m_world->getLoadedChunkPointerNoConst(s.first, s.second);
-					if(chunk)
+					if (chunk)
 						m_world->getChunk(s.first, s.second).lightUnlock();
 				}
 			}
 			break;
 		}
 	}
+
+	memcpy(m_map_sky_out, m_map_sky, sn.chunkWidth * sn.chunkHeight * WORLD_CHUNK_AREA * sizeof(half));
+
 
 	updateMapLT(sn); //set map content to cached chunk light
 
@@ -1044,55 +942,6 @@ void LightCalculator::computeLT(Snapshot& sn)
 	auto current_list = &m_light_list0;
 	auto new_list = &m_light_list1;
 
-	//this attempt is complete bullsh!t
-	/*static int dynamicChunkLightDelay = 0;
-	if (dynamicChunkLightDelay++ == 0) {//update chunks dynamic lighting
-		dynamicChunkLightDelay = 0;
-		for (int cx = 0; cx < sn.chunkWidth; ++cx)
-		{
-			for (int cy = 0; cy < sn.chunkHeight; ++cy)
-			{
-				auto c = m_world->getLoadedChunkPointer(cx + sn.offsetX, cy + sn.offsetY);
-				if (c == nullptr)
-					continue;
-
-				auto& biome = BiomeRegistry::get().getBiome(c->getBiome());
-				if (!biome.hasDynamicLighting())
-					continue;
-				auto backLight = biome.getBackgroundLight(m_world);
-
-				for (int x = 0; x < WORLD_CHUNK_SIZE; ++x)
-				{
-					for (int y = 0; y < WORLD_CHUNK_SIZE; ++y)
-					{
-						auto& b = c->getBlock(x, y);
-						auto& bl = BlockRegistry::get().getBlock(b.block_id);
-						//uint8_t val = bl.getLightSrcVal();
-						auto xx = cx * WORLD_CHUNK_SIZE + x;
-						auto yy = cy * WORLD_CHUNK_SIZE + y;
-						auto& currentLightVal = lightValue(xx, yy);
-						//check if ambient light will be there
-						if (bl.getOpacity() <= 1 && currentLightVal < backLight && (b.isWallFree() || BlockRegistry::get()
-							.getWall(b.wallID()).
-							isTransparent()))
-						{
-							currentLightVal = backLight;
-							current_list->push({ xx, yy });
-						}
-					}
-				}
-			}
-		}
-	}*/
-
-	int minX = sn.offsetX * WORLD_CHUNK_SIZE;
-	int minY = sn.offsetY * WORLD_CHUNK_SIZE;
-
-	int maxX = minX + m_chunk_width * WORLD_CHUNK_SIZE;
-	int maxY = minY + m_chunk_height * WORLD_CHUNK_SIZE;
-
-	int width = m_chunk_width * WORLD_CHUNK_SIZE;
-	int height = m_chunk_height * WORLD_CHUNK_SIZE;
 
 	//add dynamic light sources to map
 	for (auto& light : sn.data)
@@ -1107,7 +956,6 @@ void LightCalculator::computeLT(Snapshot& sn)
 			}
 		}
 	}
-
 	runFloodLocal(minX, minY, width, height, current_list, new_list);
 }
 
@@ -1147,40 +995,33 @@ void LightCalculator::darkenLT(Snapshot& sn) //deprecated
 {
 	//todo this needs to use memcpy or death will feast upon us all
 	for (int cx = 0; cx < sn.chunkWidth; ++cx)
-	{
 		for (int cy = 0; cy < sn.chunkHeight; ++cy)
 		{
 			auto c = m_world->getLoadedChunkPointerNoConst(cx + sn.offsetX, cy + sn.offsetY);
 			if (c)
-				for (int x = 0; x < WORLD_CHUNK_SIZE; ++x)
-				{
-					for (int y = 0; y < WORLD_CHUNK_SIZE; ++y)
-					{
+				for (int y = 0; y < WORLD_CHUNK_SIZE; ++y)
+					for (int x = 0; x < WORLD_CHUNK_SIZE; ++x)
 						c->lightLevel(x, y) = 0;
-						//	auto& matic = blockLightLevel((sn.offsetX + cx) * WORLD_CHUNK_SIZE + x, (sn.offsetY + cy) * WORLD_CHUNK_SIZE + y);
-						//	matic = 0;
-					}
-				}
 		}
-	}
 }
 
 void LightCalculator::setDimensionsInnerLT()
 {
-	if (m_map)
-		delete[] m_map;
-	if (m_done_map)
-		delete[] m_done_map;
+	if (m_big_buffer)
+		delete[] m_big_buffer;
 
-	if (m_map_chunkback)
-		delete[] m_map_chunkback;
-	if (m_done_map_chunkback)
-		delete[] m_done_map_chunkback;
+	size_t oneSize = m_snap_width * m_snap_height * WORLD_CHUNK_AREA;
 
+	m_big_buffer = new half[oneSize * 5];
 
-	m_map = new half[m_snap_width * m_snap_height * WORLD_CHUNK_AREA];
-	m_done_map = new half[m_snap_width * m_snap_height * WORLD_CHUNK_AREA];
+	m_map = m_big_buffer;
+	m_done_map = m_big_buffer + oneSize * 1;
+	m_map_sky = m_big_buffer + oneSize * 2;
+	m_map_sky_out = m_big_buffer + oneSize * 3;
+	m_done_map_sky_out = m_big_buffer + oneSize * 4;
 
-	m_map_chunkback = new half[m_snap_width * m_snap_height * WORLD_CHUNK_AREA];
-	m_done_map_chunkback = new half[m_snap_width * m_snap_height * WORLD_CHUNK_AREA];
+	/*m_done_map = new half[oneSize];
+	m_map_sky = new half[oneSize];
+	m_map_sky_out = new half[oneSize];
+	m_done_map_sky_out = new half[oneSize];*/
 }

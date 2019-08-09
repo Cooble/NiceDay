@@ -76,6 +76,8 @@ struct TextureInfo
 		return *this;
 	}
 
+	inline TextureInfo copy() const { return *this; }
+
 
 	TextureInfo()
 	{
@@ -109,5 +111,5 @@ public:
 	virtual void setPixels(float* light_map) = 0; //todo add template anotation to enable more than jut floats
 	virtual void setPixels(uint8_t* light_map) =0; //todo add template anotation to enable more than jut bytes
 public:
-	static Texture* create(TextureInfo&);
+	static Texture* create(const TextureInfo&);
 };

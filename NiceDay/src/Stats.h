@@ -12,4 +12,5 @@ public:
 	static float player_light_intensity;
 	static float debug_x;
 	static BiomeDistances biome_distances;
+	static float edge_scale;
 };

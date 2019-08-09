@@ -6,6 +6,7 @@
 #include "layer/ImGuiLayer.h"
 #include "layer/WorldLayer.h"
 #include <chrono>
+#include "graphics/GContext.h"
 
 #define BIND_EVENT_FN(x) std::bind(&Game::x, &Game::get(), std::placeholders::_1)
 
@@ -46,7 +47,15 @@ void Game::fireEvent(Event& e)
 void Game::init()
 {
 	m_target_tps = TARGET_TPS;
-	m_Window = new Window(1280, 720, "NiceDay");
+#ifdef ND_DEBUG
+	std::string s = "Niceday - Debug";
+#else
+	std::string s = "Niceday - Release";
+#endif
+	m_Window = new Window(1280, 720, s.c_str());
+	GContext::get().init(Renderer::getAPI());
+	Effect::init();
+	Sprite2D::init();
 	m_Window->setEventCallback(eventCallback);
 	auto l = new MainLayer();
 	m_LayerStack.PushLayer(l);

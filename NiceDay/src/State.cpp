@@ -12,3 +12,4 @@ float Stats::player_light_intensity = 1.0f;
 float Stats::debug_x = 1.0f;
 volatile int Stats::light_millis = 0;
 BiomeDistances Stats::biome_distances = BiomeDistances();
+float Stats::edge_scale = 0.35;

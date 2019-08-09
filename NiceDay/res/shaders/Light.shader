@@ -24,10 +24,13 @@ layout(location=0) out vec4 color;
 
 
 void main(){
-	//float gamma =2.2f;
-	float gamma =0.9f;
-	
-	color = vec4(0,0,0, pow(texture2D(u_texture, v_uv_coords).a, 1.0 / gamma));
+	float gamma =1.5f;
+	//float gamma =0.9f;
+
+	//color = vec4(0, 0, 0, pow(texture2D(u_texture, v_uv_coords).a, 1.0 / gamma));
+	float alp = texture2D(u_texture, v_uv_coords).a;
+	color = vec4(0,0,0, pow(alp,1.0/gamma));
+
 	//if (color.r == 0)
 	//discard;
 

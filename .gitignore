@@ -7,4 +7,5 @@ ignore/
 # Files
 *.user
 *.world
-/imgui.ini
+*.world.entity
+*imgui.ini
