@@ -3,6 +3,7 @@
 #include "world/World.h"
 #include "Block.h"
 #include "block_datas.h"
+#include "graphics/TextureAtlas.h"
 
 
 Block::Block(int id)
@@ -10,34 +11,39 @@ Block::Block(int id)
 	  m_texture_pos(0),
 	  m_corner_translate_array(nullptr),
 	  m_has_big_texture(false),
-	  m_bounds(BLOCK_BOUNDS_DEFAULT),
-	  m_bounds_size(sizeof(BLOCK_BOUNDS_DEFAULT) / sizeof(Phys::Polygon)),
+	  m_collision_box(BLOCK_BOUNDS_DEFAULT),
+	  m_collision_box_size(sizeof(BLOCK_BOUNDS_DEFAULT) / sizeof(Phys::Polygon)),
 	  m_opacity(3),
 	  m_light_src(0),
 	  m_block_connect_group(0)
 {
 }
-void Block::setNoBounds()
+
+void Block::setNoCollisionBox()
 {
-	m_bounds = nullptr;
-	m_bounds_size = 0;
+	m_collision_box = nullptr;
+	m_collision_box_size = 0;
 }
 
 
-Block::~Block() = default;
-
-const Phys::Polygon& Block::getBounds(int x, int y, const BlockStruct b)const
+const Phys::Polygon& Block::getCollisionBox(int x, int y, const BlockStruct& b) const
 {
-	return m_bounds[0];
+	return m_collision_box[0];
 }
-bool Block::hasBounds() const { return m_bounds_size != 0; }
+
+bool Block::hasBounds() const { return m_collision_box_size != 0; }
+
+void Block::onTextureLoaded(const TextureAtlas& atlas)
+{
+	m_texture_pos = atlas.getTexture("block/" + toString());
+}
 
 int Block::getTextureOffset(int x, int y, const BlockStruct&) const
 {
 	if (!m_has_big_texture)
 		return m_texture_pos.i;
 
-	return half_int(m_texture_pos.x * 4 + (x & 3), m_texture_pos.y * 4 + (y & 3)).i;
+	return half_int(m_texture_pos.x + (x & 3), m_texture_pos.y + (y & 3)).i;
 }
 
 int Block::getCornerOffset(int x, int y, const BlockStruct& b) const
@@ -57,6 +63,12 @@ bool Block::isInGroup(World* w, int x, int y, int group) const
 	return false;
 }
 
+bool Block::isInGroup(int blockID, int group) const
+{
+	auto& bl = BlockRegistry::get().getBlock(blockID);
+	return bl.isInConnectGroup(group) || bl.getID() == m_id;
+}
+
 bool Block::onNeighbourBlockChange(World* world, int x, int y) const
 {
 	int mask = 0;
@@ -72,6 +84,80 @@ bool Block::onNeighbourBlockChange(World* world, int x, int y) const
 	return lastCorner != block.block_corner; //we have a change (or not)
 }
 
+
+//MULTIBLOCK==================================================
+MultiBlock::MultiBlock(int id)
+	: Block(id)
+{
+}
+
+int MultiBlock::getCornerOffset(int x, int y, const BlockStruct& b) const
+{
+	return BLOCK_STATE_FULL;
+}
+
+int MultiBlock::getTextureOffset(int x, int y, const BlockStruct& b) const
+{
+	quarter_int d = b.block_metadata;
+
+	return m_texture_pos + half_int(d.x, d.y);
+}
+
+bool MultiBlock::onNeighbourBlockChange(World* world, int x, int y) const
+{
+	return false;
+}
+
+void MultiBlock::onBlockPlaced(World* w, WorldEntity* e, int xx, int yy, BlockStruct& b) const
+{
+	quarter_int meta = b.block_metadata;
+	if (!(meta.x == 0 && meta.y == 0)) //we dont want to call onblockplaced on segments placed by this method
+		return;
+	for (int x = 0; x < m_width; ++x)
+	{
+		for (int y = 0; y < m_height; ++y)
+		{
+			if (x == 0 && y == 0)
+				continue; //skip ourselves
+			BlockStruct segment;
+			segment.block_id = getID();
+			quarter_int offset(x, y, meta.z, meta.w);
+			segment.block_metadata = offset;
+			w->setBlock(xx + x, yy + y, segment);
+		}
+	}
+}
+
+void MultiBlock::onBlockDestroyed(World* w, WorldEntity* e, int xx, int yy, BlockStruct& b) const
+{
+	quarter_int offset = b.block_metadata;
+	quarter_int clearValue(127, 127, 0, 0);
+
+	if (offset == clearValue)
+		return;
+
+	for (int x = 0; x < m_width; ++x)
+	{
+		for (int y = 0; y < m_height; ++y)
+		{
+			//make this block skip this function when destroyed
+			w->editBlock(xx + x - offset.x, yy + y - offset.y).block_metadata = clearValue;
+			w->setBlock(xx + x - offset.x, yy + y - offset.y, 0);
+		}
+	}
+}
+
+bool MultiBlock::canBePlaced(World* w, int xx, int yy) const
+{
+	for (int x = 0; x < m_width; ++x)
+		for (int y = 0; y < m_height; ++y)
+			if (!w->getBlock(xx + x, yy + y).isAir())
+				return false;
+	return true;
+}
+
+
+//WALL======================================================
 Wall::Wall(int id)
 	: m_id(id),
 	  m_texture_pos(0),
@@ -82,9 +168,15 @@ Wall::Wall(int id)
 
 Wall::~Wall() = default;
 
+
+void Wall::onTextureLoaded(const TextureAtlas& atlas)
+{
+	m_texture_pos = atlas.getTexture("wall/" + toString());
+}
+
 int Wall::getTextureOffset(int wx, int wy, const BlockStruct&) const
 {
-	return half_int(m_texture_pos.x * 8 + (wx & 7), m_texture_pos.y * 8 + (wy & 7)).i;
+	return half_int(m_texture_pos.x * 2 + (wx & 7), m_texture_pos.y * 2 + (wy & 7)).i;
 }
 
 int Wall::getCornerOffset(int wx, int wy, const BlockStruct& b) const

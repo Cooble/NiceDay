@@ -4,7 +4,8 @@ BiomeRegistry::BiomeRegistry()= default;
 
 void BiomeRegistry::registerBiome(Biome* b)
 {
-	m_biomes.resize(b->getID() + 1);
+	if(m_biomes.size()<=b->getID())
+		m_biomes.resize(b->getID() + 1);
 	m_biomes[b->getID()] = b;
 }
 

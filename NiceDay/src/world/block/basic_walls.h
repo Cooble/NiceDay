@@ -5,27 +5,28 @@ class WallAir :public Wall
 {
 public:
 	WallAir();
+	inline void onTextureLoaded(const TextureAtlas& atlas) override{}
 	int getTextureOffset(int wx, int wy, const BlockStruct&) const override;
 	int getCornerOffset(int wx, int wy, const BlockStruct&) const override;
 
-	TO_STRING(WallAir)
+	UUID_STRING("air")
 };
 class WallDirt :public Wall
 {
 public:
 	WallDirt();
-	TO_STRING(WallDirt)
+	UUID_STRING("dirt")
 };
 class WallStone :public Wall
 {
 public:
 	WallStone();
-	TO_STRING(WallStone)
+	UUID_STRING("stone")
 };
 class WallGlass :public Wall
 {
 public:
 	WallGlass();
-	TO_STRING(WallGlass)
+	UUID_STRING("glass")
 	int getCornerOffset(int wx, int wy, const BlockStruct&) const override;
 };

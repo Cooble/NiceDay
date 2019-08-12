@@ -141,6 +141,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\graphics\Effect.h" />
+    <ClInclude Include="src\graphics\GContext.h" />
+    <ClInclude Include="src\graphics\TextureAtlas.h" />
     <ClInclude Include="src\graphics\TextureManager.h" />
     <ClInclude Include="src\nbt\NBT.h" />
     <ClInclude Include="src\Core.h" />
@@ -155,6 +158,7 @@
     <ClInclude Include="src\Input.h" />
     <ClInclude Include="src\Log.h" />
     <ClInclude Include="src\NDUtil.h" />
+    <ClInclude Include="src\platform\OpenGL\OpenGLContext.h" />
     <ClInclude Include="src\platform\OpenGL\OpenGLRenderer.h" />
     <ClInclude Include="src\platform\OpenGL\OpenGLTexture.h" />
     <ClInclude Include="src\physShapes.h" />
@@ -577,8 +581,13 @@
     <ClInclude Include="vendor\glm\glm\vec4.hpp" />
     <ClInclude Include="vendor\glm\glm\vector_relational.hpp" />
     <ClInclude Include="vendor\stb_image\stb_image.h" />
+    <ClInclude Include="vendor\stb_image\stb_image_resize.h" />
+    <ClInclude Include="vendor\stb_image\stb_image_write.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\graphics\Effect.cpp" />
+    <ClCompile Include="src\graphics\GContext.cpp" />
+    <ClCompile Include="src\graphics\TextureAtlas.cpp" />
     <ClCompile Include="src\graphics\TextureManager.cpp" />
     <ClCompile Include="src\nbt\NBT.cpp" />
     <ClCompile Include="src\EntryPoint.cpp" />
@@ -591,6 +600,7 @@
     <ClCompile Include="src\graphics\TestQuad.cpp" />
     <ClCompile Include="src\Input.cpp" />
     <ClCompile Include="src\Log.cpp" />
+    <ClCompile Include="src\platform\OpenGL\OpenGLContext.cpp" />
     <ClCompile Include="src\platform\OpenGL\OpenGLRenderer.cpp" />
     <ClCompile Include="src\platform\OpenGL\OpenGLTexture.cpp" />
     <ClCompile Include="src\physShapes.cpp" />

@@ -27,14 +27,14 @@ void ChunkMesh::init()
 
 
 		TextureInfo info;
-		s_texture = Texture::create(info.path("res/images/atlas/newatlas.png").filterMode(TextureFilterMode::NEAREST));
+		s_texture = Texture::create(info.path("res/images/blockAtlas/atlas.png").filterMode(TextureFilterMode::NEAREST));
 		s_texture_corners = Texture::create(info.path("res/images/atlas/corners.png"));
 
 		s_program = new Shader("res/shaders/Chunk.shader");
 		s_program->bind();
 		s_program->setUniform1i("u_texture", 0);
 		s_program->setUniform1i("u_corners", 1);
-		s_program->setUniform1i("u_texture_atlas_pixel_width_corner", BORDER_COLOR_TRANSFORMATION_FACTOR);//scale factor of determining color of corner border (4 means divide pixel pos by 4 to get to the border color)
+		s_program->setUniform1i("u_texture_atlas_pixel_width_corner", EDGE_COLOR_TRANSFORMATION_FACTOR);//scale factor of determining color of corner border (4 means divide pixel pos by 4 to get to the border color)
 
 		//todo when changing blockpixels size this wont work you need to specify pixel size of texture
 		s_program->setUniform1i("u_texture_atlas_pixel_width", BLOCK_ATLAS_PIXEL_WIDTH);//for every block we have 8 pixels in texture

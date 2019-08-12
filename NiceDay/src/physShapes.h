@@ -279,11 +279,12 @@ namespace Phys
 		return f / 3.14159265f * 180.f;
 	}
 
-	struct Rectangle
+	template<typename T=float>
+	struct Rect
 	{
-		float x0, y0, x1, y1;
+		T x0, y0, x1, y1;
 
-		inline bool containsPoint(float x, float y) const
+		inline bool containsPoint(T x, T y) const
 		{
 			return (x >= x0) && (x <= x1) && (y >= y0) && (y <= y1);
 		}
@@ -292,16 +293,19 @@ namespace Phys
 			return (v.x >= x0) && (v.x <= x1) && (v.y >= y0) && (v.y <= y1);
 		}
 
-		inline float width() const { return x1 - x0; }
-		inline float height() const { return y1 - y0; }
+		inline T width() const { return x1 - x0; }
+		inline T height() const { return y1 - y0; }
 
-		inline static Rectangle createFromDimensions(float x,float y,float width,float height)
+		inline static Rect<T> createFromDimensions(T x, T y, T width, T height)
 		{
 			return { x,y,x + width,y + height };
 		}
 
+		inline void setWidth(T width) { x1 = x0 + width; }
+		inline void setHeight(T height) { y1 = y0 + height; }
+
 	private:
-		inline bool intersectsInner(const Rectangle& rect) const
+		inline bool intersectsInner(const Rect<T>& rect) const
 		{
 			return
 				rect.containsPoint(x0, y0) ||
@@ -311,11 +315,14 @@ namespace Phys
 		}
 
 	public:
-		inline bool intersects(const Rectangle& rect) const
+		inline bool intersects(const Rect<T>& rect) const
 		{
 			return intersectsInner(rect) || rect.intersectsInner(*this);
 		}
 	};
+
+	typedef Rect<int> Rectanglei;
+	typedef Rect<float> Rectangle;
 
 	struct Polygon
 	{

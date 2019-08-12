@@ -184,11 +184,78 @@ struct half_int
 	
 };
 
+struct quarter_int
+{
+	inline static int getX(int i)
+	{
+		return ((quarter_int*)&i)->x;
+	}
+	inline static int getY(int i)
+	{
+		return ((quarter_int*)&i)->y;
+	}
+	inline static int getZ(int i)
+	{
+		return ((quarter_int*)&i)->z;
+	}
+	inline static int getW(int i)
+	{
+		return ((quarter_int*)&i)->w;
+	}
+	union
+	{
+		uint32_t i;
+
+		const struct
+		{
+			uint8_t x; //lsb
+			uint8_t y; //msb
+			uint8_t z; //msb
+			uint8_t w; //msb
+		};
+	};
+
+	quarter_int()
+	{
+	}
+
+	quarter_int(int in) : i(in)
+	{
+	}
+
+	quarter_int(int xx, int yy,int zz,int ww) : x((char)xx), y((char)yy), z((char)zz), w((char)ww)
+	{
+	}
+
+	quarter_int plus(quarter_int v) const
+	{
+		return quarter_int(x + v.x, y + v.y,z+v.z,w+v.w);
+	}
+
+	quarter_int operator+(quarter_int v) const
+	{
+		return plus(v);
+	}
+	inline operator int() const
+	{
+		return i;
+	}
+};
+
 inline bool operator!=(const half_int& f0, const half_int& f1)
 {
 	return !(f0.i == f1.i);
 }
 inline bool operator==(const half_int& f0, const half_int& f1)
+{
+	return f0.i == f1.i;
+}
+
+inline bool operator!=(const quarter_int& f0, const quarter_int& f1)
+{
+	return !(f0.i == f1.i);
+}
+inline bool operator==(const quarter_int& f0, const quarter_int& f1)
 {
 	return f0.i == f1.i;
 }
@@ -296,6 +363,32 @@ public:
 		{
 			// insert default value
 			auto result = insert(std::make_pair(key, value));
+			it = result.first;
+		}
+
+		return it->second;
+	}
+	bool contains(const Key& key)
+	{
+		return find(key) != end();
+	}
+};
+
+template<typename Key, typename T>
+class defaultable_map_other :public std::unordered_map<Key, T>
+{
+public:
+	// inherit std::unordered_map constructors
+	using std::unordered_map<Key, T>::unordered_map;
+
+	T & operator[](const Key & key)
+	{
+		auto it = find(key);
+
+		if (it == end())
+		{
+			// insert default value
+			auto result = insert(std::make_pair(key, T()));
 			it = result.first;
 		}
 

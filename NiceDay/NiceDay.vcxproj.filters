@@ -1331,6 +1331,12 @@
     <ClInclude Include="src\graphics\TextureManager.h" />
     <ClInclude Include="src\physShapes.h" />
     <ClInclude Include="src\world\entity\PathTracer.h" />
+    <ClInclude Include="src\graphics\Effect.h" />
+    <ClInclude Include="src\graphics\GContext.h" />
+    <ClInclude Include="src\platform\OpenGL\OpenGLContext.h" />
+    <ClInclude Include="src\graphics\TextureAtlas.h" />
+    <ClInclude Include="vendor\stb_image\stb_image_resize.h" />
+    <ClInclude Include="vendor\stb_image\stb_image_write.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\EntryPoint.cpp">
@@ -1487,5 +1493,9 @@
     <ClCompile Include="src\graphics\TextureManager.cpp" />
     <ClCompile Include="src\physShapes.cpp" />
     <ClCompile Include="src\world\entity\PathTracer.cpp" />
+    <ClCompile Include="src\graphics\Effect.cpp" />
+    <ClCompile Include="src\graphics\GContext.cpp" />
+    <ClCompile Include="src\platform\OpenGL\OpenGLContext.cpp" />
+    <ClCompile Include="src\graphics\TextureAtlas.cpp" />
   </ItemGroup>
 </Project>

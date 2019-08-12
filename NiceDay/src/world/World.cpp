@@ -87,13 +87,13 @@ void World::tick()
 }
 
 
-constexpr float minLight = 0.13f;
+constexpr float minLight = 0.05f;
 
-constexpr float startRiseHour = 9.5f;
-constexpr float endRiseHour = 11.f;
+constexpr float startRiseHour = 8.f;
+constexpr float endRiseHour = 9.f;
 
-constexpr float startSetHour = 15.5f;
-constexpr float endSetHour = 16.25f;
+constexpr float startSetHour = 16.f;
+constexpr float endSetHour = 17.f;
 
 static float smootherstep(float x) {
 	// Scale, bias and saturate x to 0..1 range
@@ -102,9 +102,10 @@ static float smootherstep(float x) {
 	return x * x * x * (x * (x * 6 - 15) + 10);
 }
 
-glm::vec4 World::getSkyColor()
+glm::vec4 World::getSkyLight()
 {
 	auto hour = getWorldTime().hours();
+	hour = 12;
 	float f = 0;
 	if(hour>=startRiseHour&&hour<endRiseHour)
 	{
@@ -845,7 +846,7 @@ void World::loadEntity(WorldEntity* pEntity)
 	pEntity->onLoaded(this);
 }
 
-void World::setBlock(int x, int y, BlockStruct& blok)
+void World::setBlock(int x, int y, BlockStruct& newBlock)
 {
 #ifdef ND_DEBUG
 	if (x < 0 || y < 0)
@@ -868,15 +869,19 @@ void World::setBlock(int x, int y, BlockStruct& blok)
 		c = &loadChunk(cx, cy);
 	else c = &m_chunks[index];
 
-	//set walls from old block acordingly
-	auto& block = c->block(x & (WORLD_CHUNK_SIZE - 1), y & (WORLD_CHUNK_SIZE - 1));
-	memcpy(blok.wall_id, block.wall_id, sizeof(blok.wall_id));
-	memcpy(blok.wall_corner, block.wall_corner, sizeof(blok.wall_corner));
 
-	c->setBlock(x & (WORLD_CHUNK_SIZE - 1), y & (WORLD_CHUNK_SIZE - 1), blok);
+	auto& regBlock = BlockRegistry::get().getBlock(newBlock.block_id);
+	
+	//set walls from old block acordingly
+	auto& oldBlock = c->block(x & (WORLD_CHUNK_SIZE - 1), y & (WORLD_CHUNK_SIZE - 1));
+	memcpy(newBlock.wall_id, oldBlock.wall_id, sizeof(newBlock.wall_id));
+	memcpy(newBlock.wall_corner, oldBlock.wall_corner, sizeof(newBlock.wall_corner));
+
+	c->setBlock(x & (WORLD_CHUNK_SIZE - 1), y & (WORLD_CHUNK_SIZE - 1), newBlock);
 	if (!m_edit_buffer_enable)
 	{
-		BlockRegistry::get().getBlock(blok.block_id).onNeighbourBlockChange(this, x, y);
+		regBlock.onBlockPlaced(this, nullptr, x, y, c->block(x & (WORLD_CHUNK_SIZE - 1), y & (WORLD_CHUNK_SIZE - 1)));
+		regBlock.onNeighbourBlockChange(this, x, y);
 		onBlocksChange(x, y);
 
 		loadLightResources(x, y);

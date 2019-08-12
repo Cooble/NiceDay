@@ -26,6 +26,7 @@
 #include "world/entity/entity_datas.h"
 #include "world/entity/entities.h"
 #include "graphics/TextureManager.h"
+#include "graphics/TextureAtlas.h"
 
 const char* WORLD_FILE_PATH;
 int CHUNKS_LOADED;
@@ -61,12 +62,22 @@ WorldLayer::WorldLayer()
 	ND_REGISTER_BLOCK(new BlockGrass());
 	ND_REGISTER_BLOCK(new BlockGlass());
 	ND_REGISTER_BLOCK(new BlockTorch());
+	ND_REGISTER_BLOCK(new BlockDoorClose());
+	ND_REGISTER_BLOCK(new BlockDoorOpen());
+	ND_REGISTER_BLOCK(new BlockPainting());
 
 	//walls
 	ND_REGISTER_WALL(new WallAir());
 	ND_REGISTER_WALL(new WallDirt());
 	ND_REGISTER_WALL(new WallStone());
 	ND_REGISTER_WALL(new WallGlass());
+
+
+	std::string folder = "D:/Dev/C++/NiceDay/NiceDay/res/images/blockAtlas/";
+
+	TextureAtlas t;
+	t.createAtlas(folder, 32, 8);
+	BlockRegistry::get().initTextures(t);
 
 	//biomes
 	ND_REGISTER_BIOME(new BiomeForest());
@@ -110,20 +121,6 @@ WorldLayer::WorldLayer()
 
 	ChunkMesh::init();
 	m_render_manager = new WorldRenderManager(m_cam, m_world);
-	/*Texture* t = Texture::create(TextureInfo("res/images/bg/dirt.png"));
-	Texture* t2 = Texture::create(TextureInfo("res/images/icon.png"));
-	for (int i = 0; i < 4; ++i)
-	{
-		auto sprite = new Sprite(t2);
-		sprite->setRectangle(glm::vec3(0, 10, 0), glm::vec2(10, 10));
-		m_sprites.push_back(sprite);
-	}
-	chunkOfSprites = (Sprite*)malloc(sizeof(Sprite) * 1000);
-	for (int i = 0; i < 1000; ++i)
-	{
-		auto sprite = new(chunkOfSprites+i) Sprite(t);
-		sprite->setRectangle(glm::vec3(i/100.0f, 0, 0), glm::vec2(6, 6));
-		*/
 
 	m_batch_renderer = new BatchRenderer2D();
 }
@@ -285,7 +282,8 @@ void WorldLayer::onUpdate()
 		}
 	}
 
-	if (Game::get().getInput().isMousePressed(GLFW_MOUSE_BUTTON_1))
+	if (!ImGui::IsMouseHoveringAnyWindow())
+		if (Game::get().getInput().isMousePressed(GLFW_MOUSE_BUTTON_1))
 	{
 		if (Stats::gun_enable)
 		{
@@ -297,14 +295,15 @@ void WorldLayer::onUpdate()
 				auto buff = malloc(EntityRegistry::get().getBucket(ENTITY_TYPE_ROUND_BULLET).byte_size);
 				EntityRegistry::get().createInstance(ENTITY_TYPE_ROUND_BULLET, buff);
 				auto bullet = (EntityRoundBullet*)buff;
-				bullet->getPosition() = m_cam->getPosition() + Phys::Vect(0, 10.f).asGLM();
+				bullet->getPosition() = m_cam->getPosition() + Phys::Vect(0, 4.f).asGLM();
 				bullet->fire(Phys::Vect(CURSOR_X, CURSOR_Y), 50.f / 60);
 				m_world->spawnEntity(bullet);
 			}
 		}
 		else if (BLOCK_OR_WALL_SELECTED)
 		{
-			if (m_world->getBlock(CURSOR_X, CURSOR_Y).block_id != BLOCK_PALLETE_SELECTED)
+			const BlockStruct& str = m_world->getBlock(CURSOR_X, CURSOR_Y);
+			if (str.block_id != BLOCK_PALLETE_SELECTED && BlockRegistry::get().getBlock(BLOCK_PALLETE_SELECTED).canBePlaced(m_world,CURSOR_X,CURSOR_Y))
 				m_world->setBlock(CURSOR_X, CURSOR_Y, BLOCK_PALLETE_SELECTED);
 		}
 		else
@@ -352,9 +351,10 @@ void WorldLayer::onUpdate()
 	m_chunk_loader->onUpdate();
 	m_render_manager->onUpdate();
 
-
+	return;
+	//rain
 	auto chunkP = m_world->getLoadedChunkPointer((int)getPlayer().getPosition().x >> WORLD_CHUNK_BIT_SIZE,
-		(int)getPlayer().getPosition().y >> WORLD_CHUNK_BIT_SIZE);
+	                                             (int)getPlayer().getPosition().y >> WORLD_CHUNK_BIT_SIZE);
 	if (chunkP)
 	{
 		auto& biome = BiomeRegistry::get().getBiome(chunkP->getBiome());
@@ -364,11 +364,10 @@ void WorldLayer::onUpdate()
 			static int rainDropDelay = 8;
 			if (counter++ >= rainDropDelay)
 			{
-
 				counter = 0;
 				rainDropDelay = std::rand() % 5 + 5;
 
-				for (int i = 0; i < std::rand()%5+1; ++i)
+				for (int i = 0; i < std::rand() % 5 + 1; ++i)
 				{
 					int x = std::rand() % (4 * WORLD_CHUNK_SIZE);
 					x -= 2 * WORLD_CHUNK_SIZE;
@@ -378,10 +377,10 @@ void WorldLayer::onUpdate()
 					EntityRegistry::get().createInstance(ENTITY_TYPE_ROUND_BULLET, buff);
 					auto bullet = (EntityRoundBullet*)buff;
 					bullet->getPosition() = m_cam->getPosition() + Phys::Vect(x, 2 * WORLD_CHUNK_SIZE).asGLM();
-					bullet->fire(2 * 3.14159f * 3.0f / 4 + (((std::rand() % 10) - 5) / 5.f*0.3f), ((std::rand() % 20) + 40.f) / 60);
+					bullet->fire(2 * 3.14159f * 3.0f / 4 + (((std::rand() % 10) - 5) / 5.f * 0.3f),
+					             ((std::rand() % 20) + 40.f) / 60);
 					m_world->spawnEntity(bullet);
 				}
-				
 			}
 		}
 	}
@@ -489,8 +488,9 @@ void WorldLayer::onImGuiRender()
 	if (auto current = m_world->getLoadedBlockPointer(CURSOR_X, CURSOR_Y))
 	{
 		CURRENT_BLOCK = current;
-		ImGui::Text("Current Block: %s (id: %d, corner: %d)", CURRENT_BLOCK_ID.c_str(), CURRENT_BLOCK->block_id,
-		            CURRENT_BLOCK->block_corner);
+		quarter_int metaSections = CURRENT_BLOCK->block_metadata;
+		ImGui::Text("Current Block: %s (id: %d, corner: %d, meta: %d ->[%d,%d,%d,%d])", CURRENT_BLOCK_ID.c_str(), CURRENT_BLOCK->block_id,
+		            CURRENT_BLOCK->block_corner, CURRENT_BLOCK->block_metadata,metaSections.x,metaSections.y,metaSections.z,metaSections.w);
 		int wallid = CURRENT_BLOCK->wall_id[0];
 		if (!CURRENT_BLOCK->isWallOccupied())
 			wallid = -1;
@@ -602,21 +602,30 @@ void WorldLayer::onEvent(Event& e)
 		auto event = dynamic_cast<WindowResizeEvent*>(&e);
 		m_render_manager->onScreenResize();
 	}
-
-	if (e.getEventType() == Event::EventType::MousePress)
-	{
-		auto event = dynamic_cast<MousePressEvent*>(&e);
-		if (event->getButton() == GLFW_MOUSE_BUTTON_2)
+	if (!ImGui::IsMouseHoveringAnyWindow())
+		if (e.getEventType() == Event::EventType::MousePress)
 		{
-			if (BLOCK_OR_WALL_SELECTED)
+			auto event = dynamic_cast<MousePressEvent*>(&e);
+			if (event->getButton() == GLFW_MOUSE_BUTTON_2)
 			{
-				BLOCK_PALLETE_SELECTED = m_world->getBlock(CURSOR_X, CURSOR_Y).block_id;
+				if (Game::get().getInput().isKeyPressed(GLFW_KEY_LEFT_CONTROL))
+				{
+					auto& stru = m_world->editBlock(CURSOR_X, CURSOR_Y);
+					BlockRegistry::get().getBlock(stru.block_id).onBlockClicked(
+						m_world, &getPlayer(), CURSOR_X, CURSOR_Y, stru);
+				}
+				else
+				{
+					if (BLOCK_OR_WALL_SELECTED)
+					{
+						BLOCK_PALLETE_SELECTED = m_world->getBlock(CURSOR_X, CURSOR_Y).block_id;
+					}
+					else
+					{
+						BLOCK_PALLETE_SELECTED = m_world->getBlock(CURSOR_X, CURSOR_Y).wallID();
+					}
+				}
+				event->handled = true;
 			}
-			else
-			{
-				BLOCK_PALLETE_SELECTED = m_world->getBlock(CURSOR_X, CURSOR_Y).wallID();
-			}
-			event->handled = true;
 		}
-	}
 }

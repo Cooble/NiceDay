@@ -28,7 +28,7 @@ inline static bool findIntersection(World* w, const Phys::Vect& entityPos, const
 			auto& block = BlockRegistry::get().getBlock(stru->block_id);
 			if (!block.hasBounds())
 				continue;
-			auto blockBounds = block.getBounds((int)blockPos.x, (int)blockPos.y, *stru);
+			auto blockBounds = block.getCollisionBox((int)blockPos.x, (int)blockPos.y, *stru);
 
 			blockBounds.plus({i, j});
 			if (Phys::isIntersects(blockBounds, entityBound))
@@ -174,7 +174,7 @@ void Bullet::update(World* w)
 		{
 			auto& blokTemplate = BlockRegistry::get().getBlock(blok.block_id);
 			if (blokTemplate.hasBounds())
-				if (Phys::isIntersects(m_bound, blokTemplate.getBounds(m_pos.x, m_pos.y, blok)))
+				if (Phys::isIntersects(m_bound, blokTemplate.getCollisionBox(m_pos.x, m_pos.y, blok)))
 				{
 					onBlockHit(w, m_pos.x, m_pos.y);
 					return;
@@ -313,8 +313,8 @@ EntityPlayer::EntityPlayer()
 		                               .format(TextureFormat::RGBA)), 4, 4);
 	m_sprite = Sprite(&res);
 	m_sprite.setSpriteIndex(0, 3);
-	m_sprite.setPosition(glm::vec3(-2, 0, 0));
-	m_sprite.setSize(glm::vec2(4, 5));
+	m_sprite.setPosition(glm::vec3(-1, 0, 0));
+	m_sprite.setSize(glm::vec2(2, 3));
 
 	m_bound = Phys::toPolygon({-0.75f, 0, 0.75f, 3});
 }
@@ -449,8 +449,8 @@ EntityZombie::EntityZombie()
 		                               .format(TextureFormat::RGBA)), 4, 4);
 	m_sprite = Sprite(&res);
 	m_sprite.setSpriteIndex(0, 2);
-	m_sprite.setPosition(glm::vec3(-2, 0, 0));
-	m_sprite.setSize(glm::vec2(4, 5));
+	m_sprite.setPosition(glm::vec3(-1, 0, 0));
+	m_sprite.setSize(glm::vec2(2, 3));
 
 	m_bound = Phys::toPolygon({ -0.75f, 0, 0.75f, 3 });
 }

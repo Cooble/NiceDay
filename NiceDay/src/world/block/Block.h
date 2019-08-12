@@ -1,6 +1,7 @@
 #pragma once
 #include "ndpch.h"
 #include "physShapes.h"
+class TextureAtlas;
 //STATES=========================================================
 //is air counterclockwise start from up(=lsb) (up left down right)
 constexpr int BLOCK_STATE_FULL = 0;
@@ -94,6 +95,8 @@ struct BlockStruct {
 };
 
 class World;
+class WorldEntity;
+
 
 class Block
 {
@@ -109,8 +112,8 @@ protected:
 	//if yes the texturepos will be added based on location of block in chunk
 	bool m_has_big_texture;
 
-	const Phys::Polygon* m_bounds;
-	int m_bounds_size;
+	const Phys::Polygon* m_collision_box;
+	int m_collision_box_size;
 
 
 	//how much light will be consumed by this block 
@@ -124,13 +127,14 @@ protected:
 
 	int m_block_connect_group;
 	bool isInGroup(World* w, int x, int y, int group) const;
-	void setNoBounds();
+	bool isInGroup(int blockID, int group) const;
+	void setNoCollisionBox();
 
 public:
 	Block(int id);
 	Block(const Block& c) = delete;
 	void operator=(Block const&) = delete;
-	virtual ~Block();
+	virtual ~Block()= default;
 	inline int getID() const { return m_id; };
 	inline int getConnectGroup() const { return m_block_connect_group; }
 	inline uint8_t getLightSrcVal() const
@@ -139,10 +143,13 @@ public:
 	}
 	inline uint8_t getOpacity()const {return m_opacity;}
 
-	virtual const Phys::Polygon& getBounds(int x, int y, const BlockStruct b) const;
+	virtual const Phys::Polygon& getCollisionBox(int x, int y, const BlockStruct& b) const;
 	bool hasBounds() const;
 
 	inline bool isInConnectGroup(int groups) const { return (groups & m_block_connect_group) != 0; }//they have group in common 
+
+
+	virtual void onTextureLoaded(const TextureAtlas& atlas);
 
 	//returns -1 if not render
 	virtual int getTextureOffset(int x, int y, const BlockStruct&) const;
@@ -151,16 +158,64 @@ public:
 	//returns true if this block was changed as well
 	virtual bool onNeighbourBlockChange(World* world, int x, int y) const;
 
-	virtual void onBlockPlaced(World* w, int x, int y, BlockStruct& b) const {}
+	virtual void onBlockPlaced(World* w,WorldEntity* e, int x, int y, BlockStruct& b) const {}
+	virtual void onBlockDestroyed(World* w,WorldEntity* e, int x, int y, BlockStruct& b) const {}
 
-#ifdef ND_DEBUG
+
+	virtual void onBlockClicked(World* w, WorldEntity* e,int x,int y,BlockStruct& b) const {}
+
+	virtual bool canBePlaced(World* w, int x, int y) const
+	{
+		return true;
+	}
+
+
 	inline virtual std::string toString() const { return "UNDEFINED_BLOCK"; }
 
-#define TO_STRING(x)\
-	inline std::string toString() const override {return #x;}
-#else
-#define TO_STRING(X)
-#endif
+#define UUID_STRING(x)\
+	inline std::string toString() const override {return x;}
+};
+
+class MultiBlock:public Block
+{
+protected:
+	Phys::Rectanglei m_build_dimensions;
+	int m_width;
+	int m_height;
+
+	template<int Width,int Height>
+	inline void generateCollisionBoxFromDimensions()
+	{
+		static Phys::Polygon p = Phys::toPolygon(Phys::Rectangle::createFromDimensions(0,0,Width,Height));
+		m_collision_box = &p;
+	}
+
+public:
+	MultiBlock(int id);
+	virtual ~MultiBlock() = default;
+	MultiBlock(const Block& c) = delete;
+	void operator=(MultiBlock const&) = delete;
+
+	inline int getWidth()const { return m_width; }
+	inline int getHeight()const { return m_height; }
+
+	//what dimensions need to be placed
+	virtual Phys::Rectanglei getBuildDimensions() const { return m_build_dimensions; }
+
+	int getCornerOffset(int x, int y, const BlockStruct& b) const override;
+
+	int getTextureOffset(int x, int y, const BlockStruct& b) const override;
+
+	bool onNeighbourBlockChange(World* world, int x, int y) const override;
+
+	void onBlockPlaced(World* w, WorldEntity* e, int x, int y, BlockStruct& b) const override;
+
+	void onBlockDestroyed(World* w, WorldEntity* e, int x, int y, BlockStruct& b) const override;
+
+	bool canBePlaced(World* w, int x, int y) const override;
+
+
+
 };
 
 class Wall
@@ -178,6 +233,7 @@ public:
 	Wall(const Wall& c) = delete;
 	void operator=(Wall const&) = delete;
 	virtual ~Wall();
+	virtual void onTextureLoaded(const TextureAtlas& atlas);
 	inline int getID() const { return m_id; };
 	inline bool isTransparent() const { return m_transparent; }
 
@@ -188,12 +244,7 @@ public:
 	//returns true if this block was changed as well
 	virtual void onNeighbourWallChange(World* world, int x, int y) const;
 
-#ifdef ND_DEBUG
 	inline virtual std::string toString() const { return "UNDEFINED_WALL"; }
-
-#define TO_STRING(x)\
-	inline std::string toString() const override {return #x;}
-#else
-#define TO_STRING(X)
-#endif
+#define UUID_STRING(x)\
+	inline std::string toString() const override {return x;}
 };

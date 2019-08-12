@@ -12,6 +12,7 @@
 #include "physShapes.h"
 #include "world/ChunkLoader.h"
 #include "graphics/Effect.h"
+#include "graphics/TextureAtlas.h"
 
 /*template<typename T>
 void show_binrep(const T& a)
@@ -118,7 +119,7 @@ int main()
 	using namespace Phys;
 	Log::Init();
 
-
+	
 	Game game;
 	game.init();
 	game.start();

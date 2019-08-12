@@ -415,8 +415,9 @@ int WorldRenderManager::getChunkIndex(int cx, int cy)
 glm::vec4 WorldRenderManager::getSkyColor(float y)
 {
 	auto upColor = glm::vec4(0, 0, 0, 1);
-	auto downColor = glm::vec4(0, 0.5f, 1, 1);
-
+	auto downColor = glm::vec4(0.1, 0.8f, 1, 1);
+	auto blACK = glm::vec4(0, 0, 0, 1);
+	downColor = glm::mix(blACK, downColor, m_world->getSkyLight().a);
 
 	y -= m_world->getInfo().terrain_level;
 	y /= m_world->getInfo().chunk_height * WORLD_CHUNK_SIZE - m_world->getInfo().terrain_level;
@@ -620,7 +621,7 @@ void WorldRenderManager::renderLightMap()
 	Gcon.setClearColor(1, 1, 1, 0);
 
 	m_light_simple_program->bind();
-	m_light_simple_program->setUniformVec4f("u_chunkback_color", m_world->getSkyColor());
+	m_light_simple_program->setUniformVec4f("u_chunkback_color", m_world->getSkyLight());
 	m_light_simple_texture->bind(0);
 	m_light_sky_simple_texture->bind(1);
 	m_full_screen_quad_VAO->bind();

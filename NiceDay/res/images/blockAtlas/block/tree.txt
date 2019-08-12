@@ -1,0 +1,35 @@
+#
+rootL:          1,0
+rootR:          4,0
+
+fullTrunk2W:    2,0,2,1
+
+dryBranchL:     1,2
+dryBranchR:     4,2
+
+branchL:        1,3
+branchR:        4,3
+
+trunkBranchL:   2,3       
+trunkBranchR:   3,3   
+
+
+smallBlobL2W:   0,4,2,1
+smallBlobR2W:   4,4,2,1
+
+thinTrunkL:     2,4
+thinTrunkR:     3,4
+
+dryBlobL:       4,0,2,2
+dryBlobR:       6,0,2,2
+
+bigBlob0:       0,5,6,2
+bigBlob1:       1,7,4,2
+blob:           2,9,2,2    
+
+
+
+
+
+
+
