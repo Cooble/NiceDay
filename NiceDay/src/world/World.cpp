@@ -87,7 +87,7 @@ void World::tick()
 }
 
 
-constexpr float minLight = 0.05f;
+constexpr float minLight = 0.2f;
 
 constexpr float startRiseHour = 8.f;
 constexpr float endRiseHour = 9.f;
@@ -105,7 +105,7 @@ static float smootherstep(float x) {
 glm::vec4 World::getSkyLight()
 {
 	auto hour = getWorldTime().hours();
-	hour = 12;
+	hour = 0;
 	float f = 0;
 	if(hour>=startRiseHour&&hour<endRiseHour)
 	{

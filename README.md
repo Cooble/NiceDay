@@ -34,7 +34,15 @@ In the pic: The first entity after Player was (who would have guessed...) TNT!
 ![Alt Text](screenshots/22_07_2019_00.gif?raw=false "")  
 
 In the pic: red Zombie attacks black Player.  (and then mysteriously disappears up in the sky)  
-![Alt Text](screenshots/22_07_2019_01.gif?raw=false "")  
+![Alt Text](screenshots/22_07_2019_01.gif?raw=false "")   
+
+Smooth wallLight vs edgy blockLight, Day/Night cycle (12_08_2019)  
+Added dynamically created TextureAtlas.  
+Added painting and multiblock structure support.  
+![Alt text](screenshots/12_08_2019.png?raw=false "")   
+Oh, shoot!   
+![Alt Text](screenshots/12_08_2019.gif?raw=false "")  
+
   
 
 
