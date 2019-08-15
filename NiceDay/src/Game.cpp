@@ -7,6 +7,7 @@
 #include "layer/WorldLayer.h"
 #include <chrono>
 #include "graphics/GContext.h"
+#include "Stats.h"
 
 #define BIND_EVENT_FN(x) std::bind(&Game::x, &Game::get(), std::placeholders::_1)
 
@@ -76,23 +77,36 @@ void Game::start()
 	using namespace std::chrono;
 	ND_TRACE("Game started");
 	m_running = true;
-	auto lastTime = system_clock::now();
+	auto lastTime = nowTime();
+	int millisPerTick = 1000 / m_target_tps;
+	uint64_t accomodator = 0;
 	while (m_running)
 	{
-		int over_millis = 1000 / m_target_tps;
-		auto now = system_clock::now();
-		if (duration_cast<milliseconds>(now - lastTime).count() > over_millis)
+		auto now = nowTime();
+		accomodator += now - lastTime;
+		lastTime = now;
+		Stats::updates_per_frame = accomodator / millisPerTick;
+		if (Stats::updates_per_frame > 20)
+			accomodator = 0;//lets slow the game to catch up
+		int maxMil = 0;
+		while (accomodator >= millisPerTick)
 		{
-			lastTime = now;
+			accomodator -= millisPerTick;
+			
+			auto tt = nowTime();
 			update();
-			m_tick_millis = duration_cast<milliseconds>(system_clock::now() - now).count();
+			maxMil = max((int)(nowTime() - tt),maxMil);
 		}
+		m_tick_millis = maxMil;
+
 		render();
+		m_render_millis = nowTime() - now;
+
 		current_fps++;
 		auto noww = nowTime();
-		if (noww - lastFPSMillis > 100)
+		if (noww - lastFPSMillis > 500)
 		{
-			m_fps = current_fps * 10;
+			m_fps = current_fps * 2;
 			current_fps = 0;
 			lastFPSMillis = nowTime();
 		}

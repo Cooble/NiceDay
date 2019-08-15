@@ -105,7 +105,6 @@ static float smootherstep(float x) {
 glm::vec4 World::getSkyLight()
 {
 	auto hour = getWorldTime().hours();
-	hour = 0;
 	float f = 0;
 	if(hour>=startRiseHour&&hour<endRiseHour)
 	{

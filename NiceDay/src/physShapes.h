@@ -18,9 +18,7 @@ namespace Phys
 	{
 		float x, y;
 
-		Vect()
-		{
-		}
+		Vect() = default;
 
 		Vect(float x, float y) : x(x), y(y)
 		{
@@ -233,7 +231,7 @@ namespace Phys
 
 	inline Vect vectFromAngle(float rad)
 	{
-		return { cos(rad),sin(rad) };
+		return {cos(rad), sin(rad)};
 	}
 
 	inline Vect clamp(const Vect& a, const Vect& min, const Vect& max)
@@ -279,7 +277,7 @@ namespace Phys
 		return f / 3.14159265f * 180.f;
 	}
 
-	template<typename T=float>
+	template <typename T=float>
 	struct Rect
 	{
 		T x0, y0, x1, y1;
@@ -288,6 +286,7 @@ namespace Phys
 		{
 			return (x >= x0) && (x <= x1) && (y >= y0) && (y <= y1);
 		}
+
 		inline bool containsPoint(const Vect& v) const
 		{
 			return (v.x >= x0) && (v.x <= x1) && (v.y >= y0) && (v.y <= y1);
@@ -296,9 +295,51 @@ namespace Phys
 		inline T width() const { return x1 - x0; }
 		inline T height() const { return y1 - y0; }
 
+		inline void add(int x, int y)
+		{
+			x0 += x;
+			x1 += x;
+			y0 += y;
+			y1 += y;
+		}
+
+		inline void add(const Vect& v)
+		{
+			add(v.x, v.y);
+		}
+
+		inline void add(float x, float y)
+		{
+			x0 += x;
+			x1 += x;
+			y0 += y;
+			y1 += y;
+		}
+
+		inline void minus(int x, int y)
+		{
+			x0 -= x;
+			x1 -= x;
+			y0 -= y;
+			y1 -= y;
+		}
+
+		inline void minus(const Vect& v)
+		{
+			minus(v.x, v.y);
+		}
+
+		inline void minus(float x, float y)
+		{
+			x0 -= x;
+			x1 -= x;
+			y0 -= y;
+			y1 -= y;
+		}
+
 		inline static Rect<T> createFromDimensions(T x, T y, T width, T height)
 		{
-			return { x,y,x + width,y + height };
+			return {x, y, x + width, y + height};
 		}
 
 		inline void setWidth(T width) { x1 = x0 + width; }
@@ -326,18 +367,26 @@ namespace Phys
 
 	struct Polygon
 	{
-		std::vector<Vect> vect;
-		Vect* vects;
+		std::vector<Vect> list;
 		int count;
+		bool isRectangle = false;
 	private:
 		Rectangle bounds;
 	public:
 
-		Polygon(std::vector<Vect> v = {}): vect(std::move(v))
+		Polygon(std::vector<Vect> v = {}): list(std::move(v))
 		{
-			vects = vect.data();
-			count = vect.size();
+			count = list.size();
 			recalculateBounds();
+		}
+
+		Polygon(const Polygon& p)
+		{
+			list.resize(p.list.size());
+			memcpy(list.data(), p.list.data(), sizeof(Vect) * p.size());
+			count = p.size();
+			isRectangle = p.isRectangle;
+			bounds = p.bounds;
 		}
 
 		inline void recalculateBounds()
@@ -345,10 +394,10 @@ namespace Phys
 			bounds.x0 = std::numeric_limits<float>::max();
 			bounds.y0 = std::numeric_limits<float>::max();
 
-			bounds.x1 = std::numeric_limits<float>::min();
-			bounds.y1 = std::numeric_limits<float>::min();
+			bounds.x1 = std::numeric_limits<float>::lowest();
+			bounds.y1 = std::numeric_limits<float>::lowest();
 
-			for (const auto& v : vect)
+			for (const auto& v : list)
 			{
 				bounds.x0 = std::min(bounds.x0, v.x);
 				bounds.x1 = std::max(bounds.x1, v.x);
@@ -360,18 +409,18 @@ namespace Phys
 		inline Vect& operator[](size_t index)
 		{
 			ASSERT(index < count&&index >= 0, "Invalid index");
-			return vects[index];
+			return list[index];
 		}
 
 		inline const Vect& operator[](size_t index) const
 		{
 			ASSERT(index < count&&index >= 0, "Invalid index");
-			return vects[index];
+			return list[index];
 		}
 
 		inline Polygon& plus(const Vect& v)
 		{
-			for (auto& vec : vect)
+			for (auto& vec : list)
 				vec.plus(v);
 			recalculateBounds();
 			return *this;
@@ -379,7 +428,7 @@ namespace Phys
 
 		inline Polygon& minus(const Vect& v)
 		{
-			for (auto& vec : vect)
+			for (auto& vec : list)
 				vec.minus(v);
 			recalculateBounds();
 			return *this;
@@ -391,20 +440,21 @@ namespace Phys
 
 		inline Polygon copy() const
 		{
-			return Polygon(vect);
+			return Polygon(*this);
 		}
 	};
 
 	inline Polygon toPolygon(const Rectangle& r)
 	{
-		return Polygon({
+		auto out = Polygon({
 			{r.x0, r.y0},
 			{r.x1, r.y0},
 			{r.x1, r.y1},
 			{r.x0, r.y1}
 		});
+		out.isRectangle = true;
+		return out;
 	}
-
 
 	// lines collisions ================================================================
 
@@ -443,7 +493,6 @@ namespace Phys
 	// checks if abscisses a and b intersect at one point
 	inline bool isIntersectAbscisses(const Vect& pa0, const Vect& pa1, const Vect& pb0, const Vect& pb1)
 	{
-		//todo add check if two abscisses touch at infinite points
 		Vect v = intersectLines(pa0, pa1, pb0, pb1);
 		if (!v.isValid())
 			return false;
@@ -459,29 +508,16 @@ namespace Phys
 
 	inline bool isIntersects(const Polygon& a, const Polygon& b)
 	{
-		if (a.getBounds().intersects(b.getBounds())) //first check if it is even worth trying
+		if (!a.getBounds().intersects(b.getBounds())) //first check if it is even worth trying
+			return false;
+
+		//if (a.isRectangle&&b.isRectangle)
+		//	return true;
+		for (int i = 0; i < a.size() - 1; ++i)
+			//it is that big because not using modulo for p1,p2 (bigger code - bigger performance)
 		{
-			for (int i = 0; i < a.size() - 1; ++i)
-				//it is that big because not using modulo for p1,p2 (bigger code - bigger performance)
-			{
-				auto& p0 = a[i];
-				auto& p1 = a[i + 1];
-
-				for (int j = 0; j < b.size() - 1; ++j)
-				{
-					auto& p2 = a[j];
-					auto& p3 = a[j + 1];
-					if (isIntersectAbscisses(p0, p1, p2, p3))
-						return true;
-				}
-				auto& p2 = a[b.size() - 1];
-				auto& p3 = a[0];
-				if (isIntersectAbscisses(p0, p1, p2, p3))
-					return true;
-			}
-
-			auto& p0 = a[a.size() - 1];
-			auto& p1 = a[0];
+			auto& p0 = a[i];
+			auto& p1 = a[i + 1];
 
 			for (int j = 0; j < b.size() - 1; ++j)
 			{
@@ -495,15 +531,32 @@ namespace Phys
 			if (isIntersectAbscisses(p0, p1, p2, p3))
 				return true;
 		}
-		return false;
+
+		auto& p0 = a[a.size() - 1];
+		auto& p1 = a[0];
+
+		for (int j = 0; j < b.size() - 1; ++j)
+		{
+			auto& p2 = a[j];
+			auto& p3 = a[j + 1];
+			if (isIntersectAbscisses(p0, p1, p2, p3))
+				return true;
+		}
+		auto& p2 = a[b.size() - 1];
+		auto& p3 = a[0];
+		if (isIntersectAbscisses(p0, p1, p2, p3))
+			return true;
 	}
 
 	inline bool contains(const Polygon& a, const Vect& point)
 	{
-		Vect secPoint = {std::numeric_limits<float>::max() / 2};
+		if (!a.getBounds().containsPoint(point))
+			return false;
+		if (a.isRectangle)
+			return true;
+		Vect secPoint = {0,123451526789.f};
 		int intersections = 0;
 		for (int i = 0; i < a.size(); ++i)
-			//it is that big because not using modulo for p1,p2 (bigger code - bigger performance)
 		{
 			auto& p0 = a[i];
 			auto& p1 = a[(i + 1) % a.size()];
@@ -558,10 +611,5 @@ namespace Phys
 				return out;
 		}
 		return Vect::invalid();
-	}
-
-	inline bool collideCircles(float x1, float y1, float rad1, float x2, float y2, float rad2)
-	{
-		return false;
 	}
 }

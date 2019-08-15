@@ -144,7 +144,7 @@ public:
 	inline uint8_t getOpacity()const {return m_opacity;}
 
 	virtual const Phys::Polygon& getCollisionBox(int x, int y, const BlockStruct& b) const;
-	bool hasBounds() const;
+	bool hasCollisionBox() const;
 
 	inline bool isInConnectGroup(int groups) const { return (groups & m_block_connect_group) != 0; }//they have group in common 
 

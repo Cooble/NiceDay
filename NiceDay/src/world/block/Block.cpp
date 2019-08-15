@@ -12,7 +12,7 @@ Block::Block(int id)
 	  m_corner_translate_array(nullptr),
 	  m_has_big_texture(false),
 	  m_collision_box(BLOCK_BOUNDS_DEFAULT),
-	  m_collision_box_size(sizeof(BLOCK_BOUNDS_DEFAULT) / sizeof(Phys::Polygon)),
+	  m_collision_box_size(1),
 	  m_opacity(3),
 	  m_light_src(0),
 	  m_block_connect_group(0)
@@ -31,7 +31,7 @@ const Phys::Polygon& Block::getCollisionBox(int x, int y, const BlockStruct& b) 
 	return m_collision_box[0];
 }
 
-bool Block::hasBounds() const { return m_collision_box_size != 0; }
+bool Block::hasCollisionBox() const { return m_collision_box_size != 0; }
 
 void Block::onTextureLoaded(const TextureAtlas& atlas)
 {

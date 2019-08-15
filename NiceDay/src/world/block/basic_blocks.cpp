@@ -348,13 +348,13 @@ bool BlockDoorClose::canBePlaced(World* w, int x, int y) const
 		return false;
 	auto& str = w->getBlock(x, y - 1);
 	auto& b = BlockRegistry::get().getBlock(str.block_id);
-	if (!b.hasBounds())
+	if (!b.hasCollisionBox())
 		return false;
 
 	auto& strr = w->getBlock(x, y + 3);
 	auto& bb = BlockRegistry::get().getBlock(strr.block_id);
 
-	return bb.hasBounds();
+	return bb.hasCollisionBox();
 }
 
 void BlockDoorClose::onTextureLoaded(const TextureAtlas& atlas)

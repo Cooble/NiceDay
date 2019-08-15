@@ -32,7 +32,7 @@ public:
 
 	//calculates velocity and position based on acceleration and world colliding blocks
 	void computePhysics(World* w);
-	inline void moveOrCollide(World* w);
+	inline bool moveOrCollide(World* w, float dt);
 	inline void computeVelocity(World* w);
 	inline void computeWindResistance(World* w);
 
@@ -42,7 +42,7 @@ public:
 public:
 	inline Phys::Vect& getAcceleration() { return m_acceleration; }
 	inline Phys::Vect& getVelocity() { return m_velocity; }
-	inline const Phys::Polygon& getBoundPolygon() const { return m_bound; }
+	inline const Phys::Polygon& getCollisionBox() const { return m_bound; }
 	inline bool isOnFloor() const { return m_is_on_floor; }
 	inline Blockage getBlockageState() const { return m_blockage; }
 };
@@ -70,6 +70,8 @@ public:
 	void fire(const Phys::Vect target, float velocity);
 
 
+	// return true if there was collision
+	bool checkCollisions(World* w, float dt);
 	void update(World* w) override;
 	virtual void onBlockHit(World* w, int blockX, int blockY);
 	virtual void onCreatureHit(World* w, WorldEntity* entity);
@@ -110,6 +112,20 @@ public:
 
 	void save(NBT& src) override;
 	void load(NBT& src) override;
+};
+
+class TileEntity:public Creature
+{
+public:
+	TileEntity();
+	virtual ~TileEntity() = default;
+
+	EntityType getEntityType() const override;
+	void update(World* w) override;
+
+	TO_ENTITY_STRING(TileEntity)
+	ND_FACTORY_METH_ENTITY_BUILD(TileEntity)
+
 };
 
 class EntityPlayer : public Creature

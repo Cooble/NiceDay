@@ -33,7 +33,7 @@ TaskResponse PathTracer::update()
 			m_running = false;
 			return TaskResponse::FAIL;
 		}
-		vecto = (entityPlayer->getPosition() - entity->getPosition());
+		vecto = entityPlayer->getPosition() - entity->getPosition();
 
 	}else
 	{

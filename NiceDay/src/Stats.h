@@ -1,5 +1,7 @@
 #pragma once
 struct BiomeDistances;
+class Sprite;
+class World;
 class Stats
 {
 public:
@@ -13,4 +15,8 @@ public:
 	static float debug_x;
 	static BiomeDistances biome_distances;
 	static float edge_scale;
+	static int updates_per_frame;
+	static Sprite* bound_sprite;
+	static bool show_collisionBox;
+	static World* world;
 };

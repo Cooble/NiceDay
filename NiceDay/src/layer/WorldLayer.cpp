@@ -89,6 +89,7 @@ WorldLayer::WorldLayer()
 	ND_REGISTER_ENTITY(ENTITY_TYPE_TNT, EntityTNT);
 	ND_REGISTER_ENTITY(ENTITY_TYPE_ZOMBIE, EntityZombie);
 	ND_REGISTER_ENTITY(ENTITY_TYPE_ROUND_BULLET, EntityRoundBullet);
+	ND_REGISTER_ENTITY(ENTITY_TYPE_TILE_ENTITY, TileEntity);
 
 
 	WorldInfo info;
@@ -114,6 +115,7 @@ WorldLayer::WorldLayer()
 			m_world->genWorld();
 		}
 	}
+	Stats::world = m_world;
 
 	m_cam = new Camera();
 
@@ -123,6 +125,16 @@ WorldLayer::WorldLayer()
 	m_render_manager = new WorldRenderManager(m_cam, m_world);
 
 	m_batch_renderer = new BatchRenderer2D();
+
+	static SpriteSheetResource res(Texture::create(
+		TextureInfo("res/images/borderBox.png")
+		.filterMode(TextureFilterMode::NEAREST)
+		.format(TextureFormat::RGBA)), 1, 1);
+
+	Stats::bound_sprite = new Sprite(&res);
+	Stats::bound_sprite->setSpriteIndex(0, 0);
+	Stats::bound_sprite->setPosition(glm::vec3(0, 0, 0));
+	Stats::bound_sprite->setSize(glm::vec2(1, 1));
 }
 
 EntityPlayer& WorldLayer::getPlayer()
@@ -148,6 +160,12 @@ void WorldLayer::onAttach()
 		m_world->loadChunk( //load chunk where player is
 			half_int::getX(chunk),
 			half_int::getY(chunk));
+		/*if(m_world->getLoadedEntity(playerID)==nullptr)
+		{
+			ND_ERROR("corrupted world file:(");
+			ND_WAIT_FOR_INPUT;
+			exit(1);
+		}*/
 	}
 	else
 	{
@@ -408,30 +426,28 @@ void WorldLayer::onRender()
 	m_batch_renderer->flush();
 }
 
+static bool showTelem = false;
 void WorldLayer::onImGuiRender()
 {
-	float fps = FLT_MAX;
-	if (fpsCount > Game::get().getTargetTPS() / 10)
-	{
-		fpsCount = 0;
-		fps = Game::get().getFPS();
-	}
-	static bool show = true;
+	onImGuiRenderWorld();
 
-	if (!ImGui::Begin("WorldInfo", &show))
+	if (showTelem) {
+		onImGuiRenderTelemetrics();
+	}
+}
+void WorldLayer::onImGuiRenderTelemetrics()
+{
+	static bool showTelemetrics = false;
+	if(!ImGui::Begin("Telemetrics",&showTelemetrics))
 	{
 		ImGui::End();
 		return;
 	}
-	/*BiomeDistances d = Stats::biome_distances;
-	ImGui::Text("Biomes:");
-	for (int i = 0; i < 4; ++i)
-	{
-		ImGui::Text("* %d, %.2f", d.biomes[i], d.intensities[i]);
-
-	}*/
+	
 	static int maxMillis = 0;
 	static int maxMillisLight = 0;
+	static int maxupdatesPerFrame = 0;
+	static int maxmillisrender = 0;
 	constexpr int MAX_maxmillisUpdateInterval = 60 * 2; //evry two sec will reset the max millis tick duiration checkr
 	static int maxMillisUpdateInterval = MAX_maxmillisUpdateInterval;
 	if (maxMillisUpdateInterval-- == 0)
@@ -439,13 +455,50 @@ void WorldLayer::onImGuiRender()
 		maxMillisUpdateInterval = MAX_maxmillisUpdateInterval;
 		maxMillis = 0;
 		maxMillisLight = 0;
+		maxupdatesPerFrame = 0;
+		maxmillisrender = 0;
 	}
 	maxMillis = max(maxMillis, Game::get().getTickMillis());
 	maxMillisLight = max(maxMillisLight, Stats::light_millis);
+	maxupdatesPerFrame = max(Stats::updates_per_frame, maxupdatesPerFrame);
+	maxmillisrender = max(Game::get().getRenderMillis(), maxmillisrender);
 
 	ImGui::PlotVar("Tick Millis", Game::get().getTickMillis());
-	ImGui::Text("Max millis: %d", maxMillis);
-	ImGui::PlotVar("FPS", fps);
+	ImGui::Text("Max tick   millis: %d", maxMillis);
+	ImGui::PlotVar("Render Millis", Game::get().getRenderMillis());
+	ImGui::Text("Max render millis: %d", maxmillisrender);
+
+
+	ImGui::PlotVar("Updates per Frame", Stats::updates_per_frame);
+	ImGui::Text("Max Updates: %d", maxupdatesPerFrame);
+
+	ImGui::PlotVar("FPS", Game::get().getFPS());
+	if (Stats::light_enable)
+	{
+		ImGui::PlotVar("Light millis", Stats::light_millis);
+		ImGui::Text("Max millis: %d", maxMillisLight);
+	}
+	ImGui::End();
+}
+void WorldLayer::onImGuiRenderWorld()
+{
+	
+	static bool showBase = true;
+
+	if (!ImGui::Begin("WorldInfo", &showBase))
+	{
+		ImGui::End();
+		return;
+	}
+	ImGui::Checkbox("Show Telemetrics", &showTelem);
+	ImGui::Checkbox("Show CollisionBox", &Stats::show_collisionBox);
+	/*BiomeDistances d = Stats::biome_distances;
+	ImGui::Text("Biomes:");
+	for (int i = 0; i < 4; ++i)
+	{
+		ImGui::Text("* %d, %.2f", d.biomes[i], d.intensities[i]);
+
+	}*/
 	bool l = Stats::light_enable;
 	ImGui::Checkbox(Stats::light_enable ? "Lighting Enabled" : "Lighting Disabled", &Stats::light_enable);
 	if (l != Stats::light_enable)
@@ -453,13 +506,9 @@ void WorldLayer::onImGuiRender()
 		if (!l) m_world->getLightCalculator().run();
 		else m_world->getLightCalculator().stop();
 	}
-	if (Stats::light_enable)
-	{
-		ImGui::PlotVar("Light millis", Stats::light_millis);
-		ImGui::Text("Max millis: %d", maxMillisLight);
-	}
+	
 	ImGui::Checkbox(Stats::move_through_blocks_enable ? "Move through Blocks Enabled" : "Move through Blocks Disabled",
-	                &Stats::move_through_blocks_enable);
+		&Stats::move_through_blocks_enable);
 	l = BLOCK_OR_WALL_SELECTED;
 	ImGui::Checkbox(BLOCK_OR_WALL_SELECTED ? "BLOCK mode" : "WALL mode", &BLOCK_OR_WALL_SELECTED);
 	if (l != BLOCK_OR_WALL_SELECTED)
@@ -474,15 +523,18 @@ void WorldLayer::onImGuiRender()
 
 	ImGui::Text("World filepath: %s", WORLD_FILE_PATH);
 	ImGui::Text("WorldTime: %d:%d", (int)m_world->getWorldTime().hours(), (int)m_world->getWorldTime().minutes());
+	ImGui::Text("Cam X: %.2f \t(%d)", CAM_POS_X, (int)CAM_POS_X >> WORLD_CHUNK_BIT_SIZE);
+	ImGui::Text("Cam Y: %.2f \t(%d)", CAM_POS_Y, (int)CAM_POS_Y >> WORLD_CHUNK_BIT_SIZE);
+	ImGui::Text("Cursor X: %.2f \t(%d)", CURSOR_X, (int)CURSOR_X >> WORLD_CHUNK_BIT_SIZE);
+	ImGui::Text("Cursor y: %.2f \t(%d)", CURSOR_Y, (int)CURSOR_Y >> WORLD_CHUNK_BIT_SIZE);
+	ImGui::Separator();
+	ImGui::Text("Loaded entities: %d", m_world->getLoadedEntities().size());
 	ImGui::Text("Chunks Size: (%d/%d)", WORLD_CHUNK_WIDTH, WORLD_CHUNK_HEIGHT);
 	ImGui::Text("Chunks loaded: %d", CHUNKS_LOADED);
 	ImGui::Text("Chunks drawn: %d", CHUNKS_DRAWN);
+	ImGui::Separator();
 	ImGui::Text("Dynamic segments: %d", m_world->getNBTSaver().getSegmentCount());
 	ImGui::Text("Dynamic free segments: %d", m_world->getNBTSaver().getFreeSegmentCount());
-	ImGui::Text("Cam X: %.2f (%d)", CAM_POS_X, (int)CAM_POS_X >> WORLD_CHUNK_BIT_SIZE);
-	ImGui::Text("Cam Y: %.2f (%d)", CAM_POS_Y, (int)CAM_POS_Y >> WORLD_CHUNK_BIT_SIZE);
-	ImGui::Text("Cursor X: %.2f (%d)", CURSOR_X, (int)CURSOR_X >> WORLD_CHUNK_BIT_SIZE);
-	ImGui::Text("Cursor y: %.2f (%d)", CURSOR_Y, (int)CURSOR_Y >> WORLD_CHUNK_BIT_SIZE);
 #ifdef ND_DEBUG
 
 	if (auto current = m_world->getLoadedBlockPointer(CURSOR_X, CURSOR_Y))
@@ -490,19 +542,19 @@ void WorldLayer::onImGuiRender()
 		CURRENT_BLOCK = current;
 		quarter_int metaSections = CURRENT_BLOCK->block_metadata;
 		ImGui::Text("Current Block: %s (id: %d, corner: %d, meta: %d ->[%d,%d,%d,%d])", CURRENT_BLOCK_ID.c_str(), CURRENT_BLOCK->block_id,
-		            CURRENT_BLOCK->block_corner, CURRENT_BLOCK->block_metadata,metaSections.x,metaSections.y,metaSections.z,metaSections.w);
+			CURRENT_BLOCK->block_corner, CURRENT_BLOCK->block_metadata, metaSections.x, metaSections.y, metaSections.z, metaSections.w);
 		int wallid = CURRENT_BLOCK->wall_id[0];
 		if (!CURRENT_BLOCK->isWallOccupied())
 			wallid = -1;
 		ImGui::Text("Current Wall: %s (id: %d)",
-		            BlockRegistry::get().getWall(CURRENT_BLOCK->wall_id[0]).toString().c_str(), wallid);
+			BlockRegistry::get().getWall(CURRENT_BLOCK->wall_id[0]).toString().c_str(), wallid);
 
 		for (int i = 0; i < 2; ++i)
 			for (int j = 0; j < 2; ++j)
 			{
 				const Wall& w = BlockRegistry::get().getWall(CURRENT_BLOCK->wall_id[i * 2 + j]);
 				ImGui::Text(" -> (%d, %d): corner:%d, %s ", j, i, CURRENT_BLOCK->wall_corner[i * 2 + j],
-				            w.toString().c_str());
+					w.toString().c_str());
 			}
 		int ccx = CURSOR_X;
 		int ccy = CURSOR_Y;
@@ -510,7 +562,7 @@ void WorldLayer::onImGuiRender()
 		int i = CURSOR_Y - ccy < 0.5f ? 0 : 1;
 		const Wall& w = BlockRegistry::get().getWall(CURRENT_BLOCK->wall_id[i * 2 + j]);
 		ImGui::Text("Selected Wall -> (%d, %d): corner:%d, %s ", j, i, CURRENT_BLOCK->wall_corner[i * 2 + j],
-		            w.toString().c_str());
+			w.toString().c_str());
 	}
 
 	ImGui::Separator();
@@ -594,6 +646,12 @@ void WorldLayer::onEvent(Event& e)
 			auto e = WindowCloseEvent();
 			Game::get().fireEvent(e);
 			event->handled = true;
+
+			if (Game::get().getInput().isKeyPressed(GLFW_KEY_DELETE)) {
+				std::remove(m_world->getFilePath().c_str());
+				ND_INFO("Erasing world");
+			}
+			
 		}
 	}
 

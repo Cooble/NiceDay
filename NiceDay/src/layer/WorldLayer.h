@@ -31,7 +31,10 @@ public:
 	virtual void onUpdate() override;
 	virtual void onRender() override;
 	virtual void onImGuiRender() override;
+	void onImGuiRenderTelemetrics();
+	void onImGuiRenderWorld();
 	virtual void onEvent(Event& e) override;
+	
 
 };
 

@@ -125,7 +125,7 @@ const half_int WALL_CORNERS_GLASS[16] = {
 };
 
 const Phys::Polygon BLOCK_BOUNDS_DEFAULT[1] = {
-	Phys::Polygon({{0,0},{1,0},{1,1},{0,1}}),//00 BLOCK_STATE_FULL
+	Phys::toPolygon(Phys::Rectangle::createFromDimensions(0,0,1,1)),//00 BLOCK_STATE_FULL
 };
 const Phys::Polygon BLOCK_BOUNDS_DOOR = Phys::toPolygon(Phys::Rectangle::createFromDimensions(0.25,0,0.5,1));
 const Phys::Polygon BLOCK_BOUNDS_PLATFORM = Phys::toPolygon(Phys::Rectangle::createFromDimensions(0.75,0,1,0.25));

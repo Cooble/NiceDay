@@ -30,6 +30,7 @@ public:
 	inline LayerStack& getLayerStack() { return m_LayerStack; }
 	inline float getFPS() const{ return m_fps; }
 	inline int getTickMillis() const { return m_tick_millis; }
+	inline int getRenderMillis() const { return m_render_millis; }
 	inline int getTargetTPS() const{ return m_target_tps; }
 	inline Scheduler& getScheduler() { return m_scheduler; }
 
@@ -40,6 +41,7 @@ private:
 
 	float m_fps;
 	int m_tick_millis;
+	int m_render_millis;
 	int m_target_tps;
 
 	Window* m_Window;

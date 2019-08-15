@@ -30,7 +30,7 @@ void main() {
 	color *= 255.0f / maxLightValue;
 
 	
-	vec4 totalColor = vec4(u_chunkback_color.rgb,(texture2D(u_texture_1, v_uv_coords)* 255.0f / maxLightValue).r*u_chunkback_color.a);
+	vec4 totalColor = vec4(u_chunkback_color.rgb,(texture2D(u_texture_1, v_uv_coords)* 255.0f / maxLightValue).r-(1-u_chunkback_color.a));
 
 	color = max(color, totalColor);
 
