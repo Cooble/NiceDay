@@ -1,8 +1,18 @@
 # NiceDay
 
 Let's make Terraria in C++!  
-  
-### Pictured changelog:
+## TimeLine:
+- [Basic Tile Render](#basic-tile-render-03_05_2019)
+- [Corner tile render](#corner-tile-render-06_05_2019)
+- [Lighting prototype with water-spill-algorithm](#lighting-prototype-with-water-spill-algorithm-18_05_2019)
+- [Platforms, grass, sky](#platforms-grass-sky-20_05_2019)
+- [Blocks, Walls, Background](#blocks-walls-background-26_05_2019)
+- [Colorful block corners, glass, procedural chunk generation](#colorful-block-corners-glass-procedural-chunk-generation-14_06_2019)
+- [Dynamic and Cached monochromatic lighting system](#dynamic-and-cached-monochromatic-lighting-system-19_06_2019)
+- [Multithreaded lights,  Inheritance Entity System](#multithreaded-lights--inheritance-entity-system-maybe-will-change-to-ecs-in-the-future22_07_2019)
+- [Smooth wallLight vs edgy blockLight, Day/Night cycle](#smooth-walllight-vs-edgy-blocklight-daynight-cycle-12_08_2019)
+- [ParticleSystem, Trees, Flowers, PlayerSprite, Walking on steep floor, fullscreen](#particlesystem-trees-flowers-playersprite-walking-on-steep-floor-fullscreen-25_08_2019)  
+## Pictured changelog:
 
 #### Basic tile render (03_05_2019)
 ![Alt text](screenshots/03_05_2019.png?raw=false "")
