@@ -41,7 +41,20 @@ Added dynamically created TextureAtlas.
 Added painting and multiblock structure support.  
 ![Alt text](screenshots/12_08_2019.png?raw=false "")   
 Oh, shoot!   
-![Alt Text](screenshots/12_08_2019.gif?raw=false "")  
+![Alt Text](screenshots/12_08_2019.gif?raw=false "") 
+  
+Ability to walk on blocks which are 1high without jumping. (25_08_2019)   
+Player has a walk animation.     
+Crude ParticleSystem using BatchRenderer2D temporarily, will have its own renderer with shader in the future. Can do 3500 particles without a problem.  
+Added multiblock structure = tree and its generator.   After placing a sapling block, sapling tile entity counts the worldtime and after a while calls TreeGen.    
+Trees have random number of branches(dry or normal) and random corona.  
+Everybody loves flowers. and graaasss. (Sheep are in sight :D)  
+![Alt text](screenshots/25_08_2019.png?raw=false "")  
+
+
+
+  
+ 
 
   
 
