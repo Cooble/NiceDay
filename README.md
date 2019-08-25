@@ -24,6 +24,7 @@ Let's make Terraria in C++!
 
 #### Dynamic and Cached monochromatic lighting system (19_06_2019)  
 - Cached lighting is only calculated onBlockChange  
+
 ![Alt text](screenshots/19_06_2019.png?raw=false "")
 
 #### Multithreaded lights,  Inheritance Entity System (maybe will change to ECS in the future)(22_07_2019)  
@@ -39,6 +40,7 @@ In the pic: red Zombie attacks black Player.  (and then mysteriously disappears 
 #### Smooth wallLight vs edgy blockLight, Day/Night cycle (12_08_2019)  
 - Added dynamically created TextureAtlas.  
 - Added painting and multiblock structure support.  
+
 ![Alt text](screenshots/12_08_2019.png?raw=false "")   
 Oh, shoot!   
 ![Alt Text](screenshots/12_08_2019.gif?raw=false "") 
@@ -50,6 +52,7 @@ Oh, shoot!
 - Crude ParticleSystem using BatchRenderer2D temporarily, will have its own renderer with shader in the future. Can do 3500 particles without a problem.  
 - Added multiblock structure = tree and its generator. After placing a sapling block, sapling tile entity counts the worldtime and then calls TreeGen. Trees have random number of branches(dry or normal) and random corona.  
 - Everybody loves flowers. and graaasss. (Sheep are in sight :D)  
+
 ![Alt text](screenshots/25_08_2019.png?raw=false "")  
 
 
