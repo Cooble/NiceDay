@@ -1,7 +1,9 @@
 #pragma once
 #include "ndpch.h"
 #include "physShapes.h"
-class TextureAtlas;
+#include "world/entity/EntityManager.h"
+#include "world/entity/entity_datas.h"
+class BlockTextureAtlas;
 //STATES=========================================================
 //is air counterclockwise start from up(=lsb) (up left down right)
 constexpr int BLOCK_STATE_FULL = 0;
@@ -97,7 +99,8 @@ struct BlockStruct {
 class World;
 class WorldEntity;
 
-
+constexpr uint8_t OPACITY_AIR = 1;
+constexpr uint8_t OPACITY_SOLID = 3;
 class Block
 {
 private:
@@ -111,6 +114,8 @@ protected:
 
 	//if yes the texturepos will be added based on location of block in chunk
 	bool m_has_big_texture;
+
+	EntityType m_tile_entity;
 
 	const Phys::Polygon* m_collision_box;
 	int m_collision_box_size;
@@ -128,7 +133,11 @@ protected:
 	int m_block_connect_group;
 	bool isInGroup(World* w, int x, int y, int group) const;
 	bool isInGroup(int blockID, int group) const;
-	void setNoCollisionBox();
+	inline void setNoCollisionBox()
+	{
+		m_collision_box = nullptr;
+		m_collision_box_size = 0;
+	}
 
 public:
 	Block(int id);
@@ -142,6 +151,9 @@ public:
 		return m_light_src;
 	}
 	inline uint8_t getOpacity()const {return m_opacity;}
+	inline bool hasTileEntity()const { return m_tile_entity != ENTITY_TYPE_NONE; }
+	virtual Phys::Vecti getTileEntityCoords(int x, int y, const BlockStruct& b);
+	inline EntityType getTileEntity() const { return m_tile_entity; }
 
 	virtual const Phys::Polygon& getCollisionBox(int x, int y, const BlockStruct& b) const;
 	bool hasCollisionBox() const;
@@ -149,17 +161,17 @@ public:
 	inline bool isInConnectGroup(int groups) const { return (groups & m_block_connect_group) != 0; }//they have group in common 
 
 
-	virtual void onTextureLoaded(const TextureAtlas& atlas);
+	virtual void onTextureLoaded(const BlockTextureAtlas& atlas);
 
 	//returns -1 if not render
-	virtual int getTextureOffset(int x, int y, const BlockStruct&) const;
-	virtual int getCornerOffset(int x, int y, const BlockStruct&) const;
+	virtual int getTextureOffset(int x, int y, const BlockStruct& b) const;
+	virtual int getCornerOffset(int x, int y, const BlockStruct& b) const;
 
 	//returns true if this block was changed as well
 	virtual bool onNeighbourBlockChange(World* world, int x, int y) const;
 
-	virtual void onBlockPlaced(World* w,WorldEntity* e, int x, int y, BlockStruct& b) const {}
-	virtual void onBlockDestroyed(World* w,WorldEntity* e, int x, int y, BlockStruct& b) const {}
+	virtual void onBlockPlaced(World* w, WorldEntity* e, int x, int y, BlockStruct& b) const;
+	virtual void onBlockDestroyed(World* w, WorldEntity* e, int x, int y, BlockStruct& b) const;
 
 
 	virtual void onBlockClicked(World* w, WorldEntity* e,int x,int y,BlockStruct& b) const {}
@@ -199,6 +211,8 @@ public:
 	inline int getWidth()const { return m_width; }
 	inline int getHeight()const { return m_height; }
 
+	Phys::Vecti getTileEntityCoords(int x, int y, const BlockStruct& b) override;
+
 	//what dimensions need to be placed
 	virtual Phys::Rectanglei getBuildDimensions() const { return m_build_dimensions; }
 
@@ -233,7 +247,7 @@ public:
 	Wall(const Wall& c) = delete;
 	void operator=(Wall const&) = delete;
 	virtual ~Wall();
-	virtual void onTextureLoaded(const TextureAtlas& atlas);
+	virtual void onTextureLoaded(const BlockTextureAtlas& atlas);
 	inline int getID() const { return m_id; };
 	inline bool isTransparent() const { return m_transparent; }
 

@@ -171,9 +171,6 @@
     <ClInclude Include="src\world\World.h">
       <Filter>src\world</Filter>
     </ClInclude>
-    <ClInclude Include="src\world\WorldGen.h">
-      <Filter>src\world</Filter>
-    </ClInclude>
     <ClInclude Include="src\world\WorldIO.h">
       <Filter>src\world</Filter>
     </ClInclude>
@@ -1334,9 +1331,19 @@
     <ClInclude Include="src\graphics\Effect.h" />
     <ClInclude Include="src\graphics\GContext.h" />
     <ClInclude Include="src\platform\OpenGL\OpenGLContext.h" />
-    <ClInclude Include="src\graphics\TextureAtlas.h" />
     <ClInclude Include="vendor\stb_image\stb_image_resize.h" />
     <ClInclude Include="vendor\stb_image\stb_image_write.h" />
+    <ClInclude Include="src\world\WorldTime.h" />
+    <ClInclude Include="src\world\gen\WorldGen.h">
+      <Filter>src\world</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world\gen\TreeGen.h" />
+    <ClInclude Include="src\graphics\Bar.h" />
+    <ClInclude Include="src\particle\ParticleManager.h" />
+    <ClInclude Include="src\graphics\BlockTextureAtlas.h" />
+    <ClInclude Include="src\graphics\TextureAtlas.h" />
+    <ClInclude Include="src\world\particle\ParticleRegistry.h" />
+    <ClInclude Include="src\world\particle\particles.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\EntryPoint.cpp">
@@ -1429,9 +1436,6 @@
     <ClCompile Include="src\world\World.cpp">
       <Filter>src\world</Filter>
     </ClCompile>
-    <ClCompile Include="src\world\WorldGen.cpp">
-      <Filter>src\world</Filter>
-    </ClCompile>
     <ClCompile Include="src\world\WorldIO.cpp">
       <Filter>src\world</Filter>
     </ClCompile>
@@ -1496,6 +1500,15 @@
     <ClCompile Include="src\graphics\Effect.cpp" />
     <ClCompile Include="src\graphics\GContext.cpp" />
     <ClCompile Include="src\platform\OpenGL\OpenGLContext.cpp" />
+    <ClCompile Include="src\world\gen\WorldGen.cpp">
+      <Filter>src\world</Filter>
+    </ClCompile>
+    <ClCompile Include="src\world\gen\TreeGen.cpp" />
+    <ClCompile Include="src\graphics\Bar.cpp" />
+    <ClCompile Include="src\particle\ParticleManager.cpp" />
+    <ClCompile Include="src\graphics\BlockTextureAtlas.cpp" />
     <ClCompile Include="src\graphics\TextureAtlas.cpp" />
+    <ClCompile Include="src\world\particle\ParticleRegistry.cpp" />
+    <ClCompile Include="src\world\particle\particles.cpp" />
   </ItemGroup>
 </Project>

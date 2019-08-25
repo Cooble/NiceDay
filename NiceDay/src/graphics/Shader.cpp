@@ -107,7 +107,7 @@ static unsigned int buildProgram(const Shader::ShaderProgramSources& src) {
 	if (geometry)
 		GLCall(glDeleteShader(gs));
 
-	ND_TRACE("[Shader: {}] parsed", program);
+	//ND_TRACE("[Shader: {}] parsed", program);
 
 	return program;
 }

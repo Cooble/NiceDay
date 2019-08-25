@@ -3,12 +3,14 @@
 #include "entities.h"
 
 
-void PathTracer::init(World* world, EntityID physEntity)
+void PathTracer::init(World* world, EntityID physEntity,Phys::Vect acceleration,Phys::Vect maxVelocity)
 {
-	this->m_world = world;
-	this->m_phys_entity = physEntity;
-
+	m_world = world;
+	m_phys_entity = physEntity;
+	m_acceleration = acceleration;
+	m_max_velocity = maxVelocity;
 }
+
 
 TaskResponse PathTracer::update()
 {
@@ -52,8 +54,16 @@ TaskResponse PathTracer::update()
 			m_last_jump = entity->getPosition();
 		}
 	}
-	entity->getAcceleration().x = abs(vecto.x)/vecto.x * 20.f;
-	entity->getAcceleration().y = -9.0f / 60;
+	else if(entity->isOnFloor())
+		m_last_jump = Phys::Vect(std::numeric_limits<float>::max());
+	if(abs(entity->getVelocity().x)<=m_max_velocity.x)
+		entity->getAcceleration().x = abs(vecto.x)/vecto.x * m_acceleration.x;
+	else entity->getAcceleration().x = 0;
+
+	if (abs(entity->getVelocity().y) <= m_max_velocity.y)
+		entity->getAcceleration().y = m_acceleration.y;
+	else entity->getAcceleration().y = 0;
+
 	return TaskResponse::RUNNING;
 	
 	

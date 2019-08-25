@@ -2,9 +2,12 @@
 #include "ndpch.h"
 #include "WorldIO.h"
 #include "LightCalculator.h"
-#include "WorldGen.h"
+#include "gen/WorldGen.h"
 #include "block/Block.h"
 #include "entity/WorldEntity.h"
+#include "world/WorldTime.h"
+#include "particle/ParticleManager.h"
+
 
 #define CHUNK_NOT_EXIST -1
 #define CHUNK_BUFFER_LENGTH 100 //5*4
@@ -133,36 +136,6 @@ public:
 		cy = id >> BITS_FOR_CHUNK_LOC;
 	}
 };
-
-enum class Day : int
-{
-	MON=0,TUE,WED,THR,FRI,SAT,SUN
-};
-constexpr long TICKS_PER_MINUTE = 1;//every two seconds we have one game minute
-struct WorldTime
-{
-	long long m_ticks;
-	WorldTime(long long ticks):m_ticks(ticks){}
-
-	inline float hours() const
-	{
-		return (float)(m_ticks % (TICKS_PER_MINUTE * 60 * 24)) / TICKS_PER_MINUTE / 60;
-	}
-	inline float minutes() const
-	{
-		return (float)(m_ticks % (TICKS_PER_MINUTE * 60)) / TICKS_PER_MINUTE;
-	}
-	inline Day dayOfWeek() const
-	{
-		return Day((m_ticks % (TICKS_PER_MINUTE * 60 * 24 * 7))/(TICKS_PER_MINUTE * 60 * 24));
-	}
-	
-	inline bool isNight() const
-	{
-		auto hour = hours();
-		return hour > 19.5 || hour < 5.5;
-	}
-};
 struct WorldInfo
 {
 	long seed;
@@ -179,6 +152,8 @@ class World
 public:
 	inline static int toChunkCoord(float x) { return toChunkCoord((int)x); }
 	inline static int toChunkCoord(int x) { return x >> WORLD_CHUNK_BIT_SIZE; }
+	float m_time_speed=1;
+	bool m_dayNightCycleEnable=true;
 private:
 	friend class WorldIO::Session;
 	friend class WorldGen;
@@ -193,10 +168,15 @@ private:
 	BlockStruct m_air_block=0;
 
 	EntityManager m_entity_manager;
+
+	// needs to be created outside world and set
+	ParticleManager* m_particle_manager=nullptr;
 	WorldIO::DynamicSaver m_nbt_saver;
 
 	std::vector<EntityID> m_entity_array;
+	std::unordered_map<int64_t,EntityID> m_tile_entity_map;
 	std::vector<EntityID> m_entity_array_buff;
+	std::unordered_map<int64_t, EntityID> m_tile_entity_array_buff;
 
 
 	bool m_edit_buffer_enable = false;
@@ -245,7 +225,7 @@ public:
 	//return nullptr if chunk is not loaded or invalid coords 
 	//(won't cause chunk load)
 	const Chunk* getLoadedChunkPointer(int x, int y) const;
-	Chunk* getLoadedChunkPointerNoConst(int cx, int cy);
+	Chunk* getLoadedChunkPointerMutable(int cx, int cy);
 	int getChunkIndex(int x, int y) const;
 	int getChunkIndex(int id) const;
 	Chunk& loadChunk(int x, int y);
@@ -320,21 +300,44 @@ public:
 
 	inline auto& getNBTSaver() { return m_nbt_saver; }
 	inline EntityManager& getEntityManager() { return m_entity_manager; }
+	inline ParticleManager** particleManager() { return &m_particle_manager; }
+	void spawnParticle(ParticleID id, Phys::Vect pos, Phys::Vect speed, Phys::Vect acc, int life);
+
 
 	inline WorldEntity* getLoadedEntity(EntityID id)
 	{
 		return m_entity_manager.entity(id);
 	}
+	inline WorldEntity* getLoadedTileEntity(int x,int y)
+	{
+		auto f = m_tile_entity_map.find(Phys::Vecti(x, y).toInt64());
+		if (f == m_tile_entity_map.end())
+			return nullptr;
+		return m_entity_manager.entity(f->second);
+	}
 
 	inline const auto& getLoadedEntities() { return m_entity_array; }
+	inline const auto& getLoadedTileEntities() { return m_tile_entity_map; }
 
 	void loadEntity(WorldEntity* pEntity);
 
-	void unloadEntity(EntityID worldEntity);
+	void unloadEntity(EntityID worldEntity,bool isKilled=false);
+	void unloadTileEntity(EntityID worldEntity,bool isKilled=false);
 
 	EntityID spawnEntity(WorldEntity* pEntity);
 
+	// kills normal or tile entity
+	// never call on yourself
+	// immediately calls ~() !
+	// to kill yourself safely use entity.markDead() instead (~() will be called after update() of that entity)
+	// if you know that entity is tilentity, use killTileEntity() instead
 	void killEntity(EntityID id);
+
+	// kills only tile entity
+	// never call on yourself
+	// immediately calls ~() !
+	// to kill yourself safely use entity.markDead() instead (~() will be called after update() of that entity)
+	void killTileEntity(EntityID id);
 
 	inline std::vector<EntityID>::const_iterator beginEntities()
 	{
@@ -345,7 +348,6 @@ public:
 	{
 		return m_entity_array.end();
 	}
-
 
 	inline std::vector<EntityID>::const_reverse_iterator rbeginEntities()
 	{

@@ -2,7 +2,7 @@
 #include "BlockRegistry.h"
 
 
-void BlockRegistry::initTextures(const TextureAtlas& atlas)
+void BlockRegistry::initTextures(const BlockTextureAtlas& atlas)
 {
 	for (Block* block : m_blocks)
 	{

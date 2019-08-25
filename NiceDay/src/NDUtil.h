@@ -399,3 +399,6 @@ public:
 		return find(key) != end();
 	}
 };
+
+inline float randFloat(float size=1) { return std::rand() % 1000 / 1000.f*size; }
+inline float randDispersedFloat(float absSize=1) { return (std::rand() % 1000 / 1000.f-0.5f)*absSize*2; }

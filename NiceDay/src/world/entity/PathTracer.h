@@ -15,13 +15,15 @@ private:
 	EntityID m_phys_entity;
 	Phys::Vect m_target;
 	EntityID m_entity_target=ENTITY_ID_INVALID;
+	Phys::Vect m_acceleration;
+	Phys::Vect m_max_velocity;
 
 	Phys::Vect m_last_jump;
 	bool m_running=false;
 public:
 
 	PathTracer() = default;
-	void init(World* world, EntityID physEntity);
+	void init(World* world, EntityID physEntity, Phys::Vect acceleration, Phys::Vect maxVelocity);
 
 	inline void setTarget(const Phys::Vect& target)
 	{

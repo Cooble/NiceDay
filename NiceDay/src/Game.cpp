@@ -48,7 +48,7 @@ void Game::fireEvent(Event& e)
 
 void Game::init()
 {
-	m_target_tps = TARGET_TPS;
+	m_target_tps = TPS;
 #ifdef ND_DEBUG
 	std::string s = "Niceday - Debug";
 #else

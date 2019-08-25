@@ -3,7 +3,8 @@
 #include "world/World.h"
 #include "block_datas.h"
 #include "entity/Camera.h"
-#include "graphics/TextureAtlas.h"
+#include "graphics/BlockTextureAtlas.h"
+#include "world/entity/EntityRegistry.h"
 
 //AIR=======================================
 BlockAir::BlockAir()
@@ -11,7 +12,7 @@ BlockAir::BlockAir()
 {
 	setNoCollisionBox();
 	m_block_connect_group = BIT(BLOCK_GROUP_AIR_BIT);
-	m_opacity = 1;
+	m_opacity = OPACITY_AIR;
 	m_texture_pos = -1;
 }
 
@@ -71,7 +72,7 @@ BlockPlatform::BlockPlatform()
 {
 	m_block_connect_group = BIT(BLOCK_GROUP_PLATFORM_BIT);
 	m_texture_pos = {0, 15};
-	m_opacity = 1;
+	m_opacity = OPACITY_AIR;
 	m_collision_box = &BLOCK_BOUNDS_PLATFORM;
 	m_collision_box_size = 1;
 }
@@ -111,7 +112,7 @@ bool BlockPlatform::onNeighbourBlockChange(World* world, int x, int y) const
 	{
 		block.block_metadata = half_int(5, 0);
 	}
-	else if (!isLeftAir&&!leftPlat)
+	else if (!isLeftAir && !leftPlat)
 	{
 		block.block_metadata = half_int(2, 0);
 	}
@@ -182,7 +183,7 @@ bool BlockGrass::onNeighbourBlockChange(World* world, int x, int y) const
 BlockGlass::BlockGlass()
 	: Block(BLOCK_GLASS)
 {
-	m_opacity = 1;
+	m_opacity = OPACITY_AIR;
 	m_texture_pos = {0, 14};
 	m_corner_translate_array = BLOCK_CORNERS_GLASS;
 }
@@ -209,6 +210,20 @@ BlockTorch::BlockTorch()
 	setNoCollisionBox();
 	m_opacity = 0;
 	m_light_src = 16;
+}
+
+void BlockTorch::onBlockClicked(World* w, WorldEntity* e, int x, int y, BlockStruct& b) const
+{
+	auto tileE = w->getLoadedTileEntity(x, y);
+	if(tileE)
+		w->killTileEntity(tileE->getID());
+	else {
+		auto entityBuff = malloc(EntityRegistry::get().getBucket(ENTITY_TYPE_TILE_TORCH).byte_size);
+		EntityRegistry::get().createInstance(ENTITY_TYPE_TILE_TORCH, entityBuff);
+
+		((WorldEntity*)entityBuff)->getPosition() = Phys::Vect(x, y);
+		w->spawnEntity((WorldEntity*)entityBuff);
+	}
 }
 
 int BlockTorch::getTextureOffset(int x, int y, const BlockStruct& b) const
@@ -271,7 +286,7 @@ bool BlockTorch::onNeighbourBlockChange(World* world, int x, int y) const
 BlockDoor::BlockDoor(int id)
 	: MultiBlock(id)
 {
-	m_opacity = 1;
+	m_opacity = OPACITY_AIR;
 	m_collision_box = &BLOCK_BOUNDS_DOOR;
 	m_collision_box_size = 1;
 }
@@ -329,7 +344,7 @@ BlockDoorOpen::BlockDoorOpen()
 	m_collision_box_size = 0;
 }
 
-void BlockDoorOpen::onTextureLoaded(const TextureAtlas& atlas)
+void BlockDoorOpen::onTextureLoaded(const BlockTextureAtlas& atlas)
 {
 	m_texture_pos = atlas.getTexture("block/door") + half_int(1, 0);
 }
@@ -357,7 +372,7 @@ bool BlockDoorClose::canBePlaced(World* w, int x, int y) const
 	return bb.hasCollisionBox();
 }
 
-void BlockDoorClose::onTextureLoaded(const TextureAtlas& atlas)
+void BlockDoorClose::onTextureLoaded(const BlockTextureAtlas& atlas)
 {
 	m_texture_pos = atlas.getTexture("block/door");
 }
@@ -365,10 +380,9 @@ void BlockDoorClose::onTextureLoaded(const TextureAtlas& atlas)
 BlockPainting::BlockPainting()
 	: MultiBlock(BLOCK_PAINTING)
 {
-	m_opacity = 1;
+	m_opacity = OPACITY_AIR;
 	m_width = 4;
 	m_height = 3;
-	m_texture_pos = {3, 8};
 	setNoCollisionBox();
 }
 
@@ -386,12 +400,72 @@ bool BlockPainting::canBePlaced(World* w, int x, int y) const
 	return true;
 }
 
+BlockTreeSapling::BlockTreeSapling()
+	: Block(BLOCK_TREE_SAPLING)
+{
+	m_opacity = OPACITY_AIR;
+	setNoCollisionBox();
+	m_tile_entity = ENTITY_TYPE_TILE_SAPLING;
+}
+
+bool BlockTreeSapling::canBePlaced(World* w, int x, int y) const
+{
+	if (!w->isAir(x, y))
+		return false;
+	int underID = w->getBlock(x, y - 1).block_id;
+	return underID == BLOCK_DIRT || underID == BLOCK_GRASS;
+}
+
+int BlockTreeSapling::getCornerOffset(int x, int y, const BlockStruct&) const
+{
+	return BLOCK_STATE_FULL;
+}
 
 BlockTree::BlockTree()
 	: Block(BLOCK_TREE)
 {
-	m_opacity = 1;
+	m_opacity = OPACITY_AIR;
 	setNoCollisionBox();
+}
+
+void BlockTree::onTextureLoaded(const BlockTextureAtlas& atlas)
+{
+	using namespace BlockTreeScope;
+	std::string path = "block/tree";
+
+	m_texture_map[RootL] = atlas.getTexture(path, "RootL");
+	m_texture_map[RootR] = atlas.getTexture(path, "RootR");
+	m_texture_map[fullTrunk2W] = atlas.getTexture(path, "fullTrunk2W");
+
+	m_texture_map[dryBranchL] = atlas.getTexture(path, "dryBranchL");
+	m_texture_map[dryBranchR] = atlas.getTexture(path, "dryBranchR");
+
+	m_texture_map[branchL] = atlas.getTexture(path, "branchL");
+	m_texture_map[branchR] = atlas.getTexture(path, "branchR");
+
+	m_texture_map[trunkBranchL] = atlas.getTexture(path, "trunkBranchL");
+	m_texture_map[trunkBranchR] = atlas.getTexture(path, "trunkBranchR");
+
+	m_texture_map[smallBlobL2W] = atlas.getTexture(path, "smallBlobL2W");
+	m_texture_map[smallBlobR2W] = atlas.getTexture(path, "smallBlobR2W");
+
+	m_texture_map[thinTrunkL] = atlas.getTexture(path, "thinTrunkL");
+	m_texture_map[thinTrunkR] = atlas.getTexture(path, "thinTrunkR");
+
+	m_texture_map[dryBlobL] = atlas.getTexture(path, "dryBlobL");
+	m_texture_map[dryBlobR] = atlas.getTexture(path, "dryBlobR");
+
+	m_texture_map[bigBlob0] = atlas.getTexture(path, "bigBlob0");
+	m_texture_map[bigBlob1] = atlas.getTexture(path, "bigBlob1");
+	m_texture_map[blob] = atlas.getTexture(path, "blob");
+
+	m_texture_map[trunkL] = atlas.getTexture(path, "trunkL");
+	m_texture_map[trunkR] = atlas.getTexture(path, "trunkR");
+}
+
+int BlockTree::getTextureOffset(int x, int y, const BlockStruct& s) const
+{
+	return m_texture_map[(uint8_t)s.block_corner] + (half_int)s.block_metadata;
 }
 
 int BlockTree::getCornerOffset(int x, int y, const BlockStruct&) const
@@ -399,7 +473,79 @@ int BlockTree::getCornerOffset(int x, int y, const BlockStruct&) const
 	return BLOCK_STATE_FULL;
 }
 
+
 bool BlockTree::onNeighbourBlockChange(World* world, int x, int y) const
 {
 	return false;
+}
+
+void BlockTree::onBlockDestroyed(World* w, WorldEntity* e, int x, int y, BlockStruct& b) const
+{
+	auto& left = w->getBlock(x - 1, y);
+	auto& right = w->getBlock(x + 1, y);
+	auto& up = w->getBlock(x, y + 1);
+	auto& down = w->getBlock(x, y - 1);
+
+	half_int baseBlock = half_int(x, y) - half_int(b.block_metadata);
+	b.block_id = 0;
+	//we dont want other blocks to call this block which would call those blocks which would c.... you get the idea
+
+	bool isOurL = left.block_id == getID(); //&&
+	//half_int(half_int(x - 1, y) - half_int(left.block_metadata)) == baseBlock;
+	if (isOurL)
+		w->setBlock(x - 1, y, 0);
+
+	bool isOurR = right.block_id == getID(); //&&
+	//	half_int(half_int(x + 1, y) - half_int(right.block_metadata)) == baseBlock;
+	if (isOurR)
+		w->setBlock(x + 1, y, 0);
+
+	bool isOurU = up.block_id == getID(); //&&
+	//	half_int(half_int(x, y + 1) - half_int(up.block_metadata)) == baseBlock;
+	if (isOurU)
+		w->setBlock(x, y + 1, 0);
+
+	bool isOurD = down.block_id == getID(); // &&
+	//	half_int(half_int(x, y - 1) - half_int(down.block_metadata)) == baseBlock;
+	if (isOurD)
+		w->setBlock(x, y - 1, 0);
+}
+
+BlockPlant::BlockPlant(int id)
+	: Block(id)
+	  , m_max_metadata(1)
+{
+	setNoCollisionBox();
+	m_opacity = OPACITY_AIR;
+}
+
+int BlockPlant::getTextureOffset(int x, int y, const BlockStruct& b) const
+{
+	return m_texture_pos + half_int(half_int(b.block_metadata).x, 0);
+}
+
+bool BlockPlant::canBePlaced(World* w, int x, int y) const
+{
+	if (!w->isAir(x, y))
+		return false;
+	int underID = w->getBlock(x, y - 1).block_id;
+	return underID == BLOCK_GRASS;
+}
+
+void BlockPlant::onBlockPlaced(World* w, WorldEntity* e, int x, int y, BlockStruct& b) const
+{
+	b.block_metadata = std::rand() % m_max_metadata;
+}
+
+BlockFlower::BlockFlower()
+	:BlockPlant(BLOCK_FLOWER)
+{
+	m_max_metadata = 8;
+}
+
+BlockGrassPlant::BlockGrassPlant()
+	: BlockPlant(BLOCK_GRASS_PLANT)
+
+{
+	m_max_metadata = 4;
 }

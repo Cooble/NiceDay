@@ -163,6 +163,40 @@ void BatchRenderer2D::submit(const Renderable2D& renderable)
 
 
 }
+void BatchRenderer2D::submit(const glm::vec3& pos,const glm::vec2& size,const UVQuad& uv,Texture* t)
+{
+	int textureSlot = bindTexture(t);
+	
+
+	m_vertex_data->position = (m_back) * pos;
+	m_vertex_data->uv = uv.uv[0];
+	m_vertex_data->textureSlot = textureSlot;
+	++m_vertex_data;
+
+	m_vertex_data->position = (m_back) * (pos + vec3(size.x, 0, 0));
+	m_vertex_data->uv = uv.uv[1];
+	m_vertex_data->textureSlot = textureSlot;
+	++m_vertex_data;
+
+	m_vertex_data->position = (m_back) * (pos + vec3(size.x, size.y, 0));
+	m_vertex_data->uv = uv.uv[2];
+	m_vertex_data->textureSlot = textureSlot;
+	++m_vertex_data;
+
+	m_vertex_data->position = (m_back) * (pos + vec3(0, size.y, 0));
+	m_vertex_data->uv = uv.uv[3];
+	m_vertex_data->textureSlot = textureSlot;
+	++m_vertex_data;
+
+	m_indices_count += 6;
+	if (m_indices_count == MAX_INDICES)
+	{
+		flush();
+		begin();
+	}
+
+
+}
 
 void BatchRenderer2D::flush()
 {

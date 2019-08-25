@@ -31,6 +31,7 @@ const std::string& EntityRegistry::entityTypeToString(EntityType type) const
 			return entity_bucket.name;
 	}
 	ASSERT(false, "Invalid EntityType");
+	return "invalid entitytype";
 }
 
 WorldEntity* EntityRegistry::loadInstance(NBT& nbt) const

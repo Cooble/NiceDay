@@ -6,6 +6,7 @@
 //should use mapbuffer or subdata
 #define USE_MAP_BUF 1
 
+struct UVQuad;
 class Texture;
 class Renderable2D;
 using namespace glm;
@@ -43,6 +44,7 @@ public:
 
 	void begin();
 	void submit(const Renderable2D&);
+	void submit(const glm::vec3& pos, const glm::vec2& size, const UVQuad& uv, Texture* t);
 	void flush();
 
 

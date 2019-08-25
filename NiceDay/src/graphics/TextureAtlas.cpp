@@ -4,10 +4,9 @@
 #include "stb_image.h"
 #include "stb_image_write.h"
 #include <filesystem>
-#include "world/ChunkMesh.h"
 
 //should print everything
-#define VERBOSE_TEXTURE_ATLAS 0
+#define VERBOSE_TEXTURE_ATLAS_B 1
 
 class Imager2D
 {
@@ -50,7 +49,6 @@ struct Icon : Phys::Rectanglei
 	int targetX, targetY;
 	std::string filePath;
 	std::string subName;
-	bool hascorners=false;
 
 	inline int getSize() const
 	{
@@ -190,7 +188,6 @@ struct Nod
 		return frame.width() < 1 || frame.height() < 1;
 	}
 };
-static std::string edgeString = "EDGE";
 
 static bool endsWith(const std::string& str, const std::string& suffix)
 {
@@ -200,12 +197,6 @@ static bool endsWith(const std::string& str, const std::string& suffix)
 static bool startsWith(const std::string& str, const std::string& prefix)
 {
 	return str.size() >= prefix.size() && 0 == str.compare(0, prefix.size(), prefix);
-}
-
-static void removeEDGE(std::string& e)
-{
-	if(endsWith(e,edgeString))
-		e = e.substr(0, e.size() - edgeString.size());
 }
 static bool fit(Icon* icon, Nod* nod)
 {
@@ -274,7 +265,6 @@ void TextureAtlas::createAtlas(const std::string& folder, int segmentCount, int 
 				continue;
 			}
 			int labelCount = 0;
-			bool corner = false;
 			Icon icon = {};
 			while (getline(myfile, line))
 			{
@@ -285,18 +275,6 @@ void TextureAtlas::createAtlas(const std::string& folder, int segmentCount, int 
 
 				if (line.empty())
 					continue;;
-				if(!labelSection&&startsWith(line,"edge:"))
-				{
-					std::string yes = line.substr(std::string("edge:").size());
-					std::string result;
-					std::remove_copy(yes.begin(), yes.end(), std::back_inserter(result), ' ');
-					yes = "";
-					std::remove_copy(result.begin(), result.end(), std::back_inserter(yes), '\t');
-					if (startsWith(yes, "1") || startsWith(yes, "true")) {
-						icon.hascorners = true;
-						corner = true;
-					}
-				}
 				if (startsWith(line, "#"))
 				{
 					labelSection = true;
@@ -338,7 +316,6 @@ void TextureAtlas::createAtlas(const std::string& folder, int segmentCount, int 
 						offset = endOffset + 1;
 					}
 					icon.filePath = convertToShrunkFilePath(folder, txtFile);
-					removeEDGE(icon.filePath);
 
 					icon.subName = labelName;
 					icon.x0 = dims[0];
@@ -347,10 +324,6 @@ void TextureAtlas::createAtlas(const std::string& folder, int segmentCount, int 
 					icon.setWidth(dims[2]);
 					icon.setHeight(dims[3]);
 					subImages[icon.filePath + icon.subName] = icon;
-					if (!std::filesystem::exists(pngFile)) {
-						pngFile = removeSuffix(pngFile);
-						pngFile += "EDGE.png";
-					}
 					subImagesPath[pngFile].push_back(icon.filePath + icon.subName);
 					icon = {};
 					++labelCount;
@@ -358,32 +331,6 @@ void TextureAtlas::createAtlas(const std::string& folder, int segmentCount, int 
 			}
 			
 			myfile.close();
-
-			if(labelCount==0&&corner)//has corners but no specified main label
-			{
-				int width = 0;
-				int height = 0;
-				int BPP = 0;
-
-
-				void* currentImage = stbi_load(pngFile.c_str(), &width, &height, &BPP, 4);
-				ASSERT(currentImage, "invalid image");
-				stbi_image_free(currentImage);
-
-				Icon icon = {};
-				icon.filePath = convertToShrunkFilePath(folder, txtFile);
-
-				icon.hascorners = true;
-				icon.subName = "main";
-				icon.x0 = width/segmentSize/EDGE_COLOR_TRANSFORMATION_FACTOR;
-				icon.y0 = height/segmentSize/EDGE_COLOR_TRANSFORMATION_FACTOR;
-				icon.setWidth(width / segmentSize-icon.x0);
-				icon.setHeight(height / segmentSize - icon.y0);
-
-				subImages[icon.filePath + icon.subName] = icon;
-
-				subImagesPath[pngFile].push_back(icon.filePath + icon.subName);
-			}
 		}
 		else if (endsWith(txtFile, ".png"))
 		{
@@ -414,16 +361,6 @@ void TextureAtlas::createAtlas(const std::string& folder, int segmentCount, int 
 			icon.setHeight(height / segmentSize);
 			icon.subName = "main";
 			icon.filePath = convertToShrunkFilePath(folder, currentPNGPath);
-			
-			if(endsWith(icon.filePath, edgeString))
-			{
-				removeEDGE(icon.filePath);
-				icon.hascorners = true;
-				icon.x0 = width / segmentSize / EDGE_COLOR_TRANSFORMATION_FACTOR;
-				icon.y0 = height / segmentSize / EDGE_COLOR_TRANSFORMATION_FACTOR;
-				icon.setWidth(width / segmentSize - icon.x0);
-				icon.setHeight(height / segmentSize - icon.y0);
-			}
 			subImages[icon.filePath + icon.subName] = icon;
 
 			subImagesPath[currentPNGPath].push_back(icon.filePath + icon.subName);
@@ -431,21 +368,7 @@ void TextureAtlas::createAtlas(const std::string& folder, int segmentCount, int 
 	}
 
 
-	bool hasCorners = false;
-	for (auto& i : subImages)
-	{
-		if (i.second.hascorners)
-			hasCorners = true;
-	}
-	Icon cornerIcon;
-	if (hasCorners)
-	{
-		cornerIcon.targetX = 0;
-		cornerIcon.targetY = 0;
-		cornerIcon.setWidth(segmentCount / EDGE_COLOR_TRANSFORMATION_FACTOR);
-		cornerIcon.setHeight(segmentCount / EDGE_COLOR_TRANSFORMATION_FACTOR);
-	}
-
+	
 	Icon** ordered_icons = new Icon*[subImages.size()];
 
 	int index = 0;
@@ -457,18 +380,10 @@ void TextureAtlas::createAtlas(const std::string& folder, int segmentCount, int 
 	Sorter::invert(ordered_icons, subImages.size());
 
 	Nod n(0, 0, segmentCount, segmentCount);
-	if (hasCorners)
-	{
-		if (!fit(&cornerIcon, &n))
-		{
-			ND_ERROR("TextureAtlas: {} size[{}], too small", folder, size);
-			return;
-		}
-	}
 
 	for (int i = 0; i < subImages.size(); ++i)
 	{
-#if VERBOSE_TEXTURE_ATLAS
+#if VERBOSE_TEXTURE_ATLAS_B
 		ND_TRACE("[TextureAtlas] Loading subtexture: {}", (ordered_icons[i]->filePath + +":\t\t" + ordered_icons[i]->subName));
 #endif
 		if (!fit(ordered_icons[i], &n))
@@ -483,7 +398,6 @@ void TextureAtlas::createAtlas(const std::string& folder, int segmentCount, int 
 
 
 	Imager2D::flipY(true);
-	int indexxx = 0;
 	for (auto& path : subImagesPath)
 	{
 		int width = 0;
@@ -504,19 +418,6 @@ void TextureAtlas::createAtlas(const std::string& folder, int segmentCount, int 
 				icon.width() * segmentSize, icon.height() * segmentSize,
 				icon.targetX * segmentSize, icon.targetY * segmentSize);
 			m_subtextures[value] = half_int(icon.targetX, icon.targetY);
-			if (icon.hascorners)
-			{
-				float multi = (float)segmentSize / EDGE_COLOR_TRANSFORMATION_FACTOR;
-				Imager2D::copySubImage(
-					currentImage, atlas,
-					width, height, size, size,
-					icon.x0 * multi-2,
-					icon.y0 * multi-2,
-					icon.width() *  multi,
-					icon.height()* multi,
-					icon.targetX *  multi,
-					icon.targetY *  multi);
-			}
 		}
 
 		stbi_image_free(currentImage);

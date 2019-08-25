@@ -6,15 +6,21 @@
 #include "world/block/BlockRegistry.h"
 #include "world/World.h"
 #include "world/block/block_datas.h"
+#include "world/block/basic_blocks.h"
+
 #include "Stats.h"
 #include "Game.h"
+#include "graphics/Sprite.h"
+#include "world/gen/TreeGen.h"
+#include "world/particle/particles.h"
+
 
 
 //PhysEntity======================================================
 
 
 //return if we have intersection
-inline static bool findIntersection(World* w, const Phys::Vect& entityPos, const Phys::Polygon& entityBound)
+inline static bool findBlockIntersection(World* w, const Phys::Vect& entityPos, const Phys::Polygon& entityBound)
 {
 	auto& entityRectangle = entityBound.getBounds();
 	for (int x = entityRectangle.x0 - 1; x < ceil(entityRectangle.x1) + 1; ++x)
@@ -40,19 +46,66 @@ inline static bool findIntersection(World* w, const Phys::Vect& entityPos, const
 	return false;
 }
 
+inline static float getFloorHeight(World* w, const Phys::Vect& entityPos, const Phys::Rectangle& entityRectangle)
+{
+	float lineY = std::numeric_limits<float>::lowest();
+	for (int i = 0; i < 2; ++i)
+	{
+		for (int yy = 0; yy < 2; ++yy)
+		{
+			float x = entityRectangle.x0 + entityPos.x + i * entityRectangle.width();
+			float y = entityRectangle.y0 + entityPos.y + yy;
+			auto& pointDown0 = Phys::Vect(x, y);
+			auto& pointDown1 = Phys::Vect(x, y - 10000);
+
+			auto stru = w->getLoadedBlockPointer((int)pointDown0.x, (int)pointDown0.y);
+			if (stru == nullptr || stru->block_id == BLOCK_AIR)
+				continue;
+			auto& block = BlockRegistry::get().getBlock(stru->block_id);
+			if (!block.hasCollisionBox())
+				continue;
+
+			auto blockBounds = block.getCollisionBox((int)pointDown0.x, (int)pointDown0.y, *stru).copy();
+			auto blockPos = Phys::Vect((int)pointDown0.x, (int)pointDown0.y);
+			for (int j = 0; j < blockBounds.size(); ++j)
+			{
+				auto& v0 = blockBounds[j] + blockPos;
+				auto& v1 = blockBounds[(j + 1) % blockBounds.size()] + blockPos;
+
+				if (i == 0) //left
+				{
+					if (v0.x > pointDown0.x)
+						lineY = max(lineY, v0.y);
+				}
+				else if (v0.x < pointDown0.x) //right
+					lineY = max(lineY, v0.y);
+
+				auto v = Phys::intersectLines(v0, v1, pointDown0, pointDown1);
+				if (v.isValid() && v.y < entityRectangle.y1 + entityPos.y)
+					lineY = max(lineY, v.y);
+			}
+		}
+	}
+	return lineY;
+}
+
 constexpr float maxDistancePerStep = 0.4f;
 
 void PhysEntity::computePhysics(World* w)
 {
 	computeVelocity(w);
 	computeWindResistance(w);
-	if (m_velocity.lengthCab() > maxDistancePerStep * maxDistancePerStep)
+
+	if (m_velocity.lengthCab() > maxDistancePerStep)
 	{
-		if (!moveOrCollide(w, 0.5f)) //lets take 2 half steps yeah!
-			moveOrCollide(w, 0.5f);
+		int dividor = ceil(m_velocity.lengthCab() / maxDistancePerStep);
+		for (int i = 0; i < dividor; ++i)
+		{
+			if (moveOrCollide(w, 1.0f / dividor))
+				break;
+		}
 	}
-	else
-		moveOrCollide(w, 1);
+	else moveOrCollide(w, 1);
 }
 
 bool PhysEntity::moveOrCollide(World* w, float dt)
@@ -60,28 +113,68 @@ bool PhysEntity::moveOrCollide(World* w, float dt)
 	m_blockage = NONE;
 	m_is_on_floor = false;
 
-	constexpr float floorResistance = 0.1; //negative numbers mean conveyor belt Yeah!
+	constexpr float floorResistance = 0.2; //negative numbers mean conveyor belt Yeah!
 
 	//collision detection============================
 	auto possibleEntityPos = m_pos + m_velocity * dt;
 
 	//check if we can procceed in x, y direction
-	if (findIntersection(w, possibleEntityPos, m_bound))
+	if (findBlockIntersection(w, possibleEntityPos, m_bound))
 	{
 		possibleEntityPos = m_pos;
 		possibleEntityPos.x += m_velocity.x * dt;
 		//check if we can procceed at least in x direction
-		if (findIntersection(w, possibleEntityPos, m_bound))
+		if (findBlockIntersection(w, possibleEntityPos, m_bound))
 		{
+			//walk on floor check
+			if (m_can_walk && m_bound.isRectangle)
+			{
+				float y0 = m_bound.getBounds().y0 + m_pos.y;
+				float floorHeight = getFloorHeight(w, possibleEntityPos, m_bound.getBounds());
+				float difference = floorHeight - y0;
+
+				constexpr float maxHeightToWalk = 0.99f;
+				if (floorHeight < (m_bound.getBounds().y1 + m_pos.y) &&
+					difference > -0.06f &&
+					difference < maxHeightToWalk)
+				{
+					possibleEntityPos.y = floorHeight + 0.05f + m_bound.getBounds().y0;
+					if (!findBlockIntersection(w, possibleEntityPos, m_bound))
+					{
+						m_is_on_floor = true;
+						m_pos = possibleEntityPos;
+						m_velocity.y = 0;
+
+						if (m_velocity.x > 0) //apply resistance
+						{
+							m_velocity.x -= floorResistance / 2;
+							if (m_velocity.x < 0)
+								m_velocity.x = 0;
+						}
+						else if (m_velocity.x < 0)
+						{
+							m_velocity.x += floorResistance / 2;
+							if (m_velocity.x > 0)
+								m_velocity.x = 0;
+						}
+
+						return false;
+					}
+				}
+			}
+
 			possibleEntityPos = m_pos;
 			possibleEntityPos.y += m_velocity.y * dt;
 			//check if we can procceed at least in y direction
-			if (findIntersection(w, possibleEntityPos, m_bound))
+			if (findBlockIntersection(w, possibleEntityPos, m_bound))
 			{
 				//we have nowhere to go
 				m_blockage = m_velocity.x > 0 ? RIGHT : LEFT;
 				if (m_velocity.y <= 0)
+				{
 					m_is_on_floor = true;
+					m_pos.y = (int)m_pos.y + 0.01f;
+				}
 				possibleEntityPos = m_pos;
 				m_velocity = 0;
 			}
@@ -94,7 +187,16 @@ bool PhysEntity::moveOrCollide(World* w, float dt)
 		else //we can procceed in x direction
 		{
 			if (m_velocity.y <= 0)
+			{
+				if (m_bound.isRectangle)
+				{
+					float floorHeight = getFloorHeight(w, possibleEntityPos, m_bound.getBounds());
+					if (Phys::isValidFloat(floorHeight) && w->isBlockValid(possibleEntityPos.x, floorHeight) && abs(
+						floorHeight - m_pos.y) < 0.5)
+						possibleEntityPos.y = floorHeight + 0.01f;
+				}
 				m_is_on_floor = true;
+			}
 			m_velocity.y = 0;
 
 			if (m_velocity.x > 0)
@@ -173,8 +275,8 @@ bool Bullet::checkCollisions(World* w, float dt)
 				Phys::contains(blokTemplate.getCollisionBox(m_pos.x, m_pos.y, blok),
 				               Phys::Vect(m_pos.x - (int)m_pos.x, m_pos.y - (int)m_pos.y)))
 			{
-				onBlockHit(w, m_pos.x, m_pos.y);
-				return true;
+				if (onBlockHit(w, m_pos.x, m_pos.y))
+					return true;
 			}
 		}
 	}
@@ -192,8 +294,8 @@ bool Bullet::checkCollisions(World* w, float dt)
 				if (d->getCollisionBox().size() != 0 &&
 					Phys::contains(d->getCollisionBox(), m_pos - d->getPosition()))
 				{
-					onCreatureHit(w, e);
-					return true;
+					if (onEntityHit(w, e))
+						return true;
 				}
 			}
 	}
@@ -204,7 +306,7 @@ void Bullet::update(World* w)
 {
 	if (m_live_ticks++ == m_max_live_ticks)
 	{
-		w->killEntity(getID());
+		markDead();
 		return;
 	}
 	PhysEntity::computeVelocity(w);
@@ -221,54 +323,17 @@ void Bullet::update(World* w)
 	else checkCollisions(w, 1);
 }
 
-//RoundBullet======================================================
-EntityRoundBullet::EntityRoundBullet()
-{
-	m_max_live_ticks = 60 * 60;
-	m_max_velocity = {100.f / 60};
-	m_acceleration = {0, -1.f / 60.f};
 
-	static SpriteSheetResource res(Texture::create(
-		                               TextureInfo("res/images/player.png")
-		                               .filterMode(TextureFilterMode::NEAREST)
-		                               .format(TextureFormat::RGBA)), 4, 4);
-	m_sprite = Sprite(&res);
-	m_sprite.setSpriteIndex(3, 0);
-	float size = 1.5f;
-	m_sprite.setPosition(glm::vec3(-size / 2, -size / 2, 0));
-	m_sprite.setSize(glm::vec2(size, size));
+bool Bullet::onBlockHit(World* w, int blockX, int blockY)
+{
+	markDead();
+	return true;
 }
 
-EntityType EntityRoundBullet::getEntityType() const
+bool Bullet::onEntityHit(World* w, WorldEntity* entity)
 {
-	return ENTITY_TYPE_ROUND_BULLET;
-}
-
-void EntityRoundBullet::onLoaded(World* w)
-{
-	w->getLightCalculator().registerLight(this);
-}
-
-void EntityRoundBullet::onUnloaded(World* w)
-{
-	w->getLightCalculator().removeLight(this);
-}
-
-void Bullet::onBlockHit(World* w, int blockX, int blockY)
-{
-	//ND_INFO("Death by blok: {}", BlockRegistry::get().getBlock(w->getBlock(blockX, blockY).block_id).toString());
-	w->killEntity(getID());
-}
-
-void Bullet::onCreatureHit(World* w, WorldEntity* entity)
-{
-	//ND_INFO("Death by entity: {}", entity->toString());
-	if (entity->getEntityType() != ENTITY_TYPE_PLAYER)
-	{
-		w->killEntity(entity->getID());
-	}
-	w->killEntity(getID());
-	//todo harm creature
+	markDead();
+	return true;
 }
 
 void Bullet::render(BatchRenderer2D& renderer)
@@ -278,6 +343,15 @@ void Bullet::render(BatchRenderer2D& renderer)
 	renderer.push(m);
 	renderer.submit(m_sprite);
 	renderer.pop();
+}
+
+Bullet::Bullet()
+	: m_damage(0),
+	  m_live_ticks(0),
+	  m_max_live_ticks(60 * 30),
+	  m_angle(0)
+{
+	m_flags |= EFLAG_TEMPORARY;
 }
 
 void Bullet::fire(float angle, float velocity)
@@ -291,12 +365,70 @@ void Bullet::fire(const Phys::Vect target, float velocity)
 	m_velocity = (target - m_pos).normalize() * velocity;
 }
 
+//RoundBullet======================================================
+EntityRoundBullet::EntityRoundBullet()
+{
+	m_max_live_ticks = 60 * 60;
+	m_max_velocity = {100.f / 60};
+	m_acceleration = {0, -1.f / 60.f};
+	static SpriteSheetResource res(Texture::create(
+		                               TextureInfo("res/images/player.png")
+		                               .filterMode(TextureFilterMode::NEAREST)
+		                               .format(TextureFormat::RGBA)), 4, 4);
+	m_sprite = Sprite(&res);
+	m_sprite.setSpriteIndex(3, 0);
+	float size = 1.5f;
+	m_sprite.setPosition(glm::vec3(-size / 2, -size / 2, 0));
+	m_sprite.setSize(glm::vec2(size, size));
+	m_damage = 0.3f;
+}
+
+EntityType EntityRoundBullet::getEntityType() const
+{
+	return ENTITY_TYPE_ROUND_BULLET;
+}
+
+bool EntityRoundBullet::onEntityHit(World* w, WorldEntity* entity)
+{
+	auto en = dynamic_cast<PhysEntity*>(entity);
+	if (en)
+	{
+		Phys::Vect punchBack = m_velocity.copy().normalize() * m_punch_back;
+		en->getVelocity() += punchBack; // add this kick
+	}
+	auto creature = dynamic_cast<Creature*>(entity);
+	if(creature)
+		creature->onHit(w,this, m_damage);
+	markDead();
+	return true;
+}
+
+void EntityRoundBullet::onLoaded(World* w)
+{
+	w->getLightCalculator().registerLight(this);
+}
+
+void EntityRoundBullet::onUnloaded(World* w)
+{
+	w->getLightCalculator().removeLight(this);
+}
+
+
+Creature::Creature()
+{
+	m_health_bar = Bar::buildDefault(glm::vec2(-1,-0.25f));
+}
 
 //Creature======================================================
 void Creature::render(BatchRenderer2D& renderer)
 {
 	renderer.push(glm::translate(glm::mat4(1.0f), glm::vec3(m_pos.x, m_pos.y, 0)));
-	renderer.submit(m_sprite);
+	renderer.submit(m_animation);
+
+	m_health_bar.setValue(m_health / m_max_health);
+	m_health_bar.setEnabled(m_health < m_max_health);
+	m_health_bar.render(renderer);
+
 	renderer.pop();
 
 	if (m_bound.size() != 0 && Stats::show_collisionBox)
@@ -360,56 +492,63 @@ void Creature::render(BatchRenderer2D& renderer)
 void Creature::save(NBT& src)
 {
 	PhysEntity::save(src);
+	src.set("Health", m_health);
 }
 
 void Creature::load(NBT& src)
 {
 	PhysEntity::load(src);
+	m_health = src.get("Health", m_max_health);
 }
 
-TileEntity::TileEntity()
-{
-	m_velocity = 0.0f;
-	m_acceleration = {0, 0};
-	m_max_velocity = {0, 0};
 
-	static SpriteSheetResource res(Texture::create(
-		                               TextureInfo("res/images/borderBox.png")
-		                               .filterMode(TextureFilterMode::NEAREST)
-		                               .format(TextureFormat::RGBA)), 1, 1);
-	m_sprite = Sprite(&res);
-	m_sprite.setSpriteIndex(0, 0);
-	m_sprite.setPosition(glm::vec3(0, 0, 0));
-	m_sprite.setSize(glm::vec2(1, 1));
-	m_bound = Phys::toPolygon(Phys::Rectangle::createFromDimensions(0, 0, 1, 1));
+//Sapling=======================================================
+EntityType TileEntitySapling::getEntityType() const
+{
+	return ENTITY_TYPE_TILE_SAPLING;
 }
 
-EntityType TileEntity::getEntityType() const
-{
-	return ENTITY_TYPE_TILE_ENTITY;
-}
+// Torch=======================================================
 
-void TileEntity::update(World* w)
+void TileEntityTorch::update(World* w)
 {
-	return;
-	auto& entities = w->getLoadedEntities();
-	for (auto entityID : entities)
+	m_tick_to_spawn_particle--;
+	if (m_tick_to_spawn_particle==0)
 	{
-		if (entityID == getID())
-			continue;
-		auto entity = w->getEntityManager().entity(entityID);
-		auto physEntity = dynamic_cast<PhysEntity*>(entity);
-		if (physEntity == nullptr)
-			continue;
-		auto pos = physEntity->getPosition() - m_pos;
-		auto pl = m_bound.copy().minus(pos);
-		if (isIntersects(pl, physEntity->getCollisionBox()))
-		{
-			ND_INFO("Touching: {}", physEntity->toString());
-		}
+		m_tick_to_spawn_particle = std::rand() % 60 + 2*60;
+		w->spawnParticle(
+			ParticleList::torch_fire,
+			m_pos + Phys::Vect(0.5f+randDispersedFloat(0.05f), 1),
+			{ randDispersedFloat(0.001), randFloat(0.001f)+0.001f },
+			{ 0 },
+			60 * 3);
+
+		w->spawnParticle(
+			ParticleList::torch_smoke,
+			m_pos + Phys::Vect(0.5f + randDispersedFloat(0.05f), 1),
+			{ randDispersedFloat(0.01), randFloat(0.005f) + 0.01f },
+			{ 0 },
+			60 * 4);
+	}
+
+}
+
+EntityType TileEntityTorch::getEntityType() const
+{
+	return ENTITY_TYPE_TILE_TORCH;
+}
+
+
+void TileEntitySapling::update(World* w)
+{
+	TileEntity::update(w);
+
+	if (m_age.hours() > 1)
+	{
+		m_age = 0;
+		TreeGen::buildTree(w, getX(), getY());
 	}
 }
-
 
 //PlayerEntity======================================================
 
@@ -418,43 +557,73 @@ EntityPlayer::EntityPlayer()
 {
 	m_velocity = 0.0f;
 	m_acceleration = {0.f, -9.8f / 60};
-	m_max_velocity = {45.f / 60};
+	m_max_velocity = {50.f / 60};
 
 	static SpriteSheetResource res(Texture::create(
-		                               TextureInfo("res/images/player.png")
+		                               TextureInfo("res/images/player3.png")
 		                               .filterMode(TextureFilterMode::NEAREST)
-		                               .format(TextureFormat::RGBA)), 4, 4);
-	m_sprite = Sprite(&res);
-	m_sprite.setSpriteIndex(0, 3);
-	m_sprite.setPosition(glm::vec3(-1, 0, 0));
-	m_sprite.setSize(glm::vec2(2, 3));
+		                               .format(TextureFormat::RGBA)), 8, 1);
+	m_animation = Animation(&res, {1, 2, 3, 2, 1, 4, 5, 4});
+	m_animation.setSpriteFrame(0, 0);
+	m_animation.setPosition(glm::vec3(-1, 0, 0));
+	m_animation.setSize(glm::vec2(2, 3));
 	m_bound = Phys::toPolygon(Phys::Rectangle::createFromDimensions(-0.75f, 0, 1.5f, 2.9f));
 }
 
 void EntityPlayer::update(World* w)
 {
 	auto lastPos = m_pos;
-	PhysEntity::computePhysics(w);
+	if (!Stats::move_through_blocks_enable)
+		PhysEntity::computePhysics(w);
+	else
+	{
+		m_velocity = Phys::clamp(m_velocity, -m_max_velocity, m_max_velocity);
+		m_pos += m_velocity;
+	}
 
 	if (this->m_pos.x > lastPos.x)
 	{
-		m_pose = 1;
+		m_animation.setHorizontalFlip(false);
+		m_animation_var = 1;
 	}
 	else if (this->m_pos.x < lastPos.x)
 	{
-		m_pose = 2;
+		m_animation.setHorizontalFlip(true);
+		m_animation_var = 1;
 	}
 	else
 	{
 		if (this->m_pos.y != lastPos.y)
+		{
+			m_animation_var = 0;
+			m_animation.setHorizontalFlip(false);
+			m_animation.setSpriteFrame(0, 0);
 			m_pose = 0;
+			m_last_pose = 0;
+		}
+		else
+		{
+			if (m_animation_var == 1)
+				m_animation.setSpriteFrame(1, 0);
+		}
 	}
-	m_sprite.setSpriteIndex(m_pose, 3);
+	constexpr int animationBlocksPerFrame = 2;
+	m_pose += abs(lastPos.x - m_pos.x);
+	if (m_pose - m_last_pose > animationBlocksPerFrame)
+	{
+		m_pose = m_last_pose;
+		m_animation.nextFrame();
+	}
 }
+
 
 EntityType EntityPlayer::getEntityType() const
 {
 	return ENTITY_TYPE_PLAYER;
+}
+
+void EntityPlayer::onHit(World* w, WorldEntity* e, float damage)
+{
 }
 
 void EntityPlayer::save(NBT& src)
@@ -484,11 +653,11 @@ EntityTNT::EntityTNT()
 		                               TextureInfo("res/images/player.png")
 		                               .filterMode(TextureFilterMode::NEAREST)
 		                               .format(TextureFormat::RGBA)), 4, 4);
-	m_sprite = Sprite(&res);
-	m_sprite.setSpriteIndex(0, 0);
+	m_animation = Animation(&res);
+	m_animation.setSpriteIndex(0, 0);
 
-	m_sprite.setPosition(glm::vec3(-1, 0, 0));
-	m_sprite.setSize(glm::vec2(2, 2));
+	m_animation.setPosition(glm::vec3(-1, 0, 0));
+	m_animation.setSize(glm::vec2(2, 2));
 
 	m_bound = Phys::toPolygon({-1, 0, 1, 2});
 }
@@ -502,14 +671,14 @@ void EntityTNT::update(World* w)
 	{
 		m_blinkTime = 0;
 		flip = !flip;
-		m_sprite.setSpriteIndex(flip, 0);
+		m_animation.setSpriteIndex(flip, 0);
 	}
 
 	if (m_timeToBoom-- == 0)
 	{
 		auto point = w->getLoadedBlockPointer(m_pos.x, m_pos.y);
-		if (point)
-			w->setWall(m_pos.x, m_pos.y, 0);
+		//if (point)
+		//	w->setWall(m_pos.x, m_pos.y, 0);//leave the wall be
 
 		w->beginBlockSet();
 		for (int i = -7; i < 7; ++i)
@@ -525,7 +694,7 @@ void EntityTNT::update(World* w)
 			}
 		}
 		w->flushBlockSet();
-		w->killEntity(getID());
+		markDead();
 	}
 }
 
@@ -550,18 +719,21 @@ void EntityTNT::load(NBT& src)
 
 EntityZombie::EntityZombie()
 {
+
+	setMaxHealth(15);
+
 	m_velocity = 0.0f;
 	m_acceleration = {0.f, -9.8f / 60};
-	m_max_velocity = {5.f / 60, 50.f / 60};
+	m_max_velocity = {50.f / 60, 50.f / 60};
 
 	static SpriteSheetResource res(Texture::create(
 		                               TextureInfo("res/images/player.png")
 		                               .filterMode(TextureFilterMode::NEAREST)
 		                               .format(TextureFormat::RGBA)), 4, 4);
-	m_sprite = Sprite(&res);
-	m_sprite.setSpriteIndex(0, 2);
-	m_sprite.setPosition(glm::vec3(-1, 0, 0));
-	m_sprite.setSize(glm::vec2(2, 3));
+	m_animation = Animation(&res);
+	m_animation.setSpriteIndex(0, 2);
+	m_animation.setPosition(glm::vec3(-1, 0, 0));
+	m_animation.setSize(glm::vec2(2, 3));
 
 	m_bound = Phys::toPolygon(Phys::Rectangle::createFromDimensions(-0.75f, 0, 1.5f, 2.9f));
 }
@@ -583,7 +755,9 @@ void EntityZombie::update(World* w)
 				{
 					if (pointer->getPosition().distanceSquared(m_pos) < std::pow(25, 2))
 					{
-						m_tracer.init(w, getID());
+						m_tracer.init(w, getID(),
+						              {4.f / TPS, -9.f / TPS},
+						              {10.f / TPS, 50.f / TPS});
 						m_tracer.setTarget(e);
 						break;
 					}
@@ -595,11 +769,8 @@ void EntityZombie::update(World* w)
 			auto response = m_tracer.update();
 			if (response == TaskResponse::SUCCESS)
 			{
-				m_found_player = true;
-				m_velocity.x = 0;
-				m_velocity.y = 5; //lets fly away:D
-				m_acceleration.x = 0;
-				m_acceleration.y = 10.f / 60;
+				markDead();
+				return;
 			}
 		}
 	}
@@ -618,7 +789,7 @@ void EntityZombie::update(World* w)
 		if (this->m_pos.y != lastPos.y)
 			m_pose = 0;
 	}
-	m_sprite.setSpriteIndex(m_pose, 2);
+	m_animation.setSpriteIndex(m_pose, 2);
 }
 
 EntityType EntityZombie::getEntityType() const

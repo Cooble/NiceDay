@@ -141,8 +141,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\world\particle\ParticleRegistry.h" />
+    <ClInclude Include="src\graphics\Bar.h" />
     <ClInclude Include="src\graphics\Effect.h" />
     <ClInclude Include="src\graphics\GContext.h" />
+    <ClInclude Include="src\graphics\BlockTextureAtlas.h" />
     <ClInclude Include="src\graphics\TextureAtlas.h" />
     <ClInclude Include="src\graphics\TextureManager.h" />
     <ClInclude Include="src\nbt\NBT.h" />
@@ -158,6 +161,7 @@
     <ClInclude Include="src\Input.h" />
     <ClInclude Include="src\Log.h" />
     <ClInclude Include="src\NDUtil.h" />
+    <ClInclude Include="src\particle\ParticleManager.h" />
     <ClInclude Include="src\platform\OpenGL\OpenGLContext.h" />
     <ClInclude Include="src\platform\OpenGL\OpenGLRenderer.h" />
     <ClInclude Include="src\platform\OpenGL\OpenGLTexture.h" />
@@ -198,10 +202,12 @@
     <ClInclude Include="src\world\entity\componentManager.h" />
     <ClInclude Include="src\world\entity\Pool.h" />
     <ClInclude Include="src\world\entity\EntityRegistry.h" />
+    <ClInclude Include="src\world\gen\TreeGen.h" />
     <ClInclude Include="src\world\ITickable.h" />
     <ClInclude Include="src\world\LightCalculator.h" />
+    <ClInclude Include="src\world\particle\particles.h" />
     <ClInclude Include="src\world\World.h" />
-    <ClInclude Include="src\world\WorldGen.h" />
+    <ClInclude Include="src\world\gen\WorldGen.h" />
     <ClInclude Include="src\world\WorldIO.h" />
     <ClInclude Include="src\world\WorldRenderManager.h" />
     <ClInclude Include="src\world\biome\Biome.h" />
@@ -216,6 +222,7 @@
     <ClInclude Include="src\world\block\basic_walls.h" />
     <ClInclude Include="src\world\block\block_datas.h" />
     <ClInclude Include="src\world\entity\WorldEntity.h" />
+    <ClInclude Include="src\world\WorldTime.h" />
     <ClInclude Include="vendor\glm\glm\common.hpp" />
     <ClInclude Include="vendor\glm\glm\detail\_features.hpp" />
     <ClInclude Include="vendor\glm\glm\detail\_fixes.hpp" />
@@ -585,8 +592,11 @@
     <ClInclude Include="vendor\stb_image\stb_image_write.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\world\particle\ParticleRegistry.cpp" />
+    <ClCompile Include="src\graphics\Bar.cpp" />
     <ClCompile Include="src\graphics\Effect.cpp" />
     <ClCompile Include="src\graphics\GContext.cpp" />
+    <ClCompile Include="src\graphics\BlockTextureAtlas.cpp" />
     <ClCompile Include="src\graphics\TextureAtlas.cpp" />
     <ClCompile Include="src\graphics\TextureManager.cpp" />
     <ClCompile Include="src\nbt\NBT.cpp" />
@@ -600,6 +610,7 @@
     <ClCompile Include="src\graphics\TestQuad.cpp" />
     <ClCompile Include="src\Input.cpp" />
     <ClCompile Include="src\Log.cpp" />
+    <ClCompile Include="src\particle\ParticleManager.cpp" />
     <ClCompile Include="src\platform\OpenGL\OpenGLContext.cpp" />
     <ClCompile Include="src\platform\OpenGL\OpenGLRenderer.cpp" />
     <ClCompile Include="src\platform\OpenGL\OpenGLTexture.cpp" />
@@ -638,9 +649,11 @@
     <ClCompile Include="src\world\entity\componentManager.cpp" />
     <ClCompile Include="src\world\entity\Pool.cpp" />
     <ClCompile Include="src\world\entity\EntityRegistry.cpp" />
+    <ClCompile Include="src\world\gen\TreeGen.cpp" />
     <ClCompile Include="src\world\LightCalculator.cpp" />
+    <ClCompile Include="src\world\particle\particles.cpp" />
     <ClCompile Include="src\world\World.cpp" />
-    <ClCompile Include="src\world\WorldGen.cpp" />
+    <ClCompile Include="src\world\gen\WorldGen.cpp" />
     <ClCompile Include="src\world\WorldIO.cpp" />
     <ClCompile Include="src\world\WorldRenderManager.cpp" />
     <ClCompile Include="src\world\biome\Biome.cpp" />

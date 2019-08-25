@@ -1,8 +1,8 @@
 ﻿#include "ndpch.h"
 #include "WorldGen.h"
-#include "World.h"
-#include "biome/Biome.h"
-#include "block/block_datas.h"
+#include "world/World.h"
+#include "world/biome/Biome.h"
+#include "world/block/block_datas.h"
 
 static float clamp(float v,float min, float max)
 {
@@ -87,8 +87,9 @@ static int getNeighbourCount(bool* map,int x,int y)
 	return out;
 }
 
-void WorldGen::gen(int seed, World* w, Chunk& c)
+void WorldGen::genLayer0(int seed, World* w, Chunk& c)
 {
+	//TimerStaper t("gen chunk");
 	static bool* map0 = new bool[WORLD_CHUNK_AREA * 4];
 	static bool* map1 = new bool[WORLD_CHUNK_AREA * 4];
 	srand(c.chunkID() * 123546+5);
@@ -103,15 +104,21 @@ void WorldGen::gen(int seed, World* w, Chunk& c)
 	int torchX = rand() % WORLD_CHUNK_SIZE;
 	if (rand() % 2 == 0)
 		torchPlaced = true;//skip torch placement in 50% of cases
+	int heightmap[WORLD_CHUNK_SIZE];
+	for (int x = 0; x < WORLD_CHUNK_SIZE; ++x)
+	{
+		heightmap[x] = getTerrainHeight(seed, c.m_x * WORLD_CHUNK_SIZE+x);
+	}
+	srand(c.chunkID() * 654789 + 4);
 	for (int x = 0; x < WORLD_CHUNK_SIZE; x++)
 	{
-		for (int y = 0; y < WORLD_CHUNK_SIZE; y++)
+		for (int y = WORLD_CHUNK_SIZE-1; y >= 0; --y)
 		{
 			auto& block = c.block(x, y);
 
 			auto worldx = c.m_x * WORLD_CHUNK_SIZE + x;
 			auto worldy = c.m_y * WORLD_CHUNK_SIZE + y;
-			int terrain = info.terrain_level + getTerrainHeight(seed, worldx);
+			int terrain = info.terrain_level + heightmap[x];
 			//if (x == 0 || y == 0)
 			//	block.block_id = 0;
 			if (block.block_id == BLOCK_TORCH)
@@ -119,12 +126,31 @@ void WorldGen::gen(int seed, World* w, Chunk& c)
 			if (worldy > terrain)
 				block.block_id = BLOCK_AIR;
 			else if (worldy == terrain) {
-				if(torchX==x&& !torchPlaced)
-					if(y!=WORLD_CHUNK_SIZE-1)
+				if (torchX == x && !torchPlaced) {
+					if (y != WORLD_CHUNK_SIZE - 1)
 					{
 						torchPlaced = true;
-						c.block(x, y+1).block_id = BLOCK_TORCH;
+						c.block(x, y + 1).block_id = BLOCK_TORCH;
 					}
+				}
+				if (y != (WORLD_CHUNK_SIZE - 1)) 
+				{
+					switch (std::rand() % 8)
+					{
+					case 0:
+						c.block(x, y + 1).block_id = BLOCK_FLOWER;
+						c.block(x, y + 1).block_metadata = std::rand() % 8;
+						break;
+					case 1:
+					case 2:
+					case 3:
+					case 4:
+					case 5:
+						c.block(x, y + 1).block_id = BLOCK_GRASS_PLANT;
+						c.block(x, y + 1).block_metadata = std::rand() % 4;
+						break;
+					}
+				}
 				block.block_id = BLOCK_GRASS;
 			}
 			else if (worldy == terrain-1)
@@ -197,51 +223,6 @@ void WorldGen::gen(int seed, World* w, Chunk& c)
 			c.block(randX, randY).block_id = BLOCK_TORCH;
 		}
 	}
-			
-		
-
-
-
-
-	/*//this worldgen is lame
-	std::vector<std::pair<int, int>> robs;
-	std::vector<std::pair<int, int>> newRobs;
-	auto r1 = &robs;
-	auto r2 = &newRobs;
-	std::srand((seed+1)*c.chunkID() * 100);
-	int length = std::rand() % 15+3;
-	r1->emplace_back(std::make_pair(std::rand() % 16, std::rand() % 16));
-	for (int i = 0; i < length; ++i)
-	{
-		for(auto t: *r1)
-		{
-			int& robX = t.first;
-			int& robY = t.second;
-
-			int xMove = std::rand() % 3-1;
-			robX += xMove;
-			robY += xMove==0? std::rand() % 3 - 1:0;
-
-			if (robX < 0 || robX >= WORLD_CHUNK_SIZE)
-				continue;
-			if (robY < 0 || robY >= WORLD_CHUNK_SIZE)
-				continue;
-			if (c.getBlock(robX, robY).block_id != 0)
-			{
-				if (std::rand() % 10 == 0)
-					r2->emplace_back(std::make_pair(robX, robY));
-				c.getBlock(robX, robY).block_id = std::rand()%2==0?BLOCK_ADAMANTITE:BLOCK_GOLD;
-				r2->emplace_back(std::make_pair(robX, robY));
-			}
-		}
-		auto t = r1;
-		r1 = r2;
-		r2 = t;
-		
-		
-	}*/
-
-	
 	//update block states
 	for (int x = 1; x < WORLD_CHUNK_SIZE-1; x++)//boundaries will be updated after all other adjacent chunks are generated
 	{

@@ -10,10 +10,14 @@ public:
 	
 	inline half_int getTexture(const std::string& fileName, const std::string& subName="main")const
 	{
-		auto& i = m_subtextures.find(fileName + subName);
+		std::string subNameC = subName;
+		std::transform(subNameC.begin(), subNameC.end(), subNameC.begin(),
+			[](unsigned char c) { return std::tolower(c); });
+
+		auto& i = m_subtextures.find(fileName + subNameC);
 		if(i==m_subtextures.end())
 		{
-			ND_ERROR("Trying to retrieve not loaded texture: {}", (fileName + +":\t\t"+subName));
+			ND_ERROR("Trying to retrieve not loaded texture: {}", (fileName + +":\t\t"+ subNameC));
 			return 0;
 		}
 		return i->second;

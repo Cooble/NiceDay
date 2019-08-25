@@ -7,6 +7,7 @@
 #include "graphics/Sprite.h"
 #include "world/entity/ssystem.h"
 #include "world/entity/entities.h"
+#include "particle/ParticleManager.h"
 
 
 class BatchRenderer2D;
@@ -20,6 +21,8 @@ private:
 	//ChunkMeshInstance* m_mesh;
 	WorldRenderManager* m_render_manager;
 	Camera* m_cam;
+
+	void registerEverything();
 
 public:
 	WorldLayer();

@@ -15,7 +15,11 @@ private:
 
 	struct WindowData
 	{
-		unsigned int width, height;
+		int width, height;
+		int lastWidth, lastHeight;
+		int x, y;
+		int lastX, lastY;
+		bool fullscreen=false;
 		std::string title;
 		EventCallbackFn eventCallback;
 	};
@@ -27,6 +31,7 @@ public:
 	~Window();
 
 	void setSize(int width, int height);
+	void setFullScreen(bool fullscreen);
 	void setTitle(const char* title);
 	void close();
 	void update();
@@ -38,6 +43,7 @@ public:
 	inline unsigned int getWidth() const { return m_data.width; }
 	inline unsigned int getHeight() const { return m_data.height; }
 	inline const char* getTitle() const { return m_data.title.c_str(); }
+	inline bool isFullscreen() const { return m_data.fullscreen; }
 
 private:
 	//void framebuffer_size_callback(GLFWwindow* window, int width, int height);

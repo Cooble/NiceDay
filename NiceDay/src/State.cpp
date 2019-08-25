@@ -18,3 +18,4 @@ int Stats::updates_per_frame = 0;
 Sprite* Stats::bound_sprite = nullptr;
 bool Stats::show_collisionBox = false;
 World* Stats::world = nullptr;
+int Stats::particle_count = 0;

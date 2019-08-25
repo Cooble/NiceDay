@@ -122,6 +122,7 @@ Window::Window(int width, int height, const char* title) :
 	ND_INFO((char*)renderer);
 	ND_INFO("GL version: {}", gl);
 	ND_INFO("GLSL version: {}", glsl);
+
 }
 
 
@@ -137,6 +138,27 @@ void Window::setSize(int width, int height)
 	m_data.width = width;
 	m_data.height = height;
 	glfwSetWindowSize(m_window, width, height);
+}
+
+void Window::setFullScreen(bool fullscreen)
+{
+	if (m_data.fullscreen == fullscreen)
+		return;
+	if (fullscreen) {
+
+		glfwGetWindowPos(m_window, &m_data.lastX, &m_data.lastY);
+		glfwGetWindowSize(m_window, &m_data.lastWidth, &m_data.lastHeight);
+		glfwSetWindowMonitor(m_window, glfwGetPrimaryMonitor(), 0, 0, 1920, 1080, 60);
+	}
+	else
+	{
+		glfwSetWindowMonitor(m_window, nullptr, m_data.lastX, m_data.lastY, m_data.lastWidth, m_data.lastHeight,60);
+		m_data.width = m_data.lastWidth;
+		m_data.height = m_data.lastHeight;
+		m_data.x = m_data.lastX;
+		m_data.y = m_data.lastY;
+	}
+	m_data.fullscreen = fullscreen;
 }
 
 void Window::setTitle(const char * title)

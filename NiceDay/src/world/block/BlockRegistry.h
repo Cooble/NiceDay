@@ -6,6 +6,8 @@
 	BlockRegistry::get().registerBlock(block);
 #define ND_REGISTER_WALL(wall)\
 	BlockRegistry::get().registerWall(wall);
+class BlockTextureAtlas;
+
 class BlockRegistry
 {
 
@@ -25,7 +27,7 @@ public:
 	inline const std::vector<Block*>& getBlocks() { return m_blocks; }
 	inline const std::vector<Wall*>& getWalls() { return m_walls; }
 
-	void initTextures(const TextureAtlas& atlas);
+	void initTextures(const BlockTextureAtlas& atlas);
 
 	static inline BlockRegistry& get() { 
 		static BlockRegistry s_instance;

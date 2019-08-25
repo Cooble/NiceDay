@@ -29,6 +29,38 @@ struct UVQuad
 		uv[3] = pos+glm::vec2(0, dy);
 
 	}
+	inline void setSize(const glm::vec2& size)
+	{
+		uv[1] = uv[0] + glm::vec2(size.x, 0);
+		uv[2] = uv[0] + size;
+		uv[3] = uv[0] + glm::vec2(0, size.y);
+	}
+
+	inline static UVQuad build(const glm::vec2& pos, const glm::vec2& size, bool horizontalFlip = false, bool verticalFlip = false)
+	{
+		glm::vec2 pos0 = pos;
+		glm::vec2 pos1 = pos+size;
+		if(horizontalFlip)
+		{
+			float x = pos0.x;
+			pos0.x = pos1.x;
+			pos1.x = x;
+		}
+		if (verticalFlip)
+		{
+			float y = pos0.y;
+			pos0.y = pos1.y;
+			pos1.y = y;
+		}
+
+		UVQuad out;
+
+		out.uv[0] = pos0;
+		out.uv[1] = glm::vec2(pos1.x,pos0.y);
+		out.uv[2] =pos1;
+		out.uv[3] = glm::vec2(pos0.x,pos1.y);
+		return out;
+	}
 
 };
 class Renderable2D

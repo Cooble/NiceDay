@@ -20,12 +20,15 @@ smallBlobR2W:   4,4,2,1
 thinTrunkL:     2,4
 thinTrunkR:     3,4
 
-dryBlobL:       4,0,2,2
-dryBlobR:       6,0,2,2
+dryBlobL:       4,1,2,1
+dryBlobR:       6,1,2,1
 
 bigBlob0:       0,5,6,2
 bigBlob1:       1,7,4,2
-blob:           2,9,2,2    
+blob:           2,9,2,2  
+
+trunkL:         2,1  
+trunkR:         3,1  
 
 
 

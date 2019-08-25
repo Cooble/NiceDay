@@ -13,6 +13,180 @@ namespace Phys
 	{
 		return !std::isnan(f) && !std::isinf(f);
 	}
+	struct Vecti
+	{
+		int x, y;
+
+		Vecti() = default;
+
+		Vecti(float x, float y) : x(x), y(y)
+		{
+		}
+
+		Vecti(int x, int y) : x(x), y(y)
+		{
+		}
+
+		Vecti(int x, float y) : x(x), y(y)
+		{
+		}
+
+		Vecti(float x, int y) : x(x), y(y)
+		{
+		}
+
+		Vecti(float m) : x(m), y(m)
+		{
+		}
+
+		Vecti(const glm::vec2& m) : x(m.x), y(m.y)
+		{
+		}
+
+		inline Vecti operator+(const Vecti& v) const
+		{
+			return { x + v.x, y + v.y };
+		}
+
+		inline Vecti operator-(const Vecti& v) const
+		{
+			return { x - v.x, y - v.y };
+		}
+
+		inline Vecti operator-() const
+		{
+			return { -x, -y };
+		}
+
+		inline Vecti operator*(const Vecti& v) const
+		{
+			return { x * v.x, y * v.y };
+		}
+
+		inline Vecti operator/(const Vecti& v) const
+		{
+			return { x / v.x, y / v.y };
+		}
+
+		inline Vecti operator*(float v) const
+		{
+			return { x * v, y * v };
+		}
+
+		inline Vecti operator/(float v) const
+		{
+			return { x / v, y / v };
+		}
+
+
+		inline void operator*=(float v)
+		{
+			x *= v;
+			y *= v;
+		}
+
+		inline void operator/=(float v)
+		{
+			x /= v;
+			y /= v;
+		}
+
+		inline void operator+=(const Vecti& v)
+		{
+			plus(v);
+		}
+
+		inline void plus(const Vecti& v)
+		{
+			x += v.x;
+			y += v.y;
+		}
+
+		inline void operator-=(const Vecti& v)
+		{
+			minus(v);
+		}
+
+		inline void minus(const Vecti& v)
+		{
+			x -= v.x;
+			y -= v.y;
+		}
+
+		inline void operator*=(const Vecti& v)
+		{
+			multiply(v);
+		}
+
+		inline void multiply(const Vecti& v)
+		{
+			x *= v.x;
+			y *= v.y;
+		}
+
+		inline void operator/=(const Vecti& v)
+		{
+			divide(v);
+		}
+
+		inline void divide(const Vecti& v)
+		{
+			x /= v.x;
+			y /= v.y;
+		}
+
+
+		inline bool operator==(const Vecti& other) const
+		{
+			return x == other.x && y == other.y;
+		}
+
+		inline bool operator!=(const Vecti& other) const
+		{
+			return !operator==(other);
+		}
+		inline int64_t operator()()
+		{
+			return *(int64_t*)(this);
+		}
+		inline int64_t toInt64() 
+		{
+			return *(int64_t*)(this);
+		}
+
+
+		inline float lengthSquared() const
+		{
+			return x * x + y * y;
+		}
+
+		inline float length() const
+		{
+			return sqrt(lengthSquared());
+		}
+
+		inline float lengthCab() const
+		{
+			return abs(x) + abs(y);
+		}
+
+		inline float distanceSquared(const Vecti& v) const
+		{
+			return (v - *this).lengthSquared();
+		}
+
+		inline float distance(const Vecti& v) const
+		{
+			return (v - *this).length();
+		}
+
+		inline float distanceCab(const Vecti& v) const
+		{
+			return (v - *this).lengthCab();
+		}
+
+		inline Vecti copy() const { return Vecti(x, y); }
+	};
 
 	struct Vect
 	{
@@ -244,13 +418,11 @@ namespace Phys
 
 	inline Vect operator+(float a, const Phys::Vect& b)
 	{
-		//outside the class
 		return b + a;
 	}
 
 	inline Vect operator*(float a, const Phys::Vect& b)
 	{
-		//outside the class
 		return b * a;
 	}
 
@@ -511,6 +683,10 @@ namespace Phys
 		if (!a.getBounds().intersects(b.getBounds())) //first check if it is even worth trying
 			return false;
 
+	//	if (a.size() == 3 || b.size() == 3)
+	//		__debugbreak();
+
+
 		//if (a.isRectangle&&b.isRectangle)
 		//	return true;
 		for (int i = 0; i < a.size() - 1; ++i)
@@ -521,13 +697,13 @@ namespace Phys
 
 			for (int j = 0; j < b.size() - 1; ++j)
 			{
-				auto& p2 = a[j];
-				auto& p3 = a[j + 1];
+				auto& p2 = b[j];
+				auto& p3 = b[j + 1];
 				if (isIntersectAbscisses(p0, p1, p2, p3))
 					return true;
 			}
-			auto& p2 = a[b.size() - 1];
-			auto& p3 = a[0];
+			auto& p2 = b[b.size() - 1];
+			auto& p3 = b[0];
 			if (isIntersectAbscisses(p0, p1, p2, p3))
 				return true;
 		}
@@ -537,13 +713,13 @@ namespace Phys
 
 		for (int j = 0; j < b.size() - 1; ++j)
 		{
-			auto& p2 = a[j];
-			auto& p3 = a[j + 1];
+			auto& p2 = b[j];
+			auto& p3 = b[j + 1];
 			if (isIntersectAbscisses(p0, p1, p2, p3))
 				return true;
 		}
-		auto& p2 = a[b.size() - 1];
-		auto& p3 = a[0];
+		auto& p2 = b[b.size() - 1];
+		auto& p3 = b[0];
 		if (isIntersectAbscisses(p0, p1, p2, p3))
 			return true;
 	}
@@ -580,14 +756,14 @@ namespace Phys
 
 				for (int j = 0; j < b.size() - 1; ++j)
 				{
-					auto& p2 = a[j];
-					auto& p3 = a[j + 1];
+					auto& p2 = b[j];
+					auto& p3 = b[j + 1];
 					auto out = intersectAbscisses(p0, p1, p2, p3);
 					if (out.isValid())
 						return out;
 				}
-				auto& p2 = a[b.size() - 1];
-				auto& p3 = a[0];
+				auto& p2 = b[b.size() - 1];
+				auto& p3 = b[0];
 				auto out = intersectAbscisses(p0, p1, p2, p3);
 				if (out.isValid())
 					return out;
@@ -598,14 +774,14 @@ namespace Phys
 
 			for (int j = 0; j < b.size() - 1; ++j)
 			{
-				auto& p2 = a[j];
-				auto& p3 = a[j + 1];
+				auto& p2 = b[j];
+				auto& p3 = b[j + 1];
 				auto out = intersectAbscisses(p0, p1, p2, p3);
 				if (out.isValid())
 					return out;
 			}
-			auto& p2 = a[b.size() - 1];
-			auto& p3 = a[0];
+			auto& p2 = b[b.size() - 1];
+			auto& p3 = b[0];
 			auto out = intersectAbscisses(p0, p1, p2, p3);
 			if (out.isValid())
 				return out;

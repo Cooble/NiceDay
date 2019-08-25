@@ -7,7 +7,7 @@
 #include "layer/ImGuiLayer.h"
 #include "Scheduler.h"
 
-constexpr int TARGET_TPS=60;
+constexpr int TPS=60;
 
 class Game
 {

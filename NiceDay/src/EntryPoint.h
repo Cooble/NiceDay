@@ -12,7 +12,7 @@
 #include "physShapes.h"
 #include "world/ChunkLoader.h"
 #include "graphics/Effect.h"
-#include "graphics/TextureAtlas.h"
+#include "graphics/BlockTextureAtlas.h"
 
 /*template<typename T>
 void show_binrep(const T& a)

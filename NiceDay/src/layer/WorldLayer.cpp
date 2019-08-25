@@ -26,7 +26,10 @@
 #include "world/entity/entity_datas.h"
 #include "world/entity/entities.h"
 #include "graphics/TextureManager.h"
+#include "graphics/BlockTextureAtlas.h"
 #include "graphics/TextureAtlas.h"
+#include "world/particle/ParticleRegistry.h"
+#include "world/particle/particles.h"
 
 const char* WORLD_FILE_PATH;
 int CHUNKS_LOADED;
@@ -48,9 +51,7 @@ static void* playerBuff;
 static EntityID playerID;
 static SpriteSheetResource* res;
 
-
-WorldLayer::WorldLayer()
-	: Layer("WorldLayer")
+void WorldLayer::registerEverything()
 {
 	//blocks
 	ND_REGISTER_BLOCK(new BlockAir());
@@ -65,6 +66,10 @@ WorldLayer::WorldLayer()
 	ND_REGISTER_BLOCK(new BlockDoorClose());
 	ND_REGISTER_BLOCK(new BlockDoorOpen());
 	ND_REGISTER_BLOCK(new BlockPainting());
+	ND_REGISTER_BLOCK(new BlockTree());
+	ND_REGISTER_BLOCK(new BlockTreeSapling());
+	ND_REGISTER_BLOCK(new BlockFlower());
+	ND_REGISTER_BLOCK(new BlockGrassPlant());
 
 	//walls
 	ND_REGISTER_WALL(new WallAir());
@@ -72,25 +77,40 @@ WorldLayer::WorldLayer()
 	ND_REGISTER_WALL(new WallStone());
 	ND_REGISTER_WALL(new WallGlass());
 
-
-	std::string folder = "D:/Dev/C++/NiceDay/NiceDay/res/images/blockAtlas/";
-
-	TextureAtlas t;
-	t.createAtlas(folder, 32, 8);
-	BlockRegistry::get().initTextures(t);
+	//entities
+	ND_REGISTER_ENTITY(ENTITY_TYPE_PLAYER, EntityPlayer);
+	ND_REGISTER_ENTITY(ENTITY_TYPE_TNT, EntityTNT);
+	ND_REGISTER_ENTITY(ENTITY_TYPE_ZOMBIE, EntityZombie);
+	ND_REGISTER_ENTITY(ENTITY_TYPE_ROUND_BULLET, EntityRoundBullet);
+	ND_REGISTER_ENTITY(ENTITY_TYPE_TILE_SAPLING, TileEntitySapling);
+	ND_REGISTER_ENTITY(ENTITY_TYPE_TILE_TORCH, TileEntityTorch);
 
 	//biomes
 	ND_REGISTER_BIOME(new BiomeForest());
 	ND_REGISTER_BIOME(new BiomeUnderground());
 	ND_REGISTER_BIOME(new BiomeDirt());
 
-	//entities
-	ND_REGISTER_ENTITY(ENTITY_TYPE_PLAYER, EntityPlayer);
-	ND_REGISTER_ENTITY(ENTITY_TYPE_TNT, EntityTNT);
-	ND_REGISTER_ENTITY(ENTITY_TYPE_ZOMBIE, EntityZombie);
-	ND_REGISTER_ENTITY(ENTITY_TYPE_ROUND_BULLET, EntityRoundBullet);
-	ND_REGISTER_ENTITY(ENTITY_TYPE_TILE_ENTITY, TileEntity);
+	ParticleList::initDefaultParticles(ParticleRegistry::get());
+}
 
+WorldLayer::WorldLayer()
+	: Layer("WorldLayer")
+{
+	std::string blockAtlasFolder = "D:/Dev/C++/NiceDay/NiceDay/res/images/blockAtlas/";
+
+	BlockTextureAtlas blockAtlas;
+	blockAtlas.createAtlas(blockAtlasFolder, 32, 8);
+
+	std::string particleAtlasFolder = "D:/Dev/C++/NiceDay/NiceDay/res/images/particleAtlas/";
+
+	TextureAtlas particleAtlas;
+	constexpr int particleAtlasSize = 8;
+	particleAtlas.createAtlas(particleAtlasFolder, particleAtlasSize, 8);
+
+	registerEverything();
+
+	ParticleRegistry::get().initTextures(particleAtlas);
+	BlockRegistry::get().initTextures(blockAtlas);
 
 	WorldInfo info;
 	strcpy_s(info.name, "NiceWorld");
@@ -127,14 +147,21 @@ WorldLayer::WorldLayer()
 	m_batch_renderer = new BatchRenderer2D();
 
 	static SpriteSheetResource res(Texture::create(
-		TextureInfo("res/images/borderBox.png")
-		.filterMode(TextureFilterMode::NEAREST)
-		.format(TextureFormat::RGBA)), 1, 1);
+		                               TextureInfo("res/images/borderBox.png")
+		                               .filterMode(TextureFilterMode::NEAREST)
+		                               .format(TextureFormat::RGBA)), 1, 1);
 
 	Stats::bound_sprite = new Sprite(&res);
 	Stats::bound_sprite->setSpriteIndex(0, 0);
 	Stats::bound_sprite->setPosition(glm::vec3(0, 0, 0));
 	Stats::bound_sprite->setSize(glm::vec2(1, 1));
+
+	Texture* particleAtlasT = Texture::create(
+		TextureInfo("res/images/particleAtlas/atlas.png")
+		.filterMode(TextureFilterMode::NEAREST)
+		.format(TextureFormat::RGBA));
+
+	*m_world->particleManager() = new ParticleManager(5000, particleAtlasT, particleAtlasSize);
 }
 
 EntityPlayer& WorldLayer::getPlayer()
@@ -205,6 +232,14 @@ void WorldLayer::onDetach()
 
 static int fpsCount;
 
+static float randFloat()
+{
+	return std::rand() % 1000 / 1000.f;
+}
+static float randDipsersedFloat()
+{
+	return std::rand() % 1000 / 1000.f-0.5f;
+}
 void WorldLayer::onUpdate()
 {
 	m_cam->m_light_intensity = Stats::player_light_intensity;
@@ -302,60 +337,103 @@ void WorldLayer::onUpdate()
 
 	if (!ImGui::IsMouseHoveringAnyWindow())
 		if (Game::get().getInput().isMousePressed(GLFW_MOUSE_BUTTON_1))
-	{
-		if (Stats::gun_enable)
 		{
-			constexpr int BULLET_CADENCE_DELAY = 3;
-			static int counter = 0;
-			if (counter++ == BULLET_CADENCE_DELAY)
+			if (Stats::gun_enable)
 			{
-				counter = 0;
-				auto buff = malloc(EntityRegistry::get().getBucket(ENTITY_TYPE_ROUND_BULLET).byte_size);
-				EntityRegistry::get().createInstance(ENTITY_TYPE_ROUND_BULLET, buff);
-				auto bullet = (EntityRoundBullet*)buff;
-				bullet->getPosition() = m_cam->getPosition() + Phys::Vect(0, 4.f).asGLM();
-				bullet->fire(Phys::Vect(CURSOR_X, CURSOR_Y), 50.f / 60);
-				m_world->spawnEntity(bullet);
+				constexpr int BULLET_CADENCE_DELAY = 3;
+				static int counter = 0;
+				if (counter++ == BULLET_CADENCE_DELAY)
+				{
+					counter = 0;
+					auto buff = malloc(EntityRegistry::get().getBucket(ENTITY_TYPE_ROUND_BULLET).byte_size);
+					EntityRegistry::get().createInstance(ENTITY_TYPE_ROUND_BULLET, buff);
+					auto bullet = (EntityRoundBullet*)buff;
+					bullet->getPosition() = m_cam->getPosition() + Phys::Vect(0, 4.f).asGLM();
+					bullet->fire(Phys::Vect(CURSOR_X, CURSOR_Y), 50.f / 60);
+					m_world->spawnEntity(bullet);
+				}
 			}
-		}
-		else if (BLOCK_OR_WALL_SELECTED)
-		{
-			const BlockStruct& str = m_world->getBlock(CURSOR_X, CURSOR_Y);
-			if (str.block_id != BLOCK_PALLETE_SELECTED && BlockRegistry::get().getBlock(BLOCK_PALLETE_SELECTED).canBePlaced(m_world,CURSOR_X,CURSOR_Y))
-				m_world->setBlock(CURSOR_X, CURSOR_Y, BLOCK_PALLETE_SELECTED);
-		}
-		else
-		{
-			if (m_world->getBlock(CURSOR_X, CURSOR_Y).isWallOccupied())
+			else if (BLOCK_OR_WALL_SELECTED)
 			{
-				if (m_world->getBlock(CURSOR_X, CURSOR_Y).wallID() != BLOCK_PALLETE_SELECTED)
-					m_world->setWall(CURSOR_X, CURSOR_Y, BLOCK_PALLETE_SELECTED);
+				const BlockStruct& str = m_world->getBlock(CURSOR_X, CURSOR_Y);
+				if (str.block_id != BLOCK_PALLETE_SELECTED && BlockRegistry::get()
+				                                              .getBlock(BLOCK_PALLETE_SELECTED).canBePlaced(
+					                                              m_world, CURSOR_X, CURSOR_Y))
+					m_world->setBlock(CURSOR_X, CURSOR_Y, BLOCK_PALLETE_SELECTED);
 			}
 			else
-				m_world->setWall(CURSOR_X, CURSOR_Y, BLOCK_PALLETE_SELECTED);
+			{
+				if (m_world->getBlock(CURSOR_X, CURSOR_Y).isWallOccupied())
+				{
+					if (m_world->getBlock(CURSOR_X, CURSOR_Y).wallID() != BLOCK_PALLETE_SELECTED)
+						m_world->setWall(CURSOR_X, CURSOR_Y, BLOCK_PALLETE_SELECTED);
+				}
+				else
+					m_world->setWall(CURSOR_X, CURSOR_Y, BLOCK_PALLETE_SELECTED);
+			}
 		}
-	}
 
 	glm::vec2 accel = glm::vec2(0, 0);
 	accel.y = -9.0f / 60;
 	glm::vec2& velocity = getPlayer().getVelocity().asGLM();
 	float acc = 0.3f;
+	float moveThroughBlockSpeed = 6;
 
-
-	if (Game::get().getInput().isKeyPressed(GLFW_KEY_RIGHT))
-		accel.x = acc;
-	if (Game::get().getInput().isKeyPressed(GLFW_KEY_LEFT))
-		accel.x = -acc;
-	if (Game::get().getInput().isKeyPressed(GLFW_KEY_UP))
+	if (Stats::move_through_blocks_enable)
 	{
-		if (istsunderBlock || Stats::fly_enable)
-			velocity.y = 10;
+		velocity = glm::vec2(0,0);
+		if (Game::get().getInput().isKeyPressed(GLFW_KEY_RIGHT))
+			velocity.x = moveThroughBlockSpeed;
+		if (Game::get().getInput().isKeyPressed(GLFW_KEY_LEFT))
+			velocity.x = -moveThroughBlockSpeed;
+
+
+		if (Game::get().getInput().isKeyPressed(GLFW_KEY_UP))
+			velocity.y = moveThroughBlockSpeed;
+		if (Game::get().getInput().isKeyPressed(GLFW_KEY_DOWN))
+			velocity.y = -moveThroughBlockSpeed;
 	}
 
-	getPlayer().getAcceleration() = accel;
-	//std::cout << "Acceleration: " << Phys::asVect(accel) << "\n";
-	m_cam->setPosition(getPlayer().getPosition().asGLM());
+	else
+	{
+		if (Game::get().getInput().isKeyPressed(GLFW_KEY_RIGHT))
+			accel.x = acc;
+		if (Game::get().getInput().isKeyPressed(GLFW_KEY_LEFT))
+			accel.x = -acc;
+		if (Game::get().getInput().isKeyPressed(GLFW_KEY_UP))
+		{
+			if (istsunderBlock || Stats::fly_enable)
+				velocity.y = 10;
+		}
+		getPlayer().getAcceleration() = accel;
+	}
 
+	//std::cout << "Acceleration: " << Phys::asVect(accel) << "\n";
+	
+	// Particle Sh't
+	/* 
+	static float angle=0;
+	static int tickToChangeAngle = 1;
+	tickToChangeAngle--;
+	static float angleee = 0;
+	static float speeeed = 1;
+	if(tickToChangeAngle<=0)
+	{
+		tickToChangeAngle = rand() % 10 + 5;
+		angleee = randFloat()*3.14159f*2;
+		speeeed = randFloat() * 2 + 0.5;
+	}
+	m_particles->createParticle(particleLine, getPlayer().getPosition(), Phys::vectFromAngle(angleee)*speeeed, { 0 }, (60 + rand() % 10) * 5);
+
+
+
+	for (int i = 0; i < 10; ++i)
+	{
+		angle += 0.03f;
+		auto speed = Phys::vectFromAngle(angle + randDipsersedFloat() + 3.14159f / 2);
+		auto speed2 = speed *randFloat();
+		m_particles->createParticle(particleDot, getPlayer().getPosition(), speed2, speed*(-0.005f+randDipsersedFloat()*0.2f), (60 + rand() % 10) * 5);
+	}*/
 
 	CAM_POS_X = (m_cam->getPosition().x);
 	CAM_POS_Y = (m_cam->getPosition().y);
@@ -366,6 +444,7 @@ void WorldLayer::onUpdate()
 	WORLD_CHUNK_HEIGHT = m_world->getInfo().chunk_height;
 
 	m_world->onUpdate();
+	m_cam->setPosition(getPlayer().getPosition().asGLM());
 	m_chunk_loader->onUpdate();
 	m_render_manager->onUpdate();
 
@@ -421,29 +500,33 @@ void WorldLayer::onRender()
 		if (ren)
 			ren->render(*m_batch_renderer);
 	}
+	(*m_world->particleManager())->render(*m_batch_renderer);
 	m_batch_renderer->pop(); //world matrix
 	m_batch_renderer->pop(); //proj matrix
 	m_batch_renderer->flush();
 }
 
 static bool showTelem = false;
+
 void WorldLayer::onImGuiRender()
 {
 	onImGuiRenderWorld();
 
-	if (showTelem) {
+	if (showTelem)
+	{
 		onImGuiRenderTelemetrics();
 	}
 }
+
 void WorldLayer::onImGuiRenderTelemetrics()
 {
 	static bool showTelemetrics = false;
-	if(!ImGui::Begin("Telemetrics",&showTelemetrics))
+	if (!ImGui::Begin("Telemetrics", &showTelemetrics))
 	{
 		ImGui::End();
 		return;
 	}
-	
+
 	static int maxMillis = 0;
 	static int maxMillisLight = 0;
 	static int maxupdatesPerFrame = 0;
@@ -480,9 +563,9 @@ void WorldLayer::onImGuiRenderTelemetrics()
 	}
 	ImGui::End();
 }
+
 void WorldLayer::onImGuiRenderWorld()
 {
-	
 	static bool showBase = true;
 
 	if (!ImGui::Begin("WorldInfo", &showBase))
@@ -506,9 +589,9 @@ void WorldLayer::onImGuiRenderWorld()
 		if (!l) m_world->getLightCalculator().run();
 		else m_world->getLightCalculator().stop();
 	}
-	
+
 	ImGui::Checkbox(Stats::move_through_blocks_enable ? "Move through Blocks Enabled" : "Move through Blocks Disabled",
-		&Stats::move_through_blocks_enable);
+	                &Stats::move_through_blocks_enable);
 	l = BLOCK_OR_WALL_SELECTED;
 	ImGui::Checkbox(BLOCK_OR_WALL_SELECTED ? "BLOCK mode" : "WALL mode", &BLOCK_OR_WALL_SELECTED);
 	if (l != BLOCK_OR_WALL_SELECTED)
@@ -522,13 +605,15 @@ void WorldLayer::onImGuiRenderWorld()
 
 
 	ImGui::Text("World filepath: %s", WORLD_FILE_PATH);
-	ImGui::Text("WorldTime: %d:%d", (int)m_world->getWorldTime().hours(), (int)m_world->getWorldTime().minutes());
+	ImGui::Text("WorldTime: %d:%d", (int)m_world->getWorldTime().hour(), (int)m_world->getWorldTime().minute());
+	ImGui::SliderFloat("Time speed", &m_world->m_time_speed, 0.f, 20.0f, "ratio = %.2f");
 	ImGui::Text("Cam X: %.2f \t(%d)", CAM_POS_X, (int)CAM_POS_X >> WORLD_CHUNK_BIT_SIZE);
 	ImGui::Text("Cam Y: %.2f \t(%d)", CAM_POS_Y, (int)CAM_POS_Y >> WORLD_CHUNK_BIT_SIZE);
 	ImGui::Text("Cursor X: %.2f \t(%d)", CURSOR_X, (int)CURSOR_X >> WORLD_CHUNK_BIT_SIZE);
 	ImGui::Text("Cursor y: %.2f \t(%d)", CURSOR_Y, (int)CURSOR_Y >> WORLD_CHUNK_BIT_SIZE);
 	ImGui::Separator();
 	ImGui::Text("Loaded entities: %d", m_world->getLoadedEntities().size());
+	ImGui::Text("particles: %d", Stats::particle_count);
 	ImGui::Text("Chunks Size: (%d/%d)", WORLD_CHUNK_WIDTH, WORLD_CHUNK_HEIGHT);
 	ImGui::Text("Chunks loaded: %d", CHUNKS_LOADED);
 	ImGui::Text("Chunks drawn: %d", CHUNKS_DRAWN);
@@ -647,11 +732,11 @@ void WorldLayer::onEvent(Event& e)
 			Game::get().fireEvent(e);
 			event->handled = true;
 
-			if (Game::get().getInput().isKeyPressed(GLFW_KEY_DELETE)) {
+			if (Game::get().getInput().isKeyPressed(GLFW_KEY_DELETE))
+			{
 				std::remove(m_world->getFilePath().c_str());
 				ND_INFO("Erasing world");
 			}
-			
 		}
 	}
 

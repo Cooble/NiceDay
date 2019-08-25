@@ -1,11 +1,12 @@
 ﻿#pragma once
 #include "Block.h"
+#include "graphics/BlockTextureAtlas.h"
 
 class WallAir :public Wall
 {
 public:
 	WallAir();
-	inline void onTextureLoaded(const TextureAtlas& atlas) override{}
+	inline void onTextureLoaded(const BlockTextureAtlas& atlas) override{}
 	int getTextureOffset(int wx, int wy, const BlockStruct&) const override;
 	int getCornerOffset(int wx, int wy, const BlockStruct&) const override;
 

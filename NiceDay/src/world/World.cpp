@@ -7,7 +7,7 @@
 #include "Game.h"
 #include "entity/EntityRegistry.h"
 #include <filesystem>
-
+#include "entity/entities.h"
 
 
 Chunk::Chunk()
@@ -52,50 +52,62 @@ void World::onUpdate()
 		loadQueue.pop();
 	}
 }
-static int light_tick_delay=0;
-constexpr int MAX_LIGHT_TICK_DELAY=60;
+
+static int light_tick_delay = 0;
+constexpr int MAX_LIGHT_TICK_DELAY = 60;
+
 void World::tick()
 {
-
-	m_info.time++;
+	static float timeAdvance=0;
+	timeAdvance += m_time_speed;
+	while (timeAdvance >= 1) {
+		m_info.time++;
+		timeAdvance--;
+	}
 
 	//we need a buffer here cause we cant modify array during iteration
 	if (m_entity_array_buff.size() != m_entity_array.size())
 		m_entity_array_buff.resize(m_entity_array.size()); //make sure there is enough space in buff
 	memcpy(m_entity_array_buff.data(), m_entity_array.data(), m_entity_array.size() * sizeof(EntityID));
 
-	for (int i = m_entity_array_buff.size() - 1; i >= 0; --i)
+	for (auto id : m_entity_array_buff)
 	{
-		WorldEntity* entity = m_entity_manager.entity(m_entity_array_buff[i]);
+		WorldEntity* entity = m_entity_manager.entity(id);
 		if (entity)
-			entity->update(this);
-	}
-	/*if(light_tick_delay++==MAX_LIGHT_TICK_DELAY)
-	{
-		light_tick_delay = 0;
-		for (auto& chunk : m_chunks)
 		{
-			if(!chunk.isLoaded())
-				continue;
-			auto& biome = BiomeRegistry::get().getBiome(chunk.getBiome());
-			if(biome.hasDynamicLighting())
-			{
-				
-			}
+			entity->update(this);
+			if (entity->isMarkedDead())
+				killEntity(entity->getID());
 		}
-	}*/
+	}
+
+
+	m_tile_entity_array_buff = std::unordered_map<int64_t, EntityID>(m_tile_entity_map); //lets just copy
+
+	for (auto& pair : m_tile_entity_array_buff)
+	{
+		WorldEntity* entity = m_entity_manager.entity(pair.second);
+		if (entity)
+		{
+			entity->update(this);
+			if (entity->isMarkedDead())
+				killEntity(entity->getID());
+		}
+	}
+	m_particle_manager->update();
 }
 
 
 constexpr float minLight = 0.2f;
 
-constexpr float startRiseHour = 8.f;
-constexpr float endRiseHour = 9.f;
+constexpr float startRiseHour = 5.f;
+constexpr float endRiseHour = 6.f;
 
-constexpr float startSetHour = 16.f;
-constexpr float endSetHour = 17.f;
+constexpr float startSetHour = 18.f;
+constexpr float endSetHour = 19.f;
 
-static float smootherstep(float x) {
+static float smootherstep(float x)
+{
 	// Scale, bias and saturate x to 0..1 range
 	x = clamp(x, 0.0f, 1.0f);
 	// Evaluate polynomial
@@ -104,25 +116,26 @@ static float smootherstep(float x) {
 
 glm::vec4 World::getSkyLight()
 {
-	auto hour = getWorldTime().hours();
+	auto hour = getWorldTime().hour();
+	
+	//hour = 12;
 	float f = 0;
-	if(hour>=startRiseHour&&hour<endRiseHour)
+	if (hour >= startRiseHour && hour < endRiseHour)
 	{
 		hour -= startRiseHour;
 		hour /= (endRiseHour - startRiseHour);
-		f = minLight + smootherstep(hour)*(1-minLight);
+		f = minLight + smootherstep(hour) * (1 - minLight);
 	}
-	else if(hour >= startSetHour && hour < endSetHour)
+	else if (hour >= startSetHour && hour < endSetHour)
 	{
 		hour -= startSetHour;
 		hour /= (endSetHour - startSetHour);
-		f = minLight + (1 - smootherstep(hour))*(1 - minLight);
+		f = minLight + (1 - smootherstep(hour)) * (1 - minLight);
 	}
-	else if (hour >= endRiseHour&&hour<startSetHour)
+	else if (hour >= endRiseHour && hour < startSetHour)
 		f = 1;
 	else f = minLight;
-	return glm::vec4( 0,0,0,f);
-
+	return glm::vec4(0, 0, 0, f);
 }
 
 bool World::isChunkGenerated(int x, int y)
@@ -167,7 +180,7 @@ const Chunk* World::getLoadedChunkPointer(int cx, int cy) const
 	return &m_chunks[index];
 }
 
-Chunk* World::getLoadedChunkPointerNoConst(int cx, int cy) //todo really rename it man its terrible
+Chunk* World::getLoadedChunkPointerMutable(int cx, int cy) //todo really rename it man its terrible
 {
 	int index = getChunkIndex(cx, cy);
 	if (index == -1)
@@ -234,7 +247,7 @@ void World::loadChunksAndGen(std::set<int>& toLoadChunks)
 		{
 			//need to load entities
 
-			if(m_nbt_saver.setReadChunkID(c.chunkID()))
+			if (m_nbt_saver.setReadChunkID(c.chunkID()))
 			{
 				uint32_t numberOfEntities = 0;
 				m_nbt_saver.read(numberOfEntities);
@@ -242,7 +255,7 @@ void World::loadChunksAndGen(std::set<int>& toLoadChunks)
 				{
 					NBT n;
 					n.deserialize(&m_nbt_saver);
-					auto entity= EntityRegistry::get().loadInstance(n);
+					auto entity = EntityRegistry::get().loadInstance(n);
 					loadEntity(entity);
 				}
 			}
@@ -341,8 +354,8 @@ void World::genChunks(std::set<int>& toGenChunks)
 			{
 				Chunk* c = &m_chunks[getChunkIndex(*genIt)];
 
-				this->m_gen.gen(this->m_info.seed, this, *c);
-				
+				this->m_gen.genLayer0(this->m_info.seed, this, *c);
+
 				c->lightLock();
 				this->m_light_calc.assignComputeChunk(c->getCX(), c->getCY());
 
@@ -364,14 +377,15 @@ void World::genChunks(std::set<int>& toGenChunks)
 				auto& c = m_chunks[getChunkIndex(id)];
 
 				auto resources = LightCalculator::createQuadroCross(c.getCX(), c.getCY());
-				for (int i = 0; i < 4; ++i) {
-					auto pC = getLoadedChunkPointerNoConst(resources[i].first, resources[i].second);
+				for (int i = 0; i < 4; ++i)
+				{
+					auto pC = getLoadedChunkPointerMutable(resources[i].first, resources[i].second);
 					if (pC)
 						pC->lightLock();
 				}
-				
-				m_light_calc.assignComputeChunkBorders(c.getCX(),c.getCY());
-				if (mask != 0)//check if chunk is not only for readonly purposes
+
+				m_light_calc.assignComputeChunkBorders(c.getCX(), c.getCY());
+				if (mask != 0) //check if chunk is not only for readonly purposes
 				{
 					this->updateChunkBounds(half_int::getX(id), half_int::getY(id), mask);
 				}
@@ -508,29 +522,51 @@ void World::unloadChunks(std::set<int>& chunk_ids)
 		c.setLoaded(false);
 		c.last_save_time = getWorldTicks();
 		stream.saveChunk(&c, getChunkSaveOffset(c.chunkID()));
+
+		int toUnloadRealSize = 0;
 		for (EntityID id : m_entity_array)
 		{
 			auto e = m_entity_manager.entityDangerous(id);
 			ASSERT(m_entity_manager.isLoaded(id) && m_entity_manager.isAlive(id), "Shit");
-			if(rect.containsPoint(e->getPosition()))
+			if (rect.containsPoint(e->getPosition()))
+			{
 				toUnload.push_back(id);
+				if (!e->hasFlag(EFLAG_TEMPORARY))
+					toUnloadRealSize++;
+			}
+		}
+		for (auto& pair : m_tile_entity_map)
+		{
+			auto e = m_entity_manager.entityDangerous(pair.second);
+			ASSERT(m_entity_manager.isLoaded(pair.second) && m_entity_manager.isAlive(pair.second), "Shit");
+			if (rect.containsPoint(e->getPosition()))
+			{
+				toUnload.push_back(pair.second);
+				if (!e->hasFlag(EFLAG_TEMPORARY))
+					toUnloadRealSize++;
+			}
 		}
 		m_nbt_saver.setWriteChunkID(chunkId);
-		uint32_t entityCount = toUnload.size();
-		if(entityCount)
-			m_nbt_saver.write(entityCount);//if chunk is blank no need to write anything
+		if (toUnloadRealSize)
+			m_nbt_saver.write(toUnloadRealSize); //if chunk is blank no need to write anything
 		NBT nbt;
 		for (auto entity : toUnload)
 		{
-			m_entity_manager.entity(entity)->save(nbt);
-			nbt.serialize(&m_nbt_saver);
-			nbt.clear();
-
-			unloadEntity(entity);
+			auto entiP = m_entity_manager.entity(entity);
+			if (entiP->hasFlag(EFLAG_TEMPORARY))
+			{
+				killEntity(entiP->getID()); //those which temporary are, on chunk-unload shall be killed
+			}
+			else
+			{
+				entiP->save(nbt);
+				nbt.serialize(&m_nbt_saver);
+				nbt.clear();
+				unloadEntity(entity);
+			}
 		}
 		m_nbt_saver.flushWrite();
 		toUnload.clear();
-
 	}
 	m_nbt_saver.endSession();
 }
@@ -551,7 +587,7 @@ const BlockStruct* World::getLoadedBlockPointer(int x, int y) const
 	if (index != -1)
 	{
 		return &const_cast<BlockStruct&>(m_chunks[index].block(x & (WORLD_CHUNK_SIZE - 1),
-		                                                          y & (WORLD_CHUNK_SIZE - 1)));
+		                                                       y & (WORLD_CHUNK_SIZE - 1)));
 	}
 	return nullptr;
 }
@@ -732,18 +768,22 @@ EntityID World::spawnEntity(WorldEntity* pEntity)
 	auto id = m_entity_manager.createEntity();
 	pEntity->m_id = id;
 	loadEntity(pEntity);
+	pEntity->onSpawned(this);
 	return id;
 }
 
-void World::unloadEntity(EntityID worldEntity)
+void World::unloadEntity(EntityID worldEntity, bool isKilled)
 {
 	for (int i = 0; i < m_entity_array.size(); ++i)
 	{
 		if (m_entity_array[i] == worldEntity)
 		{
 			auto pointer = m_entity_manager.entity(worldEntity);
-			if (pointer) {
+			if (pointer)
+			{
 				pointer->onUnloaded(this);
+				if (isKilled)
+					pointer->onKilled(this);
 				free(pointer);
 			}
 			else ND_WARN("Unloading entity that has no instance");
@@ -754,12 +794,70 @@ void World::unloadEntity(EntityID worldEntity)
 			return;
 		}
 	}
+	for (auto& pair : m_tile_entity_map)
+	{
+		if (pair.second == worldEntity)
+		{
+			auto pointer = m_entity_manager.entity(worldEntity);
+			if (pointer)
+			{
+				pointer->onUnloaded(this);
+				if (isKilled)
+					pointer->onKilled(this);
+				free(pointer);
+			}
+			else ND_WARN("Unloading tile entity that has no instance");
+
+			m_entity_manager.setLoaded(worldEntity, false);
+
+			m_tile_entity_map.erase(m_tile_entity_map.find(pair.first));
+			return;
+		}
+	}
+}
+
+void World::unloadTileEntity(EntityID worldEntity, bool isKilled)
+{
+	for (auto& pair : m_tile_entity_map)
+	{
+		if (pair.second == worldEntity)
+		{
+			auto pointer = m_entity_manager.entity(worldEntity);
+			if (pointer)
+			{
+				pointer->onUnloaded(this);
+				if (isKilled)
+					pointer->onKilled(this);
+				free(pointer);
+			}
+			else ND_WARN("Unloading tile entity that has no instance");
+
+			m_entity_manager.setLoaded(worldEntity, false);
+
+			m_tile_entity_map.erase(m_tile_entity_map.find(pair.first));
+			return;
+		}
+	}
 }
 
 void World::killEntity(EntityID id)
 {
 	if (m_entity_manager.isLoaded(id))
-		unloadEntity(id);
+	{
+		unloadEntity(id, true);
+	}
+	else
+		ND_WARN("Killing entity thats not loaded! {}", id);
+
+	m_entity_manager.killEntity(id);
+}
+
+void World::killTileEntity(EntityID id)
+{
+	if (m_entity_manager.isLoaded(id))
+	{
+		unloadTileEntity(id, true);
+	}
 	else
 		ND_WARN("Killing entity thats not loaded! {}", id);
 
@@ -789,7 +887,6 @@ bool World::saveWorld()
 	m_nbt_saver.endSession();
 
 	return true;
-
 }
 
 bool World::loadWorld()
@@ -799,7 +896,8 @@ bool World::loadWorld()
 
 	//load worldinfo
 	auto session = WorldIO::Session(m_file_path, true);
-	if (!session.loadWorldMetadata(&m_info)) {
+	if (!session.loadWorldMetadata(&m_info))
+	{
 		ND_WARN("World file: {} is corrupted", m_file_path);
 		return false;
 	}
@@ -809,12 +907,12 @@ bool World::loadWorld()
 	m_nbt_saver.beginSession();
 
 	//load entitymanager
-	if(m_nbt_saver.setReadChunkID(DYNAMIC_ID_ENITY_MANAGER))
+	if (m_nbt_saver.setReadChunkID(DYNAMIC_ID_ENITY_MANAGER))
 		m_entity_manager.deserialize(&m_nbt_saver);
 	else ND_WARN("World file: {}.entity is corrupted", m_file_path);
 
 	//load worldnbt
-	if(m_nbt_saver.setReadChunkID(DYNAMIC_ID_WORLD_NBT))
+	if (m_nbt_saver.setReadChunkID(DYNAMIC_ID_WORLD_NBT))
 		m_world_nbt.deserialize(&m_nbt_saver);
 	else ND_WARN("World file: {}.entity is corrupted (cannot read worldnbt)", m_file_path);
 
@@ -824,16 +922,20 @@ bool World::loadWorld()
 
 bool World::genWorld()
 {
-	auto session = WorldIO::Session(m_file_path, true,true);
+	auto session = WorldIO::Session(m_file_path, true, true);
 	session.genWorldFile(&m_info);
 	session.close();
 
 	m_nbt_saver.clearEverything();
 	m_nbt_saver.init();
 	return true;
-
 }
 
+
+void World::spawnParticle(ParticleID id, Phys::Vect pos, Phys::Vect speed, Phys::Vect acc, int life)
+{
+	m_particle_manager->createParticle(id, pos, speed, acc, life);
+}
 
 void World::loadEntity(WorldEntity* pEntity)
 {
@@ -841,7 +943,12 @@ void World::loadEntity(WorldEntity* pEntity)
 	//ASSERT(m_entity_manager.isAlive(id), "Loading dead entity, wtf..?");
 	m_entity_manager.setLoaded(id, true);
 	m_entity_manager.setEntityPointer(id, pEntity);
-	m_entity_array.push_back(id);
+	if (dynamic_cast<TileEntity*>(pEntity))
+	{
+		m_tile_entity_map[Phys::Vecti(pEntity->getPosition().x, pEntity->getPosition().y).toInt64()] = pEntity->getID();
+	}
+	else
+		m_entity_array.push_back(id);
 	pEntity->onLoaded(this);
 }
 
@@ -870,9 +977,15 @@ void World::setBlock(int x, int y, BlockStruct& newBlock)
 
 
 	auto& regBlock = BlockRegistry::get().getBlock(newBlock.block_id);
-	
+
+
 	//set walls from old block acordingly
 	auto& oldBlock = c->block(x & (WORLD_CHUNK_SIZE - 1), y & (WORLD_CHUNK_SIZE - 1));
+	//if (newBlock.block_id==0)
+	//{
+	auto& bb = BlockRegistry::get().getBlock(oldBlock.block_id);
+	bb.onBlockDestroyed(this, nullptr, x, y, oldBlock);
+	//}
 	memcpy(newBlock.wall_id, oldBlock.wall_id, sizeof(newBlock.wall_id));
 	memcpy(newBlock.wall_corner, oldBlock.wall_corner, sizeof(newBlock.wall_corner));
 

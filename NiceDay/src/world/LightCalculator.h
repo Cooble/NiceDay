@@ -2,7 +2,6 @@
 #include "ndpch.h"
 
 #include "block/BlockRegistry.h"
-#include "WorldGen.h"
 
 #define MAX_SNAPSHOT_NUMBER 5
 

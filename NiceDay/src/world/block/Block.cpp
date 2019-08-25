@@ -3,7 +3,8 @@
 #include "world/World.h"
 #include "Block.h"
 #include "block_datas.h"
-#include "graphics/TextureAtlas.h"
+#include "graphics/BlockTextureAtlas.h"
+#include "world/entity/EntityRegistry.h"
 
 
 Block::Block(int id)
@@ -11,34 +12,42 @@ Block::Block(int id)
 	  m_texture_pos(0),
 	  m_corner_translate_array(nullptr),
 	  m_has_big_texture(false),
+	  m_tile_entity(ENTITY_TYPE_NONE),
 	  m_collision_box(BLOCK_BOUNDS_DEFAULT),
-	  m_collision_box_size(1),
-	  m_opacity(3),
+	  m_collision_box_size(3),
+	  m_opacity(OPACITY_SOLID),
 	  m_light_src(0),
 	  m_block_connect_group(0)
+
 {
 }
 
-void Block::setNoCollisionBox()
+Phys::Vecti Block::getTileEntityCoords(int x, int y, const BlockStruct& b)
 {
-	m_collision_box = nullptr;
-	m_collision_box_size = 0;
+	return Phys::Vecti(x, y);
 }
-
 
 const Phys::Polygon& Block::getCollisionBox(int x, int y, const BlockStruct& b) const
 {
-	return m_collision_box[0];
+	switch (b.block_corner)
+	{
+	case BLOCK_STATE_CORNER_UP_LEFT:
+		return m_collision_box[1];
+	case BLOCK_STATE_CORNER_UP_RIGHT:
+		return m_collision_box[2];
+	default:
+		return m_collision_box[0];
+	}
 }
 
 bool Block::hasCollisionBox() const { return m_collision_box_size != 0; }
 
-void Block::onTextureLoaded(const TextureAtlas& atlas)
+void Block::onTextureLoaded(const BlockTextureAtlas& atlas)
 {
 	m_texture_pos = atlas.getTexture("block/" + toString());
 }
 
-int Block::getTextureOffset(int x, int y, const BlockStruct&) const
+int Block::getTextureOffset(int x, int y, const BlockStruct& b) const
 {
 	if (!m_has_big_texture)
 		return m_texture_pos.i;
@@ -84,11 +93,38 @@ bool Block::onNeighbourBlockChange(World* world, int x, int y) const
 	return lastCorner != block.block_corner; //we have a change (or not)
 }
 
+void Block::onBlockPlaced(World* w, WorldEntity* e, int x, int y, BlockStruct& b) const
+{
+	if (hasTileEntity()) {
+		auto entityBuff = malloc(EntityRegistry::get().getBucket(m_tile_entity).byte_size);
+		EntityRegistry::get().createInstance(m_tile_entity, entityBuff);
+
+		((WorldEntity*)entityBuff)->getPosition() = Phys::Vect(x, y);
+		w->spawnEntity((WorldEntity*)entityBuff);
+	}
+}
+
+void Block::onBlockDestroyed(World* w, WorldEntity* e, int x, int y, BlockStruct& b) const
+{
+	if (hasTileEntity()) {
+		
+		WorldEntity* ee = w->getLoadedTileEntity(x, y);
+		if (ee)
+			ee->markDead();
+	}
+}
+
 
 //MULTIBLOCK==================================================
 MultiBlock::MultiBlock(int id)
 	: Block(id)
 {
+}
+
+Phys::Vecti MultiBlock::getTileEntityCoords(int x, int y, const BlockStruct& b)
+{
+	quarter_int offset = b.block_metadata;
+	return { x - offset.x, y - offset.y };
 }
 
 int MultiBlock::getCornerOffset(int x, int y, const BlockStruct& b) const
@@ -126,6 +162,7 @@ void MultiBlock::onBlockPlaced(World* w, WorldEntity* e, int xx, int yy, BlockSt
 			w->setBlock(xx + x, yy + y, segment);
 		}
 	}
+	Block::onBlockPlaced(w, e, xx, yy, b);
 }
 
 void MultiBlock::onBlockDestroyed(World* w, WorldEntity* e, int xx, int yy, BlockStruct& b) const
@@ -145,6 +182,7 @@ void MultiBlock::onBlockDestroyed(World* w, WorldEntity* e, int xx, int yy, Bloc
 			w->setBlock(xx + x - offset.x, yy + y - offset.y, 0);
 		}
 	}
+	Block::onBlockDestroyed(w, e, xx - offset.x, yy - offset.y, w->editBlock(xx - offset.x, yy - offset.y));
 }
 
 bool MultiBlock::canBePlaced(World* w, int xx, int yy) const
@@ -169,7 +207,7 @@ Wall::Wall(int id)
 Wall::~Wall() = default;
 
 
-void Wall::onTextureLoaded(const TextureAtlas& atlas)
+void Wall::onTextureLoaded(const BlockTextureAtlas& atlas)
 {
 	m_texture_pos = atlas.getTexture("wall/" + toString());
 }
