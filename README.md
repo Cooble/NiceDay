@@ -1,8 +1,18 @@
 # NiceDay
 
 Let's make Terraria in C++!  
-  
-### Pictured changelog:
+## TimeLine:
+- [Basic Tile Render](#basic-tile-render-03_05_2019)
+- [Corner tile render](#corner-tile-render-06_05_2019)
+- [Lighting prototype with water-spill-algorithm](#lighting-prototype-with-water-spill-algorithm-18_05_2019)
+- [Platforms, grass, sky](#platforms-grass-sky-20_05_2019)
+- [Blocks, Walls, Background](#blocks-walls-background-26_05_2019)
+- [Colorful block corners, glass, procedural chunk generation](#colorful-block-corners-glass-procedural-chunk-generation-14_06_2019)
+- [Dynamic and Cached monochromatic lighting system](#dynamic-and-cached-monochromatic-lighting-system-19_06_2019)
+- [Multithreaded lights,  Inheritance Entity System](#multithreaded-lights--inheritance-entity-system-maybe-will-change-to-ecs-in-the-future22_07_2019)
+- [Smooth wallLight vs edgy blockLight, Day/Night cycle](#smooth-walllight-vs-edgy-blocklight-daynight-cycle-12_08_2019)
+- [ParticleSystem, Trees, Flowers, PlayerSprite, Walking on steep floor, fullscreen](#particlesystem-trees-flowers-playersprite-walking-on-steep-floor-fullscreen-25_08_2019)  
+## Pictured changelog:
 
 #### Basic tile render (03_05_2019)
 ![Alt text](screenshots/03_05_2019.png?raw=false "")
@@ -24,6 +34,7 @@ Let's make Terraria in C++!
 
 #### Dynamic and Cached monochromatic lighting system (19_06_2019)  
 - Cached lighting is only calculated onBlockChange  
+
 ![Alt text](screenshots/19_06_2019.png?raw=false "")
 
 #### Multithreaded lights,  Inheritance Entity System (maybe will change to ECS in the future)(22_07_2019)  
@@ -39,6 +50,7 @@ In the pic: red Zombie attacks black Player.  (and then mysteriously disappears 
 #### Smooth wallLight vs edgy blockLight, Day/Night cycle (12_08_2019)  
 - Added dynamically created TextureAtlas.  
 - Added painting and multiblock structure support.  
+
 ![Alt text](screenshots/12_08_2019.png?raw=false "")   
 Oh, shoot!   
 ![Alt Text](screenshots/12_08_2019.gif?raw=false "") 
@@ -50,6 +62,7 @@ Oh, shoot!
 - Crude ParticleSystem using BatchRenderer2D temporarily, will have its own renderer with shader in the future. Can do 3500 particles without a problem.  
 - Added multiblock structure = tree and its generator. After placing a sapling block, sapling tile entity counts the worldtime and then calls TreeGen. Trees have random number of branches(dry or normal) and random corona.  
 - Everybody loves flowers. and graaasss. (Sheep are in sight :D)  
+
 ![Alt text](screenshots/25_08_2019.png?raw=false "")  
 
 
