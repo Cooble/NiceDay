@@ -11,14 +11,17 @@ class Texture;
 class Renderable2D;
 using namespace glm;
 
-struct VertexData 
+
+class ParticleRenderer
 {
-	glm::vec3 position;
-	glm::vec2 uv;
-	int textureSlot;
-};
-class BatchRenderer2D
-{
+	struct VertexData
+	{
+		glm::vec3 position;
+		glm::vec2 uv0;
+		glm::vec2 uv1;
+		int textureSlot;
+		float mix;
+	};
 private:
 	std::vector<mat4> m_transformation_stack;
 	std::vector<const Texture*> m_textures;
@@ -36,15 +39,14 @@ private:
 private:
 	int bindTexture(const Texture* t);
 public:
-	BatchRenderer2D();
-	~BatchRenderer2D();
+	ParticleRenderer();
+	~ParticleRenderer();
 
 	void push(const mat4& trans);
 	void pop();
 
 	void begin();
-	void submit(const Renderable2D& ren);
-	void submit(const glm::vec3& pos, const glm::vec2& size, const UVQuad& uv, Texture* t);
+	void submit(const glm::vec3& pos, const glm::vec2& size, const UVQuad& uv0, const UVQuad& uv1, Texture* t, float mix);
 	void flush();
 
 

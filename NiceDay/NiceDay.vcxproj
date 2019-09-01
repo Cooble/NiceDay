@@ -141,6 +141,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\graphics\ParticleRenderer.h" />
     <ClInclude Include="src\world\particle\ParticleRegistry.h" />
     <ClInclude Include="src\graphics\Bar.h" />
     <ClInclude Include="src\graphics\Effect.h" />
@@ -592,6 +593,7 @@
     <ClInclude Include="vendor\stb_image\stb_image_write.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\graphics\ParticleRenderer.cpp" />
     <ClCompile Include="src\world\particle\ParticleRegistry.cpp" />
     <ClCompile Include="src\graphics\Bar.cpp" />
     <ClCompile Include="src\graphics\Effect.cpp" />

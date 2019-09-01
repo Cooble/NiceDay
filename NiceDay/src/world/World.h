@@ -301,7 +301,7 @@ public:
 	inline auto& getNBTSaver() { return m_nbt_saver; }
 	inline EntityManager& getEntityManager() { return m_entity_manager; }
 	inline ParticleManager** particleManager() { return &m_particle_manager; }
-	void spawnParticle(ParticleID id, Phys::Vect pos, Phys::Vect speed, Phys::Vect acc, int life);
+	void spawnParticle(ParticleID id, Phys::Vect pos, Phys::Vect speed, Phys::Vect acc, int life,float rotation=0);
 
 
 	inline WorldEntity* getLoadedEntity(EntityID id)

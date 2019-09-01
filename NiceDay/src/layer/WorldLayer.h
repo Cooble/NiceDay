@@ -8,6 +8,7 @@
 #include "world/entity/ssystem.h"
 #include "world/entity/entities.h"
 #include "particle/ParticleManager.h"
+#include "graphics/ParticleRenderer.h"
 
 
 class BatchRenderer2D;
@@ -16,6 +17,7 @@ class WorldLayer : public Layer
 private:
 	std::vector<Sprite*> m_sprites;
 	BatchRenderer2D* m_batch_renderer;
+	ParticleRenderer* m_particle_renderer;
 	World* m_world;
 	ChunkLoader* m_chunk_loader;
 	//ChunkMeshInstance* m_mesh;

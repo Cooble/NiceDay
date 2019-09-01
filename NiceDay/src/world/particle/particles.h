@@ -7,6 +7,7 @@ namespace ParticleList
 	inline ParticleID torch_smoke;
 	inline ParticleID dot;
 	inline ParticleID line;
+	inline ParticleID bulletShatter;
 
 	void initDefaultParticles(ParticleRegistry& p);
 };

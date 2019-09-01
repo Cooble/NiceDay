@@ -128,6 +128,7 @@ public:
 	std::pair<int, int> getLightPosition() const override { return std::make_pair(m_pos.x, m_pos.y); }
 	uint8_t getIntensity() const override { return 10; }
 	bool onEntityHit(World* w, WorldEntity* entity) override;
+	bool onBlockHit(World* w, int blockX, int blockY) override;
 
 	void onLoaded(World* w) override;
 	void onUnloaded(World* w) override;
@@ -221,9 +222,11 @@ public:
 class EntityZombie : public Creature
 {
 private:
-	int m_pose = 0;
 	PathTracer m_tracer;
 	bool m_found_player = false;
+	float m_pose = 0;
+	float m_last_pose = 0;
+	int m_animation_var = 0;
 
 public:
 	EntityZombie();

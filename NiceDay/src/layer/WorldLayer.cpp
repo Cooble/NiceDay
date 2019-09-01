@@ -145,6 +145,7 @@ WorldLayer::WorldLayer()
 	m_render_manager = new WorldRenderManager(m_cam, m_world);
 
 	m_batch_renderer = new BatchRenderer2D();
+	m_particle_renderer = new ParticleRenderer();
 
 	static SpriteSheetResource res(Texture::create(
 		                               TextureInfo("res/images/borderBox.png")
@@ -174,6 +175,7 @@ WorldLayer::~WorldLayer()
 	delete m_chunk_loader;
 	delete m_world;
 	delete m_batch_renderer;
+	delete m_particle_renderer;
 	delete m_render_manager;
 }
 
@@ -232,14 +234,6 @@ void WorldLayer::onDetach()
 
 static int fpsCount;
 
-static float randFloat()
-{
-	return std::rand() % 1000 / 1000.f;
-}
-static float randDipsersedFloat()
-{
-	return std::rand() % 1000 / 1000.f-0.5f;
-}
 void WorldLayer::onUpdate()
 {
 	m_cam->m_light_intensity = Stats::player_light_intensity;
@@ -411,7 +405,7 @@ void WorldLayer::onUpdate()
 	//std::cout << "Acceleration: " << Phys::asVect(accel) << "\n";
 	
 	// Particle Sh't
-	/* 
+	/*
 	static float angle=0;
 	static int tickToChangeAngle = 1;
 	tickToChangeAngle--;
@@ -423,18 +417,19 @@ void WorldLayer::onUpdate()
 		angleee = randFloat()*3.14159f*2;
 		speeeed = randFloat() * 2 + 0.5;
 	}
-	m_particles->createParticle(particleLine, getPlayer().getPosition(), Phys::vectFromAngle(angleee)*speeeed, { 0 }, (60 + rand() % 10) * 5);
+	m_world->spawnParticle(ParticleList::line, getPlayer().getPosition(), Phys::vectFromAngle(angleee)*speeeed, { 0 }, (60 + rand() % 10) * 5);
 
 
 
 	for (int i = 0; i < 10; ++i)
 	{
 		angle += 0.03f;
-		auto speed = Phys::vectFromAngle(angle + randDipsersedFloat() + 3.14159f / 2);
+		auto speed = Phys::vectFromAngle(angle + randDispersedFloat() + 3.14159f / 2);
 		auto speed2 = speed *randFloat();
-		m_particles->createParticle(particleDot, getPlayer().getPosition(), speed2, speed*(-0.005f+randDipsersedFloat()*0.2f), (60 + rand() % 10) * 5);
-	}*/
-
+		m_world->spawnParticle(ParticleList::dot, getPlayer().getPosition(), speed2, speed*(-0.005f+ randDispersedFloat()*0.2f), (60 + rand() % 10) * 5);
+	}
+	*/
+	
 	CAM_POS_X = (m_cam->getPosition().x);
 	CAM_POS_Y = (m_cam->getPosition().y);
 	CHUNKS_LOADED = m_world->getMap().size();
@@ -487,12 +482,15 @@ void WorldLayer::onUpdate()
 
 void WorldLayer::onRender()
 {
+	//world
 	m_render_manager->render();
 
-	m_batch_renderer->begin();
-	m_batch_renderer->push(m_render_manager->getProjMatrix());
+	//entities
 	auto worldMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(-m_cam->getPosition().x, -m_cam->getPosition().y, 0));
-	m_batch_renderer->push(worldMatrix);
+	
+	m_batch_renderer->begin();
+	m_batch_renderer->push(m_render_manager->getProjMatrix()*worldMatrix);
+	
 	for (auto it = m_world->beginEntities(); it != m_world->endEntities(); ++it)
 	{
 		WorldEntity* entity = m_world->getLoadedEntity(*it);
@@ -500,10 +498,18 @@ void WorldLayer::onRender()
 		if (ren)
 			ren->render(*m_batch_renderer);
 	}
-	(*m_world->particleManager())->render(*m_batch_renderer);
-	m_batch_renderer->pop(); //world matrix
-	m_batch_renderer->pop(); //proj matrix
+	
+	m_batch_renderer->pop();
 	m_batch_renderer->flush();
+
+
+	//particles
+	m_particle_renderer->begin();
+	m_particle_renderer->push(m_render_manager->getProjMatrix()*worldMatrix);
+	(*m_world->particleManager())->render(*m_particle_renderer);
+	m_particle_renderer->pop();
+	m_particle_renderer->flush();
+
 }
 
 static bool showTelem = false;

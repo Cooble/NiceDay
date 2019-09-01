@@ -1,11 +1,11 @@
 #pragma once
 #include "physShapes.h"
-#include "graphics/IBatchRenderable2D.h"
 #include "world/particle/ParticleRegistry.h"
 
+class ParticleRenderer;
 class Texture;
 
-class ParticleManager:public IBatchRenderable2D
+class ParticleManager
 {
 private:
 	struct Particle
@@ -21,6 +21,7 @@ private:
 		half_int texture_size;
 		uint8_t frame_count;
 		uint8_t current_frame;
+		uint8_t next_frame;
 		uint8_t frame_age;
 		// ticks per frame
 		uint8_t  tpf;
@@ -39,6 +40,9 @@ public:
 	void update();
 	inline void clearAll() { m_particleCount = 0; }
 	Particle& createParticle();
-	void createParticle(ParticleID id, Phys::Vect pos, Phys::Vect speed, Phys::Vect acc, int life);
-	void render(BatchRenderer2D& renderer) override;
+
+
+	// rotation if negative will be determined from actual speed of particle
+	void createParticle(ParticleID id, Phys::Vect pos, Phys::Vect speed, Phys::Vect acc, int life,float rotation=0);
+	void render(ParticleRenderer& renderer);
 };

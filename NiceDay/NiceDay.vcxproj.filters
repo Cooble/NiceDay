@@ -1344,6 +1344,7 @@
     <ClInclude Include="src\graphics\TextureAtlas.h" />
     <ClInclude Include="src\world\particle\ParticleRegistry.h" />
     <ClInclude Include="src\world\particle\particles.h" />
+    <ClInclude Include="src\graphics\ParticleRenderer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\EntryPoint.cpp">
@@ -1510,5 +1511,6 @@
     <ClCompile Include="src\graphics\TextureAtlas.cpp" />
     <ClCompile Include="src\world\particle\ParticleRegistry.cpp" />
     <ClCompile Include="src\world\particle\particles.cpp" />
+    <ClCompile Include="src\graphics\ParticleRenderer.cpp" />
   </ItemGroup>
 </Project>

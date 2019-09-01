@@ -15,7 +15,6 @@
 #include "world/particle/particles.h"
 
 
-
 //PhysEntity======================================================
 
 
@@ -397,10 +396,31 @@ bool EntityRoundBullet::onEntityHit(World* w, WorldEntity* entity)
 		en->getVelocity() += punchBack; // add this kick
 	}
 	auto creature = dynamic_cast<Creature*>(entity);
-	if(creature)
-		creature->onHit(w,this, m_damage);
+	if (creature)
+		creature->onHit(w, this, m_damage);
 	markDead();
 	return true;
+}
+
+bool EntityRoundBullet::onBlockHit(World* w, int blockX, int blockY)
+{
+	float numero=8;
+	float partNumero = 3.41459 * 2 / numero;
+	for (int i = 0; i < numero; ++i)
+	{
+		if(rand()%3>0)
+			continue;
+		float angle = i * partNumero+randDispersedFloat(0.2f);
+		float partX = sin(angle);
+		float partY = cos(angle);
+		float truX = m_pos.x+partX;
+		float truY = m_pos.y+partY;
+		constexpr float radiusCheck = 0.8f;
+		if (!BlockRegistry::get().getBlock(w->getBlock(m_pos.x + partX * radiusCheck, m_pos.y + partY * radiusCheck).block_id).hasCollisionBox())
+			w->spawnParticle(ParticleList::bulletShatter, m_pos + (Phys::Vect(partX, partY)*0.1f), Phys::Vect(partX, partY)*0.15f, { 0,-0.55f / 60 }, 60, -1);
+	}
+	return Bullet::onBlockHit(w, blockX, blockY);
+
 }
 
 void EntityRoundBullet::onLoaded(World* w)
@@ -416,7 +436,7 @@ void EntityRoundBullet::onUnloaded(World* w)
 
 Creature::Creature()
 {
-	m_health_bar = Bar::buildDefault(glm::vec2(-1,-0.25f));
+	m_health_bar = Bar::buildDefault(glm::vec2(-1, -0.25f));
 }
 
 //Creature======================================================
@@ -513,24 +533,23 @@ EntityType TileEntitySapling::getEntityType() const
 void TileEntityTorch::update(World* w)
 {
 	m_tick_to_spawn_particle--;
-	if (m_tick_to_spawn_particle==0)
+	if (m_tick_to_spawn_particle == 0)
 	{
-		m_tick_to_spawn_particle = std::rand() % 60 + 2*60;
+		m_tick_to_spawn_particle = std::rand() % 60 + 2 * 60;
 		w->spawnParticle(
 			ParticleList::torch_fire,
-			m_pos + Phys::Vect(0.5f+randDispersedFloat(0.05f), 1),
-			{ randDispersedFloat(0.001), randFloat(0.001f)+0.001f },
-			{ 0 },
+			m_pos + Phys::Vect(0.5f + randDispersedFloat(0.05f), 1),
+			{randDispersedFloat(0.001), randFloat(0.001f) + 0.001f},
+			{0},
 			60 * 3);
 
 		w->spawnParticle(
 			ParticleList::torch_smoke,
 			m_pos + Phys::Vect(0.5f + randDispersedFloat(0.05f), 1),
-			{ randDispersedFloat(0.01), randFloat(0.005f) + 0.01f },
-			{ 0 },
+			{randDispersedFloat(0.01), randFloat(0.005f) + 0.01f},
+			{0},
 			60 * 4);
 	}
-
 }
 
 EntityType TileEntityTorch::getEntityType() const
@@ -607,7 +626,7 @@ void EntityPlayer::update(World* w)
 				m_animation.setSpriteFrame(1, 0);
 		}
 	}
-	constexpr int animationBlocksPerFrame = 2;
+	constexpr float animationBlocksPerFrame = 1;
 	m_pose += abs(lastPos.x - m_pos.x);
 	if (m_pose - m_last_pose > animationBlocksPerFrame)
 	{
@@ -719,7 +738,6 @@ void EntityTNT::load(NBT& src)
 
 EntityZombie::EntityZombie()
 {
-
 	setMaxHealth(15);
 
 	m_velocity = 0.0f;
@@ -727,13 +745,13 @@ EntityZombie::EntityZombie()
 	m_max_velocity = {50.f / 60, 50.f / 60};
 
 	static SpriteSheetResource res(Texture::create(
-		                               TextureInfo("res/images/player.png")
+		                               TextureInfo("res/images/zombie.png")
 		                               .filterMode(TextureFilterMode::NEAREST)
-		                               .format(TextureFormat::RGBA)), 4, 4);
-	m_animation = Animation(&res);
+		                               .format(TextureFormat::RGBA)), 16, 1);
+	m_animation = Animation(&res, {0, 1, 2, 1, 0, 4, 3, 4});
 	m_animation.setSpriteIndex(0, 2);
 	m_animation.setPosition(glm::vec3(-1, 0, 0));
-	m_animation.setSize(glm::vec2(2, 3));
+	m_animation.setSize(glm::vec2(2, 4));
 
 	m_bound = Phys::toPolygon(Phys::Rectangle::createFromDimensions(-0.75f, 0, 1.5f, 2.9f));
 }
@@ -774,22 +792,28 @@ void EntityZombie::update(World* w)
 			}
 		}
 	}
-
-
 	if (this->m_pos.x > lastPos.x)
 	{
-		m_pose = 1;
+		m_animation.setHorizontalFlip(false);
+		m_animation_var = 1;
 	}
 	else if (this->m_pos.x < lastPos.x)
 	{
-		m_pose = 2;
+		m_animation.setHorizontalFlip(true);
+		m_animation_var = 1;
 	}
 	else
 	{
-		if (this->m_pos.y != lastPos.y)
-			m_pose = 0;
+		if (m_animation_var == 1)
+			m_animation.setSpriteFrame(1, 0);
 	}
-	m_animation.setSpriteIndex(m_pose, 2);
+	constexpr float animationBlocksPerFrame = 0.5f;
+	m_pose += abs(lastPos.x - m_pos.x);
+	if (m_pose - m_last_pose > animationBlocksPerFrame)
+	{
+		m_pose = m_last_pose;
+		m_animation.nextFrame();
+	}
 }
 
 EntityType EntityZombie::getEntityType() const

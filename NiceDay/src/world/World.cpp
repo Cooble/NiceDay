@@ -932,15 +932,14 @@ bool World::genWorld()
 }
 
 
-void World::spawnParticle(ParticleID id, Phys::Vect pos, Phys::Vect speed, Phys::Vect acc, int life)
+void World::spawnParticle(ParticleID id, Phys::Vect pos, Phys::Vect speed, Phys::Vect acc, int life,float rotation)
 {
-	m_particle_manager->createParticle(id, pos, speed, acc, life);
+	m_particle_manager->createParticle(id, pos, speed, acc, life,rotation);
 }
 
 void World::loadEntity(WorldEntity* pEntity)
 {
 	auto id = pEntity->getID();
-	//ASSERT(m_entity_manager.isAlive(id), "Loading dead entity, wtf..?");
 	m_entity_manager.setLoaded(id, true);
 	m_entity_manager.setEntityPointer(id, pEntity);
 	if (dynamic_cast<TileEntity*>(pEntity))
