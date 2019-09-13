@@ -4,45 +4,52 @@
 #include "layer/LayerStack.h"
 #include "event/MouseEvent.h"
 #include "event/WindowEvent.h"
-#include "layer/ImGuiLayer.h"
 #include "Scheduler.h"
 
-constexpr int TPS=60;
+class ImGuiLayer;
 
-class Game
+class App
 {
-
 public:
-	Game();
-	~Game();
+	App(int width=1280, int height=720, const std::string& title="ND_ENGINE");
+	virtual ~App();
 
-	void init();
 	void start();
-	void update();
-	void render();
 	void stop();
-	bool onWindowClose(WindowCloseEvent&);
+
+	virtual bool onWindowClose(WindowCloseEvent& e);
+
 	void fireEvent(Event& e);
 
-	inline static Game& get() { return *s_Instance; }
+	inline static App& get() { return *s_Instance; }
 	inline Window* getWindow() { return m_Window; }
 	inline Input& getInput() { return m_Input; }
 	inline LayerStack& getLayerStack() { return m_LayerStack; }
+	inline Scheduler& getScheduler() { return m_scheduler; }
+
+	// return target ticks per second (not actual)
+	inline int getTPS() const{ return m_target_tps; }
+
+
+	//=====telemetry====
+
 	inline float getFPS() const{ return m_fps; }
 	inline int getTickMillis() const { return m_tick_millis; }
 	inline int getRenderMillis() const { return m_render_millis; }
-	inline int getTargetTPS() const{ return m_target_tps; }
-	inline Scheduler& getScheduler() { return m_scheduler; }
 
 private:
-	static Game* s_Instance;
+	static App* s_Instance;
+	void init(int width,int height,const std::string& title);
+	void update();
+	void render();
+protected:
 	int current_fps=0;
 	long long lastFPSMillis;
 
 	float m_fps;
 	int m_tick_millis;
 	int m_render_millis;
-	int m_target_tps;
+	int m_target_tps=60;
 
 	Window* m_Window;
 	Input m_Input;
@@ -50,7 +57,18 @@ private:
 	ImGuiLayer* m_ImGuiLayer;
 	Scheduler m_scheduler;
 	bool m_running=false;
+	
+};
 
-
+class ImGuiLayer : public Layer
+{
+public:
+	ImGuiLayer();
+	~ImGuiLayer() = default;
+	void onAttach();
+	void onDetach();
+	void begin();
+	void end();
+	void onImGuiRender();
 };
 

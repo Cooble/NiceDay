@@ -1,7 +1,7 @@
 ﻿#pragma once
-#include "Shader.h"
-#include "buffer/Buffer.h"
-#include "buffer/VertexArray.h"
+#include "API/Shader.h"
+#include "API/Buffer.h"
+#include "API/VertexArray.h"
 
 struct TestQuad
 {

@@ -1,9 +1,9 @@
 #pragma once
 
-#include "buffer/VertexArray.h"
+#include "API/VertexArray.h"
 #include "Sprite2D.h"
 
-#include "Shader.h"
+#include "API/Shader.h"
 
 class IndexBuffer;
 class VertexBuffer;

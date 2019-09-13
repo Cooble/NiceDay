@@ -7,7 +7,7 @@
 #include "world/WorldIO.h"
 #include "event/KeyEvent.h"
 #include "event/MouseEvent.h"
-#include "Game.h"
+#include "App.h"
 #include "Stats.h"
 #include "imguiplotvar.h"
 #include <GLFW/glfw3.h>
@@ -114,10 +114,10 @@ WorldLayer::WorldLayer()
 
 	WorldInfo info;
 	strcpy_s(info.name, "NiceWorld");
-	info.chunk_width = 200;
-	info.chunk_height = 10;
+	info.chunk_width = 50;
+	info.chunk_height = 50;
 	info.seed = 0;
-	info.terrain_level = (info.chunk_height - 2) * WORLD_CHUNK_SIZE;
+	info.terrain_level = (info.chunk_height - 4) * WORLD_CHUNK_SIZE;
 
 	m_world = new World(std::string(info.name) + ".world", info);
 
@@ -248,9 +248,9 @@ void WorldLayer::onUpdate()
 		m_world->getLightCalculator().snapshot();
 		lightCalcDelay = 1;
 	}
-	auto pair = Game::get().getInput().getMouseLocation();
-	CURSOR_X = pair.first - Game::get().getWindow()->getWidth() / 2;
-	CURSOR_Y = -pair.second + Game::get().getWindow()->getHeight() / 2;
+	auto pair = App::get().getInput().getMouseLocation();
+	CURSOR_X = pair.first - App::get().getWindow()->getWidth() / 2;
+	CURSOR_Y = -pair.second + App::get().getWindow()->getHeight() / 2;
 
 	CURSOR_X = CURSOR_X / BLOCK_PIXEL_SIZE + m_cam->getPosition().x;
 	CURSOR_Y = CURSOR_Y / BLOCK_PIXEL_SIZE + m_cam->getPosition().y;
@@ -269,7 +269,7 @@ void WorldLayer::onUpdate()
 	bool tntenable = true;
 	constexpr int maxDeltaBum = 2;
 	static int deltaBum = 0;
-	if (Game::get().getInput().isKeyPressed(GLFW_KEY_T))
+	if (App::get().getInput().isKeyPressed(GLFW_KEY_T))
 	{
 		if (tntenable)
 		{
@@ -292,12 +292,12 @@ void WorldLayer::onUpdate()
 			}
 		}
 	}
-	if (Game::get().getInput().isKeyFreshlyPressed(GLFW_KEY_C))
+	if (App::get().getInput().isKeyFreshlyPressed(GLFW_KEY_C))
 	{
 		Stats::fly_enable = !Stats::fly_enable;
 		ND_INFO("Fly mode: {}", Stats::fly_enable);
 	}
-	if (Game::get().getInput().isKeyFreshlyPressed(GLFW_KEY_E))
+	if (App::get().getInput().isKeyFreshlyPressed(GLFW_KEY_E))
 	{
 		auto t = Phys::asVect(m_cam->getPosition()).copy();
 
@@ -309,7 +309,7 @@ void WorldLayer::onUpdate()
 		m_world->spawnEntity((WorldEntity*)entityBuff);
 	}
 
-	if (Game::get().getInput().isKeyPressed(GLFW_KEY_B))
+	if (App::get().getInput().isKeyPressed(GLFW_KEY_B))
 	{
 		constexpr int BULLET_CADENCE_DELAY = 8;
 		static int counter = 0;
@@ -330,7 +330,7 @@ void WorldLayer::onUpdate()
 	}
 
 	if (!ImGui::IsMouseHoveringAnyWindow())
-		if (Game::get().getInput().isMousePressed(GLFW_MOUSE_BUTTON_1))
+		if (App::get().getInput().isMousePressed(GLFW_MOUSE_BUTTON_1))
 		{
 			if (Stats::gun_enable)
 			{
@@ -376,25 +376,25 @@ void WorldLayer::onUpdate()
 	if (Stats::move_through_blocks_enable)
 	{
 		velocity = glm::vec2(0,0);
-		if (Game::get().getInput().isKeyPressed(GLFW_KEY_RIGHT))
+		if (App::get().getInput().isKeyPressed(GLFW_KEY_RIGHT))
 			velocity.x = moveThroughBlockSpeed;
-		if (Game::get().getInput().isKeyPressed(GLFW_KEY_LEFT))
+		if (App::get().getInput().isKeyPressed(GLFW_KEY_LEFT))
 			velocity.x = -moveThroughBlockSpeed;
 
 
-		if (Game::get().getInput().isKeyPressed(GLFW_KEY_UP))
+		if (App::get().getInput().isKeyPressed(GLFW_KEY_UP))
 			velocity.y = moveThroughBlockSpeed;
-		if (Game::get().getInput().isKeyPressed(GLFW_KEY_DOWN))
+		if (App::get().getInput().isKeyPressed(GLFW_KEY_DOWN))
 			velocity.y = -moveThroughBlockSpeed;
 	}
 
 	else
 	{
-		if (Game::get().getInput().isKeyPressed(GLFW_KEY_RIGHT))
+		if (App::get().getInput().isKeyPressed(GLFW_KEY_RIGHT))
 			accel.x = acc;
-		if (Game::get().getInput().isKeyPressed(GLFW_KEY_LEFT))
+		if (App::get().getInput().isKeyPressed(GLFW_KEY_LEFT))
 			accel.x = -acc;
-		if (Game::get().getInput().isKeyPressed(GLFW_KEY_UP))
+		if (App::get().getInput().isKeyPressed(GLFW_KEY_UP))
 		{
 			if (istsunderBlock || Stats::fly_enable)
 				velocity.y = 10;
@@ -477,7 +477,6 @@ void WorldLayer::onUpdate()
 		}
 	}
 
-	//m_physics_system->proccess(m_physics_manager);
 }
 
 void WorldLayer::onRender()
@@ -547,21 +546,21 @@ void WorldLayer::onImGuiRenderTelemetrics()
 		maxupdatesPerFrame = 0;
 		maxmillisrender = 0;
 	}
-	maxMillis = max(maxMillis, Game::get().getTickMillis());
+	maxMillis = max(maxMillis, App::get().getTickMillis());
 	maxMillisLight = max(maxMillisLight, Stats::light_millis);
 	maxupdatesPerFrame = max(Stats::updates_per_frame, maxupdatesPerFrame);
-	maxmillisrender = max(Game::get().getRenderMillis(), maxmillisrender);
+	maxmillisrender = max(App::get().getRenderMillis(), maxmillisrender);
 
-	ImGui::PlotVar("Tick Millis", Game::get().getTickMillis());
+	ImGui::PlotVar("Tick Millis", App::get().getTickMillis());
 	ImGui::Text("Max tick   millis: %d", maxMillis);
-	ImGui::PlotVar("Render Millis", Game::get().getRenderMillis());
+	ImGui::PlotVar("Render Millis", App::get().getRenderMillis());
 	ImGui::Text("Max render millis: %d", maxmillisrender);
 
 
 	ImGui::PlotVar("Updates per Frame", Stats::updates_per_frame);
 	ImGui::Text("Max Updates: %d", maxupdatesPerFrame);
 
-	ImGui::PlotVar("FPS", Game::get().getFPS());
+	ImGui::PlotVar("FPS", App::get().getFPS());
 	if (Stats::light_enable)
 	{
 		ImGui::PlotVar("Light millis", Stats::light_millis);
@@ -611,7 +610,7 @@ void WorldLayer::onImGuiRenderWorld()
 
 
 	ImGui::Text("World filepath: %s", WORLD_FILE_PATH);
-	ImGui::Text("WorldTime: %d:%d", (int)m_world->getWorldTime().hour(), (int)m_world->getWorldTime().minute());
+	ImGui::Text("WorldTime: (%d) %d:%d", m_world->getWorldTime().m_ticks,(int)m_world->getWorldTime().hour(), (int)m_world->getWorldTime().minute());
 	ImGui::SliderFloat("Time speed", &m_world->m_time_speed, 0.f, 20.0f, "ratio = %.2f");
 	ImGui::Text("Cam X: %.2f \t(%d)", CAM_POS_X, (int)CAM_POS_X >> WORLD_CHUNK_BIT_SIZE);
 	ImGui::Text("Cam Y: %.2f \t(%d)", CAM_POS_Y, (int)CAM_POS_Y >> WORLD_CHUNK_BIT_SIZE);
@@ -735,10 +734,10 @@ void WorldLayer::onEvent(Event& e)
 		if (event->getKey() == GLFW_KEY_ESCAPE)
 		{
 			auto e = WindowCloseEvent();
-			Game::get().fireEvent(e);
+			App::get().fireEvent(e);
 			event->handled = true;
 
-			if (Game::get().getInput().isKeyPressed(GLFW_KEY_DELETE))
+			if (App::get().getInput().isKeyPressed(GLFW_KEY_DELETE))
 			{
 				std::remove(m_world->getFilePath().c_str());
 				ND_INFO("Erasing world");
@@ -757,7 +756,7 @@ void WorldLayer::onEvent(Event& e)
 			auto event = dynamic_cast<MousePressEvent*>(&e);
 			if (event->getButton() == GLFW_MOUSE_BUTTON_2)
 			{
-				if (Game::get().getInput().isKeyPressed(GLFW_KEY_LEFT_CONTROL))
+				if (App::get().getInput().isKeyPressed(GLFW_KEY_LEFT_CONTROL))
 				{
 					auto& stru = m_world->editBlock(CURSOR_X, CURSOR_Y);
 					BlockRegistry::get().getBlock(stru.block_id).onBlockClicked(

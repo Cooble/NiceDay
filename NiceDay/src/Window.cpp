@@ -4,13 +4,12 @@
 #include "event/MouseEvent.h"
 #include "event/KeyEvent.h"
 #include "event/WindowEvent.h"
-#include "graphics/Renderer.h"
-#include "platform/OpenGL/OpenGLRenderer.h"
+#include "platform/OpenGL/GLRenderer.h"
 
 static void blankFun(Event& e) {}
 static bool is_glfw_initialized = false;
 
-Window::Window(int width, int height, const char* title) :
+Window::Window(int width, int height, const std::string& title) :
 	m_window(nullptr)
 {
 	m_data.width = width;
@@ -30,7 +29,7 @@ Window::Window(int width, int height, const char* title) :
 
 	// glfw window creation
 	// --------------------
-	m_window = glfwCreateWindow(width, height, title, NULL, NULL);
+	m_window = glfwCreateWindow(width, height, title.c_str(), NULL, NULL);
 	if (m_window == NULL)
 	{
 		ND_ERROR("Failed to create GLFW window");

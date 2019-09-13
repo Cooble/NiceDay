@@ -1,6 +1,6 @@
 #include "ndpch.h"
 #include "Input.h"
-#include "Game.h"
+#include "App.h"
 #include "Window.h"
 
 
@@ -35,7 +35,7 @@ void Input::update()
 bool Input::isKeyPressed(int button)
 {
 	getKey(button);//save this button to vector
-	GLFWwindow* w = Game::get().getWindow()->getWindow();
+	GLFWwindow* w = App::get().getWindow()->getWindow();
 	auto state = glfwGetKey(w, button);
 	return state == GLFW_PRESS || state == GLFW_REPEAT;
 }
@@ -50,14 +50,14 @@ bool Input::isKeyFreshlyReleased(int button)
 
 bool Input::isMousePressed(int button)
 {
-	GLFWwindow* w = Game::get().getWindow()->getWindow();
+	GLFWwindow* w = App::get().getWindow()->getWindow();
 	auto state = glfwGetMouseButton(w, button);
 	return state==GLFW_PRESS;
 }
 
 std::pair<float, float> Input::getMouseLocation()
 {
-	GLFWwindow* w = Game::get().getWindow()->getWindow();
+	GLFWwindow* w = App::get().getWindow()->getWindow();
 	double x, y;
 	glfwGetCursorPos(w, &x, &y);
 	return std::make_pair<>((float)x,(float)y);

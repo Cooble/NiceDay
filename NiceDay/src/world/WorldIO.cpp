@@ -37,6 +37,11 @@ static bool checkDebugState(std::fstream* stream)
 
 //in bytes
 static const int HEADER_SIZE = 1000;
+static const int HEADER_LOADED_CHUNKS_SIZE = 1000000;//1MB reserved for list of chunks which have been already generated
+
+static const int HEADER_START_POINT = 0;
+static const int HEADER_TOTAL_START_POINT = HEADER_SIZE;
+static const int HEADER_TOTAL_END_POINT = HEADER_SIZE+ HEADER_LOADED_CHUNKS_SIZE;
 
 
 namespace WorldIO
@@ -60,10 +65,16 @@ namespace WorldIO
 	void Session::genWorldFile(const WorldInfo* info)
 	{
 		saveWorldMetadata(info);
+		m_stream->seekp(HEADER_TOTAL_START_POINT);
 		
-		m_stream->seekp(HEADER_SIZE);
+		char* b = new char[HEADER_LOADED_CHUNKS_SIZE];
+		memset(b, 0, HEADER_LOADED_CHUNKS_SIZE);
+		m_stream->write(b, HEADER_LOADED_CHUNKS_SIZE);
+		delete[] b;
+		
+		m_stream->seekp(HEADER_TOTAL_END_POINT);
 
-		Chunk* cc = new Chunk();
+		auto cc = new Chunk();
 		memset(cc, 0, sizeof(Chunk));
 		cc->setLoaded(false);
 		cc->last_save_time = 0;
@@ -87,7 +98,7 @@ namespace WorldIO
 		m_stream->seekg(0,std::ios::end);
 		if (m_stream->tellg() < sizeof(WorldInfo))//this file doesn't seem to exist
 			return false;
-		m_stream->seekp(0);
+		m_stream->seekg(HEADER_START_POINT);
 		m_stream->read((char*)world, sizeof(WorldInfo));
 		CHECK_STREAM_STATE(m_stream);
 		return true;
@@ -95,13 +106,28 @@ namespace WorldIO
 
 	void Session::saveWorldMetadata(const WorldInfo* world)
 	{
+		m_stream->seekp(HEADER_START_POINT);
 		m_stream->write((char*)world, sizeof(WorldInfo));
+		CHECK_STREAM_STATE(m_stream);
+	}
+
+	void Session::saveGenBoolMap(const NDUtil::Bitset* bitset)
+	{
+		m_stream->seekp(HEADER_TOTAL_START_POINT);
+		bitset->write(*m_stream);
+		CHECK_STREAM_STATE(m_stream);
+	}
+
+	void Session::loadGenBoolMap(NDUtil::Bitset* bitset)
+	{
+		m_stream->seekg(HEADER_TOTAL_START_POINT);
+		bitset->read(*m_stream);
 		CHECK_STREAM_STATE(m_stream);
 	}
 
 	void Session::loadChunk(Chunk* chunk, int offset)
 	{
-		m_stream->seekg(HEADER_SIZE + sizeof(Chunk) * offset, std::ios::beg);
+		m_stream->seekg(HEADER_TOTAL_END_POINT + sizeof(Chunk) * offset, std::ios::beg);
 		m_stream->read((char*)chunk, sizeof(Chunk));
 		chunk->m_main_thread_fence = 0;
 		chunk->m_light_thread_fence = 0;
@@ -110,7 +136,7 @@ namespace WorldIO
 
 	void Session::saveChunk(const Chunk* chunk, int offset)
 	{
-		m_stream->seekp(HEADER_SIZE + sizeof(Chunk) * offset, std::ios::beg);
+		m_stream->seekp(HEADER_TOTAL_END_POINT + sizeof(Chunk) * offset, std::ios::beg);
 		m_stream->write((char*)chunk, sizeof(Chunk));
 		CHECK_STREAM_STATE(m_stream);
 	}

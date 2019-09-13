@@ -4,10 +4,11 @@
 #include "WorldIO.h"
 #include "block/BlockRegistry.h"
 #include "biome/BiomeRegistry.h"
-#include "Game.h"
+#include "App.h"
 #include "entity/EntityRegistry.h"
 #include <filesystem>
 #include "entity/entities.h"
+#include "FileChunkProvider.h"
 
 
 Chunk::Chunk()
@@ -33,6 +34,8 @@ World::World(std::string file_path, const WorldInfo& info)
 	  m_file_path(file_path),
 	  m_nbt_saver(file_path + ".entity")
 {
+	m_chunk_provider = new FileChunkProvider(file_path);
+	m_is_chunk_gen_map.resize(info.chunk_width*info.chunk_height);
 	init();
 }
 
@@ -343,7 +346,7 @@ void World::genChunks(std::set<int>& toGenChunks)
 	int genIndex = 0;
 	int upIndex = 0;
 
-	Game::get().getScheduler().runTaskTimer(
+	App::get().getScheduler().runTaskTimer(
 		[genIndex, upIndex, this, toGenChunks, toupdateChunks]() mutable -> bool
 		{
 			taskActive = true;
@@ -869,6 +872,7 @@ bool World::saveWorld()
 	//world metadata
 	auto session = WorldIO::Session(m_file_path, true);
 	session.saveWorldMetadata(&m_info);
+	session.saveGenBoolMap(&m_is_chunk_gen_map);
 	session.close();
 
 	m_nbt_saver.beginSession();
@@ -889,6 +893,7 @@ bool World::saveWorld()
 	return true;
 }
 
+
 bool World::loadWorld()
 {
 	if (!std::filesystem::exists(m_file_path))
@@ -901,6 +906,7 @@ bool World::loadWorld()
 		ND_WARN("World file: {} is corrupted", m_file_path);
 		return false;
 	}
+	session.loadGenBoolMap(&m_is_chunk_gen_map);
 	session.close();
 
 	m_nbt_saver.init();

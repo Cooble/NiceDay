@@ -1,7 +1,6 @@
 #include "ndpch.h"
 #include "Shader.h"
-#include "Renderer.h"
-#include "platform/OpenGL/OpenGLRenderer.h"
+#include "platform/OpenGL/GLRenderer.h"
 
 
 #define FORGET_BIND_PROTECTION //just bind it please, dont waste your time 

@@ -1,30 +1,30 @@
 ﻿#include "ndpch.h"
-#include "OpenGLFrameBuffer.h"
-#include "OpenGLRenderer.h"
+#include "GLFrameBuffer.h"
+#include "GLRenderer.h"
 
-OpenGLFrameBuffer::OpenGLFrameBuffer()
+GLFrameBuffer::GLFrameBuffer()
 {
 	GLCall(glGenFramebuffers(1, &m_id));
 }
 
-OpenGLFrameBuffer::~OpenGLFrameBuffer()
+GLFrameBuffer::~GLFrameBuffer()
 {
 	GLCall(glDeleteFramebuffers(1, &m_id));
 }
 
-void OpenGLFrameBuffer::bind()
+void GLFrameBuffer::bind()
 {
 	GLCall(glBindFramebuffer(GL_FRAMEBUFFER, m_id));
 	if(m_color_attachments.size())
 		GLCall(glDrawBuffers(m_color_attachments.size(), m_color_attachments.data()));
 }
 
-void OpenGLFrameBuffer::unbind()
+void GLFrameBuffer::unbind()
 {
 	GLCall(glBindFramebuffer(GL_FRAMEBUFFER, 0));
 }
 
-void OpenGLFrameBuffer::attachTexture(unsigned int textureId, unsigned int attachmentNumber)
+void GLFrameBuffer::attachTexture(unsigned int textureId, unsigned int attachmentNumber)
 {
 	attachmentNumber += GL_COLOR_ATTACHMENT0;
 

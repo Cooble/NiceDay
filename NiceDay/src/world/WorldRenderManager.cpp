@@ -1,12 +1,12 @@
 ﻿#include "ndpch.h"
 #include "WorldRenderManager.h"
-#include "Game.h"
+#include "App.h"
 #include "Stats.h"
 #include "graphics/Renderer.h"
 #include "world/ChunkMesh.h"
 
 
-#include "platform/OpenGL/OpenGLRenderer.h"
+#include "platform/OpenGL/GLRenderer.h"
 #include "biome/BiomeRegistry.h"
 #include <algorithm>
 #include "graphics/GContext.h"
@@ -124,14 +124,14 @@ WorldRenderManager::~WorldRenderManager()
 void WorldRenderManager::onScreenResize()
 {
 	//build world view matrix
-	float ratioo = (float)Game::get().getWindow()->getHeight() / (float)Game::get().getWindow()->getWidth();
-	float chunkheightt = 2 * (float)BLOCK_PIXEL_SIZE / (float)Game::get().getWindow()->getHeight();
+	float ratioo = (float)App::get().getWindow()->getHeight() / (float)App::get().getWindow()->getWidth();
+	float chunkheightt = 2 * (float)BLOCK_PIXEL_SIZE / (float)App::get().getWindow()->getHeight();
 	//this 2 means view is from -1 to 1 and not from 0 to 1
 	m_proj_matrix = glm::scale(glm::mat4(1.0f), glm::vec3(ratioo * chunkheightt, chunkheightt, 1));
 
 	//refresh number of chunks 
-	int screenWidth = Game::get().getWindow()->getWidth();
-	int screenHeight = Game::get().getWindow()->getHeight();
+	int screenWidth = App::get().getWindow()->getWidth();
+	int screenHeight = App::get().getWindow()->getHeight();
 	float chunkwidth = ((float)screenWidth / (float)BLOCK_PIXEL_SIZE) / (float)WORLD_CHUNK_SIZE;
 	float chunkheight = ((float)screenHeight / (float)BLOCK_PIXEL_SIZE) / (float)WORLD_CHUNK_SIZE;
 	m_chunk_width = ceil(chunkwidth) + 2;
@@ -430,7 +430,7 @@ void WorldRenderManager::renderBiomeBackgroundToFBO()
 {
 	using namespace glm;
 
-	vec2 screenDim = vec2(Game::get().getWindow()->getWidth(), Game::get().getWindow()->getHeight());
+	vec2 screenDim = vec2(App::get().getWindow()->getWidth(), App::get().getWindow()->getHeight());
 	vec2 lowerScreen = m_camera->getPosition() - ((screenDim / (float)BLOCK_PIXEL_SIZE));
 	vec2 upperScreen = m_camera->getPosition() + ((screenDim / (float)BLOCK_PIXEL_SIZE));
 	screenDim = upperScreen - lowerScreen;
@@ -513,8 +513,8 @@ void WorldRenderManager::render()
 		Gcon.clear(COLOR_BUFFER_BIT);
 
 		//sky render
-		float CURSOR_Y = Game::get().getWindow()->getHeight() / BLOCK_PIXEL_SIZE + m_camera->getPosition().y;
-		float CURSOR_YY = -(float)Game::get().getWindow()->getHeight() / BLOCK_PIXEL_SIZE + m_camera->getPosition().y;
+		float CURSOR_Y = App::get().getWindow()->getHeight() / BLOCK_PIXEL_SIZE + m_camera->getPosition().y;
+		float CURSOR_YY = -(float)App::get().getWindow()->getHeight() / BLOCK_PIXEL_SIZE + m_camera->getPosition().y;
 		m_sky_program->bind();
 		auto upColor = getSkyColor(CURSOR_Y);
 		auto downColor = getSkyColor(CURSOR_YY);
@@ -657,7 +657,7 @@ void WorldRenderManager::applyLightMap(Texture* lightmap)
 
 	m_light_VAO->bind();
 
-	glViewport(0, 0, Game::get().getWindow()->getWidth(), Game::get().getWindow()->getHeight());
+	glViewport(0, 0, App::get().getWindow()->getWidth(), App::get().getWindow()->getHeight());
 	glEnable(GL_BLEND);
 	glBlendFuncSeparate(GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA,GL_ZERO,GL_ONE);
 	GLCall(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));

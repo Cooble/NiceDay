@@ -1,9 +1,8 @@
 ﻿#include "ndpch.h"
 #include "BatchRenderer2D.h"
 #include "Renderable2D.h"
-#include "Texture.h"
-#include "platform/OpenGL/OpenGLRenderer.h"
-#include "Stats.h"
+#include "API/Texture.h"
+#include "platform/OpenGL/GLRenderer.h"
 
 #define MAX_TEXTURES 16
 

@@ -2,7 +2,7 @@
 #include "Renderer.h"
 
 #include <glad/glad.h>
-#include "platform/OpenGL/OpenGLRenderer.h"
+#include "platform/OpenGL/GLRenderer.h"
 
 GraphicsAPI Renderer::s_api = GraphicsAPI::OpenGL;
 

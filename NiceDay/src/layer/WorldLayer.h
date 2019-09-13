@@ -5,9 +5,7 @@
 #include "world/WorldRenderManager.h"
 #include "entity/Camera.h"
 #include "graphics/Sprite.h"
-#include "world/entity/ssystem.h"
 #include "world/entity/entities.h"
-#include "particle/ParticleManager.h"
 #include "graphics/ParticleRenderer.h"
 
 

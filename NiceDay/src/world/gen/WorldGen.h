@@ -2,6 +2,7 @@
 class Chunk;
 class World;
 
+class PriorGen;
 class WorldGenLayer
 {
 protected:
@@ -17,6 +18,7 @@ class WorldGen
 {
 private:
 	std::vector<WorldGenLayer*> m_layers;
+	PriorGen* m_prior_gen = nullptr;
 
 public:
 	inline void registerLayer(WorldGenLayer* p) { m_layers.push_back(p); }

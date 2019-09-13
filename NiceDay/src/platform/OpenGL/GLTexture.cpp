@@ -1,10 +1,10 @@
 ﻿#include "ndpch.h"
-#include "OpenGLTexture.h"
+#include "GLTexture.h"
 #include "stb_image.h"
-#include "OpenGLRenderer.h"
+#include "GLRenderer.h"
 
 
-OpenGLTexture::OpenGLTexture(const TextureInfo& info)
+GLTexture::GLTexture(const TextureInfo& info)
 	:m_width(info.width),
 	m_height(info.height),
 	m_format(info.f_format),
@@ -38,28 +38,28 @@ OpenGLTexture::OpenGLTexture(const TextureInfo& info)
 }
 
 
-OpenGLTexture::~OpenGLTexture()
+GLTexture::~GLTexture()
 {
 	GLCall(glDeleteTextures(1, &m_id));
 }
 
-void OpenGLTexture::setPixels(float* light_map)
+void GLTexture::setPixels(float* light_map)
 {
 	GLCall(glBindTexture(GL_TEXTURE_2D, m_id));
 	GLCall(glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_width, m_height, (int)m_format, GL_FLOAT, light_map));
 	GLCall(glBindTexture(GL_TEXTURE_2D, 0));
 }
-void OpenGLTexture::setPixels(uint8_t* light_map)
+void GLTexture::setPixels(uint8_t* light_map)
 {
 	GLCall(glBindTexture(GL_TEXTURE_2D, m_id));
 	GLCall(glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_width, m_height, (int)m_format, GL_UNSIGNED_BYTE, light_map));
 	GLCall(glBindTexture(GL_TEXTURE_2D, 0));
 }
 
-void OpenGLTexture::bind(unsigned int slot) const {
+void GLTexture::bind(unsigned int slot) const {
 	GLCall(glActiveTexture(GL_TEXTURE0 + slot));
 	GLCall(glBindTexture(GL_TEXTURE_2D, m_id));
 }
-void OpenGLTexture::unbind() const {
+void GLTexture::unbind() const {
 	GLCall(glBindTexture(GL_TEXTURE_2D, 0));
 }

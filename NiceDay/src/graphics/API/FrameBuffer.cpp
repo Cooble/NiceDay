@@ -1,6 +1,6 @@
 ﻿#include "ndpch.h"
 #include "FrameBuffer.h"
-#include "platform/OpenGL/OpenGLFrameBuffer.h"
+#include "platform/OpenGL/GLFrameBuffer.h"
 #include "graphics/Renderer.h"
 
 
@@ -9,7 +9,7 @@ FrameBuffer* FrameBuffer::create()
 	switch (Renderer::getAPI())
 	{
 	case GraphicsAPI::OpenGL:
-		return new OpenGLFrameBuffer();
+		return new GLFrameBuffer();
 	default:
 		ASSERT(false, "Invalid RenderAPI");
 		return nullptr;

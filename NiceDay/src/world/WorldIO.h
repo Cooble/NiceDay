@@ -39,6 +39,9 @@ namespace WorldIO
 
 		void saveWorldMetadata(const WorldInfo* world);
 
+		void saveGenBoolMap(const NDUtil::Bitset* bitset);
+		void loadGenBoolMap(NDUtil::Bitset* bitset);
+
 		//return true if success
 		bool loadWorldMetadata(WorldInfo* world);
 

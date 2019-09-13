@@ -19,8 +19,8 @@ public:
 	T* allocate();
 	void deallocate(T* t);
 	inline int getMaxSize() const { return m_size; }
-	inline int getCurrentSize() const { return m_free_list.size(); }
-	inline int getFreeSize() const { return m_size-m_free_list.size(); }
+	inline int getCurrentSize() const { return m_free_list.bitSize(); }
+	inline int getFreeSize() const { return m_size-m_free_list.bitSize(); }
 	
 };
 

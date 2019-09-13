@@ -1,7 +1,7 @@
 ﻿#include "ndpch.h"
 #include "Buffer.h"
 #include "graphics/Renderer.h"
-#include "platform/OpenGL/OpenGLBuffer.h"
+#include "platform/OpenGL/GLBuffer.h"
 
 VertexBuffer* VertexBuffer::create(void* vertices, uint32_t size, BufferUsage usage)
 {

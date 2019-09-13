@@ -1,7 +1,7 @@
 #include "ndpch.h"
 #include "ParticleManager.h"
 #include "graphics/ParticleRenderer.h"
-#include "graphics/Texture.h"
+#include "graphics/API/Texture.h"
 #include "Stats.h"
 #include "graphics/Renderable2D.h"
 

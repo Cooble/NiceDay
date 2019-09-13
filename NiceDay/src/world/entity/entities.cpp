@@ -2,14 +2,14 @@
 #include "entities.h"
 #include "graphics/BatchRenderer2D.h"
 #include "entity_datas.h"
-#include "graphics/Texture.h"
+#include "graphics/API/Texture.h"
 #include "world/block/BlockRegistry.h"
 #include "world/World.h"
 #include "world/block/block_datas.h"
 #include "world/block/basic_blocks.h"
 
 #include "Stats.h"
-#include "Game.h"
+#include "App.h"
 #include "graphics/Sprite.h"
 #include "world/gen/TreeGen.h"
 #include "world/particle/particles.h"
@@ -90,9 +90,41 @@ inline static float getFloorHeight(World* w, const Phys::Vect& entityPos, const 
 
 constexpr float maxDistancePerStep = 0.4f;
 
+static float sgn(float f)
+{
+	if (f == 0)
+		return 0;
+	return abs(f) / f;
+}
 void PhysEntity::computePhysics(World* w)
 {
+	auto& collidingEntities = w->getLoadedEntities();
+	//todo make entity flags to dtermine whether this force oughta be applied
+	float xRepelForce = 0;
+
+
+	for (auto id : collidingEntities)
+	{
+		WorldEntity* e = w->getEntityManager().entity(id);
+		auto collidier = dynamic_cast<PhysEntity*>(e);
+		if (collidier&&e->getID()!=getID())
+			if (Phys::isIntersects(collidier->getCollisionBox(), collidier->getPosition(), m_bound, m_pos)) {
+				float maxDistance = collidier->getCollisionBox().getBounds().width() + m_bound.getBounds().width();
+				maxDistance /= 2;
+				float deltaX = m_pos.x - collidier->getPosition().x;
+				xRepelForce += sgn(deltaX)*max(1-abs(deltaX) / maxDistance,0.5f);
+			}
+	}
+	float lastXAcc = m_acceleration.x;
+	if(xRepelForce!=0)
+	{
+		m_acceleration.x += clamp(xRepelForce,-1.f,1.f)*0.15f;
+	}
+
 	computeVelocity(w);
+	
+	m_acceleration.x = lastXAcc;
+
 	computeWindResistance(w);
 
 	if (m_velocity.lengthCab() > maxDistancePerStep)
@@ -105,6 +137,7 @@ void PhysEntity::computePhysics(World* w)
 		}
 	}
 	else moveOrCollide(w, 1);
+
 }
 
 bool PhysEntity::moveOrCollide(World* w, float dt)
@@ -113,6 +146,9 @@ bool PhysEntity::moveOrCollide(World* w, float dt)
 	m_is_on_floor = false;
 
 	constexpr float floorResistance = 0.2; //negative numbers mean conveyor belt Yeah!
+	
+
+
 
 	//collision detection============================
 	auto possibleEntityPos = m_pos + m_velocity * dt;
@@ -278,6 +314,11 @@ bool Bullet::checkCollisions(World* w, float dt)
 					return true;
 			}
 		}
+	}else
+	{
+		//todo remove kill on unloaded chunks
+		markDead();//live in chunk that is not loaded - kill it
+		return true;
 	}
 	auto& entities = w->getLoadedEntities();
 
@@ -379,7 +420,7 @@ EntityRoundBullet::EntityRoundBullet()
 	float size = 1.5f;
 	m_sprite.setPosition(glm::vec3(-size / 2, -size / 2, 0));
 	m_sprite.setSize(glm::vec2(size, size));
-	m_damage = 0.3f;
+	m_damage = 1.f;
 }
 
 EntityType EntityRoundBullet::getEntityType() const
@@ -773,6 +814,7 @@ void EntityZombie::update(World* w)
 				{
 					if (pointer->getPosition().distanceSquared(m_pos) < std::pow(25, 2))
 					{
+						auto TPS = App::get().getTPS();
 						m_tracer.init(w, getID(),
 						              {4.f / TPS, -9.f / TPS},
 						              {10.f / TPS, 50.f / TPS});

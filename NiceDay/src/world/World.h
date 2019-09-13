@@ -7,6 +7,7 @@
 #include "entity/WorldEntity.h"
 #include "world/WorldTime.h"
 #include "particle/ParticleManager.h"
+#include "IChunkProvider.h"
 
 
 #define CHUNK_NOT_EXIST -1
@@ -141,7 +142,7 @@ struct WorldInfo
 	long seed;
 	int chunk_width, chunk_height;
 	int terrain_level;
-	long long time;
+	long long time=0;
 	char name[100];
 	EntityID player_id;
 	ChunkID playerChunk;
@@ -157,10 +158,12 @@ public:
 private:
 	friend class WorldIO::Session;
 	friend class WorldGen;
+	NDUtil::Bitset m_is_chunk_gen_map;
 	LightCalculator m_light_calc;
 	WorldGen m_gen;
 	std::vector<Chunk> m_chunks;
 	NBT m_world_nbt;
+	IChunkProvider* m_chunk_provider;
 
 	WorldInfo m_info;
 	std::string m_file_path;
@@ -373,6 +376,15 @@ public:
 	// no chunk generation
 	// return true if success
 	bool genWorld();
+
+	inline bool isChunkGenerated(int cx,int cy) const
+	{
+		return m_is_chunk_gen_map[getChunkSaveOffset(cx, cy)];
+	}
+	inline void markChunkGenerated(int cx, int cy)
+	{
+		m_is_chunk_gen_map.set(getChunkSaveOffset(cx, cy),true);
+	}
 };
 
 

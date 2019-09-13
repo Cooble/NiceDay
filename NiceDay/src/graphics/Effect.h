@@ -1,9 +1,9 @@
 ﻿#pragma once
-#include "buffer/FrameBuffer.h"
-#include "Texture.h"
-#include "buffer/Buffer.h"
-#include "buffer/VertexArray.h"
-#include "Shader.h"
+#include "API/FrameBuffer.h"
+#include "API/Texture.h"
+#include "API/Buffer.h"
+#include "API/VertexArray.h"
+#include "API/Shader.h"
 
 class Effect
 {

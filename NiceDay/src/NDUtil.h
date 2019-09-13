@@ -102,7 +102,7 @@ namespace NDUtil
 			if (m_bits.size() < (bits/32))
 				m_bits.resize(bits / 32);
 		}
-		inline bool get(size_t index)
+		inline bool get(size_t index)const
 		{
 			return m_bits[index >> 5][index&((1 << 5) - 1)];
 		}
@@ -110,7 +110,7 @@ namespace NDUtil
 		{
 			m_bits[index >> 5][index&((1 << 5) - 1)]=val;
 		}
-		inline bool operator[](size_t index)
+		inline bool operator[](size_t index) const
 		{
 			return get(index);
 		}
@@ -121,7 +121,28 @@ namespace NDUtil
 			set(m_last_size - 1,val);
 		}
 		inline auto& getSource()const { return m_bits; }
-		inline size_t size() { return m_bits.size() * 32; }
+		inline size_t bitSize() const { return m_bits.size() * 32; }
+		inline size_t byteSize() const
+		{
+			return m_bits.size() * sizeof(std::bitset<32>);
+		}
+
+		inline void write(std::ostream& stream) const
+		{
+			int arraySize = m_bits.size();
+			stream.write((char*)&arraySize, sizeof(int));
+			stream.write((char*)&m_last_size, sizeof(int));
+			stream.write((char*)m_bits.data(), byteSize());
+
+		}
+		inline void read(std::istream& stream)
+		{
+			int arraySize = 0;
+			stream.read((char*)&arraySize, sizeof(int));
+			m_bits.resize(arraySize);
+			stream.read((char*)&m_last_size, sizeof(int));
+			stream.read((char*)m_bits.data(), byteSize());
+		}
 	};
 
 
@@ -129,7 +150,7 @@ namespace NDUtil
 	template <typename T>
 	static void eraseKeepPacked(std::vector<T>& t,size_t indexToErase)
 	{
-		auto& tt = t[t.size() - 1];
+		auto& tt = t[t.bitSize() - 1];
 		t[indexToErase] = tt;
 		t.erase(t.end() - 1);
 	}
@@ -402,3 +423,108 @@ public:
 
 inline float randFloat(float size=1) { return std::rand() % 1000 / 1000.f*size; }
 inline float randDispersedFloat(float absSize=1) { return (std::rand() % 1000 / 1000.f-0.5f)*absSize*2; }
+
+class JobAssigment
+{
+private:
+	int64_t m_main=0;
+	int64_t m_worker=0;
+public:
+	int64_t m_variable=0;
+
+public:
+	inline void assign() { ++m_main; }
+	inline void markDone() { ++m_worker; }
+
+	inline bool isDone() const { return m_main == m_worker; }
+	
+	inline void reset()
+	{
+		ASSERT(isDone(), "Cannot reset when job is pending");
+		m_main = 0;
+		m_worker = 0;
+	}
+};
+
+//todo make startAssigning() and flushAssigning()
+template<typename WorkAssignment>
+class Worker
+{
+private:
+	bool m_is_stopped = true;
+	bool m_is_running = false;
+	std::mutex m_queue_mutex;
+	std::queue<WorkAssignment> m_queue;// Have I found everybody fun assignment to do today?
+	std::condition_variable m_wait_condition_variable;
+private:
+	void runInner()
+	{
+		m_is_running = true;
+		m_is_stopped = false;
+		init();
+		std::mutex waitMutex;
+		std::unique_lock<std::mutex> loopLock(waitMutex);
+		std::vector<WorkAssignment> bufferAssigns;
+		while (m_is_running)
+		{
+			m_wait_condition_variable.wait(loopLock);
+
+
+			std::unique_lock<std::mutex> guard(m_queue_mutex);
+			bufferAssigns.resize(m_queue.bitSize());//this is lame too much memory alloc and stuff
+			int index = 0;
+			while (!m_queue.empty())
+			{
+				bufferAssigns[index++] = m_queue.front();
+				m_queue.pop();
+			}
+			guard.unlock();
+			proccessAssignments(bufferAssigns);
+		}
+		deInit();
+		m_is_stopped = true;
+	}
+public:
+	virtual ~Worker() = default;
+
+
+	// will create separate working thread and return immediately
+	inline void start()
+	{
+		std::thread t(&Worker::runInner, this);
+		t.detach();
+	}
+
+	// will notify work thread to stop
+	// to check if work thread is truly killed check isStopped()
+	inline void stop()
+	{
+		m_is_running = false;
+		m_wait_condition_variable.notify_one();
+	}
+
+	// called by work thread after start before processing assignments
+	inline virtual void init() {};
+	inline virtual void deInit() {};
+
+	// dont forget to mark the job as done
+	virtual void proccessAssignments(std::vector<WorkAssignment>& assignments) = 0;
+
+	inline bool isStopped()
+	{
+		return m_is_stopped;
+	}
+
+	void assignWork(const WorkAssignment* assignments, int size)
+	{
+		std::lock_guard<std::mutex> guard(m_queue_mutex);
+		for (int i = 0; i < size; ++i)
+			m_queue.push(assignments[i]);
+		m_wait_condition_variable.notify_one();
+	}
+	inline void assignWork(const WorkAssignment& assignment)
+	{
+		assignWork(&assignment, 1);
+	}
+};
+

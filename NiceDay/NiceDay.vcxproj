@@ -85,8 +85,8 @@
       <Optimization>Disabled</Optimization>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <BasicRuntimeChecks>UninitializedLocalUsageCheck</BasicRuntimeChecks>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <BasicRuntimeChecks>UninitializedLocalUsageCheck</BasicRuntimeChecks>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -108,7 +108,6 @@
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -131,7 +130,6 @@
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -141,32 +139,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="src\graphics\ParticleRenderer.h" />
-    <ClInclude Include="src\world\particle\ParticleRegistry.h" />
-    <ClInclude Include="src\graphics\Bar.h" />
-    <ClInclude Include="src\graphics\Effect.h" />
-    <ClInclude Include="src\graphics\GContext.h" />
-    <ClInclude Include="src\graphics\BlockTextureAtlas.h" />
-    <ClInclude Include="src\graphics\TextureAtlas.h" />
-    <ClInclude Include="src\graphics\TextureManager.h" />
-    <ClInclude Include="src\nbt\NBT.h" />
     <ClInclude Include="src\Core.h" />
     <ClInclude Include="src\EntryPoint.h" />
-    <ClInclude Include="src\Game.h" />
-    <ClInclude Include="src\graphics\BatchRenderer2D.h" />
-    <ClInclude Include="src\graphics\Group.h" />
-    <ClInclude Include="src\graphics\IBatchRenderable2D.h" />
-    <ClInclude Include="src\graphics\Renderable2D.h" />
-    <ClInclude Include="src\graphics\Sprite.h" />
-    <ClInclude Include="src\graphics\TestQuad.h" />
+    <ClInclude Include="src\App.h" />
+    <ClInclude Include="src\imgui_utils.h" />
     <ClInclude Include="src\Input.h" />
     <ClInclude Include="src\Log.h" />
     <ClInclude Include="src\NDUtil.h" />
-    <ClInclude Include="src\particle\ParticleManager.h" />
-    <ClInclude Include="src\platform\OpenGL\OpenGLContext.h" />
-    <ClInclude Include="src\platform\OpenGL\OpenGLRenderer.h" />
-    <ClInclude Include="src\platform\OpenGL\OpenGLTexture.h" />
-    <ClInclude Include="src\physShapes.h" />
+    <ClInclude Include="src\Sandbox.h" />
     <ClInclude Include="src\Scheduler.h" />
     <ClInclude Include="src\Stats.h" />
     <ClInclude Include="src\Window.h" />
@@ -176,41 +156,54 @@
     <ClInclude Include="src\event\KeyEvent.h" />
     <ClInclude Include="src\event\MouseEvent.h" />
     <ClInclude Include="src\event\WindowEvent.h" />
+    <ClInclude Include="src\graphics\Bar.h" />
+    <ClInclude Include="src\graphics\BatchRenderer2D.h" />
+    <ClInclude Include="src\graphics\BlockTextureAtlas.h" />
+    <ClInclude Include="src\graphics\Effect.h" />
+    <ClInclude Include="src\graphics\GContext.h" />
+    <ClInclude Include="src\graphics\Group.h" />
+    <ClInclude Include="src\graphics\IBatchRenderable2D.h" />
+    <ClInclude Include="src\graphics\ParticleRenderer.h" />
+    <ClInclude Include="src\graphics\Renderable2D.h" />
     <ClInclude Include="src\graphics\Renderer.h" />
-    <ClInclude Include="src\graphics\Shader.h" />
+    <ClInclude Include="src\graphics\API\Shader.h" />
+    <ClInclude Include="src\graphics\Sprite.h" />
     <ClInclude Include="src\graphics\Sprite2D.h" />
-    <ClInclude Include="src\graphics\Texture.h" />
-    <ClInclude Include="src\graphics\buffer\Buffer.h" />
-    <ClInclude Include="src\graphics\buffer\FrameBuffer.h" />
-    <ClInclude Include="src\graphics\buffer\VertexArray.h" />
-    <ClInclude Include="src\layer\ImGuiLayer.h" />
+    <ClInclude Include="src\graphics\TestQuad.h" />
+    <ClInclude Include="src\graphics\API\Texture.h" />
+    <ClInclude Include="src\graphics\TextureAtlas.h" />
+    <ClInclude Include="src\graphics\TextureManager.h" />
+    <ClInclude Include="src\graphics\API\Buffer.h" />
+    <ClInclude Include="src\graphics\API\FrameBuffer.h" />
+    <ClInclude Include="src\graphics\API\VertexArray.h" />
     <ClInclude Include="src\layer\Layer.h" />
     <ClInclude Include="src\layer\LayerStack.h" />
     <ClInclude Include="src\layer\MainLayer.h" />
+    <ClInclude Include="src\layer\PriorGenLayer.h" />
     <ClInclude Include="src\layer\WorldLayer.h" />
     <ClInclude Include="src\layer\imguiplotvar.h" />
+    <ClInclude Include="src\nbt\NBT.h" />
     <ClInclude Include="src\ndpch.h" />
-    <ClInclude Include="src\platform\OpenGL\OpenGLBuffer.h" />
-    <ClInclude Include="src\platform\OpenGL\OpenGLFrameBuffer.h" />
-    <ClInclude Include="src\platform\OpenGL\OpenGLVertexArray.h" />
+    <ClInclude Include="src\particle\ParticleManager.h" />
+    <ClInclude Include="src\physShapes.h" />
+    <ClInclude Include="src\platform\OpenGL\GLBuffer.h" />
+    <ClInclude Include="src\platform\OpenGL\GLContext.h" />
+    <ClInclude Include="src\platform\OpenGL\GLFrameBuffer.h" />
+    <ClInclude Include="src\platform\OpenGL\GLRenderer.h" />
+    <ClInclude Include="src\platform\OpenGL\GLTexture.h" />
+    <ClInclude Include="src\platform\OpenGL\GLVertexArray.h" />
     <ClInclude Include="src\world\ChunkLoader.h" />
     <ClInclude Include="src\world\ChunkMesh.h" />
-    <ClInclude Include="src\world\entity\entities.h" />
-    <ClInclude Include="src\world\entity\EntityManager.h" />
-    <ClInclude Include="src\world\entity\entity_datas.h" />
-    <ClInclude Include="src\world\entity\PathTracer.h" />
-    <ClInclude Include="src\world\entity\ssystem.h" />
-    <ClInclude Include="src\world\entity\componentManager.h" />
-    <ClInclude Include="src\world\entity\Pool.h" />
-    <ClInclude Include="src\world\entity\EntityRegistry.h" />
-    <ClInclude Include="src\world\gen\TreeGen.h" />
+    <ClInclude Include="src\world\FileChunkProvider.h" />
+    <ClInclude Include="src\world\IChunkProvider.h" />
+    <ClInclude Include="src\world\gen\OpenSimplexNoise.hpp" />
     <ClInclude Include="src\world\ITickable.h" />
     <ClInclude Include="src\world\LightCalculator.h" />
-    <ClInclude Include="src\world\particle\particles.h" />
+    <ClInclude Include="src\world\ThreadedChunkProvider.h" />
     <ClInclude Include="src\world\World.h" />
-    <ClInclude Include="src\world\gen\WorldGen.h" />
     <ClInclude Include="src\world\WorldIO.h" />
     <ClInclude Include="src\world\WorldRenderManager.h" />
+    <ClInclude Include="src\world\WorldTime.h" />
     <ClInclude Include="src\world\biome\Biome.h" />
     <ClInclude Include="src\world\biome\BiomeForest.h" />
     <ClInclude Include="src\world\biome\BiomeRegistry.h" />
@@ -222,8 +215,20 @@
     <ClInclude Include="src\world\block\basic_blocks.h" />
     <ClInclude Include="src\world\block\basic_walls.h" />
     <ClInclude Include="src\world\block\block_datas.h" />
+    <ClInclude Include="src\world\entity\EntityManager.h" />
+    <ClInclude Include="src\world\entity\EntityRegistry.h" />
+    <ClInclude Include="src\world\entity\PathTracer.h" />
+    <ClInclude Include="src\world\entity\Pool.h" />
     <ClInclude Include="src\world\entity\WorldEntity.h" />
-    <ClInclude Include="src\world\WorldTime.h" />
+    <ClInclude Include="src\world\entity\componentManager.h" />
+    <ClInclude Include="src\world\entity\entities.h" />
+    <ClInclude Include="src\world\entity\entity_datas.h" />
+    <ClInclude Include="src\world\entity\ssystem.h" />
+    <ClInclude Include="src\world\gen\PriorGen.h" />
+    <ClInclude Include="src\world\gen\TreeGen.h" />
+    <ClInclude Include="src\world\gen\WorldGen.h" />
+    <ClInclude Include="src\world\particle\ParticleRegistry.h" />
+    <ClInclude Include="src\world\particle\particles.h" />
     <ClInclude Include="vendor\glm\glm\common.hpp" />
     <ClInclude Include="vendor\glm\glm\detail\_features.hpp" />
     <ClInclude Include="vendor\glm\glm\detail\_fixes.hpp" />
@@ -593,69 +598,62 @@
     <ClInclude Include="vendor\stb_image\stb_image_write.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\graphics\ParticleRenderer.cpp" />
-    <ClCompile Include="src\world\particle\ParticleRegistry.cpp" />
-    <ClCompile Include="src\graphics\Bar.cpp" />
-    <ClCompile Include="src\graphics\Effect.cpp" />
-    <ClCompile Include="src\graphics\GContext.cpp" />
-    <ClCompile Include="src\graphics\BlockTextureAtlas.cpp" />
-    <ClCompile Include="src\graphics\TextureAtlas.cpp" />
-    <ClCompile Include="src\graphics\TextureManager.cpp" />
-    <ClCompile Include="src\nbt\NBT.cpp" />
     <ClCompile Include="src\EntryPoint.cpp" />
-    <ClCompile Include="src\Game.cpp" />
-    <ClCompile Include="src\graphics\BatchRenderer2D.cpp" />
-    <ClCompile Include="src\graphics\Group.cpp" />
-    <ClCompile Include="src\graphics\IBatchRenderable2D.cpp" />
-    <ClCompile Include="src\graphics\Renderable2D.cpp" />
-    <ClCompile Include="src\graphics\Sprite.cpp" />
-    <ClCompile Include="src\graphics\TestQuad.cpp" />
+    <ClCompile Include="src\App.cpp" />
+    <ClCompile Include="src\imgui_utils.cpp" />
     <ClCompile Include="src\Input.cpp" />
     <ClCompile Include="src\Log.cpp" />
-    <ClCompile Include="src\particle\ParticleManager.cpp" />
-    <ClCompile Include="src\platform\OpenGL\OpenGLContext.cpp" />
-    <ClCompile Include="src\platform\OpenGL\OpenGLRenderer.cpp" />
-    <ClCompile Include="src\platform\OpenGL\OpenGLTexture.cpp" />
-    <ClCompile Include="src\physShapes.cpp" />
+    <ClCompile Include="src\Sandbox.cpp" />
     <ClCompile Include="src\Scheduler.cpp" />
     <ClCompile Include="src\State.cpp" />
     <ClCompile Include="src\Window.cpp" />
     <ClCompile Include="src\entity\Camera.cpp" />
+    <ClCompile Include="src\graphics\Bar.cpp" />
+    <ClCompile Include="src\graphics\BatchRenderer2D.cpp" />
+    <ClCompile Include="src\graphics\BlockTextureAtlas.cpp" />
+    <ClCompile Include="src\graphics\Effect.cpp" />
+    <ClCompile Include="src\graphics\GContext.cpp" />
+    <ClCompile Include="src\graphics\Group.cpp" />
+    <ClCompile Include="src\graphics\IBatchRenderable2D.cpp" />
+    <ClCompile Include="src\graphics\ParticleRenderer.cpp" />
+    <ClCompile Include="src\graphics\Renderable2D.cpp" />
     <ClCompile Include="src\graphics\Renderer.cpp" />
-    <ClCompile Include="src\graphics\Shader.cpp" />
+    <ClCompile Include="src\graphics\API\Shader.cpp" />
+    <ClCompile Include="src\graphics\Sprite.cpp" />
     <ClCompile Include="src\graphics\Sprite2D.cpp" />
-    <ClCompile Include="src\graphics\Texture.cpp" />
-    <ClCompile Include="src\graphics\buffer\Buffer.cpp" />
-    <ClCompile Include="src\graphics\buffer\FrameBuffer.cpp" />
-    <ClCompile Include="src\graphics\buffer\VertexArray.cpp" />
-    <ClCompile Include="src\layer\ImGuiBuild.cpp" />
-    <ClCompile Include="src\layer\ImGuiLayer.cpp" />
+    <ClCompile Include="src\graphics\TestQuad.cpp" />
+    <ClCompile Include="src\graphics\API\Texture.cpp" />
+    <ClCompile Include="src\graphics\TextureAtlas.cpp" />
+    <ClCompile Include="src\graphics\TextureManager.cpp" />
+    <ClCompile Include="src\graphics\API\Buffer.cpp" />
+    <ClCompile Include="src\graphics\API\FrameBuffer.cpp" />
+    <ClCompile Include="src\graphics\API\VertexArray.cpp" />
+    <ClCompile Include="src\layer\imgui_build.cpp" />
     <ClCompile Include="src\layer\Layer.cpp" />
     <ClCompile Include="src\layer\LayerStack.cpp" />
     <ClCompile Include="src\layer\MainLayer.cpp" />
+    <ClCompile Include="src\layer\PriorGenLayer.cpp" />
     <ClCompile Include="src\layer\WorldLayer.cpp" />
     <ClCompile Include="src\layer\imguiplotvar.cpp" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\nbt\NBT.cpp" />
     <ClCompile Include="src\ndpch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="src\platform\OpenGL\OpenGLBuffer.cpp" />
-    <ClCompile Include="src\platform\OpenGL\OpenGLFrameBuffer.cpp" />
-    <ClCompile Include="src\platform\OpenGL\OpenGLVertexArray.cpp" />
+    <ClCompile Include="src\particle\ParticleManager.cpp" />
+    <ClCompile Include="src\physShapes.cpp" />
+    <ClCompile Include="src\platform\OpenGL\GLBuffer.cpp" />
+    <ClCompile Include="src\platform\OpenGL\GLContext.cpp" />
+    <ClCompile Include="src\platform\OpenGL\GLFrameBuffer.cpp" />
+    <ClCompile Include="src\platform\OpenGL\GLRenderer.cpp" />
+    <ClCompile Include="src\platform\OpenGL\GLTexture.cpp" />
+    <ClCompile Include="src\platform\OpenGL\GLVertexArray.cpp" />
     <ClCompile Include="src\world\ChunkLoader.cpp" />
     <ClCompile Include="src\world\ChunkMesh.cpp" />
-    <ClCompile Include="src\world\entity\entities.cpp" />
-    <ClCompile Include="src\world\entity\EntityManager.cpp" />
-    <ClCompile Include="src\world\entity\PathTracer.cpp" />
-    <ClCompile Include="src\world\entity\ssystem.cpp" />
-    <ClCompile Include="src\world\entity\componentManager.cpp" />
-    <ClCompile Include="src\world\entity\Pool.cpp" />
-    <ClCompile Include="src\world\entity\EntityRegistry.cpp" />
-    <ClCompile Include="src\world\gen\TreeGen.cpp" />
+    <ClCompile Include="src\world\FileChunkProvider.cpp" />
     <ClCompile Include="src\world\LightCalculator.cpp" />
-    <ClCompile Include="src\world\particle\particles.cpp" />
+    <ClCompile Include="src\world\ThreadedChunkProvider.cpp" />
     <ClCompile Include="src\world\World.cpp" />
-    <ClCompile Include="src\world\gen\WorldGen.cpp" />
     <ClCompile Include="src\world\WorldIO.cpp" />
     <ClCompile Include="src\world\WorldRenderManager.cpp" />
     <ClCompile Include="src\world\biome\Biome.cpp" />
@@ -668,7 +666,19 @@
     <ClCompile Include="src\world\block\BlockRegistry.cpp" />
     <ClCompile Include="src\world\block\basic_blocks.cpp" />
     <ClCompile Include="src\world\block\basic_walls.cpp" />
+    <ClCompile Include="src\world\entity\EntityManager.cpp" />
+    <ClCompile Include="src\world\entity\EntityRegistry.cpp" />
+    <ClCompile Include="src\world\entity\PathTracer.cpp" />
+    <ClCompile Include="src\world\entity\Pool.cpp" />
     <ClCompile Include="src\world\entity\WorldEntity.cpp" />
+    <ClCompile Include="src\world\entity\componentManager.cpp" />
+    <ClCompile Include="src\world\entity\entities.cpp" />
+    <ClCompile Include="src\world\entity\ssystem.cpp" />
+    <ClCompile Include="src\world\gen\PriorGen.cpp" />
+    <ClCompile Include="src\world\gen\TreeGen.cpp" />
+    <ClCompile Include="src\world\gen\WorldGen.cpp" />
+    <ClCompile Include="src\world\particle\ParticleRegistry.cpp" />
+    <ClCompile Include="src\world\particle\particles.cpp" />
     <ClCompile Include="vendor\stb_image\stb_image.cpp" />
   </ItemGroup>
   <ItemGroup>

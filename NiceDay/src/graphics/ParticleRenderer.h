@@ -1,6 +1,6 @@
 ﻿#pragma once
-#include "Shader.h"
-#include "buffer/VertexArray.h"
+#include "API/Shader.h"
+#include "API/VertexArray.h"
 
 
 //should use mapbuffer or subdata

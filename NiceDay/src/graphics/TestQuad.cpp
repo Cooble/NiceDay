@@ -1,7 +1,7 @@
 ﻿#include "ndpch.h"
 #include "TestQuad.h"
 #include "Renderer.h"
-#include "platform/OpenGL/OpenGLRenderer.h"
+#include "platform/OpenGL/GLRenderer.h"
 
 TestQuad::TestQuad(bool centered)
 {

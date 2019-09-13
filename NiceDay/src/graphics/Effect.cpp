@@ -1,7 +1,7 @@
 ﻿#include "ndpch.h"
 #include "Effect.h"
-#include "platform/OpenGL/OpenGLRenderer.h"
-#include "Game.h"
+#include "platform/OpenGL/GLRenderer.h"
+#include "App.h"
 #include "GContext.h"
 
 
@@ -47,7 +47,7 @@ void FrameBufferTexturePair::bind() const
 void FrameBufferTexturePair::unbind() const
 {
 	m_fbo->unbind();
-	Gcon.setViewport(Game::get().getWindow()->getWidth(), Game::get().getWindow()->getHeight());
+	Gcon.setViewport(App::get().getWindow()->getWidth(), App::get().getWindow()->getHeight());
 }
 
 SingleTextureEffect::SingleTextureEffect(const TextureInfo& targetTexture)
@@ -81,7 +81,7 @@ void AlphaMaskEffect::render(const Texture* t, bool toFBO)
 		Gcon.setViewport(m_output_texture->getWidth(), m_output_texture->getHeight());
 		Effect::renderDefault();
 		m_fbo->unbind();
-		Gcon.setViewport(Game::get().getWindow()->getWidth(), Game::get().getWindow()->getHeight());
+		Gcon.setViewport(App::get().getWindow()->getWidth(), App::get().getWindow()->getHeight());
 	}
 	else
 		Effect::renderDefault();
@@ -105,7 +105,7 @@ void ScaleEdgesEffect::render(const Texture* t, float scale, bool toFBO)
 		Gcon.setViewport(m_output_texture->getWidth(), m_output_texture->getHeight());
 		Effect::renderDefault();
 		m_fbo->unbind();
-		Gcon.setViewport(Game::get().getWindow()->getWidth(), Game::get().getWindow()->getHeight());
+		Gcon.setViewport(App::get().getWindow()->getWidth(), App::get().getWindow()->getHeight());
 	}
 	else
 		Effect::renderDefault();
@@ -129,7 +129,7 @@ void GreenFilter::render(const Texture* t, bool toFBO)
 		Gcon.setViewport(m_output_texture->getWidth(), m_output_texture->getHeight());
 		Effect::renderDefault();
 		m_fbo->unbind();
-		Gcon.setViewport(Game::get().getWindow()->getWidth(), Game::get().getWindow()->getHeight());
+		Gcon.setViewport(App::get().getWindow()->getWidth(), App::get().getWindow()->getHeight());
 	}
 	else
 		Effect::renderDefault();
@@ -156,7 +156,7 @@ void HorizontalBlur::render(const Texture* t, bool toFBO)
 		Gcon.setViewport(m_output_texture->getWidth(), m_output_texture->getHeight());
 		Effect::renderDefault();
 		m_fbo->unbind();
-		Gcon.setViewport(Game::get().getWindow()->getWidth(), Game::get().getWindow()->getHeight());
+		Gcon.setViewport(App::get().getWindow()->getWidth(), App::get().getWindow()->getHeight());
 
 	}
 	else
@@ -182,7 +182,7 @@ void VerticalBlur::render(const Texture* t, bool toFBO)
 		Gcon.setViewport(m_output_texture->getWidth(), m_output_texture->getHeight());
 		Effect::renderDefault();
 		m_fbo->unbind();
-		Gcon.setViewport(Game::get().getWindow()->getWidth(), Game::get().getWindow()->getHeight());
+		Gcon.setViewport(App::get().getWindow()->getWidth(), App::get().getWindow()->getHeight());
 
 	}
 	else

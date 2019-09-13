@@ -1,10 +1,10 @@
 #pragma once
 #include "ndpch.h"
-#include  "world/World.h"
-#include "graphics/Shader.h"
-#include "graphics/Texture.h"
-#include "graphics/buffer/Buffer.h"
-#include "graphics/buffer/VertexArray.h"
+#include "world/World.h"
+#include "graphics/API/Buffer.h"
+#include "graphics/API/Shader.h"
+#include "graphics/API/VertexArray.h"
+
 
 constexpr unsigned int BLOCK_TEXTURE_ATLAS_SIZE =32;//icons in row
 constexpr unsigned int BLOCK_CORNER_ATLAS_SIZE = 8;//icons in row

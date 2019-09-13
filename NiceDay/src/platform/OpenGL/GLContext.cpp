@@ -1,8 +1,8 @@
 ﻿#include "ndpch.h"
-#include "OpenGLContext.h"
-#include "OpenGLRenderer.h"
+#include "GLContext.h"
+#include "GLRenderer.h"
 
-void OpenGLContext::enableBlend()
+void GLContext::enableBlend()
 {
 	GLCall(glEnable(GL_BLEND));
 
@@ -12,7 +12,7 @@ void OpenGLContext::enableBlend()
 	m_blend_enabled = true;
 }
 
-void OpenGLContext::disableBlend()
+void GLContext::disableBlend()
 {
 	GLCall(glDisable(GL_BLEND));
 
@@ -22,7 +22,7 @@ void OpenGLContext::disableBlend()
 	m_blend_enabled = false;
 }
 
-void OpenGLContext::setBlendEquation(BlendEquation e)
+void GLContext::setBlendEquation(BlendEquation e)
 {
 	GLCall(glBlendEquation((unsigned int)e));
 	return;
@@ -31,7 +31,7 @@ void OpenGLContext::setBlendEquation(BlendEquation e)
 	m_current_blend_data.blendEquation = e;
 }
 
-void OpenGLContext::setBlendFuncSeparate(Blend src, Blend dst, Blend srcA, Blend dstA)
+void GLContext::setBlendFuncSeparate(Blend src, Blend dst, Blend srcA, Blend dstA)
 {
 	GLCall(glBlendFuncSeparate((unsigned int)src, (unsigned int)dst, (unsigned int)srcA, (unsigned int)dstA));
 
@@ -53,7 +53,7 @@ void OpenGLContext::setBlendFuncSeparate(Blend src, Blend dst, Blend srcA, Blend
 	blends[3] = dstA;
 }
 
-void OpenGLContext::setBlendFunc(Blend src, Blend dst)
+void GLContext::setBlendFunc(Blend src, Blend dst)
 {
 	GLCall(glBlendFunc((unsigned int)src, (unsigned int)dst));
 	return;
@@ -73,7 +73,7 @@ void OpenGLContext::setBlendFunc(Blend src, Blend dst)
 	blends[3] = Blend::NONE;
 }
 
-void OpenGLContext::setBlendConstant(float r, float g, float b, float a)
+void GLContext::setBlendConstant(float r, float g, float b, float a)
 {
 	GLCall(glBlendColor(r, g, b, a));
 	return;
@@ -96,12 +96,12 @@ void OpenGLContext::setBlendConstant(float r, float g, float b, float a)
 
 }
 
-void OpenGLContext::clear(BufferBit bits)
+void GLContext::clear(BufferBit bits)
 {
 	GLCall(glClear(bits));
 }
 
-void OpenGLContext::setClearColor(float r, float g, float b, float a)
+void GLContext::setClearColor(float r, float g, float b, float a)
 {
 	GLCall(glClearColor(r, g, b, a));
 	return;
@@ -121,7 +121,7 @@ void OpenGLContext::setClearColor(float r, float g, float b, float a)
 	m_clearColor[3] = a;
 }
 
-void OpenGLContext::setViewport(int x, int y, int width, int height)
+void GLContext::setViewport(int x, int y, int width, int height)
 {
 	GLCall(glViewport(x, y, width, height));
 	return;

@@ -720,8 +720,12 @@ namespace Phys
 		}
 		auto& p2 = b[b.size() - 1];
 		auto& p3 = b[0];
-		if (isIntersectAbscisses(p0, p1, p2, p3))
-			return true;
+		return isIntersectAbscisses(p0, p1, p2, p3);
+	}
+	inline bool isIntersects(const Polygon& aa,const Phys::Vect& aPos,const Polygon& b, const Phys::Vect& bPos)
+	{
+		Polygon a = aa.copy().plus(aPos - bPos);
+		return isIntersects(a, b);
 	}
 
 	inline bool contains(const Polygon& a, const Vect& point)

@@ -19,6 +19,12 @@
     <Filter Include="src\layer">
       <UniqueIdentifier>{D9A595B5-4510-4A2C-8E4E-FBD1FAF72781}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\nbt">
+      <UniqueIdentifier>{802030A9-ECFF-AE44-F517-3A1B617615A6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\particle">
+      <UniqueIdentifier>{F0ED2546-DC50-B5EA-85D6-EDA07118816D}</UniqueIdentifier>
+    </Filter>
     <Filter Include="src\platform">
       <UniqueIdentifier>{41663D6D-2DC9-CC11-D64E-05C8C2909894}</UniqueIdentifier>
     </Filter>
@@ -36,6 +42,12 @@
     </Filter>
     <Filter Include="src\world\entity">
       <UniqueIdentifier>{B0FF9350-9CF8-B2A2-C52A-9827B18292AE}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\world\gen">
+      <UniqueIdentifier>{2D0FC412-99CF-3F49-620A-89C6CE898425}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\world\particle">
+      <UniqueIdentifier>{6720C8FF-5304-8955-BC64-83A8A86773D7}</UniqueIdentifier>
     </Filter>
     <Filter Include="vendor">
       <UniqueIdentifier>{B3738122-9F15-ACF8-88D0-BF4C74113349}</UniqueIdentifier>
@@ -69,9 +81,6 @@
     <ClInclude Include="src\EntryPoint.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="src\Game.h">
-      <Filter>src</Filter>
-    </ClInclude>
     <ClInclude Include="src\Input.h">
       <Filter>src</Filter>
     </ClInclude>
@@ -79,6 +88,9 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="src\NDUtil.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Scheduler.h">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="src\Stats.h">
@@ -105,29 +117,50 @@
     <ClInclude Include="src\event\WindowEvent.h">
       <Filter>src\event</Filter>
     </ClInclude>
+    <ClInclude Include="src\graphics\Bar.h">
+      <Filter>src\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\graphics\BatchRenderer2D.h">
+      <Filter>src\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\graphics\BlockTextureAtlas.h">
+      <Filter>src\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\graphics\Effect.h">
+      <Filter>src\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\graphics\GContext.h">
+      <Filter>src\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\graphics\Group.h">
+      <Filter>src\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\graphics\IBatchRenderable2D.h">
+      <Filter>src\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\graphics\ParticleRenderer.h">
+      <Filter>src\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\graphics\Renderable2D.h">
+      <Filter>src\graphics</Filter>
+    </ClInclude>
     <ClInclude Include="src\graphics\Renderer.h">
       <Filter>src\graphics</Filter>
     </ClInclude>
-    <ClInclude Include="src\graphics\Shader.h">
+    <ClInclude Include="src\graphics\Sprite.h">
       <Filter>src\graphics</Filter>
     </ClInclude>
     <ClInclude Include="src\graphics\Sprite2D.h">
       <Filter>src\graphics</Filter>
     </ClInclude>
-    <ClInclude Include="src\graphics\Texture.h">
+    <ClInclude Include="src\graphics\TestQuad.h">
       <Filter>src\graphics</Filter>
     </ClInclude>
-    <ClInclude Include="src\graphics\buffer\Buffer.h">
-      <Filter>src\graphics\buffer</Filter>
+    <ClInclude Include="src\graphics\TextureAtlas.h">
+      <Filter>src\graphics</Filter>
     </ClInclude>
-    <ClInclude Include="src\graphics\buffer\FrameBuffer.h">
-      <Filter>src\graphics\buffer</Filter>
-    </ClInclude>
-    <ClInclude Include="src\graphics\buffer\VertexArray.h">
-      <Filter>src\graphics\buffer</Filter>
-    </ClInclude>
-    <ClInclude Include="src\layer\ImGuiLayer.h">
-      <Filter>src\layer</Filter>
+    <ClInclude Include="src\graphics\TextureManager.h">
+      <Filter>src\graphics</Filter>
     </ClInclude>
     <ClInclude Include="src\layer\Layer.h">
       <Filter>src\layer</Filter>
@@ -138,23 +171,26 @@
     <ClInclude Include="src\layer\MainLayer.h">
       <Filter>src\layer</Filter>
     </ClInclude>
+    <ClInclude Include="src\layer\PriorGenLayer.h">
+      <Filter>src\layer</Filter>
+    </ClInclude>
     <ClInclude Include="src\layer\WorldLayer.h">
       <Filter>src\layer</Filter>
     </ClInclude>
     <ClInclude Include="src\layer\imguiplotvar.h">
       <Filter>src\layer</Filter>
     </ClInclude>
+    <ClInclude Include="src\nbt\NBT.h">
+      <Filter>src\nbt</Filter>
+    </ClInclude>
     <ClInclude Include="src\ndpch.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="src\platform\OpenGL\OpenGLBuffer.h">
-      <Filter>src\platform\OpenGL</Filter>
+    <ClInclude Include="src\particle\ParticleManager.h">
+      <Filter>src\particle</Filter>
     </ClInclude>
-    <ClInclude Include="src\platform\OpenGL\OpenGLFrameBuffer.h">
-      <Filter>src\platform\OpenGL</Filter>
-    </ClInclude>
-    <ClInclude Include="src\platform\OpenGL\OpenGLVertexArray.h">
-      <Filter>src\platform\OpenGL</Filter>
+    <ClInclude Include="src\physShapes.h">
+      <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="src\world\ChunkLoader.h">
       <Filter>src\world</Filter>
@@ -175,6 +211,9 @@
       <Filter>src\world</Filter>
     </ClInclude>
     <ClInclude Include="src\world\WorldRenderManager.h">
+      <Filter>src\world</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world\WorldTime.h">
       <Filter>src\world</Filter>
     </ClInclude>
     <ClInclude Include="src\world\biome\Biome.h">
@@ -210,8 +249,47 @@
     <ClInclude Include="src\world\block\block_datas.h">
       <Filter>src\world\block</Filter>
     </ClInclude>
+    <ClInclude Include="src\world\entity\EntityManager.h">
+      <Filter>src\world\entity</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world\entity\EntityRegistry.h">
+      <Filter>src\world\entity</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world\entity\PathTracer.h">
+      <Filter>src\world\entity</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world\entity\Pool.h">
+      <Filter>src\world\entity</Filter>
+    </ClInclude>
     <ClInclude Include="src\world\entity\WorldEntity.h">
       <Filter>src\world\entity</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world\entity\componentManager.h">
+      <Filter>src\world\entity</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world\entity\entities.h">
+      <Filter>src\world\entity</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world\entity\entity_datas.h">
+      <Filter>src\world\entity</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world\entity\ssystem.h">
+      <Filter>src\world\entity</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world\gen\PriorGen.h">
+      <Filter>src\world\gen</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world\gen\TreeGen.h">
+      <Filter>src\world\gen</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world\gen\WorldGen.h">
+      <Filter>src\world\gen</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world\particle\ParticleRegistry.h">
+      <Filter>src\world\particle</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world\particle\particles.h">
+      <Filter>src\world\particle</Filter>
     </ClInclude>
     <ClInclude Include="vendor\glm\glm\common.hpp">
       <Filter>vendor\glm\glm</Filter>
@@ -1308,55 +1386,66 @@
     <ClInclude Include="vendor\stb_image\stb_image.h">
       <Filter>vendor\stb_image</Filter>
     </ClInclude>
-    <ClInclude Include="src\graphics\TestQuad.h" />
-    <ClInclude Include="src\Scheduler.h" />
-    <ClInclude Include="src\world\entity\Pool.h" />
-    <ClInclude Include="src\platform\OpenGL\OpenGLTexture.h" />
-    <ClInclude Include="src\platform\OpenGL\OpenGLRenderer.h" />
-    <ClInclude Include="src\graphics\BatchRenderer2D.h" />
-    <ClInclude Include="src\graphics\Renderable2D.h" />
-    <ClInclude Include="src\graphics\Sprite.h" />
-    <ClInclude Include="src\graphics\Group.h" />
-    <ClInclude Include="src\world\entity\EntityManager.h" />
-    <ClInclude Include="src\graphics\IBatchRenderable2D.h" />
-    <ClInclude Include="src\world\entity\componentManager.h" />
-    <ClInclude Include="src\world\entity\ssystem.h" />
-    <ClInclude Include="src\world\entity\entity_datas.h" />
-    <ClInclude Include="src\world\entity\entities.h" />
-    <ClInclude Include="src\world\entity\EntityRegistry.h" />
-    <ClInclude Include="src\nbt\NBT.h" />
-    <ClInclude Include="src\graphics\TextureManager.h" />
-    <ClInclude Include="src\physShapes.h" />
-    <ClInclude Include="src\world\entity\PathTracer.h" />
-    <ClInclude Include="src\graphics\Effect.h" />
-    <ClInclude Include="src\graphics\GContext.h" />
-    <ClInclude Include="src\platform\OpenGL\OpenGLContext.h" />
-    <ClInclude Include="vendor\stb_image\stb_image_resize.h" />
-    <ClInclude Include="vendor\stb_image\stb_image_write.h" />
-    <ClInclude Include="src\world\WorldTime.h" />
-    <ClInclude Include="src\world\gen\WorldGen.h">
-      <Filter>src\world</Filter>
+    <ClInclude Include="vendor\stb_image\stb_image_resize.h">
+      <Filter>vendor\stb_image</Filter>
     </ClInclude>
-    <ClInclude Include="src\world\gen\TreeGen.h" />
-    <ClInclude Include="src\graphics\Bar.h" />
-    <ClInclude Include="src\particle\ParticleManager.h" />
-    <ClInclude Include="src\graphics\BlockTextureAtlas.h" />
-    <ClInclude Include="src\graphics\TextureAtlas.h" />
-    <ClInclude Include="src\world\particle\ParticleRegistry.h" />
-    <ClInclude Include="src\world\particle\particles.h" />
-    <ClInclude Include="src\graphics\ParticleRenderer.h" />
+    <ClInclude Include="vendor\stb_image\stb_image_write.h">
+      <Filter>vendor\stb_image</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world\gen\OpenSimplexNoise.hpp" />
+    <ClInclude Include="src\imgui_utils.h" />
+    <ClInclude Include="src\Sandbox.h" />
+    <ClInclude Include="src\App.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\platform\OpenGL\GLBuffer.h">
+      <Filter>src\platform\OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="src\platform\OpenGL\GLContext.h">
+      <Filter>src\platform\OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="src\platform\OpenGL\GLFrameBuffer.h">
+      <Filter>src\platform\OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="src\platform\OpenGL\GLRenderer.h">
+      <Filter>src\platform\OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="src\platform\OpenGL\GLTexture.h">
+      <Filter>src\platform\OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="src\platform\OpenGL\GLVertexArray.h">
+      <Filter>src\platform\OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="src\graphics\API\Buffer.h">
+      <Filter>src\graphics\buffer</Filter>
+    </ClInclude>
+    <ClInclude Include="src\graphics\API\FrameBuffer.h">
+      <Filter>src\graphics\buffer</Filter>
+    </ClInclude>
+    <ClInclude Include="src\graphics\API\VertexArray.h">
+      <Filter>src\graphics\buffer</Filter>
+    </ClInclude>
+    <ClInclude Include="src\graphics\API\Texture.h">
+      <Filter>src\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\graphics\API\Shader.h">
+      <Filter>src\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world\IChunkProvider.h" />
+    <ClInclude Include="src\world\FileChunkProvider.h" />
+    <ClInclude Include="src\world\ThreadedChunkProvider.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\EntryPoint.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Game.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\Input.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\Log.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Scheduler.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\State.cpp">
@@ -1368,32 +1457,50 @@
     <ClCompile Include="src\entity\Camera.cpp">
       <Filter>src\entity</Filter>
     </ClCompile>
+    <ClCompile Include="src\graphics\Bar.cpp">
+      <Filter>src\graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\BatchRenderer2D.cpp">
+      <Filter>src\graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\BlockTextureAtlas.cpp">
+      <Filter>src\graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\Effect.cpp">
+      <Filter>src\graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\GContext.cpp">
+      <Filter>src\graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\Group.cpp">
+      <Filter>src\graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\IBatchRenderable2D.cpp">
+      <Filter>src\graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\ParticleRenderer.cpp">
+      <Filter>src\graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\Renderable2D.cpp">
+      <Filter>src\graphics</Filter>
+    </ClCompile>
     <ClCompile Include="src\graphics\Renderer.cpp">
       <Filter>src\graphics</Filter>
     </ClCompile>
-    <ClCompile Include="src\graphics\Shader.cpp">
+    <ClCompile Include="src\graphics\Sprite.cpp">
       <Filter>src\graphics</Filter>
     </ClCompile>
     <ClCompile Include="src\graphics\Sprite2D.cpp">
       <Filter>src\graphics</Filter>
     </ClCompile>
-    <ClCompile Include="src\graphics\Texture.cpp">
+    <ClCompile Include="src\graphics\TestQuad.cpp">
       <Filter>src\graphics</Filter>
     </ClCompile>
-    <ClCompile Include="src\graphics\buffer\Buffer.cpp">
-      <Filter>src\graphics\buffer</Filter>
+    <ClCompile Include="src\graphics\TextureAtlas.cpp">
+      <Filter>src\graphics</Filter>
     </ClCompile>
-    <ClCompile Include="src\graphics\buffer\FrameBuffer.cpp">
-      <Filter>src\graphics\buffer</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\buffer\VertexArray.cpp">
-      <Filter>src\graphics\buffer</Filter>
-    </ClCompile>
-    <ClCompile Include="src\layer\ImGuiBuild.cpp">
-      <Filter>src\layer</Filter>
-    </ClCompile>
-    <ClCompile Include="src\layer\ImGuiLayer.cpp">
-      <Filter>src\layer</Filter>
+    <ClCompile Include="src\graphics\TextureManager.cpp">
+      <Filter>src\graphics</Filter>
     </ClCompile>
     <ClCompile Include="src\layer\Layer.cpp">
       <Filter>src\layer</Filter>
@@ -1402,6 +1509,9 @@
       <Filter>src\layer</Filter>
     </ClCompile>
     <ClCompile Include="src\layer\MainLayer.cpp">
+      <Filter>src\layer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\layer\PriorGenLayer.cpp">
       <Filter>src\layer</Filter>
     </ClCompile>
     <ClCompile Include="src\layer\WorldLayer.cpp">
@@ -1413,17 +1523,17 @@
     <ClCompile Include="src\main.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\nbt\NBT.cpp">
+      <Filter>src\nbt</Filter>
+    </ClCompile>
     <ClCompile Include="src\ndpch.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\platform\OpenGL\OpenGLBuffer.cpp">
-      <Filter>src\platform\OpenGL</Filter>
+    <ClCompile Include="src\particle\ParticleManager.cpp">
+      <Filter>src\particle</Filter>
     </ClCompile>
-    <ClCompile Include="src\platform\OpenGL\OpenGLFrameBuffer.cpp">
-      <Filter>src\platform\OpenGL</Filter>
-    </ClCompile>
-    <ClCompile Include="src\platform\OpenGL\OpenGLVertexArray.cpp">
-      <Filter>src\platform\OpenGL</Filter>
+    <ClCompile Include="src\physShapes.cpp">
+      <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\world\ChunkLoader.cpp">
       <Filter>src\world</Filter>
@@ -1473,44 +1583,90 @@
     <ClCompile Include="src\world\block\basic_walls.cpp">
       <Filter>src\world\block</Filter>
     </ClCompile>
+    <ClCompile Include="src\world\entity\EntityManager.cpp">
+      <Filter>src\world\entity</Filter>
+    </ClCompile>
+    <ClCompile Include="src\world\entity\EntityRegistry.cpp">
+      <Filter>src\world\entity</Filter>
+    </ClCompile>
+    <ClCompile Include="src\world\entity\PathTracer.cpp">
+      <Filter>src\world\entity</Filter>
+    </ClCompile>
+    <ClCompile Include="src\world\entity\Pool.cpp">
+      <Filter>src\world\entity</Filter>
+    </ClCompile>
     <ClCompile Include="src\world\entity\WorldEntity.cpp">
       <Filter>src\world\entity</Filter>
+    </ClCompile>
+    <ClCompile Include="src\world\entity\componentManager.cpp">
+      <Filter>src\world\entity</Filter>
+    </ClCompile>
+    <ClCompile Include="src\world\entity\entities.cpp">
+      <Filter>src\world\entity</Filter>
+    </ClCompile>
+    <ClCompile Include="src\world\entity\ssystem.cpp">
+      <Filter>src\world\entity</Filter>
+    </ClCompile>
+    <ClCompile Include="src\world\gen\PriorGen.cpp">
+      <Filter>src\world\gen</Filter>
+    </ClCompile>
+    <ClCompile Include="src\world\gen\TreeGen.cpp">
+      <Filter>src\world\gen</Filter>
+    </ClCompile>
+    <ClCompile Include="src\world\gen\WorldGen.cpp">
+      <Filter>src\world\gen</Filter>
+    </ClCompile>
+    <ClCompile Include="src\world\particle\ParticleRegistry.cpp">
+      <Filter>src\world\particle</Filter>
+    </ClCompile>
+    <ClCompile Include="src\world\particle\particles.cpp">
+      <Filter>src\world\particle</Filter>
     </ClCompile>
     <ClCompile Include="vendor\stb_image\stb_image.cpp">
       <Filter>vendor\stb_image</Filter>
     </ClCompile>
-    <ClCompile Include="src\graphics\TestQuad.cpp" />
-    <ClCompile Include="src\Scheduler.cpp" />
-    <ClCompile Include="src\world\entity\Pool.cpp" />
-    <ClCompile Include="src\platform\OpenGL\OpenGLTexture.cpp" />
-    <ClCompile Include="src\platform\OpenGL\OpenGLRenderer.cpp" />
-    <ClCompile Include="src\graphics\BatchRenderer2D.cpp" />
-    <ClCompile Include="src\graphics\Renderable2D.cpp" />
-    <ClCompile Include="src\graphics\Sprite.cpp" />
-    <ClCompile Include="src\graphics\Group.cpp" />
-    <ClCompile Include="src\world\entity\EntityManager.cpp" />
-    <ClCompile Include="src\graphics\IBatchRenderable2D.cpp" />
-    <ClCompile Include="src\world\entity\componentManager.cpp" />
-    <ClCompile Include="src\world\entity\ssystem.cpp" />
-    <ClCompile Include="src\world\entity\entities.cpp" />
-    <ClCompile Include="src\world\entity\EntityRegistry.cpp" />
-    <ClCompile Include="src\nbt\NBT.cpp" />
-    <ClCompile Include="src\graphics\TextureManager.cpp" />
-    <ClCompile Include="src\physShapes.cpp" />
-    <ClCompile Include="src\world\entity\PathTracer.cpp" />
-    <ClCompile Include="src\graphics\Effect.cpp" />
-    <ClCompile Include="src\graphics\GContext.cpp" />
-    <ClCompile Include="src\platform\OpenGL\OpenGLContext.cpp" />
-    <ClCompile Include="src\world\gen\WorldGen.cpp">
-      <Filter>src\world</Filter>
+    <ClCompile Include="src\imgui_utils.cpp" />
+    <ClCompile Include="src\Sandbox.cpp" />
+    <ClCompile Include="src\App.cpp">
+      <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\world\gen\TreeGen.cpp" />
-    <ClCompile Include="src\graphics\Bar.cpp" />
-    <ClCompile Include="src\particle\ParticleManager.cpp" />
-    <ClCompile Include="src\graphics\BlockTextureAtlas.cpp" />
-    <ClCompile Include="src\graphics\TextureAtlas.cpp" />
-    <ClCompile Include="src\world\particle\ParticleRegistry.cpp" />
-    <ClCompile Include="src\world\particle\particles.cpp" />
-    <ClCompile Include="src\graphics\ParticleRenderer.cpp" />
+    <ClCompile Include="src\platform\OpenGL\GLBuffer.cpp">
+      <Filter>src\platform\OpenGL</Filter>
+    </ClCompile>
+    <ClCompile Include="src\platform\OpenGL\GLContext.cpp">
+      <Filter>src\platform\OpenGL</Filter>
+    </ClCompile>
+    <ClCompile Include="src\platform\OpenGL\GLFrameBuffer.cpp">
+      <Filter>src\platform\OpenGL</Filter>
+    </ClCompile>
+    <ClCompile Include="src\platform\OpenGL\GLRenderer.cpp">
+      <Filter>src\platform\OpenGL</Filter>
+    </ClCompile>
+    <ClCompile Include="src\platform\OpenGL\GLTexture.cpp">
+      <Filter>src\platform\OpenGL</Filter>
+    </ClCompile>
+    <ClCompile Include="src\platform\OpenGL\GLVertexArray.cpp">
+      <Filter>src\platform\OpenGL</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\API\Buffer.cpp">
+      <Filter>src\graphics\buffer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\API\FrameBuffer.cpp">
+      <Filter>src\graphics\buffer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\API\VertexArray.cpp">
+      <Filter>src\graphics\buffer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\API\Texture.cpp">
+      <Filter>src\graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\API\Shader.cpp">
+      <Filter>src\graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\layer\imgui_build.cpp">
+      <Filter>src\layer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\world\FileChunkProvider.cpp" />
+    <ClCompile Include="src\world\ThreadedChunkProvider.cpp" />
   </ItemGroup>
 </Project>

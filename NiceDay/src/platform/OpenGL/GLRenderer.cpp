@@ -1,5 +1,5 @@
 ﻿#include "ndpch.h"
-#include "OpenGLRenderer.h"
+#include "GLRenderer.h"
 
 #define BREAK_ON_GL_ERROR 1
 

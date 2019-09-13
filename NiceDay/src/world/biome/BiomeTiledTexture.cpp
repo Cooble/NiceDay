@@ -1,6 +1,6 @@
 ﻿#include "ndpch.h"
 #include "BiomeTiledTexture.h"
-#include "Game.h"
+#include "App.h"
 #include "world/WorldRenderManager.h"
 
 BiomeTiledTexture::BiomeTiledTexture(int id, const std::string& texture_path)
@@ -20,7 +20,7 @@ BiomeTiledTexture::BiomeTiledTexture(int id, const std::string& texture_path)
 void BiomeTiledTexture::updateSprites(World* m_world, Camera* m_camera)
 {
 	using namespace glm;
-	vec2 screenDim = vec2(Game::get().getWindow()->getWidth(), Game::get().getWindow()->getHeight());
+	vec2 screenDim = vec2(App::get().getWindow()->getWidth(), App::get().getWindow()->getHeight());
 	vec2 lowerScreen = m_camera->getPosition() - ((screenDim / (float)BLOCK_PIXEL_SIZE) / 2.0f);
 	vec2 upperScreen = m_camera->getPosition()+  ((screenDim / (float)BLOCK_PIXEL_SIZE) / 2.0f);
 	screenDim = upperScreen - lowerScreen;

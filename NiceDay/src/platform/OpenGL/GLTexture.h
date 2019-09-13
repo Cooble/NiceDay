@@ -1,8 +1,8 @@
 ﻿#pragma once
-#include "graphics/Texture.h"
+#include "graphics/API/Texture.h"
 
 
-class OpenGLTexture: public Texture
+class GLTexture: public Texture
 {
 private:
 	unsigned int m_id;
@@ -13,8 +13,8 @@ private:
 	std::string m_filePath;
 
 public:
-	OpenGLTexture(const TextureInfo& info);
-	~OpenGLTexture();
+	GLTexture(const TextureInfo& info);
+	~GLTexture();
 
 	void bind(unsigned int slot = 0) const override;
 	void unbind() const override;

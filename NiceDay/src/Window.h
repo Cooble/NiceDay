@@ -27,7 +27,7 @@ private:
 
 
 public:
-	Window(int width, int height, const char* title);
+	Window(int width, int height, const std::string& title);
 	~Window();
 
 	void setSize(int width, int height);

@@ -1,7 +1,7 @@
 ﻿#pragma once
 #include "graphics/GContext.h"
 
-class OpenGLContext:public GContext
+class GLContext:public GContext
 {
 private:
 	bool m_blend_enabled=false;
@@ -14,7 +14,7 @@ private:
 	float m_clearColor[4];
 	int m_viewport[4];
 public:
-	~OpenGLContext() = default;
+	~GLContext() = default;
 	void enableBlend() override;
 	void disableBlend() override;
 	void setBlendEquation(BlendEquation e) override;
