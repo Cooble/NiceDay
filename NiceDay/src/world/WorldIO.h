@@ -14,7 +14,7 @@ Possible errors you might do:
 
 class World;
 class Chunk;
-class WorldInfo;
+struct WorldInfo;
 
 namespace WorldIO
 {

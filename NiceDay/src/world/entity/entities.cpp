@@ -19,7 +19,7 @@
 
 
 //return if we have intersection
-inline static bool findBlockIntersection(World* w, const Phys::Vect& entityPos, const Phys::Polygon& entityBound)
+inline static bool findBlockIntersection(World& w, const Phys::Vect& entityPos, const Phys::Polygon& entityBound)
 {
 	auto& entityRectangle = entityBound.getBounds();
 	for (int x = entityRectangle.x0 - 1; x < ceil(entityRectangle.x1) + 1; ++x)
@@ -29,7 +29,7 @@ inline static bool findBlockIntersection(World* w, const Phys::Vect& entityPos, 
 			Phys::Vect blockPos(x, y);
 			blockPos += entityPos;
 
-			auto stru = w->getLoadedBlockPointer((int)blockPos.x, (int)blockPos.y);
+			auto stru = w.getBlock((int)blockPos.x, (int)blockPos.y);
 			if (stru == nullptr || stru->block_id == BLOCK_AIR)
 				continue;
 			auto& block = BlockRegistry::get().getBlock(stru->block_id);
@@ -45,7 +45,7 @@ inline static bool findBlockIntersection(World* w, const Phys::Vect& entityPos, 
 	return false;
 }
 
-inline static float getFloorHeight(World* w, const Phys::Vect& entityPos, const Phys::Rectangle& entityRectangle)
+inline static float getFloorHeight(World& w, const Phys::Vect& entityPos, const Phys::Rectangle& entityRectangle)
 {
 	float lineY = std::numeric_limits<float>::lowest();
 	for (int i = 0; i < 2; ++i)
@@ -57,7 +57,7 @@ inline static float getFloorHeight(World* w, const Phys::Vect& entityPos, const 
 			auto& pointDown0 = Phys::Vect(x, y);
 			auto& pointDown1 = Phys::Vect(x, y - 10000);
 
-			auto stru = w->getLoadedBlockPointer((int)pointDown0.x, (int)pointDown0.y);
+			auto stru = w.getBlock((int)pointDown0.x, (int)pointDown0.y);
 			if (stru == nullptr || stru->block_id == BLOCK_AIR)
 				continue;
 			auto& block = BlockRegistry::get().getBlock(stru->block_id);
@@ -96,16 +96,16 @@ static float sgn(float f)
 		return 0;
 	return abs(f) / f;
 }
-void PhysEntity::computePhysics(World* w)
+void PhysEntity::computePhysics(World& w)
 {
-	auto& collidingEntities = w->getLoadedEntities();
+	auto& collidingEntities = w.getLoadedEntities();
 	//todo make entity flags to dtermine whether this force oughta be applied
 	float xRepelForce = 0;
 
 
 	for (auto id : collidingEntities)
 	{
-		WorldEntity* e = w->getEntityManager().entity(id);
+		WorldEntity* e = w.getEntityManager().entity(id);
 		auto collidier = dynamic_cast<PhysEntity*>(e);
 		if (collidier&&e->getID()!=getID())
 			if (Phys::isIntersects(collidier->getCollisionBox(), collidier->getPosition(), m_bound, m_pos)) {
@@ -140,7 +140,7 @@ void PhysEntity::computePhysics(World* w)
 
 }
 
-bool PhysEntity::moveOrCollide(World* w, float dt)
+bool PhysEntity::moveOrCollide(World& w, float dt)
 {
 	m_blockage = NONE;
 	m_is_on_floor = false;
@@ -226,7 +226,7 @@ bool PhysEntity::moveOrCollide(World* w, float dt)
 				if (m_bound.isRectangle)
 				{
 					float floorHeight = getFloorHeight(w, possibleEntityPos, m_bound.getBounds());
-					if (Phys::isValidFloat(floorHeight) && w->isBlockValid(possibleEntityPos.x, floorHeight) && abs(
+					if (Phys::isValidFloat(floorHeight) && w.isBlockValid(possibleEntityPos.x, floorHeight) && abs(
 						floorHeight - m_pos.y) < 0.5)
 						possibleEntityPos.y = floorHeight + 0.01f;
 				}
@@ -252,14 +252,14 @@ bool PhysEntity::moveOrCollide(World* w, float dt)
 	return false;
 }
 
-void PhysEntity::computeVelocity(World* w)
+void PhysEntity::computeVelocity(World& w)
 {
 	//motion=========================================
 	m_velocity += m_acceleration;
 	m_velocity = Phys::clamp(m_velocity, -m_max_velocity, m_max_velocity);
 }
 
-void PhysEntity::computeWindResistance(World* w)
+void PhysEntity::computeWindResistance(World& w)
 {
 	//wind resistance================================
 	constexpr float windResistance = 0.01;
@@ -295,11 +295,11 @@ void PhysEntity::load(NBT& src)
 
 //Bullet======================================================
 
-bool Bullet::checkCollisions(World* w, float dt)
+bool Bullet::checkCollisions(World& w, float dt)
 {
 	m_pos += m_velocity * dt;
 	m_angle = m_velocity.angleDegrees();
-	auto blokk = w->getLoadedBlockPointer(m_pos.x, m_pos.y);
+	auto blokk = w.getBlock(m_pos.x, m_pos.y);
 	if (blokk)
 	{
 		auto& blok = *blokk;
@@ -320,11 +320,11 @@ bool Bullet::checkCollisions(World* w, float dt)
 		markDead();//live in chunk that is not loaded - kill it
 		return true;
 	}
-	auto& entities = w->getLoadedEntities();
+	auto& entities = w.getLoadedEntities();
 
 	for (auto entityID : entities)
 	{
-		auto e = w->getLoadedEntity(entityID);
+		auto e = w.getLoadedEntity(entityID);
 		if (e->getPosition().distanceSquared(m_pos) < MAX_BULLET_ENTITY_DISTANCE_SQ)
 			if (auto d = dynamic_cast<PhysEntity*>(e))
 			{
@@ -342,7 +342,7 @@ bool Bullet::checkCollisions(World* w, float dt)
 	return false;
 }
 
-void Bullet::update(World* w)
+void Bullet::update(World& w)
 {
 	if (m_live_ticks++ == m_max_live_ticks)
 	{
@@ -364,13 +364,13 @@ void Bullet::update(World* w)
 }
 
 
-bool Bullet::onBlockHit(World* w, int blockX, int blockY)
+bool Bullet::onBlockHit(World& w, int blockX, int blockY)
 {
 	markDead();
 	return true;
 }
 
-bool Bullet::onEntityHit(World* w, WorldEntity* entity)
+bool Bullet::onEntityHit(World& w, WorldEntity* entity)
 {
 	markDead();
 	return true;
@@ -428,7 +428,7 @@ EntityType EntityRoundBullet::getEntityType() const
 	return ENTITY_TYPE_ROUND_BULLET;
 }
 
-bool EntityRoundBullet::onEntityHit(World* w, WorldEntity* entity)
+bool EntityRoundBullet::onEntityHit(World& w, WorldEntity* entity)
 {
 	auto en = dynamic_cast<PhysEntity*>(entity);
 	if (en)
@@ -443,7 +443,7 @@ bool EntityRoundBullet::onEntityHit(World* w, WorldEntity* entity)
 	return true;
 }
 
-bool EntityRoundBullet::onBlockHit(World* w, int blockX, int blockY)
+bool EntityRoundBullet::onBlockHit(World& w, int blockX, int blockY)
 {
 	float numero=8;
 	float partNumero = 3.41459 * 2 / numero;
@@ -457,21 +457,21 @@ bool EntityRoundBullet::onBlockHit(World* w, int blockX, int blockY)
 		float truX = m_pos.x+partX;
 		float truY = m_pos.y+partY;
 		constexpr float radiusCheck = 0.8f;
-		if (!BlockRegistry::get().getBlock(w->getBlock(m_pos.x + partX * radiusCheck, m_pos.y + partY * radiusCheck).block_id).hasCollisionBox())
-			w->spawnParticle(ParticleList::bulletShatter, m_pos + (Phys::Vect(partX, partY)*0.1f), Phys::Vect(partX, partY)*0.15f, { 0,-0.55f / 60 }, 60, -1);
+		if (!BlockRegistry::get().getBlock(w.getBlockM(m_pos.x + partX * radiusCheck, m_pos.y + partY * radiusCheck)->block_id).hasCollisionBox())
+			w.spawnParticle(ParticleList::bulletShatter, m_pos + (Phys::Vect(partX, partY)*0.1f), Phys::Vect(partX, partY)*0.15f, { 0,-0.55f / 60 }, 60, -1);
 	}
 	return Bullet::onBlockHit(w, blockX, blockY);
 
 }
 
-void EntityRoundBullet::onLoaded(World* w)
+void EntityRoundBullet::onLoaded(World& w)
 {
-	w->getLightCalculator().registerLight(this);
+	w.getLightCalculator().registerLight(this);
 }
 
-void EntityRoundBullet::onUnloaded(World* w)
+void EntityRoundBullet::onUnloaded(World& w)
 {
-	w->getLightCalculator().removeLight(this);
+	w.getLightCalculator().removeLight(this);
 }
 
 
@@ -531,7 +531,7 @@ void Creature::render(BatchRenderer2D& renderer)
 			{
 				for (int x = -4; x < 4; ++x)
 				{
-					const BlockStruct* str = Stats::world->getBlockPointer(x + m_pos.x, y + m_pos.y);
+					const BlockStruct* str = Stats::world->getBlock(x + m_pos.x, y + m_pos.y);
 					if (str == nullptr)
 						continue;
 					auto& b = BlockRegistry::get().getBlock(str->block_id);
@@ -571,20 +571,20 @@ EntityType TileEntitySapling::getEntityType() const
 
 // Torch=======================================================
 
-void TileEntityTorch::update(World* w)
+void TileEntityTorch::update(World& w)
 {
 	m_tick_to_spawn_particle--;
 	if (m_tick_to_spawn_particle == 0)
 	{
 		m_tick_to_spawn_particle = std::rand() % 60 + 2 * 60;
-		w->spawnParticle(
+		w.spawnParticle(
 			ParticleList::torch_fire,
 			m_pos + Phys::Vect(0.5f + randDispersedFloat(0.05f), 1),
 			{randDispersedFloat(0.001), randFloat(0.001f) + 0.001f},
 			{0},
 			60 * 3);
 
-		w->spawnParticle(
+		w.spawnParticle(
 			ParticleList::torch_smoke,
 			m_pos + Phys::Vect(0.5f + randDispersedFloat(0.05f), 1),
 			{randDispersedFloat(0.01), randFloat(0.005f) + 0.01f},
@@ -599,7 +599,7 @@ EntityType TileEntityTorch::getEntityType() const
 }
 
 
-void TileEntitySapling::update(World* w)
+void TileEntitySapling::update(World& w)
 {
 	TileEntity::update(w);
 
@@ -630,7 +630,7 @@ EntityPlayer::EntityPlayer()
 	m_bound = Phys::toPolygon(Phys::Rectangle::createFromDimensions(-0.75f, 0, 1.5f, 2.9f));
 }
 
-void EntityPlayer::update(World* w)
+void EntityPlayer::update(World& w)
 {
 	auto lastPos = m_pos;
 	if (!Stats::move_through_blocks_enable)
@@ -682,7 +682,7 @@ EntityType EntityPlayer::getEntityType() const
 	return ENTITY_TYPE_PLAYER;
 }
 
-void EntityPlayer::onHit(World* w, WorldEntity* e, float damage)
+void EntityPlayer::onHit(World& w, WorldEntity* e, float damage)
 {
 }
 
@@ -722,7 +722,7 @@ EntityTNT::EntityTNT()
 	m_bound = Phys::toPolygon({-1, 0, 1, 2});
 }
 
-void EntityTNT::update(World* w)
+void EntityTNT::update(World& w)
 {
 	PhysEntity::computePhysics(w);
 
@@ -736,24 +736,24 @@ void EntityTNT::update(World* w)
 
 	if (m_timeToBoom-- == 0)
 	{
-		auto point = w->getLoadedBlockPointer(m_pos.x, m_pos.y);
+		auto point = w.getBlock(m_pos.x, m_pos.y);
 		//if (point)
-		//	w->setWall(m_pos.x, m_pos.y, 0);//leave the wall be
+		//	w.setWall(m_pos.x, m_pos.y, 0);//leave the wall be
 
-		w->beginBlockSet();
+		w.beginBlockSet();
 		for (int i = -7; i < 7; ++i)
 		{
 			for (int j = -7; j < 7; ++j)
 			{
 				if (Phys::Vect(i, j).lengthCab() < 6)
 				{
-					if (auto point = w->getLoadedBlockPointer(m_pos.x + i, m_pos.y + j))
+					if (auto point = w.getBlock(m_pos.x + i, m_pos.y + j))
 						if (point && !point->isAir())
-							w->setBlock(m_pos.x + i, m_pos.y + j, 0);
+							w.setBlock(m_pos.x + i, m_pos.y + j, 0);
 				}
 			}
 		}
-		w->flushBlockSet();
+		w.flushBlockSet();
 		markDead();
 	}
 }
@@ -797,7 +797,7 @@ EntityZombie::EntityZombie()
 	m_bound = Phys::toPolygon(Phys::Rectangle::createFromDimensions(-0.75f, 0, 1.5f, 2.9f));
 }
 
-void EntityZombie::update(World* w)
+void EntityZombie::update(World& w)
 {
 	auto lastPos = m_pos;
 	PhysEntity::computePhysics(w);
@@ -806,16 +806,16 @@ void EntityZombie::update(World* w)
 	{
 		if (!m_tracer.isRunning())
 		{
-			auto& enties = w->getLoadedEntities();
+			auto& enties = w.getLoadedEntities();
 			for (auto e : enties)
 			{
-				auto pointer = w->getLoadedEntity(e);
+				auto pointer = w.getLoadedEntity(e);
 				if (pointer->getEntityType() == ENTITY_TYPE_PLAYER)
 				{
 					if (pointer->getPosition().distanceSquared(m_pos) < std::pow(25, 2))
 					{
 						auto TPS = App::get().getTPS();
-						m_tracer.init(w, getID(),
+						m_tracer.init(&w, getID(),
 						              {4.f / TPS, -9.f / TPS},
 						              {10.f / TPS, 50.f / TPS});
 						m_tracer.setTarget(e);

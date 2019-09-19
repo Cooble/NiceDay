@@ -10,7 +10,7 @@ ChunkLoader::ChunkLoader(World * w)
 
 ChunkLoader::~ChunkLoader()= default;
 
-static void printMap(std::unordered_map<int, int>& map) {
+/*static void printMap(std::unordered_map<int, int>& map) {
 	for (auto it = map.begin(); it != map.end(); ++it) {
 		int x, y;
 		Chunk::getChunkPosFromID(it->first, x, y);
@@ -23,7 +23,7 @@ static void printSet(std::set<int>& set) {
 		Chunk::getChunkPosFromID(*it, x, y);
 		ND_INFO("{}, {}", x, y);
 	}
-}
+}*/
 
 void ChunkLoader::tickInner()
 {
@@ -35,7 +35,7 @@ void ChunkLoader::tickInner()
 	for (auto& iterator : map)
 	{
 		half_int c = iterator.first;
-		Chunk& g = m_world->getChunk(c.x, c.y);
+		auto& g = *m_world->getChunk(c.x, c.y);
 		if(!g.isLocked())//cannot unload chunk that is locked
 			toRemoveList.insert(iterator.first);//get all loaded chunks
 	}
@@ -60,15 +60,17 @@ void ChunkLoader::tickInner()
 				if ((y < 0) || (y >= m_world->getInfo().chunk_height))
 					continue;
 
-				if (!m_world->isChunkLoaded(x, y))
+				if (!m_world->isChunkFullyLoaded(half_int(x,y)))
 					toLoadList.insert(half_int(x, y));
 
 				toRemoveList.erase(half_int(x, y));
 			}
 		}
 	}
-	m_world->unloadChunks(toRemoveList);
-	m_world->loadChunksAndGen(toLoadList);
+	if (!toRemoveList.empty())
+		m_world->unloadChunks(toRemoveList);
+	if(!toLoadList.empty())
+		m_world->loadChunksAndGen(toLoadList);
 }
 
 void ChunkLoader::onUpdate()

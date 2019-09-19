@@ -20,7 +20,7 @@ int BlockAir::getTextureOffset(int x, int y, const BlockStruct&) const { return 
 
 int BlockAir::getCornerOffset(int x, int y, const BlockStruct&) const { return 0; }
 
-bool BlockAir::onNeighbourBlockChange(World* world, int x, int y) const { return false; }
+bool BlockAir::onNeighbourBlockChange(BlockAccess& world, int x, int y) const { return false; }
 
 
 //STONE=======================================
@@ -77,13 +77,13 @@ BlockPlatform::BlockPlatform()
 	m_collision_box_size = 1;
 }
 
-bool BlockPlatform::onNeighbourBlockChange(World* world, int x, int y) const
+bool BlockPlatform::onNeighbourBlockChange(BlockAccess& world, int x, int y) const
 {
-	BlockStruct& block = world->editBlock(x, y);
+	BlockStruct& block = *world.getBlockM(x, y);
 	int lastMeta = block.block_metadata;
 
-	int idLeft = world->getBlock(x - 1, y).block_id;
-	int idRight = world->getBlock(x + 1, y).block_id;
+	int idLeft = (*world.getBlockM(x - 1, y)).block_id;
+	int idRight = (*world.getBlockM(x + 1, y)).block_id;
 
 	bool leftPlat = getID() == idLeft;
 	bool rightPlat = getID() == idRight;
@@ -146,9 +146,9 @@ int BlockGrass::getTextureOffset(int x, int y, const BlockStruct& s) const
 }
 
 
-bool BlockGrass::onNeighbourBlockChange(World* world, int x, int y) const
+bool BlockGrass::onNeighbourBlockChange(BlockAccess& world, int x, int y) const
 {
-	BlockStruct& block = world->editBlock(x, y);
+	auto& block = *world.getBlockM(x, y);
 	int lastid = block.block_id;
 	int lastCorner = block.block_corner;
 	bool custombit = (lastCorner & BIT(4)); //perserve custombit
@@ -193,10 +193,10 @@ int BlockGlass::getTextureOffset(int x, int y, const BlockStruct& s) const
 	return (m_texture_pos + half_int(s.block_metadata, 0));
 }
 
-bool BlockGlass::onNeighbourBlockChange(World* world, int x, int y) const
+bool BlockGlass::onNeighbourBlockChange(BlockAccess& world, int x, int y) const
 {
 	auto c = Block::onNeighbourBlockChange(world, x, y);
-	BlockStruct& e = world->editBlock(x, y);
+	auto& e = *world.getBlockM(x, y);
 	e.block_metadata = std::rand() % 10;
 	e.block_metadata &= 3;
 	return c;
@@ -212,17 +212,17 @@ BlockTorch::BlockTorch()
 	m_light_src = 16;
 }
 
-void BlockTorch::onBlockClicked(World* w, WorldEntity* e, int x, int y, BlockStruct& b) const
+void BlockTorch::onBlockClicked(World& w, WorldEntity* e, int x, int y, BlockStruct& b) const
 {
-	auto tileE = w->getLoadedTileEntity(x, y);
+	auto tileE = w.getLoadedTileEntity(x, y);
 	if(tileE)
-		w->killTileEntity(tileE->getID());
+		w.killTileEntity(tileE->getID());
 	else {
 		auto entityBuff = malloc(EntityRegistry::get().getBucket(ENTITY_TYPE_TILE_TORCH).byte_size);
 		EntityRegistry::get().createInstance(ENTITY_TYPE_TILE_TORCH, entityBuff);
 
 		((WorldEntity*)entityBuff)->getPosition() = Phys::Vect(x, y);
-		w->spawnEntity((WorldEntity*)entityBuff);
+		w.spawnEntity((WorldEntity*)entityBuff);
 	}
 }
 
@@ -236,19 +236,19 @@ int BlockTorch::getCornerOffset(int x, int y, const BlockStruct&) const
 	return 0;
 }
 
-bool BlockTorch::isInTorchGroup(World* world, int x, int y) const
+bool BlockTorch::isInTorchGroup(BlockAccess& world, int x, int y) const
 {
 	int id = BLOCK_AIR;
-	auto p = world->getLoadedBlockPointer(x, y);
+	auto p = world.getBlockM(x, y);
 	if (p)
 		id = p->block_id;
 
 	return id != BLOCK_TORCH && id != BLOCK_AIR;
 }
 
-bool BlockTorch::onNeighbourBlockChange(World* world, int x, int y) const
+bool BlockTorch::onNeighbourBlockChange(BlockAccess& world, int x, int y) const
 {
-	BlockStruct& s = world->editBlock(x, y);
+	auto& s = *world.getBlockM(x, y);
 	int lastCorner = s.block_corner;
 
 	int mask = 0;
@@ -277,7 +277,7 @@ bool BlockTorch::onNeighbourBlockChange(World* world, int x, int y) const
 		}
 		else
 		{
-			world->setBlock(x, y, BLOCK_AIR); //torch cannot float
+			world.setBlock(x, y, BLOCK_AIR); //torch cannot float
 		}
 	}
 	return lastCorner != s.block_corner;
@@ -291,7 +291,7 @@ BlockDoor::BlockDoor(int id)
 	m_collision_box_size = 1;
 }
 
-void BlockDoor::onBlockClicked(World* w, WorldEntity* e, int x, int y, BlockStruct& curBlok) const
+void BlockDoor::onBlockClicked(World& w, WorldEntity* e, int x, int y, BlockStruct& curBlok) const
 {
 	quarter_int offset = curBlok.block_metadata;
 
@@ -307,10 +307,10 @@ void BlockDoor::onBlockClicked(World* w, WorldEntity* e, int x, int y, BlockStru
 			bnew.block_metadata = quarter_int(0, 0, 1, 0);
 			for (int yyy = 0; yyy < 3; ++yyy)
 			{
-				if (!w->isAir(mainBlockX - 1, mainBlockY + yyy))
+				if (!w.isAir(mainBlockX - 1, mainBlockY + yyy))
 					return;
 			}
-			w->setBlock(mainBlockX - 1, mainBlockY, bnew);
+			w.setBlockWithNotify(mainBlockX - 1, mainBlockY, bnew);
 		}
 		else
 		{
@@ -318,10 +318,10 @@ void BlockDoor::onBlockClicked(World* w, WorldEntity* e, int x, int y, BlockStru
 			bnew.block_metadata = quarter_int(0, 0, 0, 0);
 			for (int yyy = 0; yyy < 3; ++yyy)
 			{
-				if (!w->isAir(mainBlockX + 1, mainBlockY + yyy))
+				if (!w.isAir(mainBlockX + 1, mainBlockY + yyy))
 					return;
 			}
-			w->setBlock(mainBlockX, mainBlockY, bnew);
+			w.setBlockWithNotify(mainBlockX, mainBlockY, bnew);
 		}
 	}
 	else
@@ -330,8 +330,8 @@ void BlockDoor::onBlockClicked(World* w, WorldEntity* e, int x, int y, BlockStru
 		bnew.block_id = BLOCK_DOOR_CLOSE;
 		bool z = quarter_int(curBlok.block_metadata).z == 1;
 		BlockRegistry::get().getBlock(BLOCK_DOOR_OPEN).onBlockDestroyed(w, e, mainBlockX, mainBlockY,
-		                                                                w->editBlock(mainBlockX, mainBlockY));
-		w->setBlock(mainBlockX + (z ? 1 : 0), mainBlockY, bnew);
+		                                                                *w.getBlockM(mainBlockX, mainBlockY));
+		w.setBlockWithNotify(mainBlockX + (z ? 1 : 0), mainBlockY, bnew);
 	}
 }
 
@@ -357,16 +357,16 @@ BlockDoorClose::BlockDoorClose()
 	m_texture_pos = {0, 8};
 }
 
-bool BlockDoorClose::canBePlaced(World* w, int x, int y) const
+bool BlockDoorClose::canBePlaced(World& w, int x, int y) const
 {
 	if (!MultiBlock::canBePlaced(w, x, y))
 		return false;
-	auto& str = w->getBlock(x, y - 1);
+	auto& str = *w.getBlockM(x, y - 1);
 	auto& b = BlockRegistry::get().getBlock(str.block_id);
 	if (!b.hasCollisionBox())
 		return false;
 
-	auto& strr = w->getBlock(x, y + 3);
+	auto& strr = *w.getBlockM(x, y + 3);
 	auto& bb = BlockRegistry::get().getBlock(strr.block_id);
 
 	return bb.hasCollisionBox();
@@ -386,13 +386,13 @@ BlockPainting::BlockPainting()
 	setNoCollisionBox();
 }
 
-bool BlockPainting::canBePlaced(World* w, int x, int y) const
+bool BlockPainting::canBePlaced(World& w, int x, int y) const
 {
 	for (int xx = 0; xx < m_width; ++xx)
 	{
 		for (int yy = 0; yy < m_height; ++yy)
 		{
-			auto& str = w->getBlock(x + xx, y + yy);
+			auto& str = *w.getBlockM(x + xx, y + yy);
 			if (str.isWallFree() || !str.isAir()) //need wall and not blocks
 				return false;
 		}
@@ -408,11 +408,11 @@ BlockTreeSapling::BlockTreeSapling()
 	m_tile_entity = ENTITY_TYPE_TILE_SAPLING;
 }
 
-bool BlockTreeSapling::canBePlaced(World* w, int x, int y) const
+bool BlockTreeSapling::canBePlaced(World& w, int x, int y) const
 {
-	if (!w->isAir(x, y))
+	if (!w.isAir(x, y))
 		return false;
-	int underID = w->getBlock(x, y - 1).block_id;
+	int underID = w.getBlockM(x, y - 1)->block_id;
 	return underID == BLOCK_DIRT || underID == BLOCK_GRASS;
 }
 
@@ -474,17 +474,17 @@ int BlockTree::getCornerOffset(int x, int y, const BlockStruct&) const
 }
 
 
-bool BlockTree::onNeighbourBlockChange(World* world, int x, int y) const
+bool BlockTree::onNeighbourBlockChange(BlockAccess& world, int x, int y) const
 {
 	return false;
 }
 
-void BlockTree::onBlockDestroyed(World* w, WorldEntity* e, int x, int y, BlockStruct& b) const
+void BlockTree::onBlockDestroyed(World& w, WorldEntity* e, int x, int y, BlockStruct& b) const
 {
-	auto& left = w->getBlock(x - 1, y);
-	auto& right = w->getBlock(x + 1, y);
-	auto& up = w->getBlock(x, y + 1);
-	auto& down = w->getBlock(x, y - 1);
+	auto& left = *w.getBlockM(x - 1, y);
+	auto& right = *w.getBlockM(x + 1, y);
+	auto& up = *w.getBlockM(x, y + 1);
+	auto& down = *w.getBlockM(x, y - 1);
 
 	half_int baseBlock = half_int(x, y) - half_int(b.block_metadata);
 	b.block_id = 0;
@@ -493,22 +493,22 @@ void BlockTree::onBlockDestroyed(World* w, WorldEntity* e, int x, int y, BlockSt
 	bool isOurL = left.block_id == getID(); //&&
 	//half_int(half_int(x - 1, y) - half_int(left.block_metadata)) == baseBlock;
 	if (isOurL)
-		w->setBlock(x - 1, y, 0);
+		w.setBlockWithNotify(x - 1, y, 0);
 
 	bool isOurR = right.block_id == getID(); //&&
 	//	half_int(half_int(x + 1, y) - half_int(right.block_metadata)) == baseBlock;
 	if (isOurR)
-		w->setBlock(x + 1, y, 0);
+		w.setBlockWithNotify(x + 1, y, 0);
 
 	bool isOurU = up.block_id == getID(); //&&
 	//	half_int(half_int(x, y + 1) - half_int(up.block_metadata)) == baseBlock;
 	if (isOurU)
-		w->setBlock(x, y + 1, 0);
+		w.setBlockWithNotify(x, y + 1, 0);
 
 	bool isOurD = down.block_id == getID(); // &&
 	//	half_int(half_int(x, y - 1) - half_int(down.block_metadata)) == baseBlock;
 	if (isOurD)
-		w->setBlock(x, y - 1, 0);
+		w.setBlockWithNotify(x, y - 1, 0);
 }
 
 BlockPlant::BlockPlant(int id)
@@ -524,15 +524,15 @@ int BlockPlant::getTextureOffset(int x, int y, const BlockStruct& b) const
 	return m_texture_pos + half_int(half_int(b.block_metadata).x, 0);
 }
 
-bool BlockPlant::canBePlaced(World* w, int x, int y) const
+bool BlockPlant::canBePlaced(World& w, int x, int y) const
 {
-	if (!w->isAir(x, y))
+	if (!w.isAir(x, y))
 		return false;
-	int underID = w->getBlock(x, y - 1).block_id;
+	int underID = w.getBlockM(x, y - 1)->block_id;
 	return underID == BLOCK_GRASS;
 }
 
-void BlockPlant::onBlockPlaced(World* w, WorldEntity* e, int x, int y, BlockStruct& b) const
+void BlockPlant::onBlockPlaced(World& w, WorldEntity* e, int x, int y, BlockStruct& b) const
 {
 	b.block_metadata = std::rand() % m_max_metadata;
 }

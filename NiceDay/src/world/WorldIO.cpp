@@ -76,7 +76,6 @@ namespace WorldIO
 
 		auto cc = new Chunk();
 		memset(cc, 0, sizeof(Chunk));
-		cc->setLoaded(false);
 		cc->last_save_time = 0;
 		//writing blank chunks
 		for (int y = 0; y < info->chunk_height; y++)
@@ -129,8 +128,6 @@ namespace WorldIO
 	{
 		m_stream->seekg(HEADER_TOTAL_END_POINT + sizeof(Chunk) * offset, std::ios::beg);
 		m_stream->read((char*)chunk, sizeof(Chunk));
-		chunk->m_main_thread_fence = 0;
-		chunk->m_light_thread_fence = 0;
 		CHECK_STREAM_STATE(m_stream);
 	}
 

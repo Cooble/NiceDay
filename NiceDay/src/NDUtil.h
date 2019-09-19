@@ -90,38 +90,44 @@ namespace NDUtil
 	{
 	private:
 		std::vector<std::bitset<32>> m_bits;
-		size_t m_last_size=0;
+		size_t m_last_size = 0;
 
 	public:
 		Bitset() = default;
 
 		inline void resize(size_t bits)
 		{
-			if(bits%32!=0)
+			if (bits % 32 != 0)
 				bits = (bits / 32) * 32 + 32;
-			if (m_bits.size() < (bits/32))
+			if (m_bits.size() < (bits / 32))
 				m_bits.resize(bits / 32);
 		}
-		inline bool get(size_t index)const
+
+		inline bool get(size_t index) const
 		{
-			return m_bits[index >> 5][index&((1 << 5) - 1)];
+			return m_bits[index >> 5][index & ((1 << 5) - 1)];
 		}
-		inline void set(size_t index,bool val)
+
+		inline void set(size_t index, bool val)
 		{
-			m_bits[index >> 5][index&((1 << 5) - 1)]=val;
+			m_bits[index >> 5][index & ((1 << 5) - 1)] = val;
 		}
+
 		inline bool operator[](size_t index) const
 		{
 			return get(index);
 		}
+
 		inline void push_back(bool val)
 		{
 			++m_last_size;
 			resize(m_last_size);
-			set(m_last_size - 1,val);
+			set(m_last_size - 1, val);
 		}
-		inline auto& getSource()const { return m_bits; }
+
+		inline auto& getSource() const { return m_bits; }
 		inline size_t bitSize() const { return m_bits.size() * 32; }
+
 		inline size_t byteSize() const
 		{
 			return m_bits.size() * sizeof(std::bitset<32>);
@@ -133,8 +139,8 @@ namespace NDUtil
 			stream.write((char*)&arraySize, sizeof(int));
 			stream.write((char*)&m_last_size, sizeof(int));
 			stream.write((char*)m_bits.data(), byteSize());
-
 		}
+
 		inline void read(std::istream& stream)
 		{
 			int arraySize = 0;
@@ -146,9 +152,8 @@ namespace NDUtil
 	};
 
 
-
 	template <typename T>
-	static void eraseKeepPacked(std::vector<T>& t,size_t indexToErase)
+	static void eraseKeepPacked(std::vector<T>& t, size_t indexToErase)
 	{
 		auto& tt = t[t.bitSize() - 1];
 		t[indexToErase] = tt;
@@ -158,14 +163,16 @@ namespace NDUtil
 
 struct half_int
 {
-	inline static int getX(int i)
+	inline static int X(int i)
 	{
 		return ((half_int*)&i)->x;
 	}
-	inline static int getY(int i)
+
+	inline static int Y(int i)
 	{
 		return ((half_int*)&i)->y;
 	}
+
 	union
 	{
 		uint32_t i;
@@ -198,31 +205,35 @@ struct half_int
 	{
 		return plus(v);
 	}
+
 	inline operator int() const
 	{
 		return i;
 	}
-	
 };
 
 struct quarter_int
 {
-	inline static int getX(int i)
+	inline static int X(int i)
 	{
 		return ((quarter_int*)&i)->x;
 	}
-	inline static int getY(int i)
+
+	inline static int Y(int i)
 	{
 		return ((quarter_int*)&i)->y;
 	}
-	inline static int getZ(int i)
+
+	inline static int Z(int i)
 	{
 		return ((quarter_int*)&i)->z;
 	}
-	inline static int getW(int i)
+
+	inline static int W(int i)
 	{
 		return ((quarter_int*)&i)->w;
 	}
+
 	union
 	{
 		uint32_t i;
@@ -244,19 +255,20 @@ struct quarter_int
 	{
 	}
 
-	quarter_int(int xx, int yy,int zz,int ww) : x((char)xx), y((char)yy), z((char)zz), w((char)ww)
+	quarter_int(int xx, int yy, int zz, int ww) : x((char)xx), y((char)yy), z((char)zz), w((char)ww)
 	{
 	}
 
 	quarter_int plus(quarter_int v) const
 	{
-		return quarter_int(x + v.x, y + v.y,z+v.z,w+v.w);
+		return quarter_int(x + v.x, y + v.y, z + v.z, w + v.w);
 	}
 
 	quarter_int operator+(quarter_int v) const
 	{
 		return plus(v);
 	}
+
 	inline operator int() const
 	{
 		return i;
@@ -267,15 +279,37 @@ inline bool operator!=(const half_int& f0, const half_int& f1)
 {
 	return !(f0.i == f1.i);
 }
+
 inline bool operator==(const half_int& f0, const half_int& f1)
 {
 	return f0.i == f1.i;
+}
+
+inline bool operator!=(const half_int& f0, const int& f1)
+{
+	return !(f0.i == f1);
+}
+
+inline bool operator==(const half_int& f0, const int& f1)
+{
+	return f0.i == f1;
+}
+
+inline bool operator!=(const int& f0, const half_int& f1)
+{
+	return !(f0 == f1.i);
+}
+
+inline bool operator==(const int& f0, const half_int& f1)
+{
+	return f0 == f1.i;
 }
 
 inline bool operator!=(const quarter_int& f0, const quarter_int& f1)
 {
 	return !(f0.i == f1.i);
 }
+
 inline bool operator==(const quarter_int& f0, const quarter_int& f1)
 {
 	return f0.i == f1.i;
@@ -303,27 +337,27 @@ struct iVec2D
 
 	inline iVec2D operator+(const iVec2D& vector) const
 	{
-		return { x + vector.x, y + vector.y };
+		return {x + vector.x, y + vector.y};
 	}
 
 	inline iVec2D operator-(const iVec2D& vector) const
 	{
-		return { x - vector.x, y - vector.y };
+		return {x - vector.x, y - vector.y};
 	}
 
 	inline iVec2D operator*(const iVec2D& vector) const
 	{
-		return { x * vector.x, y * vector.y };
+		return {x * vector.x, y * vector.y};
 	}
 
 	inline iVec2D operator/(const iVec2D& vector) const
 	{
-		return { x / vector.x, y / vector.y };
+		return {x / vector.x, y / vector.y};
 	}
 
 	inline int length() const
 	{
-		return abs(x)+abs(y);
+		return abs(x) + abs(y);
 	}
 
 	inline void plus(const iVec2D& vector)
@@ -364,19 +398,19 @@ inline bool operator!=(const iVec2D& f0, const iVec2D& f1)
 template <typename T>
 constexpr T ipow(T num, unsigned int pow)
 {
-	return (pow >= sizeof(unsigned int) * 8) ? 0 :
-		pow == 0 ? 1 : num * ipow(num, pow - 1);
+	return (pow >= sizeof(unsigned int) * 8) ? 0 : pow == 0 ? 1 : num * ipow(num, pow - 1);
 }
 
 #include <unordered_map>
-template<typename Key, typename T, T value = T()>
-class defaultable_map :public std::unordered_map<Key, T>
+
+template <typename Key, typename T, T value = T()>
+class defaultable_map : public std::unordered_map<Key, T>
 {
 public:
 	// inherit std::unordered_map constructors
 	using std::unordered_map<Key, T>::unordered_map;
 
-	T & operator[](const Key & key)
+	T& operator[](const Key& key)
 	{
 		auto it = find(key);
 
@@ -389,20 +423,21 @@ public:
 
 		return it->second;
 	}
+
 	bool contains(const Key& key)
 	{
 		return find(key) != end();
 	}
 };
 
-template<typename Key, typename T>
-class defaultable_map_other :public std::unordered_map<Key, T>
+template <typename Key, typename T>
+class defaultable_map_other : public std::unordered_map<Key, T>
 {
 public:
 	// inherit std::unordered_map constructors
 	using std::unordered_map<Key, T>::unordered_map;
 
-	T & operator[](const Key & key)
+	T& operator[](const Key& key)
 	{
 		auto it = find(key);
 
@@ -415,46 +450,55 @@ public:
 
 		return it->second;
 	}
+
 	bool contains(const Key& key)
 	{
 		return find(key) != end();
 	}
 };
 
-inline float randFloat(float size=1) { return std::rand() % 1000 / 1000.f*size; }
-inline float randDispersedFloat(float absSize=1) { return (std::rand() % 1000 / 1000.f-0.5f)*absSize*2; }
+inline float randFloat(float size = 1) { return std::rand() % 1000 / 1000.f * size; }
+inline float randDispersedFloat(float absSize = 1) { return (std::rand() % 1000 / 1000.f - 0.5f) * absSize * 2; }
 
 class JobAssigment
 {
-private:
-	int64_t m_main=0;
-	int64_t m_worker=0;
 public:
-	int64_t m_variable=0;
+	int64_t m_main = 0;
+	int64_t m_worker = 0;
+public:
+	int64_t m_variable = 0;
 
 public:
 	inline void assign() { ++m_main; }
-	inline void markDone() { ++m_worker; }
+	inline void markDone()
+	{
+		ASSERT(m_worker < m_main, "marking Done Job which has not been assigned.");
+		++m_worker;
+	}
 
 	inline bool isDone() const { return m_main == m_worker; }
-	
+
 	inline void reset()
 	{
 		ASSERT(isDone(), "Cannot reset when job is pending");
 		m_main = 0;
 		m_worker = 0;
+		m_variable = 0;
 	}
 };
 
+typedef JobAssigment* JobAssigmentP;
+
 //todo make startAssigning() and flushAssigning()
-template<typename WorkAssignment>
+template <typename WorkAssignment>
 class Worker
 {
 private:
+	bool m_is_buffering_assignments = false;
 	bool m_is_stopped = true;
 	bool m_is_running = false;
 	std::mutex m_queue_mutex;
-	std::queue<WorkAssignment> m_queue;// Have I found everybody fun assignment to do today?
+	std::queue<WorkAssignment> m_queue; // Have I found everybody fun assignment to do today?
 	std::condition_variable m_wait_condition_variable;
 private:
 	void runInner()
@@ -469,30 +513,45 @@ private:
 		{
 			m_wait_condition_variable.wait(loopLock);
 
-
-			std::unique_lock<std::mutex> guard(m_queue_mutex);
-			bufferAssigns.resize(m_queue.bitSize());//this is lame too much memory alloc and stuff
-			int index = 0;
-			while (!m_queue.empty())
+			bool runAgain = true;
+			while (runAgain)
 			{
-				bufferAssigns[index++] = m_queue.front();
-				m_queue.pop();
+				{
+					std::unique_lock<std::mutex> guard(m_queue_mutex);
+					bufferAssigns.resize(m_queue.size()); //this is lame too much memory alloc and stuff
+					int index = 0;
+					while (!m_queue.empty())
+					{
+						bufferAssigns[index++] = m_queue.front();
+						m_queue.pop();
+					}
+				}
+				proccessAssignments(bufferAssigns);
+				{
+					std::unique_lock<std::mutex> guard(m_queue_mutex);
+					runAgain = !m_queue.empty() && m_is_running;//we dont need to wait for m_wait_condition_variable.notify_one();
+				}
 			}
-			guard.unlock();
-			proccessAssignments(bufferAssigns);
 		}
 		deInit();
 		m_is_stopped = true;
 	}
+
 public:
-	virtual ~Worker() = default;
+	virtual ~Worker()
+	{
+		if (!m_is_running)
+			return;
+		stop(); //need wait for thread to finish
+		while (!m_is_stopped);
+	}
 
 
 	// will create separate working thread and return immediately
 	inline void start()
 	{
 		std::thread t(&Worker::runInner, this);
-		t.detach();
+		t.detach(); //fly daemon, fly
 	}
 
 	// will notify work thread to stop
@@ -504,8 +563,13 @@ public:
 	}
 
 	// called by work thread after start before processing assignments
-	inline virtual void init() {};
-	inline virtual void deInit() {};
+	inline virtual void init()
+	{
+	};
+
+	inline virtual void deInit()
+	{
+	};
 
 	// dont forget to mark the job as done
 	virtual void proccessAssignments(std::vector<WorkAssignment>& assignments) = 0;
@@ -520,11 +584,20 @@ public:
 		std::lock_guard<std::mutex> guard(m_queue_mutex);
 		for (int i = 0; i < size; ++i)
 			m_queue.push(assignments[i]);
+		if (!m_is_buffering_assignments)
+			m_wait_condition_variable.notify_one();
+	}
+
+	inline void beginBuffering() { m_is_buffering_assignments = true; }
+
+	inline void flushBuffering()
+	{
+		m_is_buffering_assignments = false;
 		m_wait_condition_variable.notify_one();
 	}
+
 	inline void assignWork(const WorkAssignment& assignment)
 	{
 		assignWork(&assignment, 1);
 	}
 };
-

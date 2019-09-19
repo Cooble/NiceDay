@@ -38,13 +38,13 @@ public:
 	inline const Phys::Vect& getPosition() const { return m_pos; }
 	inline Phys::Vect& getPosition() { return m_pos; }
 
-	virtual void update(World* w) {}
+	virtual void update(World& w) {}
 
-	virtual void onLoaded(World* w) {}
-	virtual void onUnloaded(World* w) {}
+	virtual void onLoaded(World& w) {}
+	virtual void onUnloaded(World& w) {}
 
-	virtual void onSpawned(World* w){}
-	virtual void onKilled(World* w){}
+	virtual void onSpawned(World& w){}
+	virtual void onKilled(World& w){}
 
 
 	void save(NBT& src) override;
@@ -70,9 +70,9 @@ public:
 	TileEntity();
 	virtual ~TileEntity() = default;
 
-	void update(World* w) override;
+	void update(World& w) override;
 
-	void onSpawned(World* w) override;
+	void onSpawned(World& w) override;
 
 	void save(NBT& src) override;
 	void load(NBT& src) override;

@@ -14,7 +14,7 @@ class TileEntitySapling :public TileEntity
 public:
 	TileEntitySapling() = default;
 	virtual ~TileEntitySapling() = default;
-	void update(World* w) override;
+	void update(World& w) override;
 	EntityType getEntityType() const override;
 
 	
@@ -23,7 +23,7 @@ public:
 	TO_ENTITY_STRING(TileEntitySapling)
 	ND_FACTORY_METH_ENTITY_BUILD(TileEntitySapling)
 private:
-	void buildTree(World* w, int x, int y);
+	void buildTree(World& w, int x, int y);
 };
 class TileEntityTorch :public TileEntity
 {
@@ -32,7 +32,7 @@ private:
 public:
 	TileEntityTorch() = default;
 	virtual ~TileEntityTorch() = default;
-	void update(World* w) override;
+	void update(World& w) override;
 	EntityType getEntityType() const override;
 
 	TO_ENTITY_STRING(TileEntityTorch)
@@ -66,10 +66,10 @@ public:
 	virtual ~PhysEntity() = default;
 
 	//calculates velocity and position based on acceleration and world colliding blocks
-	void computePhysics(World* w);
-	inline bool moveOrCollide(World* w, float dt);
-	inline void computeVelocity(World* w);
-	inline void computeWindResistance(World* w);
+	void computePhysics(World& w);
+	inline bool moveOrCollide(World& w, float dt);
+	inline void computeVelocity(World& w);
+	inline void computeWindResistance(World& w);
 
 	void save(NBT& src) override;
 	void load(NBT& src) override;
@@ -106,12 +106,12 @@ public:
 
 
 	// return true if there was collision
-	bool checkCollisions(World* w, float dt);
-	void update(World* w) override;
+	bool checkCollisions(World& w, float dt);
+	void update(World& w) override;
 	//return true if was hit
-	virtual bool onBlockHit(World* w, int blockX, int blockY);
+	virtual bool onBlockHit(World& w, int blockX, int blockY);
 	//return true if was hit
-	virtual bool onEntityHit(World* w, WorldEntity* entity);
+	virtual bool onEntityHit(World& w, WorldEntity* entity);
 	void render(BatchRenderer2D& renderer) override;
 };
 
@@ -127,11 +127,11 @@ public:
 	EntityType getEntityType() const override;
 	std::pair<int, int> getLightPosition() const override { return std::make_pair(m_pos.x, m_pos.y); }
 	uint8_t getIntensity() const override { return 10; }
-	bool onEntityHit(World* w, WorldEntity* entity) override;
-	bool onBlockHit(World* w, int blockX, int blockY) override;
+	bool onEntityHit(World& w, WorldEntity* entity) override;
+	bool onBlockHit(World& w, int blockX, int blockY) override;
 
-	void onLoaded(World* w) override;
-	void onUnloaded(World* w) override;
+	void onLoaded(World& w) override;
+	void onUnloaded(World& w) override;
 
 	TO_ENTITY_STRING(EntityRoundBullet)
 	ND_FACTORY_METH_ENTITY_BUILD(EntityRoundBullet)
@@ -161,13 +161,13 @@ public:
 	inline Sprite& getSprite() { return m_animation; }
 	void render(BatchRenderer2D& renderer) override;
 
-	virtual void onHit(World* w,WorldEntity *e, float damage);
+	virtual void onHit(World& w,WorldEntity *e, float damage);
 
 	void save(NBT& src) override;
 	void load(NBT& src) override;
 };
 
-inline void Creature::onHit(World* w,WorldEntity* e, float damage)
+inline void Creature::onHit(World& w,WorldEntity* e, float damage)
 {
 	m_health = max(0.f, m_health - damage);
 	if (m_health == 0.f)
@@ -187,10 +187,10 @@ public:
 	EntityPlayer();
 	virtual ~EntityPlayer() = default;
 
-	void update(World* w) override;
+	void update(World& w) override;
 	EntityType getEntityType() const override;
 
-	void onHit(World* w, WorldEntity* e, float damage) override;
+	void onHit(World& w, WorldEntity* e, float damage) override;
 
 	TO_ENTITY_STRING(EntityPlayer)
 	ND_FACTORY_METH_ENTITY_BUILD(EntityPlayer)
@@ -209,7 +209,7 @@ private:
 public:
 	EntityTNT();
 
-	void update(World* w) override;
+	void update(World& w) override;
 	EntityType getEntityType() const override;
 
 	TO_ENTITY_STRING(EntityTNT)
@@ -231,7 +231,7 @@ private:
 public:
 	EntityZombie();
 
-	void update(World* w) override;
+	void update(World& w) override;
 	EntityType getEntityType() const override;
 
 	TO_ENTITY_STRING(EntityZombie)

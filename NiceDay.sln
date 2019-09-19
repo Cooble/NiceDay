@@ -1,8 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.28307.489
-MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NiceDay", "NiceDay\NiceDay.vcxproj", "{A2D42374-0EB4-A20F-17CC-2DE6832A0971}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "glad", "NiceDay\vendor\glad\glad.vcxproj", "{DD62977C-C999-980D-7286-7E105E9C140F}"
@@ -11,15 +9,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "glfw", "NiceDay\vendor\glfw
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "imgui", "NiceDay\vendor\imgui\imgui.vcxproj", "{0098A80F-6CAC-D0C0-352E-7420A101CDF1}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{B5742D7A-6AD4-43D2-85F1-7084E52A5DE3}"
-	ProjectSection(SolutionItems) = preProject
-		Performance1.psess = Performance1.psess
-	EndProjectSection
-EndProject
 Global
-	GlobalSection(Performance) = preSolution
-		HasPerformanceSessions = true
-	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
 		Dist|x64 = Dist|x64
@@ -53,8 +43,5 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
-	EndGlobalSection
-	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {4A218C7C-3819-47E7-AAC2-E2EB294142DD}
 	EndGlobalSection
 EndGlobal

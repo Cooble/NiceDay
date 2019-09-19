@@ -61,9 +61,9 @@ int Block::getCornerOffset(int x, int y, const BlockStruct& b) const
 	return m_corner_translate_array[(int)b.block_corner].i;
 }
 
-bool Block::isInGroup(World* w, int x, int y, int group) const
+bool Block::isInGroup(BlockAccess& w, int x, int y, int group) const
 {
-	const BlockStruct* b = w->getLoadedBlockPointer(x, y);
+	auto b = w.getBlockM(x, y);
 	if (b)
 	{
 		auto& bl = BlockRegistry::get().getBlock(b->block_id);
@@ -78,7 +78,7 @@ bool Block::isInGroup(int blockID, int group) const
 	return bl.isInConnectGroup(group) || bl.getID() == m_id;
 }
 
-bool Block::onNeighbourBlockChange(World* world, int x, int y) const
+bool Block::onNeighbourBlockChange(BlockAccess& world, int x, int y) const
 {
 	int mask = 0;
 	mask |= ((!isInGroup(world, x, y + 1, m_block_connect_group)) & 1) << 0;
@@ -87,28 +87,28 @@ bool Block::onNeighbourBlockChange(World* world, int x, int y) const
 	mask |= ((!isInGroup(world, x + 1, y, m_block_connect_group)) & 1) << 3;
 
 
-	BlockStruct& block = world->editBlock(x, y);
+	BlockStruct& block = *world.getBlockM(x, y);
 	int lastCorner = block.block_corner;
 	block.block_corner = mask;
 	return lastCorner != block.block_corner; //we have a change (or not)
 }
 
-void Block::onBlockPlaced(World* w, WorldEntity* e, int x, int y, BlockStruct& b) const
+void Block::onBlockPlaced(World& w, WorldEntity* e, int x, int y, BlockStruct& b) const
 {
 	if (hasTileEntity()) {
 		auto entityBuff = malloc(EntityRegistry::get().getBucket(m_tile_entity).byte_size);
 		EntityRegistry::get().createInstance(m_tile_entity, entityBuff);
 
 		((WorldEntity*)entityBuff)->getPosition() = Phys::Vect(x, y);
-		w->spawnEntity((WorldEntity*)entityBuff);
+		w.spawnEntity((WorldEntity*)entityBuff);
 	}
 }
 
-void Block::onBlockDestroyed(World* w, WorldEntity* e, int x, int y, BlockStruct& b) const
+void Block::onBlockDestroyed(World& w, WorldEntity* e, int x, int y, BlockStruct& b) const
 {
 	if (hasTileEntity()) {
 		
-		WorldEntity* ee = w->getLoadedTileEntity(x, y);
+		WorldEntity* ee = w.getLoadedTileEntity(x, y);
 		if (ee)
 			ee->markDead();
 	}
@@ -139,12 +139,12 @@ int MultiBlock::getTextureOffset(int x, int y, const BlockStruct& b) const
 	return m_texture_pos + half_int(d.x, d.y);
 }
 
-bool MultiBlock::onNeighbourBlockChange(World* world, int x, int y) const
+bool MultiBlock::onNeighbourBlockChange(BlockAccess& world, int x, int y) const
 {
 	return false;
 }
 
-void MultiBlock::onBlockPlaced(World* w, WorldEntity* e, int xx, int yy, BlockStruct& b) const
+void MultiBlock::onBlockPlaced(World& w, WorldEntity* e, int xx, int yy, BlockStruct& b) const
 {
 	quarter_int meta = b.block_metadata;
 	if (!(meta.x == 0 && meta.y == 0)) //we dont want to call onblockplaced on segments placed by this method
@@ -159,13 +159,13 @@ void MultiBlock::onBlockPlaced(World* w, WorldEntity* e, int xx, int yy, BlockSt
 			segment.block_id = getID();
 			quarter_int offset(x, y, meta.z, meta.w);
 			segment.block_metadata = offset;
-			w->setBlock(xx + x, yy + y, segment);
+			w.setBlockWithNotify(xx + x, yy + y, segment);
 		}
 	}
 	Block::onBlockPlaced(w, e, xx, yy, b);
 }
 
-void MultiBlock::onBlockDestroyed(World* w, WorldEntity* e, int xx, int yy, BlockStruct& b) const
+void MultiBlock::onBlockDestroyed(World& w, WorldEntity* e, int xx, int yy, BlockStruct& b) const
 {
 	quarter_int offset = b.block_metadata;
 	quarter_int clearValue(127, 127, 0, 0);
@@ -178,18 +178,18 @@ void MultiBlock::onBlockDestroyed(World* w, WorldEntity* e, int xx, int yy, Bloc
 		for (int y = 0; y < m_height; ++y)
 		{
 			//make this block skip this function when destroyed
-			w->editBlock(xx + x - offset.x, yy + y - offset.y).block_metadata = clearValue;
-			w->setBlock(xx + x - offset.x, yy + y - offset.y, 0);
+			w.getBlockM(xx + x - offset.x, yy + y - offset.y)->block_metadata = clearValue;
+			w.setBlockWithNotify(xx + x - offset.x, yy + y - offset.y, 0);
 		}
 	}
-	Block::onBlockDestroyed(w, e, xx - offset.x, yy - offset.y, w->editBlock(xx - offset.x, yy - offset.y));
+	Block::onBlockDestroyed(w, e, xx - offset.x, yy - offset.y, *w.getBlockM(xx - offset.x, yy - offset.y));
 }
 
-bool MultiBlock::canBePlaced(World* w, int xx, int yy) const
+bool MultiBlock::canBePlaced(World& w, int xx, int yy) const
 {
 	for (int x = 0; x < m_width; ++x)
 		for (int y = 0; y < m_height; ++y)
-			if (!w->getBlock(xx + x, yy + y).isAir())
+			if (!w.getBlock(xx + x, yy + y)->isAir())
 				return false;
 	return true;
 }
@@ -227,19 +227,21 @@ int Wall::getCornerOffset(int wx, int wy, const BlockStruct& b) const
 	return half_int((((wx & 1) + (wy & 1)) & 1) * 3, 0).plus(i).i;
 }
 
-static bool isWallFree(World* w, int x, int y)
+static bool isWallFree(BlockAccess& w, int x, int y)
 {
-	auto b = w->getLoadedBlockPointer(x, y);
+	auto b = w.getBlockM(x, y);
 	return b ? b->isWallFree() : false; //if we dont know we will assume is occupied
 }
 
-void Wall::onNeighbourWallChange(World* w, int x, int y) const
+void Wall::onNeighbourWallChange(BlockAccess& w, int x, int y) const
 {
-	BlockStruct& block = w->editBlock(x, y);
+	BlockStruct& block = *w.getBlockM(x, y);
+	auto p = w.getBlockM(x, y);
+	ASSERT(p, "fuk");
 	//left
 	if (isWallFree(w, x - 1, y))
 	{
-		BlockStruct& b = w->editBlock(x - 1, y);
+		auto& b = *w.getBlockM(x - 1, y);
 		b.wall_id[1] = m_id;
 		b.wall_id[3] = m_id;
 		b.wall_corner[1] = BLOCK_STATE_LINE_LEFT;
@@ -248,7 +250,7 @@ void Wall::onNeighbourWallChange(World* w, int x, int y) const
 	//right
 	if (isWallFree(w, x + 1, y))
 	{
-		BlockStruct& b = w->editBlock(x + 1, y);
+		auto& b = *w.getBlockM(x + 1, y);
 		b.wall_id[0] = m_id;
 		b.wall_id[2] = m_id;
 		b.wall_corner[0] = BLOCK_STATE_LINE_RIGHT;
@@ -257,7 +259,7 @@ void Wall::onNeighbourWallChange(World* w, int x, int y) const
 	//up
 	if (isWallFree(w, x, y + 1))
 	{
-		BlockStruct& b = w->editBlock(x, y + 1);
+		auto& b = *w.getBlockM(x, y + 1);
 		b.wall_id[0] = m_id;
 		b.wall_id[1] = m_id;
 		b.wall_corner[0] = BLOCK_STATE_LINE_UP;
@@ -266,21 +268,19 @@ void Wall::onNeighbourWallChange(World* w, int x, int y) const
 	//down
 	if (isWallFree(w, x, y - 1))
 	{
-		BlockStruct& b = w->editBlock(x, y - 1);
+		auto& b = *w.getBlockM(x, y - 1);
 		b.wall_id[2] = m_id;
 		b.wall_id[3] = m_id;
 		b.wall_corner[2] = BLOCK_STATE_LINE_DOWN;
 		b.wall_corner[3] = BLOCK_STATE_LINE_DOWN;
 	}
-	const BlockStruct* b = nullptr;
-
 	//corner left up
 
 	if (isWallFree(w, x - 1, y + 1)
 		&& isWallFree(w, x - 1, y)
 		&& isWallFree(w, x, y + 1))
 	{
-		BlockStruct& b = w->editBlock(x - 1, y + 1);
+		auto& b = *w.getBlockM(x - 1, y + 1);
 		b.wall_id[1] = m_id;
 		b.wall_corner[1] = BLOCK_STATE_CORNER_UP_LEFT;
 	}
@@ -291,7 +291,7 @@ void Wall::onNeighbourWallChange(World* w, int x, int y) const
 		&& isWallFree(w, x - 1, y)
 		&& isWallFree(w, x, y - 1))
 	{
-		BlockStruct& b = w->editBlock(x - 1, y - 1);
+		auto& b = *w.getBlockM(x - 1, y - 1);
 		b.wall_id[3] = m_id;
 		b.wall_corner[3] = BLOCK_STATE_CORNER_DOWN_LEFT;
 	}
@@ -302,7 +302,7 @@ void Wall::onNeighbourWallChange(World* w, int x, int y) const
 		&& isWallFree(w, x + 1, y)
 		&& isWallFree(w, x, y + 1))
 	{
-		BlockStruct& b = w->editBlock(x + 1, y + 1);
+		auto& b = *w.getBlockM(x + 1, y + 1);
 		b.wall_id[0] = m_id;
 		b.wall_corner[0] = BLOCK_STATE_CORNER_UP_RIGHT;
 	}
@@ -313,7 +313,7 @@ void Wall::onNeighbourWallChange(World* w, int x, int y) const
 		&& isWallFree(w, x + 1, y)
 		&& isWallFree(w, x, y - 1))
 	{
-		BlockStruct& b = w->editBlock(x + 1, y - 1);
+		auto& b = *w.getBlockM(x + 1, y - 1);
 		b.wall_id[2] = m_id;
 		b.wall_corner[2] = BLOCK_STATE_CORNER_DOWN_RIGHT;
 	}

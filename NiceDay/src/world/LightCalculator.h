@@ -68,16 +68,18 @@ public:
 	static ChunkQuadro createQuadroCross(int wx, int wy);
 
 	// adds work for light thread and returns
+	// don't forget to assign lightjob for all neighbour chunks as well with LightCalculator::computeQuadroSquare()
 	// recalculates all cached light within specific radius (=max light radius)
-	// it is mandatory to load all needed resources beforehand! and lock them using fence
 	void assignComputeChange(int x, int y);
 
 	// adds work for light thread and returns
+	// don't forget to assign lightjob to chunk!
 	// clears all light data and recalculates the chunk lighting (without affecting or being affected by others)
 	void assignComputeChunk(int cx,int cy);
 
 	// adds work for light thread and returns
 	// floods light from all external boundary blocks (block that are around the chunk but not within)
+	// don't forget to assign lightjob for all neighbour chunks as well with LightCalculator::createQuadroCross()
 	void assignComputeChunkBorders(int cx,int cy);
 
 private:

@@ -219,7 +219,7 @@ half& LightCalculator::lightValueSky(int x, int y)
 template <int DefaultVal>
 half LightCalculator::getBlockOpacity(int x, int y)
 {
-	auto b = m_world->getLoadedBlockPointer(x, y);
+	auto b = m_world->getBlockM(x, y);
 	if (b)
 		return BlockRegistry::get().getBlock(b->block_id).getOpacity();
 	return DefaultVal; //outside map -> no light
@@ -231,7 +231,7 @@ uint8_t& LightCalculator::blockLightLevel(int x, int y)
 	static uint8_t defaul = DefaultValue;
 	//todo this lasagna is causing problems because it is seen as light src on boundary ...we know
 	//just to prevent problems with not loaded chunks/return so high light that no other updates will be neccessary
-	auto b = m_world->getLoadedChunkPointerMutable(x >> WORLD_CHUNK_BIT_SIZE, y >> WORLD_CHUNK_BIT_SIZE);
+	auto b = m_world->getChunkM(x >> WORLD_CHUNK_BIT_SIZE, y >> WORLD_CHUNK_BIT_SIZE);
 	if (b)
 		return b->lightLevel(x & (WORLD_CHUNK_SIZE - 1), y & (WORLD_CHUNK_SIZE - 1));
 	return defaul; //outside map -> no light
@@ -387,7 +387,7 @@ void LightCalculator::runFloodSky(int minX, int minY, int width, int height,
 
 void LightCalculator::computeChunkLT(int cx, int cy) //will be called on chunkgeneration
 {
-	auto& c = m_world->getChunk(cx, cy);
+	auto& c = *m_world->getChunkM(cx, cy);
 	auto current_list = &m_light_list0;
 	auto new_list = &m_light_list1;
 
@@ -406,7 +406,7 @@ void LightCalculator::computeChunkLT(int cx, int cy) //will be called on chunkge
 		{
 			if (backLight == 0)
 			{
-				BlockStruct& b = c.block(x, y);
+				auto& b = c.block(x, y);
 				uint8_t val = BlockRegistry::get().getBlock(b.block_id).getLightSrcVal();
 				c.lightLevel(x, y) = val;
 				if (val == 0)
@@ -512,7 +512,7 @@ void LightCalculator::computeChunkLT(int cx, int cy) //will be called on chunkge
 
 void LightCalculator::computeChunkBordersLT(int cx, int cy)
 {
-	auto& c = m_world->getChunk(cx, cy);
+	auto& c = *m_world->getChunkM(cx, cy);
 
 	auto current_list = &m_light_list0_main_thread;
 	auto new_list = &m_light_list1_main_thread;
@@ -523,10 +523,10 @@ void LightCalculator::computeChunkBordersLT(int cx, int cy)
 	int minX = cx * WORLD_CHUNK_SIZE;
 	int minY = cy * WORLD_CHUNK_SIZE;
 
-	Chunk* up = m_world->getLoadedChunkPointerMutable(cx, cy + 1);
-	Chunk* down = m_world->getLoadedChunkPointerMutable(cx, cy - 1);
-	Chunk* left = m_world->getLoadedChunkPointerMutable(cx - 1, cy);
-	Chunk* right = m_world->getLoadedChunkPointerMutable(cx + 1, cy);
+	Chunk* up = m_world->getChunkM(cx, cy + 1);
+	Chunk* down = m_world->getChunkM(cx, cy - 1);
+	Chunk* left = m_world->getChunkM(cx - 1, cy);
+	Chunk* right = m_world->getChunkM(cx + 1, cy);
 	//add all external boundary light blocks
 	if (up)
 		for (int i = 0; i < WORLD_CHUNK_SIZE; ++i)
@@ -694,7 +694,7 @@ void LightCalculator::computeChangeLT(int minX, int minY, int maxX, int maxY, in
 
 			int cx = worldX >> WORLD_CHUNK_BIT_SIZE;
 			int cy = worldY >> WORLD_CHUNK_BIT_SIZE;
-			Chunk* c = m_world->getLoadedChunkPointerMutable(cx, cy);
+			Chunk* c = m_world->getChunkM(cx, cy);
 			if (c == nullptr)
 				continue;
 
@@ -844,7 +844,7 @@ void LightCalculator::computeLT(Snapshot& sn)
 		{
 			for (int cy = 0; cy < sn.chunkHeight; ++cy)
 			{
-				auto c = m_world->getLoadedChunkPointer(cx + sn.offsetX, cy + sn.offsetY);
+				auto c = m_world->getChunk(cx + sn.offsetX, cy + sn.offsetY);
 				if (c == nullptr)
 					continue;
 				auto& biome = BiomeRegistry::get().getBiome(c->getBiome());
@@ -901,28 +901,32 @@ void LightCalculator::computeLT(Snapshot& sn)
 				// keep track of all resources
 				for (auto s : chunkacquiredResources.src)
 				{
-					auto chunk = m_world->getLoadedChunkPointerMutable(s.first, s.second);
+					auto chunk = m_world->getChunkM(s.first, s.second);
 					if (chunk)
-						m_world->getChunk(s.first, s.second).lightUnlock();
+						m_world->getChunkM(s.first, s.second)->getLightJob().markDone();
 				}
 			}
 			break;
 		case Assignment::CHUNK:
 			computeChunkLT(pop.x, pop.y);
-			m_world->getChunk(pop.x, pop.y).lightUnlock();
+			{
+				auto ccc = m_world->getChunkM(pop.x, pop.y);
+				ccc->getLightJob().markDone();
+			}
 			break;
 		case Assignment::BORDERS:
 			{
 				auto chunkacquiredResources = createQuadroCross(pop.x, pop.y);
 
 				computeChunkBordersLT(pop.x, pop.y);
+				m_world->getChunkM(pop.x, pop.y)->getLightJob().markDone();
 
 				// keep track of all resources
 				for (auto s : chunkacquiredResources.src)
 				{
-					auto chunk = m_world->getLoadedChunkPointerMutable(s.first, s.second);
+					auto chunk = m_world->getChunkM(s.first, s.second);
 					if (chunk)
-						m_world->getChunk(s.first, s.second).lightUnlock();
+						m_world->getChunkM(s.first, s.second)->getLightJob().markDone();
 				}
 			}
 			break;
@@ -966,7 +970,7 @@ void LightCalculator::updateMapLT(Snapshot& sn)
 	{
 		for (int cy = 0; cy < sn.chunkHeight; ++cy)
 		{
-			auto c = m_world->getLoadedChunkPointer(cx + sn.offsetX, cy + sn.offsetY);
+			auto c = m_world->getChunk(cx + sn.offsetX, cy + sn.offsetY);
 			if (c)
 			{
 				for (int x = 0; x < WORLD_CHUNK_SIZE; ++x)
@@ -997,7 +1001,7 @@ void LightCalculator::darkenLT(Snapshot& sn) //deprecated
 	for (int cx = 0; cx < sn.chunkWidth; ++cx)
 		for (int cy = 0; cy < sn.chunkHeight; ++cy)
 		{
-			auto c = m_world->getLoadedChunkPointerMutable(cx + sn.offsetX, cy + sn.offsetY);
+			auto c = m_world->getChunkM(cx + sn.offsetX, cy + sn.offsetY);
 			if (c)
 				for (int y = 0; y < WORLD_CHUNK_SIZE; ++y)
 					for (int x = 0; x < WORLD_CHUNK_SIZE; ++x)

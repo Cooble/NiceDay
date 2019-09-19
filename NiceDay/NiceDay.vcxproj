@@ -194,12 +194,14 @@
     <ClInclude Include="src\platform\OpenGL\GLVertexArray.h" />
     <ClInclude Include="src\world\ChunkLoader.h" />
     <ClInclude Include="src\world\ChunkMesh.h" />
+    <ClInclude Include="src\world\ChunkPack.h" />
     <ClInclude Include="src\world\FileChunkProvider.h" />
     <ClInclude Include="src\world\IChunkProvider.h" />
     <ClInclude Include="src\world\gen\OpenSimplexNoise.hpp" />
     <ClInclude Include="src\world\ITickable.h" />
     <ClInclude Include="src\world\LightCalculator.h" />
     <ClInclude Include="src\world\ThreadedChunkProvider.h" />
+    <ClInclude Include="src\world\ThreadedWorldGen.h" />
     <ClInclude Include="src\world\World.h" />
     <ClInclude Include="src\world\WorldIO.h" />
     <ClInclude Include="src\world\WorldRenderManager.h" />
@@ -650,9 +652,11 @@
     <ClCompile Include="src\platform\OpenGL\GLVertexArray.cpp" />
     <ClCompile Include="src\world\ChunkLoader.cpp" />
     <ClCompile Include="src\world\ChunkMesh.cpp" />
+    <ClCompile Include="src\world\ChunkPack.cpp" />
     <ClCompile Include="src\world\FileChunkProvider.cpp" />
     <ClCompile Include="src\world\LightCalculator.cpp" />
     <ClCompile Include="src\world\ThreadedChunkProvider.cpp" />
+    <ClCompile Include="src\world\ThreadedWorldGen.cpp" />
     <ClCompile Include="src\world\World.cpp" />
     <ClCompile Include="src\world\WorldIO.cpp" />
     <ClCompile Include="src\world\WorldRenderManager.cpp" />

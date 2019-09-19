@@ -24,16 +24,16 @@ TileEntity::TileEntity()
 }
 
 
-void TileEntity::update(World* w)
+void TileEntity::update(World& w)
 {
-	auto newTime = w->getWorldTime();
+	auto newTime = w.getWorldTime();
 	m_age += (newTime - m_last_update_ticks);
 	m_last_update_ticks = newTime;
 }
 
-void TileEntity::onSpawned(World* w)
+void TileEntity::onSpawned(World& w)
 {
-	m_last_update_ticks = w->getWorldTime();
+	m_last_update_ticks = w.getWorldTime();
 	m_age = 0;
 }
 

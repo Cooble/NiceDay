@@ -247,7 +247,7 @@ inline float narrowFunc(float f)
 	return std::clamp((f - 0.5f) * 2 + 0.5f, 0.0f, 1.0f);
 }
 
-BiomeDistances calculateBiomeDistances(Camera* cam, World* w)
+BiomeDistances calculateBiomeDistances(Camera* cam, World& w)
 {
 	int cx = (int)cam->getPosition().x >> WORLD_CHUNK_BIT_SIZE;
 	int cy = (int)cam->getPosition().y >> WORLD_CHUNK_BIT_SIZE;
@@ -256,7 +256,7 @@ BiomeDistances calculateBiomeDistances(Camera* cam, World* w)
 	{
 		for (int y = -1; y < 2; ++y)
 		{
-			const Chunk* c = w->getLoadedChunkPointer(cx + x, cy + y);
+			const Chunk* c = w.getChunk(cx + x, cy + y);
 			if (c == nullptr)
 				continue;
 			int biome = c->getBiome();
@@ -334,14 +334,14 @@ void WorldRenderManager::onUpdate()
 					|| targetY >= (m_world->getInfo().chunk_height))
 					continue;
 				half_int mid = {targetX, targetY};
-				int index = m_world->getChunkIndex(targetX, targetY);
+				int index = m_world->getChunkIndex(half_int(targetX, targetY));
 				if (index == -1)
 				{
 					ND_WARN("Cannot render unloaded chunk {},{}", mid.x, mid.y);
 					continue;
 				}
 
-				Chunk& cc = m_world->getChunk(targetX, targetY);
+				auto& cc = *m_world->getChunkM(targetX, targetY);
 				if (m_offset_map.find(mid) == m_offset_map.end())
 					toLoadList.insert(mid);
 				else if (cc.isDirty())
@@ -372,7 +372,7 @@ void WorldRenderManager::onUpdate()
 					c.getPos().x = loaded.x * WORLD_CHUNK_SIZE;
 					c.getPos().y = loaded.y * WORLD_CHUNK_SIZE;
 
-					c.updateMesh(*m_world, m_world->getChunk(loaded.x, loaded.y));
+					c.updateMesh(*m_world, *m_world->getChunk(loaded.x, loaded.y));
 
 
 					m_offset_map[loaded] = i;
@@ -388,7 +388,7 @@ void WorldRenderManager::onUpdate()
 		for (auto iterator = m_offset_map.begin(); iterator != m_offset_map.end(); ++iterator)
 		{
 			half_int id = iterator->first;
-			Chunk& c = m_world->getChunk(id.x, id.y);
+			auto& c = *m_world->getChunkM(id.x, id.y);
 			if (c.isDirty())
 			{
 				m_chunks[iterator->second]->updateMesh(*m_world, c);
@@ -435,7 +435,7 @@ void WorldRenderManager::renderBiomeBackgroundToFBO()
 	vec2 upperScreen = m_camera->getPosition() + ((screenDim / (float)BLOCK_PIXEL_SIZE));
 	screenDim = upperScreen - lowerScreen;
 
-	BiomeDistances distances = calculateBiomeDistances(m_camera, m_world);
+	BiomeDistances distances = calculateBiomeDistances(m_camera, *m_world);
 	Stats::biome_distances = distances;
 
 	m_bg_fbo->bind();

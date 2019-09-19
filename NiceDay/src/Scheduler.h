@@ -18,7 +18,8 @@ private:
 	std::vector<ScheduleTask> m_tasks;
 public:
 	//will be called each eachTicks ticks until kill() is called
-	int runTaskTimer(Task t, int eachTicks = 1);
+	//todo is it safe to run another timer from Task?
+	int runTaskTimer(Task&& t, int eachTicks = 1);
 	void update();
 	void kill(int task_id);
 };

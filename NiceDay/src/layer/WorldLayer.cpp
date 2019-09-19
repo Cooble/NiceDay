@@ -122,7 +122,7 @@ WorldLayer::WorldLayer()
 	m_world = new World(std::string(info.name) + ".world", info);
 
 
-	bool genW = false;
+	bool genW = true;
 
 
 	if (genW)
@@ -187,8 +187,8 @@ void WorldLayer::onAttach()
 		playerID = m_world->getWorldNBT().get<EntityID>("playerID");
 		ChunkID chunk = m_world->getWorldNBT().get<ChunkID>("player_chunkID");
 		m_world->loadChunk( //load chunk where player is
-			half_int::getX(chunk),
-			half_int::getY(chunk));
+			half_int::X(chunk),
+			half_int::Y(chunk));
 		/*if(m_world->getLoadedEntity(playerID)==nullptr)
 		{
 			ND_ERROR("corrupted world file:(");
@@ -257,9 +257,9 @@ void WorldLayer::onUpdate()
 
 	if (m_world->isBlockValid(CURSOR_X, CURSOR_Y))
 	{
-		CURRENT_BLOCK = &m_world->getBlock(CURSOR_X, CURSOR_Y);
+		CURRENT_BLOCK = m_world->getBlockOrAir(CURSOR_X, CURSOR_Y);
 #ifdef ND_DEBUG
-		CURRENT_BLOCK_ID = BlockRegistry::get().getBlock(m_world->getBlock(CURSOR_X, CURSOR_Y).block_id).toString();
+		CURRENT_BLOCK_ID = BlockRegistry::get().getBlock(CURRENT_BLOCK->block_id).toString();
 #endif
 	}
 
@@ -349,17 +349,18 @@ void WorldLayer::onUpdate()
 			}
 			else if (BLOCK_OR_WALL_SELECTED)
 			{
-				const BlockStruct& str = m_world->getBlock(CURSOR_X, CURSOR_Y);
+				auto& str = *m_world->getBlockOrAir(CURSOR_X, CURSOR_Y);
 				if (str.block_id != BLOCK_PALLETE_SELECTED && BlockRegistry::get()
 				                                              .getBlock(BLOCK_PALLETE_SELECTED).canBePlaced(
-					                                              m_world, CURSOR_X, CURSOR_Y))
-					m_world->setBlock(CURSOR_X, CURSOR_Y, BLOCK_PALLETE_SELECTED);
+					                                              *m_world, CURSOR_X, CURSOR_Y))
+					m_world->setBlockWithNotify(CURSOR_X, CURSOR_Y, BLOCK_PALLETE_SELECTED);
 			}
+
 			else
 			{
-				if (m_world->getBlock(CURSOR_X, CURSOR_Y).isWallOccupied())
+				if (m_world->getBlock(CURSOR_X, CURSOR_Y)->isWallOccupied())
 				{
-					if (m_world->getBlock(CURSOR_X, CURSOR_Y).wallID() != BLOCK_PALLETE_SELECTED)
+					if (m_world->getBlock(CURSOR_X, CURSOR_Y)->wallID() != BLOCK_PALLETE_SELECTED)
 						m_world->setWall(CURSOR_X, CURSOR_Y, BLOCK_PALLETE_SELECTED);
 				}
 				else
@@ -445,7 +446,7 @@ void WorldLayer::onUpdate()
 
 	return;
 	//rain
-	auto chunkP = m_world->getLoadedChunkPointer((int)getPlayer().getPosition().x >> WORLD_CHUNK_BIT_SIZE,
+	auto chunkP = m_world->getChunk((int)getPlayer().getPosition().x >> WORLD_CHUNK_BIT_SIZE,
 	                                             (int)getPlayer().getPosition().y >> WORLD_CHUNK_BIT_SIZE);
 	if (chunkP)
 	{
@@ -627,7 +628,7 @@ void WorldLayer::onImGuiRenderWorld()
 	ImGui::Text("Dynamic free segments: %d", m_world->getNBTSaver().getFreeSegmentCount());
 #ifdef ND_DEBUG
 
-	if (auto current = m_world->getLoadedBlockPointer(CURSOR_X, CURSOR_Y))
+	if (auto current = m_world->getBlock(CURSOR_X, CURSOR_Y))
 	{
 		CURRENT_BLOCK = current;
 		quarter_int metaSections = CURRENT_BLOCK->block_metadata;
@@ -758,19 +759,19 @@ void WorldLayer::onEvent(Event& e)
 			{
 				if (App::get().getInput().isKeyPressed(GLFW_KEY_LEFT_CONTROL))
 				{
-					auto& stru = m_world->editBlock(CURSOR_X, CURSOR_Y);
+					auto& stru = *m_world->getBlockM(CURSOR_X, CURSOR_Y);
 					BlockRegistry::get().getBlock(stru.block_id).onBlockClicked(
-						m_world, &getPlayer(), CURSOR_X, CURSOR_Y, stru);
+						*m_world, &getPlayer(), CURSOR_X, CURSOR_Y, stru);
 				}
 				else
 				{
 					if (BLOCK_OR_WALL_SELECTED)
 					{
-						BLOCK_PALLETE_SELECTED = m_world->getBlock(CURSOR_X, CURSOR_Y).block_id;
+						BLOCK_PALLETE_SELECTED = m_world->getBlockM(CURSOR_X, CURSOR_Y)->block_id;
 					}
 					else
 					{
-						BLOCK_PALLETE_SELECTED = m_world->getBlock(CURSOR_X, CURSOR_Y).wallID();
+						BLOCK_PALLETE_SELECTED = m_world->getBlockM(CURSOR_X, CURSOR_Y)->wallID();
 					}
 				}
 				event->handled = true;

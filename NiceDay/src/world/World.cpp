@@ -10,36 +10,48 @@
 #include "entity/entities.h"
 #include "FileChunkProvider.h"
 
+#define WORLD_CHECK_VALID_POS(wx,wy)\
+	if ((wx) < 0 || (wy) < 0||(wx) >= getInfo().chunk_width * WORLD_CHUNK_SIZE || (wy) >= getInfo().chunk_height * WORLD_CHUNK_SIZE){\
+		ND_WARN("Set block with invalid position");\
+		return;\
+	}
 
-Chunk::Chunk()
-{
-	setLoaded(false);
-	lock(false);
-}
+//=================WORLD======================================
 
 void World::init()
 {
 	m_chunks.reserve(CHUNK_BUFFER_LENGTH);
+	m_chunk_headers.resize(CHUNK_BUFFER_LENGTH);
 	for (int i = 0; i < CHUNK_BUFFER_LENGTH; i++)
 	{
 		m_chunks.emplace_back();
 		//m_chunks.at(i).m_loaded = false; redundant
 	}
+	memset(m_chunks.data(), 0, m_chunks.size() * sizeof(Chunk));
 	ND_INFO("Made world instance");
 }
 
 World::World(std::string file_path, const WorldInfo& info)
 	: m_light_calc(this),
+	  m_threaded_gen(this),
+	  m_job_pool(200),
 	  m_info(info),
 	  m_file_path(file_path),
-	  m_nbt_saver(file_path + ".entity")
+	  m_nbt_saver(file_path + ".entity"),
+	  m_block_access(this)
 {
-	m_chunk_provider = new FileChunkProvider(file_path);
-	m_is_chunk_gen_map.resize(info.chunk_width*info.chunk_height);
+	auto provider = new FileChunkProvider(file_path);
+	m_is_chunk_gen_map.resize(info.chunk_width * info.chunk_height);
+	m_threaded_gen.start();
+	provider->start();
+	m_chunk_provider = provider;
 	init();
 }
 
-World::~World() = default;
+World::~World()
+{
+	delete m_chunk_provider;
+}
 
 static bool taskActive = false;
 static std::queue<std::set<int>> loadQueue;
@@ -48,12 +60,12 @@ static std::queue<std::set<int>> loadQueue;
 void World::onUpdate()
 {
 	tick();
-	if (!taskActive && !loadQueue.empty())
+	/*if (!taskActive && !loadQueue.empty())
 	{
 		taskActive = true;
 		genChunks(loadQueue.front());
 		loadQueue.pop();
-	}
+	}*/
 }
 
 static int light_tick_delay = 0;
@@ -61,9 +73,10 @@ constexpr int MAX_LIGHT_TICK_DELAY = 60;
 
 void World::tick()
 {
-	static float timeAdvance=0;
+	static float timeAdvance = 0;
 	timeAdvance += m_time_speed;
-	while (timeAdvance >= 1) {
+	while (timeAdvance >= 1)
+	{
 		m_info.time++;
 		timeAdvance--;
 	}
@@ -78,7 +91,7 @@ void World::tick()
 		WorldEntity* entity = m_entity_manager.entity(id);
 		if (entity)
 		{
-			entity->update(this);
+			entity->update(*this);
 			if (entity->isMarkedDead())
 				killEntity(entity->getID());
 		}
@@ -92,7 +105,7 @@ void World::tick()
 		WorldEntity* entity = m_entity_manager.entity(pair.second);
 		if (entity)
 		{
-			entity->update(this);
+			entity->update(*this);
 			if (entity->isMarkedDead())
 				killEntity(entity->getID());
 		}
@@ -120,7 +133,7 @@ static float smootherstep(float x)
 glm::vec4 World::getSkyLight()
 {
 	auto hour = getWorldTime().hour();
-	
+
 	//hour = 12;
 	float f = 0;
 	if (hour >= startRiseHour && hour < endRiseHour)
@@ -141,164 +154,299 @@ glm::vec4 World::getSkyLight()
 	return glm::vec4(0, 0, 0, f);
 }
 
-bool World::isChunkGenerated(int x, int y)
+//====================CHUNKS=========================
+
+bool World::isChunkGenerated(int chunkId)
 {
-	if (!isChunkValid(x, y))
-		return false;
-	if (isChunkLoaded(x, y))
-		return getChunk(x, y).isGenerated();
-
-	//todo dont load whole just just to see if it has been generated
-	auto stream = WorldIO::Session(m_file_path, true);
-
-	int chunkIndex = getNextFreeChunkIndex(0);
-
-	Chunk& c = m_chunks[chunkIndex];
-	int saveOffset = getChunkSaveOffset(x, y);
-	stream.loadChunk(&c, saveOffset);
-	bool isGen = c.isGenerated();
-	c.setLoaded(false);
-	stream.close();
-	return isGen;
+	return m_is_chunk_gen_map[getChunkSaveOffset(chunkId)];
 }
 
-Chunk& World::getChunk(int cx, int cy)
+const Chunk* World::getChunk(int cx, int cy) const
 {
-	int index = getChunkIndex(cx, cy);
-	ASSERT(index != -1, "Invalid operation: retrieving chunk thats not loaded! {}, {}", cx, cy);
-	if (index == -1)
-		for (auto& d : m_local_offset_map)
-		{
-			ND_TRACE("[{},{},\t- {}]", half_int::getX(d.first), half_int::getY(d.first));
-		}
-
-	return m_chunks[index];
-}
-
-const Chunk* World::getLoadedChunkPointer(int cx, int cy) const
-{
-	int index = getChunkIndex(cx, cy);
+	int index = getChunkIndex(half_int(cx, cy));
 	if (index == -1)
 		return nullptr;
 	return &m_chunks[index];
 }
 
-Chunk* World::getLoadedChunkPointerMutable(int cx, int cy) //todo really rename it man its terrible
+Chunk* World::getChunkM(int cx, int cy)
 {
-	int index = getChunkIndex(cx, cy);
-	if (index == -1)
-		return nullptr;
-	return &m_chunks[index];
-}
-
-int World::getChunkIndex(int x, int y) const
-{
-	return getChunkIndex(half_int(x, y));
+	return const_cast<Chunk*>(getChunk(cx, cy));
 }
 
 int World::getChunkIndex(int id) const
 {
-	auto got = m_local_offset_map.find(id);
-	if (got != m_local_offset_map.end())
-		return got->second;
+	auto index = getChunkHeaderIndex(id);
+	if (index == -1)
+		return -1;
+	return m_chunk_headers[index].isAccessible() ? index : -1;
+}
+
+int World::getChunkHeaderIndex(int id) const
+{
+	auto t = m_local_offset_header_map.find(id);
+	if (t != m_local_offset_header_map.end())
+		return t->second;
 	return -1;
 }
 
-Chunk& World::loadChunk(int x, int y)
+void World::loadChunk(int x, int y)
 {
 	std::set<int> s;
 	s.insert(half_int(x, y));
 	loadChunksAndGen(s);
-	return getChunk(x, y);
-}
-
-
-void World::loadChunksAndGen(std::set<int>& toLoadChunks)
-{
-	//todo problem with chunk lock, loadchunks is called before task finishes -> some task unlocks it faster than second
-	auto stream = WorldIO::Session(m_file_path, true);
-	m_nbt_saver.beginSession();
-
-	std::set<int> toGenChunks;
-
-	int lastFreeChunk = 0;
-	for (int chunkId : toLoadChunks) //need load everything and lock it because genTask will be working on it
-	{
-		int x = half_int::getX(chunkId);
-		int y = half_int::getY(chunkId);
-
-		ASSERT(isChunkValid(x, y), "Invalid chunk pos");
-
-		if (isChunkLoaded(x, y))
-			continue;
-
-		int chunkIndex = getNextFreeChunkIndex(lastFreeChunk);
-		lastFreeChunk = chunkIndex + 1;
-
-		Chunk& c = m_chunks[chunkIndex];
-		int saveOffset = getChunkSaveOffset(x, y);
-		stream.loadChunk(&c, saveOffset);
-		m_local_offset_map[c.chunkID()] = chunkIndex;
-		c.setLoaded(true);
-		if (!c.isGenerated())
-		{
-			//fresh chunk -> need to generate it
-			toGenChunks.insert(half_int(x, y));
-			//ND_INFO("GEN {}, {}", x, y);
-		}
-		else
-		{
-			//need to load entities
-
-			if (m_nbt_saver.setReadChunkID(c.chunkID()))
-			{
-				uint32_t numberOfEntities = 0;
-				m_nbt_saver.read(numberOfEntities);
-				for (int i = 0; i < numberOfEntities; ++i)
-				{
-					NBT n;
-					n.deserialize(&m_nbt_saver);
-					auto entity = EntityRegistry::get().loadInstance(n);
-					loadEntity(entity);
-				}
-			}
-			//ND_INFO("LOAD {}, {}", x, y);
-		}
-	}
-	m_nbt_saver.endSession();
-
-	if (!toGenChunks.empty())
-		loadQueue.push(toGenChunks);
 }
 
 constexpr int maskUp = BIT(0);
 constexpr int maskDown = BIT(1);
 constexpr int maskLeft = BIT(2);
 constexpr int maskRight = BIT(3);
+constexpr int maskGen = BIT(4);
 
-void World::genChunks(std::set<int>& toGenChunks)
+
+void World::loadChunksAndGen(std::set<int>& toLoadChunks)
 {
+	// HOW TO LOAD AND GEN CHUNKS
+	// 1.  determine which chunks need generation and which only load
+	// 2.  add all those chunks and chunks around them to ToUpdateList
+	// 3.  check if those chunks are valid and if chunks around don't need to be generated
+	// 4.  lock all chunks to prevent unload,(mark chunks to BEING_LOADED if neccessary)
+	// 5.  assignJob to ChunkProvider
+	// 6.  when done, mark all chunks as loaded in header
+	// 7.  call genChunks 
+	// 8.  assign generation
+	// 9.  when done finally register chunk to local_offset_map
+	// 10. update all neccessary borders on main thread
+
 	defaultable_map<int, int, 0> toupdateChunks;
-	for (auto chunkId : toGenChunks)
+
+	//sort toLoad and toGen
+	for (int chunkId : toLoadChunks)
 	{
-		int x = half_int::getX(chunkId);
-		int y = half_int::getY(chunkId);
+		int x = half_int::X(chunkId);
+		int y = half_int::Y(chunkId);
 
-		toupdateChunks[half_int(x, y)] = maskRight | maskLeft | maskUp | maskDown;
-		//yes we need to update even this one
-		toupdateChunks[half_int(x + 1, y)] |= maskLeft;
-		toupdateChunks[half_int(x - 1, y)] |= maskRight;
-		toupdateChunks[half_int(x, y + 1)] |= maskDown;
-		toupdateChunks[half_int(x, y - 1)] |= maskUp;
+		ASSERT(isChunkValid(x, y), "Invalid chunk pos");
 
-		//add chunks that need to be loaded but wont be changed
-		toupdateChunks[half_int(x - 1, y - 1)] |= 0;
-		toupdateChunks[half_int(x - 1, y + 1)] |= 0;
-		toupdateChunks[half_int(x + 1, y - 1)] |= 0;
-		toupdateChunks[half_int(x + 1, y + 1)] |= 0;
+		if (!isChunkGenerated(chunkId))
+		{
+			//add chunks that need to be loaded and or refreshed
+
+			toupdateChunks[half_int(x, y)] = maskRight | maskLeft | maskUp | maskDown | maskGen;
+			//yes we need to update even this one
+			toupdateChunks[half_int(x + 1, y)] |= maskLeft;
+			toupdateChunks[half_int(x - 1, y)] |= maskRight;
+			toupdateChunks[half_int(x, y + 1)] |= maskDown;
+			toupdateChunks[half_int(x, y - 1)] |= maskUp;
+
+			//add chunks that need to be loaded but wont be changed
+			toupdateChunks[half_int(x - 1, y - 1)] |= 0;
+			toupdateChunks[half_int(x - 1, y + 1)] |= 0;
+			toupdateChunks[half_int(x + 1, y - 1)] |= 0;
+			toupdateChunks[half_int(x + 1, y + 1)] |= 0;
+		}
+		else //add all other chunks that need to be loaded
+			toupdateChunks[chunkId] |= 0;
 	}
 
-	//load section============================================================================
+	std::vector<half_int> toRemove;
+
+
+	//now we need to load everything and lock it
+	JobAssigmentP assigment = nullptr;
+	int lastFreeChunk = 0;
+
+	auto p = dynamic_cast<ThreadedChunkProvider*>(m_chunk_provider);
+	p->beginBuffering();
+	for (auto c : toupdateChunks)
+	{
+		auto chunkId = c.first;
+		if (!isChunkValid(chunkId))
+		{
+			toRemove.emplace_back(chunkId);
+			continue;
+		}
+		int x = half_int::X(chunkId);
+		int y = half_int::Y(chunkId);
+
+		auto state = getChunkState(chunkId);
+		//if chunks is already (being) loaded we just lock it to prevent unload 
+		if (state == BEING_LOADED || state == LOADED)
+		{
+			ASSERT(getChunkHeaderIndex(chunkId) != -1, "This should never happen");
+			m_chunk_headers[getChunkHeaderIndex(chunkId)].getJob()->assign();
+			continue;
+		}
+		if (state == BEING_UNLOADED) //cannot stop unloading proccess
+		{
+			toRemove.emplace_back(chunkId);
+			continue;
+		}
+		//check if chunk to be loaded has not been generated yet, so we don't want to generate it
+		if (!isChunkGenerated(chunkId) && (c.second & maskGen) == 0)
+		{
+			toRemove.emplace_back(chunkId);
+			continue;
+		}
+
+		int chunkOffset = getNextFreeChunkIndex(0);
+		if (chunkOffset == -1)
+		{
+			ND_WARN("Cannot load chunk, buffer is full. increment CHUNK_BUFFER_LENGTH");
+			toRemove.emplace_back(chunkId);
+			continue;
+		}
+		lastFreeChunk = chunkOffset + 1;
+
+		auto& header = m_chunk_headers[chunkOffset];
+		header = ChunkHeader(chunkId);
+		header.getJob()->assign();
+		header.setState(BEING_LOADED);
+		m_local_offset_header_map[chunkId] = chunkOffset;
+		ND_INFO("chunkload {} {}", chunkId, chunkOffset);
+
+		if (assigment == nullptr)
+			assigment = m_job_pool.allocate();
+		assigment->assign();
+		m_chunk_provider->assignChunkLoad(assigment, &m_chunks[chunkOffset], getChunkSaveOffset(x, y));
+	}
+	p->flushBuffering();
+	for (int id : toRemove) //remove invalid chunks from list
+		toupdateChunks.erase(toupdateChunks.find(id));
+
+	if (assigment)
+	{
+		//wait for everything to load, then call genChunks
+		//todo use std::move to move array
+		App::get().getScheduler().runTaskTimer(
+			[assigment, this, toupdateChunks]() mutable -> bool
+			{
+				if (!assigment->isDone())
+					return false;
+				m_job_pool.deallocate(assigment);
+
+				for (auto pair : toupdateChunks)
+				{
+					half_int id = pair.first;
+					int offset = m_local_offset_header_map[id];
+					auto& header = m_chunk_headers[offset];
+					if (header.getJob()->isDone())
+						ASSERT(false, "WTF");
+					setChunkState(id, LOADED); //all needed chunks are loaded
+				}
+
+				genChunks(toupdateChunks);
+				return true;
+			}, 1);
+	}
+}
+
+void World::genChunks(defaultable_map<int, int, 0>& toUpdateChunks)
+{
+	JobAssigmentP assigment = nullptr;
+	for (auto c : toUpdateChunks)
+	{
+		if (!(c.second & maskGen))
+			continue;
+		auto chunkId = c.first;
+
+		int offset = getChunkHeaderIndex(chunkId);
+		ASSERT(offset != -1, "This should not happen");
+
+		auto& chunk = m_chunks[offset];
+		chunk.m_x = half_int::X(chunkId);
+		chunk.m_y = half_int::Y(chunkId);
+
+		if (assigment == nullptr)
+			assigment = m_job_pool.allocate();
+		assigment->assign();
+		m_threaded_gen.assignChunkGen(assigment, &chunk);
+	}
+	App::get().getScheduler().runTaskTimer(
+		[assigment, this, toUpdateChunks]() mutable -> bool
+		{
+			if (!assigment->isDone())
+				return false;
+			this->m_job_pool.deallocate(assigment);
+
+
+			for (auto pair : toUpdateChunks)
+			{
+				half_int chunkID = pair.first;
+				int offset = getChunkHeaderIndex(chunkID);
+
+				//mark gen chunks as generated
+				if ((pair.second & maskGen))
+					m_is_chunk_gen_map.set(getChunkSaveOffset(chunkID), true);
+
+
+				//unlock all used chunks
+				//make free access for setBlock() etc..
+				auto& header = m_chunk_headers[offset];
+				header.getJob()->markDone();
+				header.setAccessible(true);
+
+				/*if (pair.second & maskGen)
+				{
+					m_chunks[offset].getLightJob().assign();
+					m_light_calc.assignComputeChunk(chunkID.x, chunkID.y);
+				}*/
+			}
+
+			//assign bound update
+			JobAssigmentP boundUpdateJob = nullptr;
+			std::vector<ChunkPack> resources;
+			for (auto pair : toUpdateChunks)
+			{
+				//update chunk bounds if necessary
+				half_int chunkID = pair.first;
+				if (pair.second == 0)
+					continue;
+
+				auto up = half_int(chunkID.x, chunkID.y + 1);
+				auto down = half_int(chunkID.x, chunkID.y - 1);
+				auto right = half_int(chunkID.x + 1, chunkID.y);
+				auto left = half_int(chunkID.x - 1, chunkID.y);
+
+				ChunkPack resource(chunkID, {
+					nullptr, getChunkM(down), nullptr,
+					getChunkM(left), getChunkM(chunkID), getChunkM(right),
+					nullptr, getChunkM(up), nullptr
+				});
+				resources.push_back(resource); //todo use emplace instead of push
+				if (boundUpdateJob == nullptr)
+					boundUpdateJob = m_job_pool.allocate();
+				boundUpdateJob->assign();
+				m_threaded_gen.assignChunkBoundUpdate(boundUpdateJob, resource, pair.second);
+			}
+
+			//lock all chunks which are boun updated and souroundings
+			for (auto& pack : resources)
+				for (auto chunkP : pack)
+					if (chunkP)
+						m_chunk_headers[getChunkIndex(chunkP->chunkID())].getJob()->assign();
+
+			if (boundUpdateJob)
+				App::get().getScheduler().runTaskTimer(
+					[boundUpdateJob, this, resources]() mutable -> bool
+					{
+						if (!boundUpdateJob->isDone())
+							return false;
+						this->m_job_pool.deallocate(boundUpdateJob);
+
+						//unlock all chunks which are boun updated and souroundings
+						for (auto& pack : resources)
+							for (auto chunkP : pack)
+								if (chunkP)
+									m_chunk_headers[getChunkIndex(chunkP->chunkID())]
+										.getJob()->markDone();
+
+						return true;
+					});
+			return true;
+		}, 1);
+
+	/*//load section============================================================================
 	//load all needed chunks and remove those which are not generated (but toGenChunks)
 	auto stream = WorldIO::Session(m_file_path, true);
 	int lastFreeChunk = 0;
@@ -410,94 +558,49 @@ void World::genChunks(std::set<int>& toGenChunks)
 			//ND_INFO("we are done with {} chunks", toupdateChunks.size());
 			taskActive = false;
 			return true;
-		}, 1);
+		}, 1);*/
 }
 
 void World::loadLightResources(int x, int y)
 {
+	//todo this needs rework
 	auto resources = LightCalculator::computeQuadroSquare(x, y);
 	for (int i = 0; i < 4; ++i)
 	{
 		auto p = resources[i];
 		if (isChunkValid(p.first, p.second))
 		{
-			if (!isChunkLoaded(p.first, p.second))
+			//todo fix light
+			/*if (!isChunkFullyLoaded(half_int(p.first, p.second)))
 			{
 				loadChunk(p.first, p.second);
 			}
 			//if(!getChunk(p.first,p.second).isLightLocked())
 			//	ND_INFO("Lightlocked chunk: {},{} :", p.first, p.second, getChunk(p.first, p.second).isLightLocked());
 
-			getChunk(p.first, p.second).lightLock();
+			getChunkM(p.first, p.second)->getLightJob().assign();
+		*/
 		}
 	}
 }
 
 int World::getNextFreeChunkIndex(int startSearchIndex)
 {
-	int out = -1;
-	for (; startSearchIndex < m_chunks.size(); startSearchIndex++) //check if some chunk is free
+	for (; startSearchIndex < m_chunk_headers.size(); ++startSearchIndex)
 	{
-		if (!m_chunks[startSearchIndex].isLoaded())
-		{
-			out = startSearchIndex;
-			break;
-		}
+		auto& h = m_chunk_headers[startSearchIndex];
+		if (h.isFree())
+			return startSearchIndex;
 	}
-	if (out == -1)
-	{
-		m_chunks.reserve(m_chunks.size() + 1);
-		m_chunks.emplace_back();
-		out = m_chunks.size() - 1;
-	}
-	return out;
-}
-
-void World::updateChunkBounds(int xx, int yy, int bitBounds)
-{
-	Chunk& c = getChunk(xx, yy);
-	int wx = c.m_x * WORLD_CHUNK_SIZE;
-	int wy = c.m_y * WORLD_CHUNK_SIZE;
-	if ((bitBounds & maskUp) != 0)
-		for (int x = 0; x < WORLD_CHUNK_SIZE; x++)
-		{
-			auto& block = c.block(x, WORLD_CHUNK_SIZE - 1);
-			auto worldx = wx + x;
-			auto worldy = wy + WORLD_CHUNK_SIZE - 1;
-			BlockRegistry::get().getBlock(block.block_id).onNeighbourBlockChange(this, worldx, worldy);
-			if (block.isWallOccupied())
-				BlockRegistry::get().getWall(block.wallID()).onNeighbourWallChange(this, worldx, worldy);
-		}
-	if ((bitBounds & maskDown) != 0)
-		for (int x = 0; x < WORLD_CHUNK_SIZE; x++)
-		{
-			auto& block = c.block(x, 0);
-			auto worldx = wx + x;
-			auto worldy = wy;
-			BlockRegistry::get().getBlock(block.block_id).onNeighbourBlockChange(this, worldx, worldy);
-			if (block.isWallOccupied())
-				BlockRegistry::get().getWall(block.wallID()).onNeighbourWallChange(this, worldx, worldy);
-		}
-	if ((bitBounds & maskLeft) != 0)
-		for (int y = 0; y < WORLD_CHUNK_SIZE; y++)
-		{
-			auto& block = c.block(0, y);
-			auto worldx = wx;
-			auto worldy = wy + y;
-			BlockRegistry::get().getBlock(block.block_id).onNeighbourBlockChange(this, worldx, worldy);
-			if (block.isWallOccupied())
-				BlockRegistry::get().getWall(block.wallID()).onNeighbourWallChange(this, worldx, worldy);
-		}
-	if ((bitBounds & maskRight) != 0)
-		for (int y = 0; y < WORLD_CHUNK_SIZE; y++)
-		{
-			auto& block = c.block(WORLD_CHUNK_SIZE - 1, y);
-			auto worldx = wx + WORLD_CHUNK_SIZE - 1;
-			auto worldy = wy + y;
-			BlockRegistry::get().getBlock(block.block_id).onNeighbourBlockChange(this, worldx, worldy);
-			if (block.isWallOccupied())
-				BlockRegistry::get().getWall(block.wallID()).onNeighbourWallChange(this, worldx, worldy);
-		}
+	/*
+	 *cannot resize arrays because of other workers possibly working on it right now
+	 *
+	m_chunks.reserve(m_chunks.size() + 1);
+	m_chunks.emplace_back();
+	m_chunk_headers.emplace_back();
+	return m_chunks.size() - 1;*/
+	//ASSERT(false, "Not enough space for next chunk. Raise the CHUNK_BUFFER_LENGTH");
+	return -1;
 }
 
 void World::unloadChunk(Chunk& c)
@@ -509,7 +612,56 @@ void World::unloadChunk(Chunk& c)
 
 void World::unloadChunks(std::set<int>& chunk_ids)
 {
-	WorldIO::Session stream = WorldIO::Session(m_file_path, true);
+	JobAssigmentP assigment = nullptr;
+	std::vector<EntityID> toUnload;
+	std::vector<int> chunksToUnload;
+	for (half_int chunkId : chunk_ids)
+	{
+		int chunkOffset = getChunkIndex(chunkId);
+		if (chunkOffset == -1)
+			continue;
+		auto& header = m_chunk_headers[chunkOffset];
+		if (!header.getJob()->isDone())
+			continue;
+
+		auto& chunk = m_chunks[chunkOffset];
+
+		//todo maybe mark chunks as markedDead which would unload it after it is not locked
+		if (!chunk.getLightJob().isDone())
+			continue;
+		//auto rect = c.getChunkRectangle();
+
+		header.setAccessible(false);
+		chunk.last_save_time = getWorldTicks();
+		if (assigment == nullptr)
+			assigment = m_job_pool.allocate();
+		assigment->assign();
+		m_chunk_provider->assignChunkSave(assigment, &chunk, getChunkSaveOffset(chunkId));
+		chunksToUnload.push_back(chunkId);
+		setChunkState(chunkId, BEING_UNLOADED);
+	}
+	if (chunksToUnload.empty())
+		return;
+	App::get().getScheduler().runTaskTimer(
+		[assigment, this, chunksToUnload]() mutable -> bool
+		{
+			if (!assigment->isDone())
+				return false;
+			this->m_job_pool.deallocate(assigment);
+
+			for (auto id : chunksToUnload)
+			{
+				//ND_INFO("Unl chunk: {}, {}", half_int::X(id), half_int::Y(id));
+				auto offset = getChunkHeaderIndex(id);
+				m_local_offset_header_map.erase(id);
+				ND_INFO("chunkunlo {} {}", id, offset);
+
+				m_chunk_headers[offset] = ChunkHeader(); //reset head
+			}
+			return true;
+		}, 1);
+
+	/*WorldIO::Session stream = WorldIO::Session(m_file_path, true);
 	m_nbt_saver.beginSession();
 	std::vector<EntityID> toUnload;
 
@@ -521,7 +673,7 @@ void World::unloadChunks(std::set<int>& chunk_ids)
 			continue;
 		auto rect = c.getChunkRectangle();
 		//ND_INFO("Unloaded chunk {},{}", half_int(chunkId).x, half_int(chunkId).y);
-		m_local_offset_map.erase(chunkId); //is complexity bad?
+		m_local_offset_map.erase(chunkId); //is complexity bad? nope
 		c.setLoaded(false);
 		c.last_save_time = getWorldTicks();
 		stream.saveChunk(&c, getChunkSaveOffset(c.chunkID()));
@@ -571,28 +723,89 @@ void World::unloadChunks(std::set<int>& chunk_ids)
 		m_nbt_saver.flushWrite();
 		toUnload.clear();
 	}
-	m_nbt_saver.endSession();
+	m_nbt_saver.endSession();*/
 }
 
-const BlockStruct* World::getBlockPointer(int x, int y)
+void World::updateChunkBounds(BlockAccess& world, int cx, int cy, int bitBounds)
 {
-	if (isBlockValid(x, y))
-	{
-		auto& b = const_cast<BlockStruct&>(getBlock(x, y));
-		return &b;
-	}
-	return nullptr;
+	auto& c = *world.getChunkM(cx, cy);
+	int wx = c.m_x * WORLD_CHUNK_SIZE;
+	int wy = c.m_y * WORLD_CHUNK_SIZE;
+	if ((bitBounds & maskUp) != 0)
+		for (int x = 0; x < WORLD_CHUNK_SIZE; x++)
+		{
+			auto& block = c.block(x, WORLD_CHUNK_SIZE - 1);
+			auto worldx = wx + x;
+			auto worldy = wy + WORLD_CHUNK_SIZE - 1;
+			BlockRegistry::get().getBlock(block.block_id).onNeighbourBlockChange(world, worldx, worldy);
+			if (block.isWallOccupied())
+				BlockRegistry::get().getWall(block.wallID()).onNeighbourWallChange(world, worldx, worldy);
+		}
+	if ((bitBounds & maskDown) != 0)
+		for (int x = 0; x < WORLD_CHUNK_SIZE; x++)
+		{
+			auto& block = c.block(x, 0);
+			auto worldx = wx + x;
+			auto worldy = wy;
+			BlockRegistry::get().getBlock(block.block_id).onNeighbourBlockChange(world, worldx, worldy);
+			if (block.isWallOccupied())
+				BlockRegistry::get().getWall(block.wallID()).onNeighbourWallChange(world, worldx, worldy);
+		}
+	if ((bitBounds & maskLeft) != 0)
+		for (int y = 0; y < WORLD_CHUNK_SIZE; y++)
+		{
+			auto& block = c.block(0, y);
+			auto worldx = wx;
+			auto worldy = wy + y;
+			BlockRegistry::get().getBlock(block.block_id).onNeighbourBlockChange(world, worldx, worldy);
+			if (block.isWallOccupied())
+				BlockRegistry::get().getWall(block.wallID()).onNeighbourWallChange(world, worldx, worldy);
+		}
+	if ((bitBounds & maskRight) != 0)
+		for (int y = 0; y < WORLD_CHUNK_SIZE; y++)
+		{
+			auto& block = c.block(WORLD_CHUNK_SIZE - 1, y);
+			auto worldx = wx + WORLD_CHUNK_SIZE - 1;
+			auto worldy = wy + y;
+			BlockRegistry::get().getBlock(block.block_id).onNeighbourBlockChange(world, worldx, worldy);
+			if (block.isWallOccupied())
+				BlockRegistry::get().getWall(block.wallID()).onNeighbourWallChange(world, worldx, worldy);
+		}
 }
 
-const BlockStruct* World::getLoadedBlockPointer(int x, int y) const
+//=========================BLOCKS==========================
+
+const BlockStruct* World::getBlock(int x, int y) const
 {
-	int index = getChunkIndex(x >> WORLD_CHUNK_BIT_SIZE, y >> WORLD_CHUNK_BIT_SIZE);
+	int index = getChunkIndex(half_int(x >> WORLD_CHUNK_BIT_SIZE, y >> WORLD_CHUNK_BIT_SIZE));
 	if (index != -1)
-	{
-		return &const_cast<BlockStruct&>(m_chunks[index].block(x & (WORLD_CHUNK_SIZE - 1),
+		return const_cast<BlockStruct*>(&m_chunks[index].block(x & (WORLD_CHUNK_SIZE - 1),
 		                                                       y & (WORLD_CHUNK_SIZE - 1)));
-	}
 	return nullptr;
+}
+
+const BlockStruct* World::getBlockOrAir(int x, int y) const
+{
+	auto t = getBlock(x, y);
+	static BlockStruct b = 0;
+	return t == nullptr ? &b : t;
+}
+
+BlockStruct* World::getBlockM(int x, int y)
+{
+	return const_cast<BlockStruct*>(getBlock(x, y));
+}
+
+BlockStruct* World::getBlockTotal(int x, int y)
+{
+	int cx = x >> WORLD_CHUNK_BIT_SIZE;
+	int cy = y >> WORLD_CHUNK_BIT_SIZE;
+	int chunkID = half_int(cx, cy);
+
+	int index = getChunkHeaderIndex(chunkID);
+	if (index == -1)
+		return nullptr;
+	return &m_chunks[index].block(x & (WORLD_CHUNK_SIZE - 1), y & (WORLD_CHUNK_SIZE - 1));
 }
 
 void World::flushBlockSet()
@@ -602,44 +815,14 @@ void World::flushBlockSet()
 	{
 		auto pair = m_edit_buffer.front();
 		m_edit_buffer.pop();
-		BlockRegistry::get().getBlock(getBlock(pair.first, pair.second).block_id).onNeighbourBlockChange(
-			this, pair.first, pair.second);
+		BlockRegistry::get().getBlock(getBlockM(pair.first, pair.second)->block_id).onNeighbourBlockChange(
+			*this, pair.first, pair.second);
 		onBlocksChange(pair.first, pair.second);
 
 		//todo this is big bullshit we will need to separate it somehow to update in batches
 		loadLightResources(pair.first, pair.second);
 		m_light_calc.assignComputeChange(pair.first, pair.second); //refresh light around the block
 	}
-}
-
-BlockStruct& World::editBlock(int x, int y)
-{
-#ifdef ND_DEBUG
-	if (!isBlockValid(x, y))
-	{
-		m_air_block = 0; //when you edit this block next call to this function will return fresh air
-		return m_air_block;
-	}
-#endif
-	int cx = x >> WORLD_CHUNK_BIT_SIZE;
-	int cy = y >> WORLD_CHUNK_BIT_SIZE;
-
-	int index = getChunkIndex(cx, cy);
-	if (index == -1)
-	{
-		Chunk& c = loadChunk(cx, cy);
-
-		return c.block(x & (WORLD_CHUNK_SIZE - 1), y & (WORLD_CHUNK_SIZE - 1));
-	}
-	else
-		return m_chunks[index].block(x & (WORLD_CHUNK_SIZE - 1), y & (WORLD_CHUNK_SIZE - 1));
-}
-
-bool World::isAir(int x, int y)
-{
-	if (!isBlockValid(x, y))
-		return true;
-	return getBlock(x, y).isAir();
 }
 
 #define MAX_BLOCK_UPDATE_DEPTH 20
@@ -654,37 +837,218 @@ void World::onBlocksChange(int x, int y, int deep)
 		return;
 	}
 	if (isBlockValid(x, y + 1) && BlockRegistry::get()
-	                              .getBlock(getBlock(x, y + 1).block_id).onNeighbourBlockChange(this, x, y + 1))
+	                              .getBlock(getBlockM(x, y + 1)->block_id).onNeighbourBlockChange(*this, x, y + 1))
 	{
-		getChunk(World::toChunkCoord(x), World::toChunkCoord(y + 1)).markDirty(true);
+		getChunkM(World::toChunkCoord(x), World::toChunkCoord(y + 1))->markDirty(true);
 		onBlocksChange(x, y + 1, deep);
 	}
 
 	if (isBlockValid(x, y - 1) && BlockRegistry::get()
-	                              .getBlock(getBlock(x, y - 1).block_id).onNeighbourBlockChange(this, x, y - 1))
+	                              .getBlock(getBlockM(x, y - 1)->block_id).onNeighbourBlockChange(*this, x, y - 1))
 	{
-		getChunk(World::toChunkCoord(x), World::toChunkCoord(y - 1)).markDirty(true);
+		getChunkM(World::toChunkCoord(x), World::toChunkCoord(y - 1))->markDirty(true);
 		onBlocksChange(x, y - 1, deep);
 	}
 
 	if (isBlockValid(x + 1, y) && BlockRegistry::get()
-	                              .getBlock(getBlock(x + 1, y).block_id).onNeighbourBlockChange(this, x + 1, y))
+	                              .getBlock(getBlockM(x + 1, y)->block_id).onNeighbourBlockChange(*this, x + 1, y))
 	{
-		getChunk(World::toChunkCoord(x + 1), World::toChunkCoord(y)).markDirty(true);
+		getChunkM(World::toChunkCoord(x + 1), World::toChunkCoord(y))->markDirty(true);
 		onBlocksChange(x + 1, y, deep);
 	}
 
 	if (isBlockValid(x - 1, y) && BlockRegistry::get()
-	                              .getBlock(getBlock(x - 1, y).block_id).onNeighbourBlockChange(this, x - 1, y))
+	                              .getBlock(getBlockM(x - 1, y)->block_id).onNeighbourBlockChange(*this, x - 1, y))
 	{
-		getChunk(World::toChunkCoord(x - 1), World::toChunkCoord(y)).markDirty(true);
+		getChunkM(World::toChunkCoord(x - 1), World::toChunkCoord(y))->markDirty(true);
 		onBlocksChange(x - 1, y, deep);
 	}
 }
 
+void World::setBlockWithNotify(int x, int y, BlockStruct& newBlock)
+{
+	WORLD_CHECK_VALID_POS(x, y);
+
+	int cx = x >> WORLD_CHUNK_BIT_SIZE;
+	int cy = y >> WORLD_CHUNK_BIT_SIZE;
+
+	int index = getChunkIndex(half_int(cx, cy));
+	Chunk* c;
+	if (index == -1)
+		return;
+	else c = &m_chunks[index];
+
+
+	auto& regBlock = BlockRegistry::get().getBlock(newBlock.block_id);
+
+
+	//set walls from old block acordingly
+	auto& oldBlock = c->block(x & (WORLD_CHUNK_SIZE - 1), y & (WORLD_CHUNK_SIZE - 1));
+	//if (newBlock.block_id==0)
+	//{
+	auto& bb = BlockRegistry::get().getBlock(oldBlock.block_id);
+	bb.onBlockDestroyed(*this, nullptr, x, y, oldBlock);
+	//}
+	memcpy(newBlock.wall_id, oldBlock.wall_id, sizeof(newBlock.wall_id));
+	memcpy(newBlock.wall_corner, oldBlock.wall_corner, sizeof(newBlock.wall_corner));
+
+	c->setBlock(x & (WORLD_CHUNK_SIZE - 1), y & (WORLD_CHUNK_SIZE - 1), newBlock);
+	if (!m_edit_buffer_enable)
+	{
+		regBlock.onBlockPlaced(*this, nullptr, x, y, c->block(x & (WORLD_CHUNK_SIZE - 1), y & (WORLD_CHUNK_SIZE - 1)));
+		regBlock.onNeighbourBlockChange(*this, x, y);
+		onBlocksChange(x, y);
+
+		loadLightResources(x, y);
+		m_light_calc.assignComputeChange(x, y); //refresh light around the block
+	}
+	else
+		m_edit_buffer.emplace(x, y);
+	c->markDirty(true); //always mark renderefresh
+}
+
+void World::setBlockWithNotifyTotal(int x, int y, BlockStruct& newBlock)
+{
+	WORLD_CHECK_VALID_POS(x, y);
+	int cx = x >> WORLD_CHUNK_BIT_SIZE;
+	int cy = y >> WORLD_CHUNK_BIT_SIZE;
+
+	int index = getChunkHeaderIndex(half_int(cx, cy));
+	Chunk* c;
+	if (index == -1)
+		return;
+	else c = &m_chunks[index];
+
+
+	auto& regBlock = BlockRegistry::get().getBlock(newBlock.block_id);
+
+
+	//set walls from old block acordingly
+	auto& oldBlock = c->block(x & (WORLD_CHUNK_SIZE - 1), y & (WORLD_CHUNK_SIZE - 1));
+	//if (newBlock.block_id==0)
+	//{
+	auto& bb = BlockRegistry::get().getBlock(oldBlock.block_id);
+	bb.onBlockDestroyed(*this, nullptr, x, y, oldBlock);
+	//}
+	memcpy(newBlock.wall_id, oldBlock.wall_id, sizeof(newBlock.wall_id));
+	memcpy(newBlock.wall_corner, oldBlock.wall_corner, sizeof(newBlock.wall_corner));
+
+	c->setBlock(x & (WORLD_CHUNK_SIZE - 1), y & (WORLD_CHUNK_SIZE - 1), newBlock);
+	regBlock.onBlockPlaced(*this, nullptr, x, y, c->block(x & (WORLD_CHUNK_SIZE - 1), y & (WORLD_CHUNK_SIZE - 1)));
+	regBlock.onNeighbourBlockChange(*this, x, y);
+	onBlocksChange(x, y);
+	c->markDirty(true); //always mark renderefresh
+}
+
+void World::setBlock(int x, int y, BlockStruct& newBlock)
+{
+	WORLD_CHECK_VALID_POS(x, y);
+
+	int cx = x >> WORLD_CHUNK_BIT_SIZE;
+	int cy = y >> WORLD_CHUNK_BIT_SIZE;
+
+	int index = getChunkIndex(half_int(cx, cy));
+	Chunk* c;
+	if (index == -1)
+		return;
+	else c = &m_chunks[index];
+
+
+	auto& regBlock = BlockRegistry::get().getBlock(newBlock.block_id);
+
+
+	//set walls from old block acordingly
+	auto& oldBlock = c->block(x & (WORLD_CHUNK_SIZE - 1), y & (WORLD_CHUNK_SIZE - 1));
+	//if (newBlock.block_id==0)
+	//{
+	auto& bb = BlockRegistry::get().getBlock(oldBlock.block_id);
+	//}
+	memcpy(newBlock.wall_id, oldBlock.wall_id, sizeof(newBlock.wall_id));
+	memcpy(newBlock.wall_corner, oldBlock.wall_corner, sizeof(newBlock.wall_corner));
+
+	c->setBlock(x & (WORLD_CHUNK_SIZE - 1), y & (WORLD_CHUNK_SIZE - 1), newBlock);
+}
+
+void World::setBlockTotal(int x, int y, BlockStruct& newBlock)
+{
+	WORLD_CHECK_VALID_POS(x, y);
+
+	int cx = x >> WORLD_CHUNK_BIT_SIZE;
+	int cy = y >> WORLD_CHUNK_BIT_SIZE;
+
+	int index = getChunkHeaderIndex(half_int(cx, cy));
+
+	if (index == -1)
+		return;
+
+	auto c = &m_chunks[index];
+
+	auto& regBlock = BlockRegistry::get().getBlock(newBlock.block_id);
+
+	//set walls from old block acordingly
+	auto& oldBlock = c->block(x & (WORLD_CHUNK_SIZE - 1), y & (WORLD_CHUNK_SIZE - 1));
+	//if (newBlock.block_id==0)
+	//{
+	auto& bb = BlockRegistry::get().getBlock(oldBlock.block_id);
+	//}
+	memcpy(newBlock.wall_id, oldBlock.wall_id, sizeof(newBlock.wall_id));
+	memcpy(newBlock.wall_corner, oldBlock.wall_corner, sizeof(newBlock.wall_corner));
+
+	c->setBlock(x & (WORLD_CHUNK_SIZE - 1), y & (WORLD_CHUNK_SIZE - 1), newBlock);
+}
+
+//=========================WALLS===========================
+
+void World::setWall(int x, int y, int wall_id)
+{
+	WORLD_CHECK_VALID_POS(x, y);
+	int cx = x >> WORLD_CHUNK_BIT_SIZE;
+	int cy = y >> WORLD_CHUNK_BIT_SIZE;
+
+	int index = getChunkIndex(half_int(cx, cy));
+	Chunk* c;
+	if (index == -1)
+		return;
+	else c = &m_chunks[index];
+
+	//set block from old block acordingly
+	auto& blok = c->block(x & (WORLD_CHUNK_SIZE - 1), y & (WORLD_CHUNK_SIZE - 1));
+
+	if (!blok.isWallOccupied() && wall_id == 0) //cannot erase other blocks parts on this shared block
+		return;
+	blok.setWall(wall_id);
+	onWallsChange(x, y, blok);
+	loadLightResources(x, y);
+	m_light_calc.assignComputeChange(x, y);
+
+	c->markDirty(true);
+}
+
+void World::setWallTotal(int x, int y, int wall_id)
+{
+	WORLD_CHECK_VALID_POS(x, y);
+	int cx = x >> WORLD_CHUNK_BIT_SIZE;
+	int cy = y >> WORLD_CHUNK_BIT_SIZE;
+
+	int index = getChunkHeaderIndex(half_int(cx, cy));
+
+	if (index == -1)
+		return;
+	auto c = &m_chunks[index];
+
+	//set block from old block acordingly
+	auto& blok = c->block(x & (WORLD_CHUNK_SIZE - 1), y & (WORLD_CHUNK_SIZE - 1));
+
+	if (!blok.isWallOccupied() && wall_id == 0) //cannot erase other blocks parts on this shared block
+		return;
+	blok.setWall(wall_id);
+	onWallsChange(x, y, blok);
+	c->markDirty(true);
+}
+
 void World::onWallsChange(int xx, int yy, BlockStruct& blok)
 {
-	BlockRegistry::get().getWall(blok.wallID()).onNeighbourWallChange(this, xx, yy);
+	BlockRegistry::get().getWall(blok.wallID()).onNeighbourWallChange(*this, xx, yy);
 	/*for (int x = -1; x < 2; ++x)
 	{
 		for (int y = -1; y < 2; ++y)
@@ -692,9 +1056,9 @@ void World::onWallsChange(int xx, int yy, BlockStruct& blok)
 			if (x == 0 && y == 0)
 				continue;
 			if (isValidBlock(x + xx, y + yy)) {
-				BlockStruct& b = editBlock(x + xx, y + yy);
+				BlockStruct& b = *getBlock(x + xx, y + yy);
 				if (b.isWallOccupied())//i cannot call this method on some foreign wall pieces
-					BlockRegistry::get().getWall(b.wallID()).onNeighbourWallChange(this, x + xx, y + yy);
+					BlockRegistry::get().getWall(b.wallID()).onNeighbourWallChange(*this, x + xx, y + yy);
 			}
 		}
 	}*/
@@ -710,12 +1074,12 @@ void World::onWallsChange(int xx, int yy, BlockStruct& blok)
 				continue;
 			if (isBlockValid(x + xx, y + yy))
 			{
-				BlockStruct& b = editBlock(x + xx, y + yy);
+				auto& b = *getBlockM(x + xx, y + yy);
 				if (b.isWallOccupied())
 				{
 					//i cannot call this method on some foreign wall pieces
-					BlockRegistry::get().getWall(b.wallID()).onNeighbourWallChange(this, x + xx, y + yy);
-					Chunk& c = getChunk(toChunkCoord(x + xx), toChunkCoord(y + yy));
+					BlockRegistry::get().getWall(b.wallID()).onNeighbourWallChange(*this, x + xx, y + yy);
+					auto& c = *getChunkM(toChunkCoord(x + xx), toChunkCoord(y + yy));
 					c.markDirty(true); //mesh needs to be updated
 				}
 			}
@@ -723,55 +1087,14 @@ void World::onWallsChange(int xx, int yy, BlockStruct& blok)
 	}
 }
 
-void World::setBlock(int x, int y, int block_id)
-{
-	BlockStruct s = block_id;
-	setBlock(x, y, s);
-}
-
-void World::setWall(int x, int y, int wall_id)
-{
-#ifdef ND_DEBUG
-	if (x < 0 || y < 0)
-	{
-		ND_WARN("Set block with invalid position");
-		return;
-	}
-	if (x > getInfo().chunk_width * WORLD_CHUNK_SIZE - 1 || y > getInfo().chunk_height * WORLD_CHUNK_SIZE - 1)
-	{
-		ND_WARN("Set block with invalid position");
-		return;
-	}
-#endif
-	int cx = x >> WORLD_CHUNK_BIT_SIZE;
-	int cy = y >> WORLD_CHUNK_BIT_SIZE;
-
-	int index = getChunkIndex(cx, cy);
-	Chunk* c;
-	if (index == -1)
-		c = &loadChunk(cx, cy);
-	else c = &m_chunks[index];
-
-	//set block from old block acordingly
-	auto& blok = c->block(x & (WORLD_CHUNK_SIZE - 1), y & (WORLD_CHUNK_SIZE - 1));
-
-	if (!blok.isWallOccupied() && wall_id == 0) //cannot erase other blocks parts on this shared block
-		return;
-	blok.setWall(wall_id);
-	onWallsChange(x, y, blok);
-	//if (BiomeRegistry::get().getBiome(c->getBiome()).getBackgroundLight() != 0)
-	loadLightResources(x, y);
-	m_light_calc.assignComputeChange(x, y);
-
-	c->markDirty(true);
-}
+//===================ENTITIES============================
 
 EntityID World::spawnEntity(WorldEntity* pEntity)
 {
 	auto id = m_entity_manager.createEntity();
 	pEntity->m_id = id;
 	loadEntity(pEntity);
-	pEntity->onSpawned(this);
+	pEntity->onSpawned(*this);
 	return id;
 }
 
@@ -784,9 +1107,9 @@ void World::unloadEntity(EntityID worldEntity, bool isKilled)
 			auto pointer = m_entity_manager.entity(worldEntity);
 			if (pointer)
 			{
-				pointer->onUnloaded(this);
+				pointer->onUnloaded(*this);
 				if (isKilled)
-					pointer->onKilled(this);
+					pointer->onKilled(*this);
 				free(pointer);
 			}
 			else ND_WARN("Unloading entity that has no instance");
@@ -804,9 +1127,9 @@ void World::unloadEntity(EntityID worldEntity, bool isKilled)
 			auto pointer = m_entity_manager.entity(worldEntity);
 			if (pointer)
 			{
-				pointer->onUnloaded(this);
+				pointer->onUnloaded(*this);
 				if (isKilled)
-					pointer->onKilled(this);
+					pointer->onKilled(*this);
 				free(pointer);
 			}
 			else ND_WARN("Unloading tile entity that has no instance");
@@ -828,9 +1151,9 @@ void World::unloadTileEntity(EntityID worldEntity, bool isKilled)
 			auto pointer = m_entity_manager.entity(worldEntity);
 			if (pointer)
 			{
-				pointer->onUnloaded(this);
+				pointer->onUnloaded(*this);
 				if (isKilled)
-					pointer->onKilled(this);
+					pointer->onKilled(*this);
 				free(pointer);
 			}
 			else ND_WARN("Unloading tile entity that has no instance");
@@ -867,6 +1190,22 @@ void World::killTileEntity(EntityID id)
 	m_entity_manager.killEntity(id);
 }
 
+void World::loadEntity(WorldEntity* pEntity)
+{
+	auto id = pEntity->getID();
+	m_entity_manager.setLoaded(id, true);
+	m_entity_manager.setEntityPointer(id, pEntity);
+	if (dynamic_cast<TileEntity*>(pEntity))
+	{
+		m_tile_entity_map[Phys::Vecti(pEntity->getPosition().x, pEntity->getPosition().y).toInt64()] = pEntity->getID();
+	}
+	else
+		m_entity_array.push_back(id);
+	pEntity->onLoaded(*this);
+}
+
+//======================WORLD IO=========================
+
 bool World::saveWorld()
 {
 	//world metadata
@@ -892,7 +1231,6 @@ bool World::saveWorld()
 
 	return true;
 }
-
 
 bool World::loadWorld()
 {
@@ -937,74 +1275,9 @@ bool World::genWorld()
 	return true;
 }
 
+//=========================PARTICLES=====================
 
-void World::spawnParticle(ParticleID id, Phys::Vect pos, Phys::Vect speed, Phys::Vect acc, int life,float rotation)
+void World::spawnParticle(ParticleID id, Phys::Vect pos, Phys::Vect speed, Phys::Vect acc, int life, float rotation)
 {
-	m_particle_manager->createParticle(id, pos, speed, acc, life,rotation);
-}
-
-void World::loadEntity(WorldEntity* pEntity)
-{
-	auto id = pEntity->getID();
-	m_entity_manager.setLoaded(id, true);
-	m_entity_manager.setEntityPointer(id, pEntity);
-	if (dynamic_cast<TileEntity*>(pEntity))
-	{
-		m_tile_entity_map[Phys::Vecti(pEntity->getPosition().x, pEntity->getPosition().y).toInt64()] = pEntity->getID();
-	}
-	else
-		m_entity_array.push_back(id);
-	pEntity->onLoaded(this);
-}
-
-void World::setBlock(int x, int y, BlockStruct& newBlock)
-{
-#ifdef ND_DEBUG
-	if (x < 0 || y < 0)
-	{
-		ND_WARN("Set block with invalid position");
-		return;
-	}
-	if (x >= getInfo().chunk_width * WORLD_CHUNK_SIZE || y >= getInfo().chunk_height * WORLD_CHUNK_SIZE)
-	{
-		ND_WARN("Set block with invalid position");
-		return;
-	}
-#endif
-	int cx = x >> WORLD_CHUNK_BIT_SIZE;
-	int cy = y >> WORLD_CHUNK_BIT_SIZE;
-
-	int index = getChunkIndex(cx, cy);
-	Chunk* c;
-	if (index == -1)
-		c = &loadChunk(cx, cy);
-	else c = &m_chunks[index];
-
-
-	auto& regBlock = BlockRegistry::get().getBlock(newBlock.block_id);
-
-
-	//set walls from old block acordingly
-	auto& oldBlock = c->block(x & (WORLD_CHUNK_SIZE - 1), y & (WORLD_CHUNK_SIZE - 1));
-	//if (newBlock.block_id==0)
-	//{
-	auto& bb = BlockRegistry::get().getBlock(oldBlock.block_id);
-	bb.onBlockDestroyed(this, nullptr, x, y, oldBlock);
-	//}
-	memcpy(newBlock.wall_id, oldBlock.wall_id, sizeof(newBlock.wall_id));
-	memcpy(newBlock.wall_corner, oldBlock.wall_corner, sizeof(newBlock.wall_corner));
-
-	c->setBlock(x & (WORLD_CHUNK_SIZE - 1), y & (WORLD_CHUNK_SIZE - 1), newBlock);
-	if (!m_edit_buffer_enable)
-	{
-		regBlock.onBlockPlaced(this, nullptr, x, y, c->block(x & (WORLD_CHUNK_SIZE - 1), y & (WORLD_CHUNK_SIZE - 1)));
-		regBlock.onNeighbourBlockChange(this, x, y);
-		onBlocksChange(x, y);
-
-		loadLightResources(x, y);
-		m_light_calc.assignComputeChange(x, y); //refresh light around the block
-	}
-	else
-		m_edit_buffer.emplace(x, y);
-	c->markDirty(true); //always mark renderefresh
+	m_particle_manager->createParticle(id, pos, speed, acc, life, rotation);
 }

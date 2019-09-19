@@ -33,13 +33,13 @@ void BlockRegistry::registerWall(Wall* wall)
 
 const Block& BlockRegistry::getBlock(int block_id)
 {
-	ASSERT(m_blocks.size() > block_id, "Invalid block id");
+	ASSERT(m_blocks.size() > block_id&&block_id>=0, "Invalid block id");
 	return *m_blocks[block_id];
 }
 
 const Wall& BlockRegistry::getWall(int wall_id)
 {
-	ASSERT(m_walls.size() > wall_id, "Invalid wall id");
+	ASSERT(m_walls.size() > wall_id&&wall_id >= 0, "Invalid wall id");
 	return *m_walls[wall_id];
 }
 

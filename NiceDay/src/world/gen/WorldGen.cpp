@@ -80,9 +80,7 @@ static int getNeighbourCount(bool* map, int x, int y)
 	{
 		for (int yy = y - 1; yy < y + 2; ++yy)
 		{
-			if (xx == 0 || yy == 0)
-				continue;
-			if (xx < 0 || xx >= 2 * WORLD_CHUNK_SIZE || yy < 0 || yy >= 2 * WORLD_CHUNK_SIZE)
+			if (xx <= 0 || xx >= 2 * WORLD_CHUNK_SIZE || yy <= 0 || yy >= 2 * WORLD_CHUNK_SIZE)
 				continue;
 			out += getFromMap(map, xx, yy) ? 0 : 1;
 		}
@@ -90,14 +88,14 @@ static int getNeighbourCount(bool* map, int x, int y)
 	return out;
 }
 
-void WorldGen::genLayer0(int seed, World* w, Chunk& c)
+void WorldGen::genLayer0(World& w, Chunk& c)
 {
 	TimerStaper t("gen chunk");
 	if (m_prior_gen == nullptr)
 	{
 		m_prior_gen = new PriorGen("file");
-		m_prior_gen->gen(seed, w->getInfo().terrain_level,
-		                 w->getInfo().chunk_width * WORLD_CHUNK_SIZE, w->getInfo().chunk_height * WORLD_CHUNK_SIZE);
+		m_prior_gen->gen(w.getInfo().seed, w.getInfo().terrain_level,
+		                 w.getInfo().chunk_width * WORLD_CHUNK_SIZE, w.getInfo().chunk_height * WORLD_CHUNK_SIZE);
 	}
 	c.m_biome = BIOME_FOREST;
 	for (int zz = 0; zz < WORLD_CHUNK_SIZE; ++zz)
@@ -106,19 +104,19 @@ void WorldGen::genLayer0(int seed, World* w, Chunk& c)
 		{
 			auto worldx = c.m_x * WORLD_CHUNK_SIZE + ww;
 			auto worldy = c.m_y * WORLD_CHUNK_SIZE + zz;
-
 			c.block(ww, zz) = m_prior_gen->getBlock(worldx, worldy);
 		}
 	}
 	int offsetX = c.m_x * WORLD_CHUNK_SIZE;
 	int offsetY = c.m_y * WORLD_CHUNK_SIZE;
+	half_int index = c.chunkID();
 
 	/*TimerStaper t("gen chunk");
 	static bool* map0 = new bool[WORLD_CHUNK_AREA * 4];
 	static bool* map1 = new bool[WORLD_CHUNK_AREA * 4];
 	srand(c.chunkID() * 123546+5);
 
-	auto& info = w->getInfo();
+	auto& info = w.getInfo();
 	c.m_biome = BIOME_UNDERGROUND;
 	if ((c.m_y + 1) * WORLD_CHUNK_SIZE > (info.terrain_level - 1))
 		c.m_biome = BIOME_FOREST;
@@ -259,10 +257,10 @@ void WorldGen::genLayer0(int seed, World* w, Chunk& c)
 			auto worldx = offsetX + x;
 			auto worldy = offsetY + y;
 			if (!block.isAir())
-				BlockRegistry::get().getBlock(block.block_id).onNeighbourBlockChange(w, worldx, worldy);
+				BlockRegistry::get().getBlock(block.block_id).onNeighbourBlockChange(*w.getTotalBlockAccess(), worldx, worldy);
 			if (!block.isWallFree())
-				BlockRegistry::get().getWall(block.wallID()).onNeighbourWallChange(w, worldx, worldy);
+				BlockRegistry::get().getWall(block.wallID()).onNeighbourWallChange(*w.getTotalBlockAccess(), worldx, worldy);
 		}
 	}
-	c.last_save_time = w->getWorldTicks(); //mark it as was generated
+	c.last_save_time = w.getWorldTicks(); //mark it as was generated
 }

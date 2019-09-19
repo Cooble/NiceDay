@@ -12,13 +12,13 @@
 #define bigDiceRoll(x)\
 	((std::rand()%100)<(x))
 
-bool setTreeBlock(World* w, int x, int y, int corner, int width, int height, bool overwrite = false)
+bool setTreeBlock(World& w, int x, int y, int corner, int width, int height, bool overwrite = false)
 {
 	//check if there is space
 	if (!overwrite)
 		for (int xx = 0; xx < width; ++xx)
 			for (int yy = 0; yy < height; ++yy)
-				if (!w->isAir(x + xx, y + yy))
+				if (!w.isAir(x + xx, y + yy))
 					return false;
 
 
@@ -30,14 +30,14 @@ bool setTreeBlock(World* w, int x, int y, int corner, int width, int height, boo
 			s.block_id = BLOCK_TREE;
 			s.block_corner = corner;
 			s.block_metadata = half_int(xx, yy);
-			w->setBlock(x + xx, y + yy, s);
+			w.setBlockWithNotify(x + xx, y + yy, s);
 		}
 	}
 	return true;
 }
 
 
-bool TreeGen::buildTree(World* w, int x, int y,bool useTrueRandom)
+bool TreeGen::buildTree(World& w, int x, int y,bool useTrueRandom)
 {
 	using namespace BlockTreeScope;
 
@@ -52,7 +52,7 @@ bool TreeGen::buildTree(World* w, int x, int y,bool useTrueRandom)
 	//check if enough space for roots
 	for (int xx = -1; xx < 3; ++xx)
 	{
-		if (!w->isAir(xx + x, y) && xx != 0)
+		if (!w.isAir(xx + x, y) && xx != 0)
 			return false;
 	}
 	bool shouldBreak = false;
@@ -61,7 +61,7 @@ bool TreeGen::buildTree(World* w, int x, int y,bool useTrueRandom)
 	{
 		for (int xx = -1; xx < 3; ++xx)
 		{
-			if (!w->isAir(x + xx, y + yy))
+			if (!w.isAir(x + xx, y + yy))
 			{
 				treeHeight = yy;
 				minnerTrunkHeight = std::rand() % 2 + 1;
@@ -77,7 +77,7 @@ bool TreeGen::buildTree(World* w, int x, int y,bool useTrueRandom)
 		return false;
 
 	//base root
-	w->beginBlockSet();
+	w.beginBlockSet();
 	setTreeBlock(w, x - 1, y, RootL, 1, 1, true);
 	setTreeBlock(w, x + 2, y, RootR, 1, 1, true);
 	setTreeBlock(w, x, y, fullTrunk2W, 2, 1, true);
@@ -264,6 +264,6 @@ bool TreeGen::buildTree(World* w, int x, int y,bool useTrueRandom)
 		--yLevel;
 	}*/
 
-	w->flushBlockSet();
+	w.flushBlockSet();
 	return true;
 }

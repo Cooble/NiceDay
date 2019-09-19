@@ -3,6 +3,7 @@
 #include "physShapes.h"
 #include "world/entity/EntityManager.h"
 #include "world/entity/entity_datas.h"
+class BlockAccess;
 class BlockTextureAtlas;
 //STATES=========================================================
 //is air counterclockwise start from up(=lsb) (up left down right)
@@ -131,7 +132,7 @@ protected:
 	uint8_t m_light_src;
 
 	int m_block_connect_group;
-	bool isInGroup(World* w, int x, int y, int group) const;
+	bool isInGroup(BlockAccess& w, int x, int y, int group) const;
 	bool isInGroup(int blockID, int group) const;
 	inline void setNoCollisionBox()
 	{
@@ -168,15 +169,15 @@ public:
 	virtual int getCornerOffset(int x, int y, const BlockStruct& b) const;
 
 	//returns true if this block was changed as well
-	virtual bool onNeighbourBlockChange(World* world, int x, int y) const;
+	virtual bool onNeighbourBlockChange(BlockAccess& world, int x, int y) const;
 
-	virtual void onBlockPlaced(World* w, WorldEntity* e, int x, int y, BlockStruct& b) const;
-	virtual void onBlockDestroyed(World* w, WorldEntity* e, int x, int y, BlockStruct& b) const;
+	virtual void onBlockPlaced(World& w, WorldEntity* e, int x, int y, BlockStruct& b) const;
+	virtual void onBlockDestroyed(World& w, WorldEntity* e, int x, int y, BlockStruct& b) const;
 
 
-	virtual void onBlockClicked(World* w, WorldEntity* e,int x,int y,BlockStruct& b) const {}
+	virtual void onBlockClicked(World& w, WorldEntity* e,int x,int y,BlockStruct& b) const {}
 
-	virtual bool canBePlaced(World* w, int x, int y) const
+	virtual bool canBePlaced(World& w, int x, int y) const
 	{
 		return true;
 	}
@@ -220,13 +221,13 @@ public:
 
 	int getTextureOffset(int x, int y, const BlockStruct& b) const override;
 
-	bool onNeighbourBlockChange(World* world, int x, int y) const override;
+	bool onNeighbourBlockChange(BlockAccess& world, int x, int y) const override;
 
-	void onBlockPlaced(World* w, WorldEntity* e, int x, int y, BlockStruct& b) const override;
+	void onBlockPlaced(World& w, WorldEntity* e, int x, int y, BlockStruct& b) const override;
 
-	void onBlockDestroyed(World* w, WorldEntity* e, int x, int y, BlockStruct& b) const override;
+	void onBlockDestroyed(World& w, WorldEntity* e, int x, int y, BlockStruct& b) const override;
 
-	bool canBePlaced(World* w, int x, int y) const override;
+	bool canBePlaced(World& w, int x, int y) const override;
 
 
 
@@ -256,7 +257,7 @@ public:
 	virtual int getCornerOffset(int wx, int wy, const BlockStruct&) const;
 
 	//returns true if this block was changed as well
-	virtual void onNeighbourWallChange(World* world, int x, int y) const;
+	virtual void onNeighbourWallChange(BlockAccess& world, int x, int y) const;
 
 	inline virtual std::string toString() const { return "UNDEFINED_WALL"; }
 #define UUID_STRING(x)\

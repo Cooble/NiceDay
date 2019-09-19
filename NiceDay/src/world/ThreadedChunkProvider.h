@@ -25,6 +25,7 @@ struct WorldIOAssignment
 		NBT_READ,
 		NBT_WRITE,
 	} type;
+	WorldIOAssignment() = default;
 	WorldIOAssignment(JobAssigment* job, void* pointer, int data, int type)
 	:job(job),
 	chunk((Chunk*)pointer),

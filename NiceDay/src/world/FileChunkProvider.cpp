@@ -3,7 +3,7 @@
 
 FileChunkProvider::FileChunkProvider(const std::string& file_path)
 :m_file_path(file_path),
-m_nbt_saver(file_path+".path")
+m_nbt_saver(file_path+".entity")
 {
 	m_nbt_saver.init();
 }
