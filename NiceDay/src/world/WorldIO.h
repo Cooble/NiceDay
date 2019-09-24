@@ -103,7 +103,7 @@ namespace WorldIO
 	{
 
 	private:
-
+		bool m_is_opened=false;
 		// offset of start of dynamic data of dynamic saver (starts after DynamicSaverHeader section)
 		uint32_t m_TOTAL_OFFSET;
 		// offset of whole dynamic saver in file
@@ -194,6 +194,7 @@ namespace WorldIO
 		inline uint32_t getSegmentCount()const { return m_segment_count; }
 		inline uint32_t getFreeSegmentCount()const { return m_free_offsets.size(); }
 		void clearEverything();
+		inline bool isOpened()const { return m_is_opened; }
 	};
 
 }

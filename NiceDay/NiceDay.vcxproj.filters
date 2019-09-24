@@ -1436,6 +1436,7 @@
     <ClInclude Include="src\world\ThreadedChunkProvider.h" />
     <ClInclude Include="src\world\ThreadedWorldGen.h" />
     <ClInclude Include="src\world\ChunkPack.h" />
+    <ClInclude Include="src\world\BlockAccess.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\EntryPoint.cpp">
@@ -1672,5 +1673,6 @@
     <ClCompile Include="src\world\ThreadedChunkProvider.cpp" />
     <ClCompile Include="src\world\ThreadedWorldGen.cpp" />
     <ClCompile Include="src\world\ChunkPack.cpp" />
+    <ClCompile Include="src\world\BlockAccess.cpp" />
   </ItemGroup>
 </Project>

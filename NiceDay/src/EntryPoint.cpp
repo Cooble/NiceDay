@@ -51,9 +51,6 @@ void createRandomNBT(NBT& nbt, int deep)
 
 bool equalsNBT(NBT& one,NBT& two)
 {
-	for (auto& t : one.m_bytes)
-		if (two.m_bytes[t.first] != t.second)
-			return false;
 	for (auto& t : one.m_strings) {
 		std::string& first = std::string(t.first);
 		const char* c = first.c_str();

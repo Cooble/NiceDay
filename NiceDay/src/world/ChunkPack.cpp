@@ -1,11 +1,12 @@
 #include "ndpch.h"
 #include "ChunkPack.h"
+#include "World.h"
 
 
 
 
 ChunkPack::ChunkPack(half_int chunkCenterPos, std::initializer_list<Chunk*> chunks):
-m_chunk_pos(chunkCenterPos -half_int(1,1))
+m_chunk_pos(chunkCenterPos)
 {
 	ASSERT(chunks.size()==9,"ChunkPack requires 9 chunkpointer entries (can be nullptr)")
 	int index = 0;
@@ -58,8 +59,8 @@ void ChunkPack::setWall(int x, int y, int wall_id)
 
 Chunk* ChunkPack::getChunkM(int cx, int cy)
 {
-	cx = cx - m_chunk_pos.x;
-	cy = cy - m_chunk_pos.y;
+	cx = cx - (m_chunk_pos.x-1);
+	cy = cy - (m_chunk_pos.y-1);
 	if (cx >= 0 && cx < 3 && cy >= 0 && cy < 3)
 		return m_chunks[cy * 3 + cx];
 	return nullptr;
@@ -94,4 +95,13 @@ void ChunkPack::assignLightJob()
 		if (c)
 			c->getLightJob().assign();
 	}
+}
+
+ChunkPack ChunkPack::fromChunk(Chunk* c)
+{
+	ChunkPack out;
+	out.m_chunk_pos = c->chunkID();
+	memset(out.m_chunks.data(), 0, sizeof(out.m_chunks));
+	out.m_chunks[4] = c;
+	return out;
 }

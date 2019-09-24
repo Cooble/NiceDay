@@ -14,22 +14,22 @@
 
 WorldRenderManager::WorldRenderManager(Camera* cam, World* world)
 	: m_light_calculator(world->getLightCalculator()),
-	m_light_fbo(nullptr),
-	m_bg_fbo(nullptr),
-	m_bg_layer_fbo(nullptr),
-	m_light_smooth_fbo(nullptr),
-	m_block_fbo(nullptr),
-	m_wall_fbo(nullptr),
-	m_block_mask_texture(nullptr),
-	m_light_simple_texture(nullptr),
-	m_light_sky_simple_texture(nullptr),
-	m_green_filter(nullptr),
-	m_blur(nullptr),
-	m_edge(nullptr),
-	m_block_mask(nullptr),
-	m_fbo_pair(nullptr),
-	m_world(world),
-	m_camera(cam)
+	  m_light_fbo(nullptr),
+	  m_bg_fbo(nullptr),
+	  m_bg_layer_fbo(nullptr),
+	  m_light_smooth_fbo(nullptr),
+	  m_block_fbo(nullptr),
+	  m_wall_fbo(nullptr),
+	  m_block_mask_texture(nullptr),
+	  m_light_simple_texture(nullptr),
+	  m_light_sky_simple_texture(nullptr),
+	  m_green_filter(nullptr),
+	  m_blur(nullptr),
+	  m_edge(nullptr),
+	  m_block_mask(nullptr),
+	  m_fbo_pair(nullptr),
+	  m_world(world),
+	  m_camera(cam)
 {
 	//test quad
 
@@ -116,7 +116,7 @@ WorldRenderManager::~WorldRenderManager()
 	delete m_blur;
 	delete m_edge;
 	delete m_block_mask;
-	
+
 	delete m_fbo_pair;
 };
 
@@ -158,15 +158,15 @@ void WorldRenderManager::onScreenResize()
 	TextureInfo info;
 
 	//setup green
-	info.size(screenWidth,screenHeight);
+	info.size(screenWidth, screenHeight);
 	info.wrapMode(TextureWrapMode::CLAMP_TO_EDGE);
 
 	m_green_filter = new GreenFilter(info);
-	
+
 	m_fbo_pair->replaceTexture(Texture::create(info));
 
 	info.size(screenWidth, screenHeight);
-	
+
 
 	info = TextureInfo();
 
@@ -185,8 +185,6 @@ void WorldRenderManager::onScreenResize()
 
 	//made main light map texture with 4 channels
 
-	
-
 
 	info = TextureInfo();
 	info.size(m_chunk_width * WORLD_CHUNK_SIZE * 2, m_chunk_height * WORLD_CHUNK_SIZE * 2).
@@ -196,7 +194,7 @@ void WorldRenderManager::onScreenResize()
 
 	info.filterMode(TextureFilterMode::LINEAR);
 	m_light_smooth_fbo->replaceTexture(Texture::create(info));
-	
+
 	if (m_edge == nullptr)
 	{
 		m_edge = new ScaleEdgesEffect(info);
@@ -206,12 +204,11 @@ void WorldRenderManager::onScreenResize()
 
 	if (m_blur == nullptr)
 	{
-		m_blur = new GaussianBlurMultiple(info, { 2 });
+		m_blur = new GaussianBlurMultiple(info, {2});
 	}
 	else
 		m_blur->replaceTexture(info);
 
-	
 
 	info = TextureInfo();
 	info.size(screenWidth, screenHeight);
@@ -223,7 +220,7 @@ void WorldRenderManager::onScreenResize()
 		m_block_mask->replaceTexture(info);
 	m_block_fbo->replaceTexture(Texture::create(info));
 	m_wall_fbo->replaceTexture(Texture::create(info));
-		
+
 	//bg
 	info = TextureInfo();
 	info.size(screenWidth / 2, screenHeight / 2).filterMode(TextureFilterMode::NEAREST).format(TextureFormat::RGBA);
@@ -288,114 +285,111 @@ BiomeDistances calculateBiomeDistances(Camera* cam, World& w)
 	return out;
 }
 
+void WorldRenderManager::refreshChunkList()
+{
+	m_light_calculator.setChunkOffset(last_cx, last_cy);
+
+	std::set<int> toRemoveList;
+	std::set<int> toLoadList;
+
+	for (auto& iterator : m_offset_map)
+	{
+		toRemoveList.insert(iterator.first); //get all loaded chunks
+	}
+	for (int x = 0; x < m_chunk_width; x++)
+	{
+		for (int y = 0; y < m_chunk_height; y++)
+		{
+			auto targetX = last_cx + x;
+			auto targetY = last_cy + y;
+			if (
+				targetX < 0
+				|| targetY < 0
+				|| targetX >= (m_world->getInfo().chunk_width)
+				|| targetY >= (m_world->getInfo().chunk_height))
+				continue;
+			half_int mid = {targetX, targetY};
+			auto cc = m_world->getChunkM(targetX, targetY);
+			if (cc == nullptr)
+			{
+				ND_WARN("Cannot render unloaded chunk {},{}", mid.x, mid.y);
+				continue;
+			}
+			if (m_offset_map.find(mid) == m_offset_map.end())
+				toLoadList.insert(mid);
+			else if (cc->isDirty())
+			{
+				m_chunks.at(m_offset_map[mid])->updateMesh(*m_world, *cc);
+				cc->markDirty(false);
+			}
+			toRemoveList.erase(mid);
+		}
+	}
+	for (int removed : toRemoveList)
+	{
+		m_chunks.at(m_offset_map[removed])->m_enabled = false;
+		m_offset_map.erase(removed);
+	}
+	int lastFreeChunk = 0;
+	for (int loade : toLoadList)
+	{
+		half_int loaded = loade;
+		bool foundFreeChunk = false;
+		for (int i = lastFreeChunk; i < m_chunks.size(); i++)
+		{
+			ChunkMeshInstance& c = *m_chunks[i];
+			if (!c.m_enabled)
+			{
+				lastFreeChunk = i + 1;
+				c.m_enabled = true;
+				c.getPos().x = loaded.x * WORLD_CHUNK_SIZE;
+				c.getPos().y = loaded.y * WORLD_CHUNK_SIZE;
+
+				auto chunk = m_world->getChunkM(loaded);
+				chunk->markDirty(false);
+				c.updateMesh(*m_world, *chunk);
+
+				m_offset_map[loaded] = i;
+				foundFreeChunk = true;
+				break;
+			}
+		}
+		ASSERT(foundFreeChunk, "This shouldnt happen"); //chunks meshes should have static number 
+	}
+}
+
 void WorldRenderManager::onUpdate()
 {
 	int cx = floor(m_camera->getPosition().x / WORLD_CHUNK_SIZE) - floor(m_chunk_width / 2.0f);
 	int cy = floor(m_camera->getPosition().y / WORLD_CHUNK_SIZE) - floor(m_chunk_height / 2.0f);
 
-	if (cx != last_cx || cy != last_cy)
+	if (cx != last_cx || cy != last_cy || m_world->hasChunkChanged())
 	{
-		int lcx = cx;
-		int lcy = cy;
-		/*ND_INFO("Y {}", cy);
-		//check if chunks are always valid subset of world chunks
-		if (cy > m_world->getInfo().chunk_height - m_chunk_height)
-			lcy = m_world->getInfo().chunk_height - m_chunk_height;
-		else if (cy < m_chunk_height)
-			lcy = m_chunk_height;
-		ND_INFO("LCY {}", lcy);
-		
-		if (cx > m_world->getInfo().chunk_width - m_chunk_width)
-			lcx = m_world->getInfo().chunk_width - m_chunk_width;
-		else if (cx < m_chunk_width)
-			lcx = m_chunk_width;
-		*/
-		m_light_calculator.setChunkOffset(lcx, lcy);
 		last_cx = cx;
 		last_cy = cy;
-
-		std::set<int> toRemoveList;
-		std::set<int> toLoadList;
-
-		for (auto iterator = m_offset_map.begin(); iterator != m_offset_map.end(); ++iterator)
-		{
-			toRemoveList.insert(iterator->first); //get all loaded chunks
-		}
-		for (int x = 0; x < m_chunk_width; x++)
-		{
-			for (int y = 0; y < m_chunk_height; y++)
-			{
-				auto targetX = cx + x;
-				auto targetY = cy + y;
-				if (
-					targetX < 0
-					|| targetY < 0
-					|| targetX >= (m_world->getInfo().chunk_width)
-					|| targetY >= (m_world->getInfo().chunk_height))
-					continue;
-				half_int mid = {targetX, targetY};
-				int index = m_world->getChunkIndex(half_int(targetX, targetY));
-				if (index == -1)
-				{
-					ND_WARN("Cannot render unloaded chunk {},{}", mid.x, mid.y);
-					continue;
-				}
-
-				auto& cc = *m_world->getChunkM(targetX, targetY);
-				if (m_offset_map.find(mid) == m_offset_map.end())
-					toLoadList.insert(mid);
-				else if (cc.isDirty())
-				{
-					m_chunks.at(m_offset_map[mid])->updateMesh(*m_world, cc);
-					cc.markDirty(false);
-				}
-				toRemoveList.erase(mid);
-			}
-		}
-		for (int removed : toRemoveList)
-		{
-			m_chunks.at(m_offset_map[removed])->m_enabled = false;
-			m_offset_map.erase(removed);
-		}
-		int lastFreeChunk = 0;
-		for (int loade : toLoadList)
-		{
-			half_int loaded = loade;
-			bool foundFreeChunk = false;
-			for (int i = lastFreeChunk; i < m_chunks.size(); i++)
-			{
-				ChunkMeshInstance& c = *m_chunks[i];
-				if (!c.m_enabled)
-				{
-					lastFreeChunk = i + 1;
-					c.m_enabled = true;
-					c.getPos().x = loaded.x * WORLD_CHUNK_SIZE;
-					c.getPos().y = loaded.y * WORLD_CHUNK_SIZE;
-
-					c.updateMesh(*m_world, *m_world->getChunk(loaded.x, loaded.y));
-
-
-					m_offset_map[loaded] = i;
-					foundFreeChunk = true;
-					break;
-				}
-			}
-			ASSERT(foundFreeChunk, "This shouldnt happen"); //chunks meshes should have static number 
-		}
+		refreshChunkList();
 	}
-	else
+
+	//std::vector<int> chunksToErase;
+	for (auto& iterator : m_offset_map)
 	{
-		for (auto iterator = m_offset_map.begin(); iterator != m_offset_map.end(); ++iterator)
-		{
-			half_int id = iterator->first;
-			auto& c = *m_world->getChunkM(id.x, id.y);
-			if (c.isDirty())
+		half_int id = iterator.first;
+		auto c = m_world->getChunkM(id);
+		if (c) {
+			if (c->isDirty())
 			{
-				m_chunks[iterator->second]->updateMesh(*m_world, c);
-				c.markDirty(false);
+				m_chunks[iterator.second]->updateMesh(*m_world, *c);
+				c->markDirty(false);
 			}
 		}
+		else
+			ND_WARN("Worldrendermanager cannot find chunk");
+		//else
+		//	chunksToErase.push_back(id);
 	}
+	//for (int id : chunksToErase)
+	//	m_offset_map.erase(m_offset_map.find(id));
+
 
 	//if (Stats::light_enable)
 	//	computeLight();moved to render "thread"
@@ -496,7 +490,7 @@ void WorldRenderManager::renderBiomeBackgroundToFBO()
 void WorldRenderManager::render()
 {
 	//light
-	if(Stats::light_enable)
+	if (Stats::light_enable)
 		renderLightMap();
 
 	//chunk render
@@ -526,8 +520,8 @@ void WorldRenderManager::render()
 		//background
 		Gcon.enableBlend();
 		Gcon.setBlendFuncSeparate(Blend::SRC_ALPHA, Blend::ONE_MINUS_SRC_ALPHA, Blend::ZERO, Blend::ONE);
-		
-	
+
+
 		Sprite2D::getProgramStatic().bind();
 		Sprite2D::getVAOStatic().bind();
 		auto m = glm::translate(glm::mat4(1.0f), glm::vec3(-1, -1, 0));
@@ -550,8 +544,8 @@ void WorldRenderManager::render()
 				continue;
 
 			auto worldMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(
-				mesh->getPos().x - m_camera->getPosition().x,
-				mesh->getPos().y - m_camera->getPosition().y, 0.0f));
+				                                  mesh->getPos().x - m_camera->getPosition().x,
+				                                  mesh->getPos().y - m_camera->getPosition().y, 0.0f));
 			worldMatrix = glm::scale(worldMatrix, glm::vec3(0.5f, 0.5f, 1));
 			chunkProgram.setUniformMat4("u_transform", getProjMatrix() * worldMatrix);
 
@@ -560,7 +554,8 @@ void WorldRenderManager::render()
 		}
 		m_wall_fbo->unbind();
 
-		if (Stats::light_enable) {
+		if (Stats::light_enable)
+		{
 			m_edge->render(m_light_fbo->getTexture(), Stats::edge_scale);
 			m_blur->render(m_edge->getTexture());
 			Gcon.enableBlend();
@@ -569,7 +564,7 @@ void WorldRenderManager::render()
 		}
 	}
 
-	
+
 	//blocks
 	m_block_fbo->bind();
 	{
@@ -587,16 +582,15 @@ void WorldRenderManager::render()
 				continue;
 
 			auto world_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(
-				mesh->getPos().x - m_camera->getPosition().x,
-				mesh->getPos().y - m_camera->getPosition().y, 0.0f));
+				                                   mesh->getPos().x - m_camera->getPosition().x,
+				                                   mesh->getPos().y - m_camera->getPosition().y, 0.0f));
 			chunkProgram.setUniformMat4("u_transform", getProjMatrix() * world_matrix);
 
 			mesh->getVAO().bind();
 			GLCall(glDrawArrays(GL_POINTS, 0, WORLD_CHUNK_AREA));
 		}
-		if(Stats::light_enable)
+		if (Stats::light_enable)
 			applyLightMap(m_light_fbo->getTexture());
-
 	}
 	m_block_fbo->unbind();
 
@@ -642,13 +636,12 @@ void WorldRenderManager::renderLightMap()
 
 void WorldRenderManager::applyLightMap(Texture* lightmap)
 {
-
 	auto worldMatrix = glm::mat4(1.0f);
 	worldMatrix = glm::translate(worldMatrix, glm::vec3(
-		lightOffset.first * WORLD_CHUNK_SIZE - m_camera->getPosition().x,
-		lightOffset.second * WORLD_CHUNK_SIZE - m_camera->getPosition().y, 0.0f));
+		                             lightOffset.first * WORLD_CHUNK_SIZE - m_camera->getPosition().x,
+		                             lightOffset.second * WORLD_CHUNK_SIZE - m_camera->getPosition().y, 0.0f));
 	worldMatrix = glm::scale(worldMatrix,
-		glm::vec3(m_chunk_width * WORLD_CHUNK_SIZE, m_chunk_height * WORLD_CHUNK_SIZE, 1));
+	                         glm::vec3(m_chunk_width * WORLD_CHUNK_SIZE, m_chunk_height * WORLD_CHUNK_SIZE, 1));
 
 	lightmap->bind(0);
 

@@ -9,6 +9,9 @@
 #include "particle/ParticleManager.h"
 #include "entity/Pool.h"
 #include "ThreadedWorldGen.h"
+#include "BlockAccess.h"
+
+
 
 class IChunkProvider;
 
@@ -44,7 +47,7 @@ private:
 	int m_biome;
 
 	//multithreading light
-	JobAssigment m_light_job;
+	JobAssignment m_light_job;
 
 public:
 	friend class World;
@@ -69,7 +72,7 @@ public:
 		else m_flags &= ~CHUNK_LOCKED_FLAG;
 	}
 
-	inline JobAssigment& getLightJob() { return m_light_job; }
+	inline JobAssignment& getLightJob() { return m_light_job; }
 
 	inline BlockStruct& block(int x, int y)
 	{
@@ -125,49 +128,36 @@ struct WorldInfo
 	ChunkID playerChunk;
 };
 
-class BlockAccess
-{
-public:
-	virtual ~BlockAccess() = default;
-
-	//returns mutable pointer to valid loaded block or nullptr
-	virtual BlockStruct* getBlockM(int x,int y) = 0;
-	virtual Chunk* getChunkM(int cx, int cy) = 0;
-	virtual void setBlock(int x, int y, BlockStruct& block) = 0;
-	inline void setBlock(int x, int y, int blockid) { setBlock(x, y, BlockStruct(blockid)); }
-	virtual void setBlockWithNotify(int x, int y, BlockStruct& block) = 0;
-	inline void setBlockWithNotify(int x, int y, int blockid) { setBlockWithNotify(x, y, BlockStruct(blockid)); }
-	virtual void setWall(int x, int y, int wallid) = 0;
-};
 
 class World:public BlockAccess
 {
 	friend class WorldIO::Session;
 	friend class WorldGen;
-
+public:
 	enum ChunkState
 	{
 		BEING_LOADED,
+		BEING_GENERATED,
+		GENERATED,
 		BEING_UNLOADED,
-		LOADED,
 		UNLOADED
 	};
-public:
 	class ChunkHeader
 	{
 		ChunkID m_chunkId = std::numeric_limits<int>::max();
-		JobAssigment m_job;
-		ChunkState m_state;
+		JobAssignment m_job;
+		ChunkState m_state=UNLOADED;
 
 		// whether you can call setBlock etc.
 		// chunk might be generated at the moment so always check this
-		bool m_is_accessible;
+		bool m_is_accessible=false;
 		
 	public:
 		ChunkHeader() = default;
 		ChunkHeader(ChunkID id) :m_chunkId(id),m_state(UNLOADED) {}
 		inline ChunkID getChunkID() const { return m_chunkId; }
-		inline JobAssigmentP getJob() { return &m_job; }
+		inline JobAssignmentP getJob() { return &m_job; }
+		inline const JobAssignment& getJobConst() const { return m_job; }
 		inline bool isFree()const {
 			return m_chunkId == std::numeric_limits<int>::max();
 		}
@@ -192,7 +182,9 @@ private:
 	NBT m_world_nbt;
 	IChunkProvider* m_chunk_provider;
 	ThreadedWorldGen m_threaded_gen;
-	Pool<JobAssigment> m_job_pool;
+	Pool<JobAssignment> m_job_pool;
+
+	bool m_has_chunk_changed = false;
 
 	WorldInfo m_info;
 	std::string m_file_path;
@@ -222,6 +214,7 @@ private:
 	void onWallsChange(int xx, int yy, BlockStruct& blok);
 	int getNextFreeChunkIndex(int startSearchIndex = 0);
 	void genChunks(defaultable_map<int, int, 0>& toUpdateChunks);
+	void updateBounds(defaultable_map<int, int, 0>& toUpdateChunks);
 	void loadLightResources(int x, int y);
 
 	inline ChunkState getChunkState(int chunkID)
@@ -247,6 +240,14 @@ public:
 	void tick();
 
 
+	//returns if a chunk was loaded or unloaded and resets
+	inline bool hasChunkChanged()
+	{
+		bool out = m_has_chunk_changed;
+
+		m_has_chunk_changed = false;
+		return out;
+	}
 	inline bool isBlockValid(int x, int y) const
 	{
 		return x >= 0 && y >= 0 && x < getInfo().chunk_width * WORLD_CHUNK_SIZE && y < getInfo().chunk_height *
@@ -281,14 +282,13 @@ public:
 	// return index if chunk is in memory and accessible or -1
 	int getChunkIndex(int id) const;
 	// return index if chunk is in memory (array) or -1
-	int getChunkHeaderIndex(int id) const;
+	int getChunkUnaccessibleIndex(int id) const;
 
 	// assign chunk load and gen task and returns
 	void loadChunk(int x, int y);
 
 	// returns if chunk can be normally accessed (it is not in being loaded state)
 	inline bool isChunkFullyLoaded(int id) const { return getChunkIndex(id) != -1; }
-	void unloadChunk(Chunk& c);
 	void unloadChunks(std::set<int>& chunk_ids);
 	static void updateChunkBounds(BlockAccess& world,int cx, int cy, int bitBounds);
 	void loadChunksAndGen(std::set<int>& toLoadChunks);
@@ -356,7 +356,7 @@ public:
 	//==========INFO==================================================
 
 	inline std::unordered_map<int, int>& getMap() { return m_local_offset_header_map; }
-
+	inline auto& getHeaders() const { return m_chunk_headers; }
 	inline long long getWorldTicks() const { return m_info.time; }
 	inline WorldTime getWorldTime() const { return WorldTime(m_info.time); }
 	inline std::string getName() const { return m_info.name; }
@@ -393,6 +393,9 @@ public:
 
 	void unloadEntity(EntityID worldEntity,bool isKilled=false);
 	void unloadTileEntity(EntityID worldEntity,bool isKilled=false);
+
+	void unloadEntityNoDestruction(WorldEntity* worldEntity, bool isKilled = false);
+	void unloadTileEntityNoDestruction(WorldEntity* worldEntity, bool isKilled = false);
 
 	EntityID spawnEntity(WorldEntity* pEntity);
 
@@ -453,8 +456,6 @@ public:
 		m_is_chunk_gen_map.set(getChunkSaveOffset(cx, cy),true);
 	}
 };
-
-
 
 
 

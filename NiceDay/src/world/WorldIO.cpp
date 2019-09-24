@@ -300,6 +300,7 @@ namespace WorldIO
 	{
 		m_stream = new std::fstream(m_path, std::ios::in | std::ios::out | std::ios::binary);
 		CHECK_STREAM_STATE_START(m_stream, m_path);
+		m_is_opened = true;
 	}
 
 	void DynamicSaver::endSession()
@@ -309,6 +310,8 @@ namespace WorldIO
 			delete m_stream;
 			m_stream = nullptr;
 		}
+		m_is_opened = false;
+
 	}
 
 	void DynamicSaver::setWriteChunkID(int chunkID)

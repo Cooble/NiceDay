@@ -22,14 +22,14 @@ void ThreadedWorldGen::proccessAssignments(std::vector<WorldGenAssignment>& assi
 	}
 }
 
-void ThreadedWorldGen::assignChunkGen(JobAssigment* job, Chunk* chunk)
+void ThreadedWorldGen::assignChunkGen(JobAssignment* job, Chunk* chunk)
 {
 	WorldGenAssignment as(job, chunk->chunkID(), chunk);
 
 	assignWork(as);
 }
 
-void ThreadedWorldGen::assignChunkBoundUpdate(JobAssigment* job, const ChunkPack& pack,int bitBounds)
+void ThreadedWorldGen::assignChunkBoundUpdate(JobAssignment* job, const ChunkPack& pack,int bitBounds)
 {
 	WorldGenAssignment as(job, pack,bitBounds);
 

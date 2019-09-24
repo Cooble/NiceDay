@@ -460,7 +460,7 @@ public:
 inline float randFloat(float size = 1) { return std::rand() % 1000 / 1000.f * size; }
 inline float randDispersedFloat(float absSize = 1) { return (std::rand() % 1000 / 1000.f - 0.5f) * absSize * 2; }
 
-class JobAssigment
+class JobAssignment
 {
 public:
 	int64_t m_main = 0;
@@ -487,7 +487,7 @@ public:
 	}
 };
 
-typedef JobAssigment* JobAssigmentP;
+typedef JobAssignment* JobAssignmentP;
 
 //todo make startAssigning() and flushAssigning()
 template <typename WorkAssignment>

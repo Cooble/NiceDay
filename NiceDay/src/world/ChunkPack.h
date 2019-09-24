@@ -1,17 +1,15 @@
 #pragma once
-
-#include "World.h"
-class Chunk;
+#include "BlockAccess.h"
 
 // contains a slice of world (chunkPointers)
 // 
 class ChunkPack:public BlockAccess
 {
-public:
+private:
 	half_int m_chunk_pos;
 	std::array<Chunk*,9> m_chunks;
-
 public:
+	ChunkPack() = default;
 	ChunkPack(half_int centerPos,std::initializer_list<Chunk*> chunks);
 	virtual ~ChunkPack()=default;
 	BlockStruct* getBlockM(int x, int y) override;
@@ -30,12 +28,11 @@ public:
 		return m_chunks.end();
 	}
 
-	inline half_int getCenterChunk()const { return m_chunk_pos + half_int(1, 1); }
+	inline half_int getCenterChunk()const { return m_chunk_pos; }
 
 	void markLightJobDone();
 	void assignLightJob();
-	
-	
 
+	static ChunkPack fromChunk(Chunk* c);
 };
 

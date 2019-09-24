@@ -88,9 +88,9 @@ static int getNeighbourCount(bool* map, int x, int y)
 	return out;
 }
 
-void WorldGen::genLayer0(World& w, Chunk& c)
+void WorldGen::genLayer0(World& w,Chunk& c)
 {
-	TimerStaper t("gen chunk");
+	//TimerStaper t("gen chunk");
 	if (m_prior_gen == nullptr)
 	{
 		m_prior_gen = new PriorGen("file");
@@ -110,7 +110,7 @@ void WorldGen::genLayer0(World& w, Chunk& c)
 	int offsetX = c.m_x * WORLD_CHUNK_SIZE;
 	int offsetY = c.m_y * WORLD_CHUNK_SIZE;
 	half_int index = c.chunkID();
-
+	ChunkPack p = ChunkPack::fromChunk(&c);
 	/*TimerStaper t("gen chunk");
 	static bool* map0 = new bool[WORLD_CHUNK_AREA * 4];
 	static bool* map1 = new bool[WORLD_CHUNK_AREA * 4];
@@ -257,9 +257,9 @@ void WorldGen::genLayer0(World& w, Chunk& c)
 			auto worldx = offsetX + x;
 			auto worldy = offsetY + y;
 			if (!block.isAir())
-				BlockRegistry::get().getBlock(block.block_id).onNeighbourBlockChange(*w.getTotalBlockAccess(), worldx, worldy);
+				BlockRegistry::get().getBlock(block.block_id).onNeighbourBlockChange(p, worldx, worldy);
 			if (!block.isWallFree())
-				BlockRegistry::get().getWall(block.wallID()).onNeighbourWallChange(*w.getTotalBlockAccess(), worldx, worldy);
+				BlockRegistry::get().getWall(block.wallID()).onNeighbourWallChange(p, worldx, worldy);
 		}
 	}
 	c.last_save_time = w.getWorldTicks(); //mark it as was generated

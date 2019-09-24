@@ -98,7 +98,7 @@ void App::start()
 			maxMil = std::max((int)(nowTime() - tt),maxMil);
 		}
 		m_tick_millis = maxMil;
-
+		now = nowTime();
 		render();
 		m_render_millis = nowTime() - now;
 

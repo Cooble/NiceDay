@@ -192,6 +192,7 @@
     <ClInclude Include="src\platform\OpenGL\GLRenderer.h" />
     <ClInclude Include="src\platform\OpenGL\GLTexture.h" />
     <ClInclude Include="src\platform\OpenGL\GLVertexArray.h" />
+    <ClInclude Include="src\world\BlockAccess.h" />
     <ClInclude Include="src\world\ChunkLoader.h" />
     <ClInclude Include="src\world\ChunkMesh.h" />
     <ClInclude Include="src\world\ChunkPack.h" />
@@ -650,6 +651,7 @@
     <ClCompile Include="src\platform\OpenGL\GLRenderer.cpp" />
     <ClCompile Include="src\platform\OpenGL\GLTexture.cpp" />
     <ClCompile Include="src\platform\OpenGL\GLVertexArray.cpp" />
+    <ClCompile Include="src\world\BlockAccess.cpp" />
     <ClCompile Include="src\world\ChunkLoader.cpp" />
     <ClCompile Include="src\world\ChunkMesh.cpp" />
     <ClCompile Include="src\world\ChunkPack.cpp" />

@@ -376,7 +376,7 @@ void WorldLayer::onUpdate()
 
 	if (Stats::move_through_blocks_enable)
 	{
-		velocity = glm::vec2(0,0);
+		velocity = glm::vec2(0, 0);
 		if (App::get().getInput().isKeyPressed(GLFW_KEY_RIGHT))
 			velocity.x = moveThroughBlockSpeed;
 		if (App::get().getInput().isKeyPressed(GLFW_KEY_LEFT))
@@ -404,7 +404,7 @@ void WorldLayer::onUpdate()
 	}
 
 	//std::cout << "Acceleration: " << Phys::asVect(accel) << "\n";
-	
+
 	// Particle Sh't
 	/*
 	static float angle=0;
@@ -430,7 +430,7 @@ void WorldLayer::onUpdate()
 		m_world->spawnParticle(ParticleList::dot, getPlayer().getPosition(), speed2, speed*(-0.005f+ randDispersedFloat()*0.2f), (60 + rand() % 10) * 5);
 	}
 	*/
-	
+
 	CAM_POS_X = (m_cam->getPosition().x);
 	CAM_POS_Y = (m_cam->getPosition().y);
 	CHUNKS_LOADED = m_world->getMap().size();
@@ -442,12 +442,11 @@ void WorldLayer::onUpdate()
 	m_world->onUpdate();
 	m_cam->setPosition(getPlayer().getPosition().asGLM());
 	m_chunk_loader->onUpdate();
-	m_render_manager->onUpdate();
 
 	return;
 	//rain
 	auto chunkP = m_world->getChunk((int)getPlayer().getPosition().x >> WORLD_CHUNK_BIT_SIZE,
-	                                             (int)getPlayer().getPosition().y >> WORLD_CHUNK_BIT_SIZE);
+	                                (int)getPlayer().getPosition().y >> WORLD_CHUNK_BIT_SIZE);
 	if (chunkP)
 	{
 		auto& biome = BiomeRegistry::get().getBiome(chunkP->getBiome());
@@ -477,20 +476,21 @@ void WorldLayer::onUpdate()
 			}
 		}
 	}
-
 }
 
 void WorldLayer::onRender()
 {
+	m_render_manager->onUpdate();
+
 	//world
 	m_render_manager->render();
 
 	//entities
 	auto worldMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(-m_cam->getPosition().x, -m_cam->getPosition().y, 0));
-	
+
 	m_batch_renderer->begin();
-	m_batch_renderer->push(m_render_manager->getProjMatrix()*worldMatrix);
-	
+	m_batch_renderer->push(m_render_manager->getProjMatrix() * worldMatrix);
+
 	for (auto it = m_world->beginEntities(); it != m_world->endEntities(); ++it)
 	{
 		WorldEntity* entity = m_world->getLoadedEntity(*it);
@@ -498,21 +498,21 @@ void WorldLayer::onRender()
 		if (ren)
 			ren->render(*m_batch_renderer);
 	}
-	
+
 	m_batch_renderer->pop();
 	m_batch_renderer->flush();
 
 
 	//particles
 	m_particle_renderer->begin();
-	m_particle_renderer->push(m_render_manager->getProjMatrix()*worldMatrix);
+	m_particle_renderer->push(m_render_manager->getProjMatrix() * worldMatrix);
 	(*m_world->particleManager())->render(*m_particle_renderer);
 	m_particle_renderer->pop();
 	m_particle_renderer->flush();
-
 }
 
 static bool showTelem = false;
+static bool showChunks = false;
 
 void WorldLayer::onImGuiRender()
 {
@@ -521,6 +521,10 @@ void WorldLayer::onImGuiRender()
 	if (showTelem)
 	{
 		onImGuiRenderTelemetrics();
+	}
+	if (showChunks)
+	{
+		onImGuiRenderChunks();
 	}
 }
 
@@ -580,6 +584,7 @@ void WorldLayer::onImGuiRenderWorld()
 		return;
 	}
 	ImGui::Checkbox("Show Telemetrics", &showTelem);
+	ImGui::Checkbox("Show Chunks", &showChunks);
 	ImGui::Checkbox("Show CollisionBox", &Stats::show_collisionBox);
 	/*BiomeDistances d = Stats::biome_distances;
 	ImGui::Text("Biomes:");
@@ -611,7 +616,8 @@ void WorldLayer::onImGuiRenderWorld()
 
 
 	ImGui::Text("World filepath: %s", WORLD_FILE_PATH);
-	ImGui::Text("WorldTime: (%d) %d:%d", m_world->getWorldTime().m_ticks,(int)m_world->getWorldTime().hour(), (int)m_world->getWorldTime().minute());
+	ImGui::Text("WorldTime: (%d) %d:%d", m_world->getWorldTime().m_ticks, (int)m_world->getWorldTime().hour(),
+	            (int)m_world->getWorldTime().minute());
 	ImGui::SliderFloat("Time speed", &m_world->m_time_speed, 0.f, 20.0f, "ratio = %.2f");
 	ImGui::Text("Cam X: %.2f \t(%d)", CAM_POS_X, (int)CAM_POS_X >> WORLD_CHUNK_BIT_SIZE);
 	ImGui::Text("Cam Y: %.2f \t(%d)", CAM_POS_Y, (int)CAM_POS_Y >> WORLD_CHUNK_BIT_SIZE);
@@ -632,20 +638,22 @@ void WorldLayer::onImGuiRenderWorld()
 	{
 		CURRENT_BLOCK = current;
 		quarter_int metaSections = CURRENT_BLOCK->block_metadata;
-		ImGui::Text("Current Block: %s (id: %d, corner: %d, meta: %d ->[%d,%d,%d,%d])", CURRENT_BLOCK_ID.c_str(), CURRENT_BLOCK->block_id,
-			CURRENT_BLOCK->block_corner, CURRENT_BLOCK->block_metadata, metaSections.x, metaSections.y, metaSections.z, metaSections.w);
+		ImGui::Text("Current Block: %s (id: %d, corner: %d, meta: %d ->[%d,%d,%d,%d])", CURRENT_BLOCK_ID.c_str(),
+		            CURRENT_BLOCK->block_id,
+		            CURRENT_BLOCK->block_corner, CURRENT_BLOCK->block_metadata, metaSections.x, metaSections.y,
+		            metaSections.z, metaSections.w);
 		int wallid = CURRENT_BLOCK->wall_id[0];
 		if (!CURRENT_BLOCK->isWallOccupied())
 			wallid = -1;
 		ImGui::Text("Current Wall: %s (id: %d)",
-			BlockRegistry::get().getWall(CURRENT_BLOCK->wall_id[0]).toString().c_str(), wallid);
+		            BlockRegistry::get().getWall(CURRENT_BLOCK->wall_id[0]).toString().c_str(), wallid);
 
 		for (int i = 0; i < 2; ++i)
 			for (int j = 0; j < 2; ++j)
 			{
 				const Wall& w = BlockRegistry::get().getWall(CURRENT_BLOCK->wall_id[i * 2 + j]);
 				ImGui::Text(" -> (%d, %d): corner:%d, %s ", j, i, CURRENT_BLOCK->wall_corner[i * 2 + j],
-					w.toString().c_str());
+				            w.toString().c_str());
 			}
 		int ccx = CURSOR_X;
 		int ccy = CURSOR_Y;
@@ -653,7 +661,7 @@ void WorldLayer::onImGuiRenderWorld()
 		int i = CURSOR_Y - ccy < 0.5f ? 0 : 1;
 		const Wall& w = BlockRegistry::get().getWall(CURRENT_BLOCK->wall_id[i * 2 + j]);
 		ImGui::Text("Selected Wall -> (%d, %d): corner:%d, %s ", j, i, CURRENT_BLOCK->wall_corner[i * 2 + j],
-			w.toString().c_str());
+		            w.toString().c_str());
 	}
 
 	ImGui::Separator();
@@ -724,6 +732,61 @@ void WorldLayer::onImGuiRenderWorld()
 	ImGui::End();
 	//static bool op = false;
 	//ImGui::ShowDemoWindow(&op);
+}
+
+
+static std::string toString(World::ChunkState s)
+{
+	switch (s)
+	{
+	case World::BEING_LOADED:		return "BE_LOADED";
+	case World::BEING_GENERATED: 	return "BE_GENERA";
+	case World::GENERATED: 			return "GENERATED";
+	case World::BEING_UNLOADED: 	return "BE_UNLOAD";
+	case World::UNLOADED:			return "UNLOADED ";
+	default: return "INVAL";
+	}
+}
+
+void WorldLayer::onImGuiRenderChunks()
+{
+	static bool showBase = true;
+
+	if (!ImGui::Begin("Chunks", &showBase))
+	{
+		ImGui::End();
+		return;
+	}
+	ImGui::Value("Tasksize ", App::get().getScheduler().size());
+	auto& t = m_world->getHeaders();
+	int offset = 0;
+	for (auto& header : t)
+	{
+		if (offset < 10) {
+			ImGui::Text("0%d: (%d/%d), %s, ac:%d, ID:%d",
+				offset++,
+				(int)header.getJobConst().m_worker,
+				(int)header.getJobConst().m_main,
+				toString(header.getState()).c_str(),
+				header.isAccessible(),
+				header.getChunkID()
+
+			);
+		}else
+		{
+			ImGui::Text("%d: (%d/%d), %s, ac:%d, ID:%d",
+				offset++,
+				(int)header.getJobConst().m_worker,
+				(int)header.getJobConst().m_main,
+				toString(header.getState()).c_str(),
+				header.isAccessible(),
+				header.getChunkID()
+
+			);
+		}
+	}
+
+	ImGui::End();
 }
 
 void WorldLayer::onEvent(Event& e)

@@ -1,4 +1,5 @@
 ﻿#pragma once
+class BlockAccess;
 class Chunk;
 class World;
 
@@ -23,5 +24,5 @@ private:
 public:
 	inline void registerLayer(WorldGenLayer* p) { m_layers.push_back(p); }
 	float getTerrainHeight(int seed, float x);
-	void genLayer0(World& w, Chunk& centerChunk);
+	void genLayer0(World& w,Chunk& centerChunk);
 };

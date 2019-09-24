@@ -80,7 +80,6 @@ public:
 struct NBT
 {
 	std::unordered_map<std::string, std::string> m_strings;
-	std::unordered_map<std::string, int8_t> m_bytes;
 	std::unordered_map<std::string, int32_t> m_ints;
 	std::unordered_map<std::string, int64_t> m_longs;
 	std::unordered_map<std::string, NBT> m_nbts;
@@ -116,7 +115,6 @@ private:
 	struct NBTHeader
 	{
 		size_t string_count;
-		size_t bytes_count;
 		size_t ints_count;
 		size_t long_count;
 		size_t nbt_count;
@@ -130,7 +128,6 @@ public:
 	void clear()
 	{
 		m_strings.clear();
-		m_bytes.clear();
 		m_ints.clear();
 		m_longs.clear();
 		m_nbts.clear();
@@ -141,9 +138,8 @@ public:
 	{
 		auto& stream = *strea;
 
-		NBTHeader data = {};
+		NBTHeader data;
 		data.string_count = m_strings.size();
-		data.bytes_count = m_bytes.size();
 		data.ints_count = m_ints.size();
 		data.long_count = m_longs.size();
 		data.nbt_count = m_nbts.size();
@@ -152,12 +148,7 @@ public:
 		for (auto& tt : m_strings)
 		{
 			stream.write(tt.first.c_str(), tt.first.size()+1);
-			stream.write(tt.second.data(), tt.second.size()+1);
-		}
-		for (auto tt : m_bytes)
-		{
-			stream.write(tt.first.c_str(), tt.first.size()+1);
-			stream.write((char*)&tt.second, 1);
+			stream.write(tt.second.c_str(), tt.second.size()+1);
 		}
 		for (auto tt : m_ints)
 		{
@@ -214,15 +205,6 @@ public:
 			auto val = std::string(buff, buff + size);
 			m_strings[key] = val;
 		}
-
-
-		for (int i = 0; i < data.bytes_count; ++i)
-		{
-			readString(stream, buff, size);
-			auto key = std::string(buff, buff + size);
-
-			stream.read((char*)&m_bytes[key],1);
-		}
 		char bufff[8];
 		for (int i = 0; i < data.ints_count; ++i)
 		{
@@ -258,8 +240,14 @@ public:
 
 	//1byte=====================================
 
-	NBT_BUILD_FUNC(uint8_t, m_bytes, int8_t)
-	NBT_BUILD_FUNC(int8_t, m_bytes, int8_t)
+	NBT_BUILD_FUNC(uint8_t, m_ints, int32_t)
+	NBT_BUILD_FUNC(int8_t, m_ints, int32_t)
+	
+	//2byte=====================================
+
+	NBT_BUILD_FUNC(uint16_t, m_ints, int32_t)
+	NBT_BUILD_FUNC(int16_t, m_ints, int32_t)
+
 
 	//4bytes======================================
 

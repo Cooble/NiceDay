@@ -3,18 +3,27 @@
 
 struct WorldIOAssignment
 {
-	JobAssigment* job;
+	JobAssignment* job;
 
 	union//pointer
 	{
 		Chunk* chunk;
 		WorldInfo* worldInfo;
 		NBT* nbt;
+		WorldEntity** entities;
+		WorldEntity*** entitiesPointer;
 	};
 	union//data
 	{
-		int chunkOffset;
-		int chunkID;
+		uint64_t data;
+		uint64_t chunkOffset;
+		uint64_t chunkID;
+	};
+	union//data2
+	{
+		uint64_t data2;
+		int* entitySizePointer;
+		uint64_t entitySize;
 	};
 	enum:int
 	{
@@ -23,13 +32,16 @@ struct WorldIOAssignment
 		WORLD_META_SAVE,
 		WORLD_META_LOAD,
 		NBT_READ,
-		NBT_WRITE,
+		NBT_WRITE,	
+		ENTITY_READ,
+		ENTITY_WRITE,
 	} type;
 	WorldIOAssignment() = default;
-	WorldIOAssignment(JobAssigment* job, void* pointer, int data, int type)
+	WorldIOAssignment(JobAssignment* job, void* pointer, uint64_t data, uint64_t data2, int type)
 	:job(job),
 	chunk((Chunk*)pointer),
-	chunkOffset(data)
+	data(data),
+	data2(data2)
 	{
 		*(int*)&this->type = type;
 	}
@@ -40,12 +52,14 @@ class ThreadedChunkProvider:public Worker<WorldIOAssignment>,public IChunkProvid
 public:
 	virtual ~ThreadedChunkProvider()=default;
 
-	void assignChunkLoad(JobAssigment* jobAssigment, Chunk* chunk, int chunkOffset) override;
-	void assignChunkSave(JobAssigment* jobAssigment, Chunk* chunk, int chunkOffset) override;
-	void assignWorldInfoSave(JobAssigment* jobAssigment, const WorldInfo* info) override;
-	void assignWorldInfoLoad(JobAssigment* jobAssigment, WorldInfo* info) override;
-	void assignNBTLoad(JobAssigment* jobAssigment, NBT* nbt) override;
-	void assignNBTSave(JobAssigment* jobAssigment, const NBT* nbt) override;
+	void assignChunkLoad(JobAssignment* jobAssigment, Chunk* chunk, int chunkOffset) override;
+	void assignChunkSave(JobAssignment* jobAssigment, Chunk* chunk, int chunkOffset) override;
+	void assignWorldInfoSave(JobAssignment* jobAssigment, const WorldInfo* info) override;
+	void assignWorldInfoLoad(JobAssignment* jobAssigment, WorldInfo* info) override;
+	void assignNBTLoad(JobAssignment* jobAssigment, int chunkId, NBT* nbt) override;
+	void assignNBTSave(JobAssignment* jobAssigment, int chunkId, const NBT* nbt) override;
+	void assignEntityLoad(JobAssignment* jobAssigment, int chunkId, WorldEntity*** entities, int* numberOfEntities) override;
+	void assignEntitySave(JobAssignment* jobAssigment, int chunkId, WorldEntity** entities, int numberOfEntities) override;
 };
 
 

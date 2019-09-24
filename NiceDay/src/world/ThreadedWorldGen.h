@@ -1,37 +1,35 @@
 ﻿#pragma once
 #include "ChunkPack.h"
 class Chunk;
-class JobAssigment;
+class JobAssignment;
 class World;
 
 struct WorldGenAssignment
 {
-	JobAssigment* job;
+	JobAssignment* job;
+
 	enum
 	{
 		GENERATION,
 		BOUND_UPDATE
-	}type;
-	union
-	{
-		struct {
-			int chunk_id;
-			Chunk* chunk;
-		};
-		struct
-		{
-		ChunkPack chunkPack;
-		int bitBounds;
-		};
-	};
-	WorldGenAssignment(JobAssigment* job, int chunkId, Chunk* chunk) :
+	} type;
+
+	int chunk_id;
+	Chunk* chunk;
+
+	ChunkPack chunkPack;
+	int bitBounds;
+	WorldGenAssignment() = default;
+
+	WorldGenAssignment(JobAssignment* job, int chunkId, Chunk* chunk) :
 		job(job),
 		chunk_id(chunkId),
 		chunk(chunk)
 	{
 		type = GENERATION;
 	}
-	WorldGenAssignment(JobAssigment* job, const ChunkPack& pack, int bitBounds) :
+
+	WorldGenAssignment(JobAssignment* job, const ChunkPack& pack, int bitBounds) :
 		job(job),
 		chunkPack(pack),
 		bitBounds(bitBounds)
@@ -54,6 +52,6 @@ public:
 
 	void proccessAssignments(std::vector<WorldGenAssignment>& assignments) override;
 
-	void assignChunkGen(JobAssigmentP job, Chunk* chunk);
-	void assignChunkBoundUpdate(JobAssigmentP job, const ChunkPack& chunk,int bitBounds);
+	void assignChunkGen(JobAssignment* job, Chunk* chunk);
+	void assignChunkBoundUpdate(JobAssignment* job, const ChunkPack& pack, int bitBounds);
 };

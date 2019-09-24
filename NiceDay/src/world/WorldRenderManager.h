@@ -88,6 +88,8 @@ public:
 	WorldRenderManager(Camera* cam,World* world);
 	~WorldRenderManager();
 	void onScreenResize();
+	// when new chunk is loaded or unloaded call this
+	void refreshChunkList();
 	void onUpdate();
 	void render();
 	void renderLightMap();

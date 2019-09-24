@@ -22,4 +22,5 @@ public:
 	int runTaskTimer(Task&& t, int eachTicks = 1);
 	void update();
 	void kill(int task_id);
+	inline int size() { return m_tasks.size(); }
 };
