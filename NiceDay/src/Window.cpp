@@ -1,5 +1,7 @@
 #include "ndpch.h"
 #include "Window.h"
+#include <GLFW/glfw3.h>
+#include <glad/glad.h>
 
 #include "event/MouseEvent.h"
 #include "event/KeyEvent.h"
@@ -179,5 +181,10 @@ void Window::update()
 	glfwSwapBuffers(m_window);
 	glClearColor(1, 0, 1, 1);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+}
+
+bool Window::shouldClose()
+{
+	return m_window != nullptr && glfwWindowShouldClose(m_window);
 }
 

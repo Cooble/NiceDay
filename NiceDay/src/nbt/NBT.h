@@ -1,6 +1,6 @@
 #pragma once
-
 #include "physShapes.h"
+#include "ndpch.h"
 struct NBT;
 
 class NBTSaveable //todo those methods should be inlined

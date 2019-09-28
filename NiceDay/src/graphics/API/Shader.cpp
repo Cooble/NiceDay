@@ -1,9 +1,7 @@
 #include "ndpch.h"
 #include "Shader.h"
 #include "platform/OpenGL/GLRenderer.h"
-
-
-#define FORGET_BIND_PROTECTION //just bind it please, dont waste your time 
+#include <filesystem>
 
 
 static void shaderTypeToString(unsigned int t)
@@ -26,8 +24,10 @@ static void shaderTypeToString(unsigned int t)
 }
 
 
+
 static Shader::ShaderProgramSources parseShader(const std::string &file_path) {
 	s_current_file = file_path.c_str();
+	ASSERT(std::filesystem::exists(file_path), "Invalid shader path");
 	std::ifstream stream(file_path);
 
 	enum class ShaderType {

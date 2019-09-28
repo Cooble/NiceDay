@@ -23,19 +23,19 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>Unicode</CharacterSet>
     <PlatformToolset>v141</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <CharacterSet>Unicode</CharacterSet>
     <PlatformToolset>v141</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Dist|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <CharacterSet>Unicode</CharacterSet>
     <PlatformToolset>v141</PlatformToolset>
@@ -54,111 +54,117 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LinkIncremental>true</LinkIncremental>
     <OutDir>..\bin\Debug-windows-x86_64\NiceDay\</OutDir>
     <IntDir>..\bin-int\Debug-windows-x86_64\NiceDay\</IntDir>
     <TargetName>NiceDay</TargetName>
-    <TargetExt>.exe</TargetExt>
+    <TargetExt>.lib</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LinkIncremental>false</LinkIncremental>
     <OutDir>..\bin\Release-windows-x86_64\NiceDay\</OutDir>
     <IntDir>..\bin-int\Release-windows-x86_64\NiceDay\</IntDir>
     <TargetName>NiceDay</TargetName>
-    <TargetExt>.exe</TargetExt>
+    <TargetExt>.lib</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Dist|x64'">
-    <LinkIncremental>false</LinkIncremental>
     <OutDir>..\bin\Dist-windows-x86_64\NiceDay\</OutDir>
     <IntDir>..\bin-int\Dist-windows-x86_64\NiceDay\</IntDir>
     <TargetName>NiceDay</TargetName>
-    <TargetExt>.exe</TargetExt>
+    <TargetExt>.lib</TargetExt>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>ndpch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>ND_PLATFORM_WINDOWS;GLFW_INCLUDE_NONE;ND_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;ND_PLATFORM_WINDOWS;GLFW_INCLUDE_NONE;ND_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>src;vendor\spdlog\include;vendor\glfw\include;vendor\glad\include;vendor\imgui;vendor\glm;vendor\stb_image;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
-      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <MinimalRebuild>false</MinimalRebuild>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <AdditionalOptions>/RTCu %(AdditionalOptions)</AdditionalOptions>
+      <LanguageStandard>stdcpp17</LanguageStandard>
       <BasicRuntimeChecks>UninitializedLocalUsageCheck</BasicRuntimeChecks>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <Lib>
+      <AdditionalDependencies>opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>ndpch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>ND_PLATFORM_WINDOWS;GLFW_INCLUDE_NONE;ND_RELEASE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;ND_PLATFORM_WINDOWS;GLFW_INCLUDE_NONE;ND_RELEASE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>src;vendor\spdlog\include;vendor\glfw\include;vendor\glad\include;vendor\imgui;vendor\glm;vendor\stb_image;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <MinimalRebuild>false</MinimalRebuild>
       <StringPooling>true</StringPooling>
-      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <Lib>
+      <AdditionalDependencies>opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Dist|x64'">
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>ndpch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>ND_PLATFORM_WINDOWS;GLFW_INCLUDE_NONE;ND_DIST;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;ND_PLATFORM_WINDOWS;GLFW_INCLUDE_NONE;ND_DIST;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>src;vendor\spdlog\include;vendor\glfw\include;vendor\glad\include;vendor\imgui;vendor\glm;vendor\stb_image;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <MinimalRebuild>false</MinimalRebuild>
       <StringPooling>true</StringPooling>
-      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <Lib>
+      <AdditionalDependencies>opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="src\Core.h" />
-    <ClInclude Include="src\EntryPoint.h" />
     <ClInclude Include="src\App.h" />
-    <ClInclude Include="src\imgui_utils.h" />
+    <ClInclude Include="src\Core.h" />
     <ClInclude Include="src\Input.h" />
     <ClInclude Include="src\Log.h" />
     <ClInclude Include="src\NDUtil.h" />
-    <ClInclude Include="src\Sandbox.h" />
+    <ClInclude Include="src\Pool.h" />
     <ClInclude Include="src\Scheduler.h" />
     <ClInclude Include="src\Stats.h" />
     <ClInclude Include="src\Window.h" />
-    <ClInclude Include="src\entity\Camera.h" />
-    <ClInclude Include="src\entity\I2DLocalable.h" />
     <ClInclude Include="src\event\Event.h" />
     <ClInclude Include="src\event\KeyEvent.h" />
     <ClInclude Include="src\event\MouseEvent.h" />
     <ClInclude Include="src\event\WindowEvent.h" />
-    <ClInclude Include="src\graphics\Bar.h" />
+    <ClInclude Include="src\graphics\API\Buffer.h" />
+    <ClInclude Include="src\graphics\API\FrameBuffer.h" />
+    <ClInclude Include="src\graphics\API\Shader.h" />
+    <ClInclude Include="src\graphics\API\Texture.h" />
+    <ClInclude Include="src\graphics\API\VertexArray.h" />
     <ClInclude Include="src\graphics\BatchRenderer2D.h" />
-    <ClInclude Include="src\graphics\BlockTextureAtlas.h" />
     <ClInclude Include="src\graphics\Effect.h" />
     <ClInclude Include="src\graphics\GContext.h" />
     <ClInclude Include="src\graphics\Group.h" />
@@ -166,25 +172,16 @@
     <ClInclude Include="src\graphics\ParticleRenderer.h" />
     <ClInclude Include="src\graphics\Renderable2D.h" />
     <ClInclude Include="src\graphics\Renderer.h" />
-    <ClInclude Include="src\graphics\API\Shader.h" />
     <ClInclude Include="src\graphics\Sprite.h" />
-    <ClInclude Include="src\graphics\Sprite2D.h" />
     <ClInclude Include="src\graphics\TestQuad.h" />
-    <ClInclude Include="src\graphics\API\Texture.h" />
     <ClInclude Include="src\graphics\TextureAtlas.h" />
     <ClInclude Include="src\graphics\TextureManager.h" />
-    <ClInclude Include="src\graphics\API\Buffer.h" />
-    <ClInclude Include="src\graphics\API\FrameBuffer.h" />
-    <ClInclude Include="src\graphics\API\VertexArray.h" />
+    <ClInclude Include="src\imgui_utils.h" />
     <ClInclude Include="src\layer\Layer.h" />
     <ClInclude Include="src\layer\LayerStack.h" />
-    <ClInclude Include="src\layer\MainLayer.h" />
-    <ClInclude Include="src\layer\PriorGenLayer.h" />
-    <ClInclude Include="src\layer\WorldLayer.h" />
     <ClInclude Include="src\layer\imguiplotvar.h" />
     <ClInclude Include="src\nbt\NBT.h" />
     <ClInclude Include="src\ndpch.h" />
-    <ClInclude Include="src\particle\ParticleManager.h" />
     <ClInclude Include="src\physShapes.h" />
     <ClInclude Include="src\platform\OpenGL\GLBuffer.h" />
     <ClInclude Include="src\platform\OpenGL\GLContext.h" />
@@ -192,46 +189,6 @@
     <ClInclude Include="src\platform\OpenGL\GLRenderer.h" />
     <ClInclude Include="src\platform\OpenGL\GLTexture.h" />
     <ClInclude Include="src\platform\OpenGL\GLVertexArray.h" />
-    <ClInclude Include="src\world\BlockAccess.h" />
-    <ClInclude Include="src\world\ChunkLoader.h" />
-    <ClInclude Include="src\world\ChunkMesh.h" />
-    <ClInclude Include="src\world\ChunkPack.h" />
-    <ClInclude Include="src\world\FileChunkProvider.h" />
-    <ClInclude Include="src\world\IChunkProvider.h" />
-    <ClInclude Include="src\world\gen\OpenSimplexNoise.hpp" />
-    <ClInclude Include="src\world\ITickable.h" />
-    <ClInclude Include="src\world\LightCalculator.h" />
-    <ClInclude Include="src\world\ThreadedChunkProvider.h" />
-    <ClInclude Include="src\world\ThreadedWorldGen.h" />
-    <ClInclude Include="src\world\World.h" />
-    <ClInclude Include="src\world\WorldIO.h" />
-    <ClInclude Include="src\world\WorldRenderManager.h" />
-    <ClInclude Include="src\world\WorldTime.h" />
-    <ClInclude Include="src\world\biome\Biome.h" />
-    <ClInclude Include="src\world\biome\BiomeForest.h" />
-    <ClInclude Include="src\world\biome\BiomeRegistry.h" />
-    <ClInclude Include="src\world\biome\BiomeTiledTexture.h" />
-    <ClInclude Include="src\world\biome\biomes.h" />
-    <ClInclude Include="src\world\block\ActionPolygon.h" />
-    <ClInclude Include="src\world\block\Block.h" />
-    <ClInclude Include="src\world\block\BlockRegistry.h" />
-    <ClInclude Include="src\world\block\basic_blocks.h" />
-    <ClInclude Include="src\world\block\basic_walls.h" />
-    <ClInclude Include="src\world\block\block_datas.h" />
-    <ClInclude Include="src\world\entity\EntityManager.h" />
-    <ClInclude Include="src\world\entity\EntityRegistry.h" />
-    <ClInclude Include="src\world\entity\PathTracer.h" />
-    <ClInclude Include="src\world\entity\Pool.h" />
-    <ClInclude Include="src\world\entity\WorldEntity.h" />
-    <ClInclude Include="src\world\entity\componentManager.h" />
-    <ClInclude Include="src\world\entity\entities.h" />
-    <ClInclude Include="src\world\entity\entity_datas.h" />
-    <ClInclude Include="src\world\entity\ssystem.h" />
-    <ClInclude Include="src\world\gen\PriorGen.h" />
-    <ClInclude Include="src\world\gen\TreeGen.h" />
-    <ClInclude Include="src\world\gen\WorldGen.h" />
-    <ClInclude Include="src\world\particle\ParticleRegistry.h" />
-    <ClInclude Include="src\world\particle\particles.h" />
     <ClInclude Include="vendor\glm\glm\common.hpp" />
     <ClInclude Include="vendor\glm\glm\detail\_features.hpp" />
     <ClInclude Include="vendor\glm\glm\detail\_fixes.hpp" />
@@ -601,19 +558,19 @@
     <ClInclude Include="vendor\stb_image\stb_image_write.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\EntryPoint.cpp" />
     <ClCompile Include="src\App.cpp" />
-    <ClCompile Include="src\imgui_utils.cpp" />
     <ClCompile Include="src\Input.cpp" />
     <ClCompile Include="src\Log.cpp" />
-    <ClCompile Include="src\Sandbox.cpp" />
+    <ClCompile Include="src\Pool.cpp" />
     <ClCompile Include="src\Scheduler.cpp" />
     <ClCompile Include="src\State.cpp" />
     <ClCompile Include="src\Window.cpp" />
-    <ClCompile Include="src\entity\Camera.cpp" />
-    <ClCompile Include="src\graphics\Bar.cpp" />
+    <ClCompile Include="src\graphics\API\Buffer.cpp" />
+    <ClCompile Include="src\graphics\API\FrameBuffer.cpp" />
+    <ClCompile Include="src\graphics\API\Shader.cpp" />
+    <ClCompile Include="src\graphics\API\Texture.cpp" />
+    <ClCompile Include="src\graphics\API\VertexArray.cpp" />
     <ClCompile Include="src\graphics\BatchRenderer2D.cpp" />
-    <ClCompile Include="src\graphics\BlockTextureAtlas.cpp" />
     <ClCompile Include="src\graphics\Effect.cpp" />
     <ClCompile Include="src\graphics\GContext.cpp" />
     <ClCompile Include="src\graphics\Group.cpp" />
@@ -621,29 +578,19 @@
     <ClCompile Include="src\graphics\ParticleRenderer.cpp" />
     <ClCompile Include="src\graphics\Renderable2D.cpp" />
     <ClCompile Include="src\graphics\Renderer.cpp" />
-    <ClCompile Include="src\graphics\API\Shader.cpp" />
     <ClCompile Include="src\graphics\Sprite.cpp" />
-    <ClCompile Include="src\graphics\Sprite2D.cpp" />
     <ClCompile Include="src\graphics\TestQuad.cpp" />
-    <ClCompile Include="src\graphics\API\Texture.cpp" />
     <ClCompile Include="src\graphics\TextureAtlas.cpp" />
     <ClCompile Include="src\graphics\TextureManager.cpp" />
-    <ClCompile Include="src\graphics\API\Buffer.cpp" />
-    <ClCompile Include="src\graphics\API\FrameBuffer.cpp" />
-    <ClCompile Include="src\graphics\API\VertexArray.cpp" />
-    <ClCompile Include="src\layer\imgui_build.cpp" />
+    <ClCompile Include="src\imgui_utils.cpp" />
     <ClCompile Include="src\layer\Layer.cpp" />
     <ClCompile Include="src\layer\LayerStack.cpp" />
-    <ClCompile Include="src\layer\MainLayer.cpp" />
-    <ClCompile Include="src\layer\PriorGenLayer.cpp" />
-    <ClCompile Include="src\layer\WorldLayer.cpp" />
+    <ClCompile Include="src\layer\imgui_build.cpp" />
     <ClCompile Include="src\layer\imguiplotvar.cpp" />
-    <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\nbt\NBT.cpp" />
     <ClCompile Include="src\ndpch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="src\particle\ParticleManager.cpp" />
     <ClCompile Include="src\physShapes.cpp" />
     <ClCompile Include="src\platform\OpenGL\GLBuffer.cpp" />
     <ClCompile Include="src\platform\OpenGL\GLContext.cpp" />
@@ -651,40 +598,6 @@
     <ClCompile Include="src\platform\OpenGL\GLRenderer.cpp" />
     <ClCompile Include="src\platform\OpenGL\GLTexture.cpp" />
     <ClCompile Include="src\platform\OpenGL\GLVertexArray.cpp" />
-    <ClCompile Include="src\world\BlockAccess.cpp" />
-    <ClCompile Include="src\world\ChunkLoader.cpp" />
-    <ClCompile Include="src\world\ChunkMesh.cpp" />
-    <ClCompile Include="src\world\ChunkPack.cpp" />
-    <ClCompile Include="src\world\FileChunkProvider.cpp" />
-    <ClCompile Include="src\world\LightCalculator.cpp" />
-    <ClCompile Include="src\world\ThreadedChunkProvider.cpp" />
-    <ClCompile Include="src\world\ThreadedWorldGen.cpp" />
-    <ClCompile Include="src\world\World.cpp" />
-    <ClCompile Include="src\world\WorldIO.cpp" />
-    <ClCompile Include="src\world\WorldRenderManager.cpp" />
-    <ClCompile Include="src\world\biome\Biome.cpp" />
-    <ClCompile Include="src\world\biome\BiomeForest.cpp" />
-    <ClCompile Include="src\world\biome\BiomeRegistry.cpp" />
-    <ClCompile Include="src\world\biome\BiomeTiledTexture.cpp" />
-    <ClCompile Include="src\world\biome\biomes.cpp" />
-    <ClCompile Include="src\world\block\ActionPolygon.cpp" />
-    <ClCompile Include="src\world\block\Block.cpp" />
-    <ClCompile Include="src\world\block\BlockRegistry.cpp" />
-    <ClCompile Include="src\world\block\basic_blocks.cpp" />
-    <ClCompile Include="src\world\block\basic_walls.cpp" />
-    <ClCompile Include="src\world\entity\EntityManager.cpp" />
-    <ClCompile Include="src\world\entity\EntityRegistry.cpp" />
-    <ClCompile Include="src\world\entity\PathTracer.cpp" />
-    <ClCompile Include="src\world\entity\Pool.cpp" />
-    <ClCompile Include="src\world\entity\WorldEntity.cpp" />
-    <ClCompile Include="src\world\entity\componentManager.cpp" />
-    <ClCompile Include="src\world\entity\entities.cpp" />
-    <ClCompile Include="src\world\entity\ssystem.cpp" />
-    <ClCompile Include="src\world\gen\PriorGen.cpp" />
-    <ClCompile Include="src\world\gen\TreeGen.cpp" />
-    <ClCompile Include="src\world\gen\WorldGen.cpp" />
-    <ClCompile Include="src\world\particle\ParticleRegistry.cpp" />
-    <ClCompile Include="src\world\particle\particles.cpp" />
     <ClCompile Include="vendor\stb_image\stb_image.cpp" />
   </ItemGroup>
   <ItemGroup>

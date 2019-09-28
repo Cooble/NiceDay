@@ -1,10 +1,10 @@
 #pragma once
 
 #include "API/VertexArray.h"
-#include "Sprite2D.h"
 
 #include "API/Shader.h"
 
+class Sprite;
 class IndexBuffer;
 class VertexBuffer;
 	
@@ -28,6 +28,5 @@ public:
 	~Renderer();
 
 	void draw(const VertexArray& vao, const Shader& shader, const IndexBuffer& ibo);
-	void draw(glm::mat4 trans,Sprite2D& sprite);
 	void clear();
 };

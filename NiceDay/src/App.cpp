@@ -28,7 +28,6 @@ void App::init(int width, int height, const std::string& title)
 	m_Window = new Window(width, height, title);
 	GContext::init(Renderer::getAPI());
 	Effect::init();
-	Sprite2D::init();
 	m_Window->setEventCallback(eventCallback);
 
 	m_ImGuiLayer = new ImGuiLayer();

@@ -1,5 +1,5 @@
-#include <utility>
 #pragma once
+#include <utility>
 //#ifdef ND_DEBUG
 #define ASSERT(cond,...) if(!(cond))\
 	{ND_ERROR("Assertion Failed: {0}",__VA_ARGS__);\

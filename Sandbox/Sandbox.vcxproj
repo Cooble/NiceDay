@@ -1,0 +1,242 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Dist|x64">
+      <Configuration>Dist</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{F4C124E3-60A1-A37E-69B9-2E55D5170AE0}</ProjectGuid>
+    <IgnoreWarnCompileDuplicatedFilename>true</IgnoreWarnCompileDuplicatedFilename>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>Sandbox</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v141</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v141</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Dist|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v141</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Dist|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+    <OutDir>..\bin\Debug-windows-x86_64\Sandbox\</OutDir>
+    <IntDir>..\bin-int\Debug-windows-x86_64\Sandbox\</IntDir>
+    <TargetName>Sandbox</TargetName>
+    <TargetExt>.exe</TargetExt>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
+    <OutDir>..\bin\Release-windows-x86_64\Sandbox\</OutDir>
+    <IntDir>..\bin-int\Release-windows-x86_64\Sandbox\</IntDir>
+    <TargetName>Sandbox</TargetName>
+    <TargetExt>.exe</TargetExt>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Dist|x64'">
+    <LinkIncremental>false</LinkIncremental>
+    <OutDir>..\bin\Dist-windows-x86_64\Sandbox\</OutDir>
+    <IntDir>..\bin-int\Dist-windows-x86_64\Sandbox\</IntDir>
+    <TargetName>Sandbox</TargetName>
+    <TargetExt>.exe</TargetExt>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>ND_PLATFORM_WINDOWS;GLFW_INCLUDE_NONE;ND_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>src;..\NiceDay\src;..\NiceDay\vendor;..\NiceDay\vendor\spdlog\include;..\NiceDay\vendor\imgui;..\NiceDay\vendor\glm;..\NiceDay\vendor\glfw\include;..\NiceDay\vendor\glad\include;..\NiceDay\vendor\stb_image;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <Optimization>Disabled</Optimization>
+      <MinimalRebuild>false</MinimalRebuild>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <BasicRuntimeChecks>UninitializedLocalUsageCheck</BasicRuntimeChecks>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>ND_PLATFORM_WINDOWS;GLFW_INCLUDE_NONE;ND_RELEASE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>src;..\NiceDay\src;..\NiceDay\vendor;..\NiceDay\vendor\spdlog\include;..\NiceDay\vendor\imgui;..\NiceDay\vendor\glm;..\NiceDay\vendor\glfw\include;..\NiceDay\vendor\glad\include;..\NiceDay\vendor\stb_image;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <Optimization>Full</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <MinimalRebuild>false</MinimalRebuild>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Dist|x64'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>ND_PLATFORM_WINDOWS;GLFW_INCLUDE_NONE;ND_DIST;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>src;..\NiceDay\src;..\NiceDay\vendor;..\NiceDay\vendor\spdlog\include;..\NiceDay\vendor\imgui;..\NiceDay\vendor\glm;..\NiceDay\vendor\glfw\include;..\NiceDay\vendor\glad\include;..\NiceDay\vendor\stb_image;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <Optimization>Full</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <MinimalRebuild>false</MinimalRebuild>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="src\core\EntryPoint.h" />
+    <ClInclude Include="src\core\Sandbox.h" />
+    <ClInclude Include="src\graphics\Bar.h" />
+    <ClInclude Include="src\graphics\BlockTextureAtlas.h" />
+    <ClInclude Include="src\graphics\Sprite2D.h" />
+    <ClInclude Include="src\layer\MainLayer.h" />
+    <ClInclude Include="src\layer\PriorGenLayer.h" />
+    <ClInclude Include="src\layer\WorldLayer.h" />
+    <ClInclude Include="src\world\BlockAccess.h" />
+    <ClInclude Include="src\world\Camera.h" />
+    <ClInclude Include="src\world\ChunkLoader.h" />
+    <ClInclude Include="src\world\ChunkMesh.h" />
+    <ClInclude Include="src\world\ChunkPack.h" />
+    <ClInclude Include="src\world\FileChunkProvider.h" />
+    <ClInclude Include="src\world\I2DLocalable.h" />
+    <ClInclude Include="src\world\IChunkProvider.h" />
+    <ClInclude Include="src\world\ITickable.h" />
+    <ClInclude Include="src\world\LightCalculator.h" />
+    <ClInclude Include="src\world\ThreadedChunkProvider.h" />
+    <ClInclude Include="src\world\ThreadedWorldGen.h" />
+    <ClInclude Include="src\world\World.h" />
+    <ClInclude Include="src\world\WorldIO.h" />
+    <ClInclude Include="src\world\WorldRenderManager.h" />
+    <ClInclude Include="src\world\WorldTime.h" />
+    <ClInclude Include="src\world\biome\Biome.h" />
+    <ClInclude Include="src\world\biome\BiomeForest.h" />
+    <ClInclude Include="src\world\biome\BiomeRegistry.h" />
+    <ClInclude Include="src\world\biome\BiomeTiledTexture.h" />
+    <ClInclude Include="src\world\biome\biomes.h" />
+    <ClInclude Include="src\world\block\ActionPolygon.h" />
+    <ClInclude Include="src\world\block\Block.h" />
+    <ClInclude Include="src\world\block\BlockRegistry.h" />
+    <ClInclude Include="src\world\block\basic_blocks.h" />
+    <ClInclude Include="src\world\block\basic_walls.h" />
+    <ClInclude Include="src\world\block\block_datas.h" />
+    <ClInclude Include="src\world\entity\EntityManager.h" />
+    <ClInclude Include="src\world\entity\EntityRegistry.h" />
+    <ClInclude Include="src\world\entity\PathTracer.h" />
+    <ClInclude Include="src\world\entity\WorldEntity.h" />
+    <ClInclude Include="src\world\entity\componentManager.h" />
+    <ClInclude Include="src\world\entity\entities.h" />
+    <ClInclude Include="src\world\entity\entity_datas.h" />
+    <ClInclude Include="src\world\entity\ssystem.h" />
+    <ClInclude Include="src\world\gen\PriorGen.h" />
+    <ClInclude Include="src\world\gen\TreeGen.h" />
+    <ClInclude Include="src\world\gen\WorldGen.h" />
+    <ClInclude Include="src\world\particle\ParticleManager.h" />
+    <ClInclude Include="src\world\particle\ParticleRegistry.h" />
+    <ClInclude Include="src\world\particle\particles.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\core\EntryPoint.cpp" />
+    <ClCompile Include="src\core\Sandbox.cpp" />
+    <ClCompile Include="src\graphics\Bar.cpp" />
+    <ClCompile Include="src\graphics\BlockTextureAtlas.cpp" />
+    <ClCompile Include="src\graphics\Sprite2D.cpp" />
+    <ClCompile Include="src\layer\MainLayer.cpp" />
+    <ClCompile Include="src\layer\PriorGenLayer.cpp" />
+    <ClCompile Include="src\layer\WorldLayer.cpp" />
+    <ClCompile Include="src\world\BlockAccess.cpp" />
+    <ClCompile Include="src\world\Camera.cpp" />
+    <ClCompile Include="src\world\ChunkLoader.cpp" />
+    <ClCompile Include="src\world\ChunkMesh.cpp" />
+    <ClCompile Include="src\world\ChunkPack.cpp" />
+    <ClCompile Include="src\world\FileChunkProvider.cpp" />
+    <ClCompile Include="src\world\LightCalculator.cpp" />
+    <ClCompile Include="src\world\ThreadedChunkProvider.cpp" />
+    <ClCompile Include="src\world\ThreadedWorldGen.cpp" />
+    <ClCompile Include="src\world\World.cpp" />
+    <ClCompile Include="src\world\WorldIO.cpp" />
+    <ClCompile Include="src\world\WorldRenderManager.cpp" />
+    <ClCompile Include="src\world\biome\Biome.cpp" />
+    <ClCompile Include="src\world\biome\BiomeForest.cpp" />
+    <ClCompile Include="src\world\biome\BiomeRegistry.cpp" />
+    <ClCompile Include="src\world\biome\BiomeTiledTexture.cpp" />
+    <ClCompile Include="src\world\biome\biomes.cpp" />
+    <ClCompile Include="src\world\block\ActionPolygon.cpp" />
+    <ClCompile Include="src\world\block\Block.cpp" />
+    <ClCompile Include="src\world\block\BlockRegistry.cpp" />
+    <ClCompile Include="src\world\block\basic_blocks.cpp" />
+    <ClCompile Include="src\world\block\basic_walls.cpp" />
+    <ClCompile Include="src\world\entity\EntityManager.cpp" />
+    <ClCompile Include="src\world\entity\EntityRegistry.cpp" />
+    <ClCompile Include="src\world\entity\PathTracer.cpp" />
+    <ClCompile Include="src\world\entity\WorldEntity.cpp" />
+    <ClCompile Include="src\world\entity\componentManager.cpp" />
+    <ClCompile Include="src\world\entity\entities.cpp" />
+    <ClCompile Include="src\world\entity\ssystem.cpp" />
+    <ClCompile Include="src\world\gen\PriorGen.cpp" />
+    <ClCompile Include="src\world\gen\TreeGen.cpp" />
+    <ClCompile Include="src\world\gen\WorldGen.cpp" />
+    <ClCompile Include="src\world\particle\ParticleManager.cpp" />
+    <ClCompile Include="src\world\particle\ParticleRegistry.cpp" />
+    <ClCompile Include="src\world\particle\particles.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\NiceDay\NiceDay.vcxproj">
+      <Project>{A2D42374-0EB4-A20F-17CC-2DE6832A0971}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

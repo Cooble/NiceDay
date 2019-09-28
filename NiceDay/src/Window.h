@@ -1,10 +1,8 @@
 #pragma once
 #include "ndpch.h"
-
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
 #include "event/Event.h"
 
+struct GLFWwindow;
 
 class Window
 {
@@ -36,8 +34,8 @@ public:
 	void close();
 	void update();
 	inline void setEventCallback(const EventCallbackFn& func) { m_data.eventCallback = func; };
-	inline bool shouldClose() { return m_window != nullptr && glfwWindowShouldClose(m_window); }
-	
+	inline bool shouldClose();
+
 
 	inline GLFWwindow* getWindow() const { return m_window; }
 	inline unsigned int getWidth() const { return m_data.width; }

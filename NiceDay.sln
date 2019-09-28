@@ -1,13 +1,17 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NiceDay", "NiceDay\NiceDay.vcxproj", "{A2D42374-0EB4-A20F-17CC-2DE6832A0971}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Sandbox", "Sandbox\Sandbox.vcxproj", "{F4C124E3-60A1-A37E-69B9-2E55D5170AE0}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Dependencies", "Dependencies", "{53E47842-3FC8-3998-A828-34EB942B241A}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "glad", "NiceDay\vendor\glad\glad.vcxproj", "{DD62977C-C999-980D-7286-7E105E9C140F}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "glfw", "NiceDay\vendor\glfw\glfw.vcxproj", "{9563977C-819A-980D-2A87-7E10169D140F}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "imgui", "NiceDay\vendor\imgui\imgui.vcxproj", "{0098A80F-6CAC-D0C0-352E-7420A101CDF1}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NiceDay", "NiceDay\NiceDay.vcxproj", "{A2D42374-0EB4-A20F-17CC-2DE6832A0971}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -16,12 +20,12 @@ Global
 		Release|x64 = Release|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{A2D42374-0EB4-A20F-17CC-2DE6832A0971}.Debug|x64.ActiveCfg = Debug|x64
-		{A2D42374-0EB4-A20F-17CC-2DE6832A0971}.Debug|x64.Build.0 = Debug|x64
-		{A2D42374-0EB4-A20F-17CC-2DE6832A0971}.Dist|x64.ActiveCfg = Dist|x64
-		{A2D42374-0EB4-A20F-17CC-2DE6832A0971}.Dist|x64.Build.0 = Dist|x64
-		{A2D42374-0EB4-A20F-17CC-2DE6832A0971}.Release|x64.ActiveCfg = Release|x64
-		{A2D42374-0EB4-A20F-17CC-2DE6832A0971}.Release|x64.Build.0 = Release|x64
+		{F4C124E3-60A1-A37E-69B9-2E55D5170AE0}.Debug|x64.ActiveCfg = Debug|x64
+		{F4C124E3-60A1-A37E-69B9-2E55D5170AE0}.Debug|x64.Build.0 = Debug|x64
+		{F4C124E3-60A1-A37E-69B9-2E55D5170AE0}.Dist|x64.ActiveCfg = Dist|x64
+		{F4C124E3-60A1-A37E-69B9-2E55D5170AE0}.Dist|x64.Build.0 = Dist|x64
+		{F4C124E3-60A1-A37E-69B9-2E55D5170AE0}.Release|x64.ActiveCfg = Release|x64
+		{F4C124E3-60A1-A37E-69B9-2E55D5170AE0}.Release|x64.Build.0 = Release|x64
 		{DD62977C-C999-980D-7286-7E105E9C140F}.Debug|x64.ActiveCfg = Debug|x64
 		{DD62977C-C999-980D-7286-7E105E9C140F}.Debug|x64.Build.0 = Debug|x64
 		{DD62977C-C999-980D-7286-7E105E9C140F}.Dist|x64.ActiveCfg = Dist|x64
@@ -40,8 +44,19 @@ Global
 		{0098A80F-6CAC-D0C0-352E-7420A101CDF1}.Dist|x64.Build.0 = Dist|x64
 		{0098A80F-6CAC-D0C0-352E-7420A101CDF1}.Release|x64.ActiveCfg = Release|x64
 		{0098A80F-6CAC-D0C0-352E-7420A101CDF1}.Release|x64.Build.0 = Release|x64
+		{A2D42374-0EB4-A20F-17CC-2DE6832A0971}.Debug|x64.ActiveCfg = Debug|x64
+		{A2D42374-0EB4-A20F-17CC-2DE6832A0971}.Debug|x64.Build.0 = Debug|x64
+		{A2D42374-0EB4-A20F-17CC-2DE6832A0971}.Dist|x64.ActiveCfg = Dist|x64
+		{A2D42374-0EB4-A20F-17CC-2DE6832A0971}.Dist|x64.Build.0 = Dist|x64
+		{A2D42374-0EB4-A20F-17CC-2DE6832A0971}.Release|x64.ActiveCfg = Release|x64
+		{A2D42374-0EB4-A20F-17CC-2DE6832A0971}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{DD62977C-C999-980D-7286-7E105E9C140F} = {53E47842-3FC8-3998-A828-34EB942B241A}
+		{9563977C-819A-980D-2A87-7E10169D140F} = {53E47842-3FC8-3998-A828-34EB942B241A}
+		{0098A80F-6CAC-D0C0-352E-7420A101CDF1} = {53E47842-3FC8-3998-A828-34EB942B241A}
 	EndGlobalSection
 EndGlobal

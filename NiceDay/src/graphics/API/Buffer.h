@@ -1,6 +1,5 @@
 ﻿#pragma once
 #include <glad/glad.h>
-
 struct VertexBufferElement
 {
 	unsigned int type;
@@ -76,7 +75,7 @@ public:
 		m_stride += VertexBufferElement::getByteCount(GL_UNSIGNED_BYTE) * count;
 	}
 
-	inline const std::vector<VertexBufferElement> getElements() const { return m_elements; }
+	inline const std::vector<VertexBufferElement>& getElements() const { return m_elements; }
 	inline unsigned int getStride() const { return m_stride; }
 };
 

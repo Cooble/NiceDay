@@ -13,7 +13,7 @@ public:
 	static float player_speed;
 	static float player_light_intensity;
 	static float debug_x;
-	static BiomeDistances biome_distances;
+	//static BiomeDistances biome_distances;
 	static float edge_scale;
 	static int updates_per_frame;
 	static Sprite* bound_sprite;
