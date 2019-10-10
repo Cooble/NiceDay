@@ -30,6 +30,8 @@ public:
 	~WorldLayer();
 
 	virtual void onAttach() override;
+	void onWorldLoaded();
+	void afterPlayerLoaded();
 	virtual void onDetach() override;
 	virtual void onUpdate() override;
 	virtual void onRender() override;

@@ -31,7 +31,10 @@ LightCalculator::LightCalculator(World* world)
 {
 }
 
-LightCalculator::~LightCalculator() = default;
+LightCalculator::~LightCalculator()
+{
+	stop();
+};
 
 void LightCalculator::assignComputeChange(int x, int y)
 {
@@ -53,11 +56,11 @@ void LightCalculator::assignComputeChunk(int cx, int cy)
 	m_wait_condition_variable.notify_one();
 }
 
-void LightCalculator::assignComputeChunkBorders(int cx, int cy)
+void LightCalculator::assignComputeChunkBorders(int cx, int cy,const ChunkPack& res)
 {
 	{
 		std::lock_guard<std::mutex> l(m_cached_light_assign_mutex);
-		Assignment p = {cx, cy, Assignment::BORDERS};
+		Assignment p = {cx, cy, Assignment::BORDERS,res};
 		m_cached_light_assignments.emplace(p);
 	}
 	m_wait_condition_variable.notify_one();
@@ -74,6 +77,28 @@ void LightCalculator::removeLight(LightSource* light)
 			m_sources.erase(m_sources.begin() + i);
 			return;
 		}
+	}
+}
+
+void LightCalculator::ChunkQuadro::assignLightJob(BlockAccess& access)
+{
+	for (int i = 0; i < 5; ++i)
+	{
+		auto pair = src[i];
+		auto c = access.getChunkM(pair.first, pair.second);
+		if (c)
+			c->getLightJob().assign();
+		else //invalidate all unreachable chunks
+			src[i] = std::make_pair(-1, -1);
+	}
+}
+void LightCalculator::ChunkQuadro::markDoneLightJob(BlockAccess& access)
+{
+	for (auto pair : src)
+	{
+		auto c = access.getChunkM(pair.first, pair.second);
+		if (c)
+			c->getLightJob().markDone();
 	}
 }
 
@@ -129,8 +154,8 @@ void LightCalculator::snapshot()
 //threading ==========================================================================
 void LightCalculator::run()
 {
-	std::thread t(&LightCalculator::runInnerLT, this);
-	t.detach(); //fly little birdie daemon, fly
+	m_t = std::thread(&LightCalculator::runInnerLT, this);
+	//t.detach(); //fly little birdie daemon, fly
 }
 
 void LightCalculator::runInnerLT()
@@ -183,14 +208,20 @@ void LightCalculator::runInnerLT()
 		}
 		//std::this_thread::sleep_for(std::chrono::milliseconds(1));//take a nap. never:D
 	}
-	if (m_big_buffer)
+	if (m_big_buffer) {
 		delete[] m_big_buffer;
+		m_big_buffer = nullptr;
+	}
 }
 
 void LightCalculator::stop()
 {
-	m_running = false;
-	m_wait_condition_variable.notify_one();
+	if (m_running)
+	{
+		m_running = false;
+		m_wait_condition_variable.notify_one();
+		m_t.join();
+	}
 }
 
 half& LightCalculator::lightValue(int x, int y)
@@ -224,6 +255,14 @@ half LightCalculator::getBlockOpacity(int x, int y)
 		return BlockRegistry::get().getBlock(b->block_id).getOpacity();
 	return DefaultVal; //outside map -> no light
 }
+template <int DefaultVal>
+half LightCalculator::getBlockOpacity(int x, int y,ChunkPack& res)
+{
+	auto b = res.getBlockM(x, y);
+	if (b)
+		return BlockRegistry::get().getBlock(b->block_id).getOpacity();
+	return DefaultVal; //outside map -> no light
+}
 
 template <uint8_t DefaultValue>
 uint8_t& LightCalculator::blockLightLevel(int x, int y)
@@ -232,6 +271,17 @@ uint8_t& LightCalculator::blockLightLevel(int x, int y)
 	//todo this lasagna is causing problems because it is seen as light src on boundary ...we know
 	//just to prevent problems with not loaded chunks/return so high light that no other updates will be neccessary
 	auto b = m_world->getChunkM(x >> WORLD_CHUNK_BIT_SIZE, y >> WORLD_CHUNK_BIT_SIZE);
+	if (b)
+		return b->lightLevel(x & (WORLD_CHUNK_SIZE - 1), y & (WORLD_CHUNK_SIZE - 1));
+	return defaul; //outside map -> no light
+}
+template <uint8_t DefaultValue>
+uint8_t& LightCalculator::blockLightLevel(int x, int y,ChunkPack& res)
+{
+	static uint8_t defaul = DefaultValue;
+	//todo this lasagna is causing problems because it is seen as light src on boundary ...we know
+	//just to prevent problems with not loaded chunks/return so high light that no other updates will be neccessary
+	auto b = res.getChunkM(x >> WORLD_CHUNK_BIT_SIZE, y >> WORLD_CHUNK_BIT_SIZE);
 	if (b)
 		return b->lightLevel(x & (WORLD_CHUNK_SIZE - 1), y & (WORLD_CHUNK_SIZE - 1));
 	return defaul; //outside map -> no light
@@ -510,9 +560,9 @@ void LightCalculator::computeChunkLT(int cx, int cy) //will be called on chunkge
 	}
 }
 
-void LightCalculator::computeChunkBordersLT(int cx, int cy)
+void LightCalculator::computeChunkBordersLT(int cx, int cy,ChunkPack& res)
 {
-	auto& c = *m_world->getChunkM(cx, cy);
+	auto& c = *res.getChunkM(cx, cy);
 
 	auto current_list = &m_light_list0_main_thread;
 	auto new_list = &m_light_list1_main_thread;
@@ -523,10 +573,10 @@ void LightCalculator::computeChunkBordersLT(int cx, int cy)
 	int minX = cx * WORLD_CHUNK_SIZE;
 	int minY = cy * WORLD_CHUNK_SIZE;
 
-	Chunk* up = m_world->getChunkM(cx, cy + 1);
-	Chunk* down = m_world->getChunkM(cx, cy - 1);
-	Chunk* left = m_world->getChunkM(cx - 1, cy);
-	Chunk* right = m_world->getChunkM(cx + 1, cy);
+	Chunk* up =		res.getChunkM(cx, cy + 1);
+	Chunk* down =	res.getChunkM(cx, cy - 1);
+	Chunk* left =	res.getChunkM(cx - 1, cy);
+	Chunk* right =	res.getChunkM(cx + 1, cy);
 	//add all external boundary light blocks
 	if (up)
 		for (int i = 0; i < WORLD_CHUNK_SIZE; ++i)
@@ -552,8 +602,8 @@ void LightCalculator::computeChunkBordersLT(int cx, int cy)
 			const int& x = p.x;
 			const int& y = p.y;
 
-			auto val = blockLightLevel(x, y);
-			auto opacity = getBlockOpacity(x, y);
+			auto val = blockLightLevel(x, y, res);
+			auto opacity = getBlockOpacity(x, y,res);
 			half l = val - opacity;
 
 			if (val < opacity) //we had overflow -> dark is coming for us all
@@ -564,7 +614,7 @@ void LightCalculator::computeChunkBordersLT(int cx, int cy)
 			//left
 			int xm1 = x - 1;
 
-			half* v = &blockLightLevel(xm1, y);
+			half* v = &blockLightLevel(xm1, y, res);
 			if (*v < newLightPower)
 			{
 				*v = newLightPower;
@@ -573,7 +623,7 @@ void LightCalculator::computeChunkBordersLT(int cx, int cy)
 
 			//down
 			int ym1 = y - 1;
-			v = &blockLightLevel(x, ym1);
+			v = &blockLightLevel(x, ym1, res);
 			if (*v < newLightPower)
 			{
 				*v = newLightPower;
@@ -581,7 +631,7 @@ void LightCalculator::computeChunkBordersLT(int cx, int cy)
 			}
 			//right
 			int x1 = x + 1;
-			v = &blockLightLevel(x1, y);
+			v = &blockLightLevel(x1, y, res);
 			if (*v < newLightPower)
 			{
 				*v = newLightPower;
@@ -589,7 +639,7 @@ void LightCalculator::computeChunkBordersLT(int cx, int cy)
 			}
 			//up
 			int y1 = y + 1;
-			v = &blockLightLevel(x, y1);
+			v = &blockLightLevel(x, y1, res);
 			if (*v < newLightPower)
 			{
 				*v = newLightPower;
@@ -603,7 +653,7 @@ void LightCalculator::computeChunkBordersLT(int cx, int cy)
 	}
 }
 
-LightCalculator::ChunkQuadro LightCalculator::computeQuadroSquare(int wx, int wy)
+LightCalculator::ChunkQuadro LightCalculator::createQuadroSquare(int wx, int wy)
 {
 	ChunkQuadro out;
 	int chunkX = wx >> WORLD_CHUNK_BIT_SIZE;
@@ -649,17 +699,18 @@ LightCalculator::ChunkQuadro LightCalculator::createQuadroCross(int cx, int cy)
 {
 	ChunkQuadro out;
 
-	out[0] = std::make_pair(cx - 1, cy);
-	out[1] = std::make_pair(cx + 1, cy);
-	out[2] = std::make_pair(cx, cy - 1);
-	out[3] = std::make_pair(cx, cy + 1);
+	out[0] = std::make_pair(cx, cy);
+	out[1] = std::make_pair(cx - 1, cy);
+	out[2] = std::make_pair(cx + 1, cy);
+	out[3] = std::make_pair(cx, cy - 1);
+	out[4] = std::make_pair(cx, cy + 1);
 	return out;
 }
 
 void LightCalculator::computeChangeLT(int minX, int minY, int maxX, int maxY, int xx, int yy)
 {
 	//oughta be WORLD_CHUNK_SIZE / 2
-	constexpr int maxLightRadius = 16; //true refresh area is one less
+	constexpr int maxLightRadius = 17; //true refresh area is one less
 	auto current_list = &m_light_list0;
 	auto new_list = &m_light_list1;
 
@@ -894,40 +945,22 @@ void LightCalculator::computeLT(Snapshot& sn)
 		{
 		case Assignment::CHANGE:
 			{
-				auto chunkacquiredResources = computeQuadroSquare(pop.x, pop.y);
-
+				auto res = createQuadroSquare(pop.x, pop.y);
 				computeChangeLT(minX, minY, maxX, maxY, pop.x, pop.y);
-
-				// keep track of all resources
-				for (auto s : chunkacquiredResources.src)
-				{
-					auto chunk = m_world->getChunkM(s.first, s.second);
-					if (chunk)
-						m_world->getChunkM(s.first, s.second)->getLightJob().markDone();
-				}
+				res.markDoneLightJob(*m_world);
 			}
 			break;
 		case Assignment::CHUNK:
-			computeChunkLT(pop.x, pop.y);
 			{
+				computeChunkLT(pop.x, pop.y);
 				auto ccc = m_world->getChunkM(pop.x, pop.y);
 				ccc->getLightJob().markDone();
 			}
 			break;
 		case Assignment::BORDERS:
 			{
-				auto chunkacquiredResources = createQuadroCross(pop.x, pop.y);
-
-				computeChunkBordersLT(pop.x, pop.y);
-				m_world->getChunkM(pop.x, pop.y)->getLightJob().markDone();
-
-				// keep track of all resources
-				for (auto s : chunkacquiredResources.src)
-				{
-					auto chunk = m_world->getChunkM(s.first, s.second);
-					if (chunk)
-						m_world->getChunkM(s.first, s.second)->getLightJob().markDone();
-				}
+				computeChunkBordersLT(pop.x, pop.y,pop.res);
+				pop.res.markLightJobDone();
 			}
 			break;
 		}
@@ -936,7 +969,7 @@ void LightCalculator::computeLT(Snapshot& sn)
 	memcpy(m_map_sky_out, m_map_sky, sn.chunkWidth * sn.chunkHeight * WORLD_CHUNK_AREA * sizeof(half));
 
 
-	updateMapLT(sn); //set map content to cached chunk light
+	updateLocalMapLT(sn); //set map content to cached chunk light
 
 
 	//add dynamic lighting
@@ -963,36 +996,24 @@ void LightCalculator::computeLT(Snapshot& sn)
 	runFloodLocal(minX, minY, width, height, current_list, new_list);
 }
 
-void LightCalculator::updateMapLT(Snapshot& sn)
+void LightCalculator::updateLocalMapLT(Snapshot& sn)
 {
 	//todo this needs to use memcpy or death will feast upon us all
 	for (int cx = 0; cx < sn.chunkWidth; ++cx)
-	{
 		for (int cy = 0; cy < sn.chunkHeight; ++cy)
 		{
 			auto c = m_world->getChunk(cx + sn.offsetX, cy + sn.offsetY);
 			if (c)
 			{
 				for (int x = 0; x < WORLD_CHUNK_SIZE; ++x)
-				{
 					for (int y = 0; y < WORLD_CHUNK_SIZE; ++y)
-					{
 						lightValue(cx * WORLD_CHUNK_SIZE + x, cy * WORLD_CHUNK_SIZE + y) = c->lightLevel(x, y);
-					}
-				}
 			}
 			else
-			{
 				for (int x = 0; x < WORLD_CHUNK_SIZE; ++x)
-				{
 					for (int y = 0; y < WORLD_CHUNK_SIZE; ++y)
-					{
 						lightValue(cx * WORLD_CHUNK_SIZE + x, cy * WORLD_CHUNK_SIZE + y) = 0;
-					}
-				}
-			}
 		}
-	}
 }
 
 void LightCalculator::darkenLT(Snapshot& sn) //deprecated

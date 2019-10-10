@@ -6,7 +6,9 @@ void ThreadedWorldGen::proccessAssignments(std::vector<WorldGenAssignment>& assi
 {
 	for (auto & assignment : assignments)
 	{
-		if (assignment.type == WorldGenAssignment::GENERATION) {
+		if (assignment.type == WorldGenAssignment::WAIT) {
+		}
+		else if (assignment.type == WorldGenAssignment::GENERATION) {
 			//ND_INFO("generating chunk {}, {}",half_int::X(assignment.chunk_id), half_int::Y(assignment.chunk_id));
 			auto& gen = m_world->getWorldGen();
 			gen.genLayer0(*m_world, *assignment.chunk);
@@ -24,6 +26,7 @@ void ThreadedWorldGen::proccessAssignments(std::vector<WorldGenAssignment>& assi
 
 void ThreadedWorldGen::assignChunkGen(JobAssignment* job, Chunk* chunk)
 {
+	job->assign();
 	WorldGenAssignment as(job, chunk->chunkID(), chunk);
 
 	assignWork(as);
@@ -31,7 +34,18 @@ void ThreadedWorldGen::assignChunkGen(JobAssignment* job, Chunk* chunk)
 
 void ThreadedWorldGen::assignChunkBoundUpdate(JobAssignment* job, const ChunkPack& pack,int bitBounds)
 {
+	job->assign();
 	WorldGenAssignment as(job, pack,bitBounds);
+
+	assignWork(as);
+}
+
+void ThreadedWorldGen::assignWait(JobAssignmentP job)
+{
+	job->assign();
+	WorldGenAssignment as;
+	as.job = job;
+	as.type = WorldGenAssignment::WAIT;
 
 	assignWork(as);
 }

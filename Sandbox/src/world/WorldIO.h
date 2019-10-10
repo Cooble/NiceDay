@@ -138,9 +138,15 @@ namespace WorldIO
 		// no beginSession() needed
 		void init();
 
+		// to setup everything (will read from file to update its tables)
+		// will not create file
+		// no beginSession() needed
+		// returns true if file exists
+		bool initIfExist();
+
 		// should be called often to save changes to vtable
 		// NOTE: 
-		//		Without table are data completely useless
+		//		Without table data is completely useless
 		// (called within begin/endSession)
 		void saveVTable();
 

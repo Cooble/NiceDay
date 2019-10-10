@@ -16,6 +16,7 @@
 App* App::s_Instance = nullptr;
 
 App::App(int width, int height, const std::string& title)
+	:m_scheduler(200)
 {
 	ASSERT(s_Instance == nullptr, "Instance of game already exists!")
 	s_Instance = this;

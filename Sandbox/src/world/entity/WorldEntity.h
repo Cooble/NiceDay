@@ -25,6 +25,7 @@ protected:
 	WorldEntity() = default;
 	virtual ~WorldEntity() = default;
 public:
+	WorldEntity(const WorldEntity&) = delete;
 	inline bool hasFlag(uint64_t flags) const { return (m_flags & flags)==flags; }
 
 	inline bool isMarkedDead()const { return m_is_dead; }

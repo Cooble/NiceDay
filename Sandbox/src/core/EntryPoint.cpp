@@ -70,9 +70,11 @@ bool equalsNBT(NBT& one,NBT& two)
 			return false;
 	return true;
 }
-
 int main()
 {
+	Log::Init();
+
+
 	Sandbox game;
 	game.start();
 

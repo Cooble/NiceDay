@@ -1,26 +1,55 @@
 ﻿#include "ndpch.h"
 #include "Scheduler.h"
 
-Scheduler::ScheduleTask::ScheduleTask(Task& t, int tickPeriod):
+Scheduler::ScheduleTask::ScheduleTask(Task&& t, int tickPeriod):
 	tickTarget(tickPeriod),
 	ticksFromLastTick(0)
 {
-	this->t = t;
+	this->t = std::forward<Task>(t);
 }
 
-int Scheduler::runTaskTimer(Task&& t, int eachTicks)
+Scheduler::ScheduleTask::ScheduleTask(AfterTask&& t, JobAssignmentP job):
+job(job)
+{	
+	this->afterT = std::forward<AfterTask>(t);
+}
+
+Scheduler::Scheduler(int jobPoolSize)
+	:m_job_pool(jobPoolSize)
 {
-	m_tasks.emplace_back(std::forward<Task>(t), eachTicks);
-	return m_tasks.size()-1;
+}
+
+void Scheduler::runTaskTimer(Task&& t, int eachTicks)
+{
+	m_new_tasks.emplace_back(std::forward<Task>(t), eachTicks);
+}
+
+void Scheduler::callWhenDone(AfterTask&& t, JobAssignmentP assignment)
+{
+	ASSERT(assignment != nullptr,"Assignment cannot be nullptr");
+	m_new_tasks.emplace_back(std::forward<AfterTask>(t), assignment);
 }
 
 void Scheduler::update()
 {
+	for (auto& m_new_task : m_new_tasks)
+		m_tasks.push_back(std::move((m_new_task)));
+
+	m_new_tasks.clear();
+
 	std::vector<int> toRemove;
-	int size = m_tasks.size();
-	for(int i  =0;i< size;++i)
+	for(int i  =0; i< m_tasks.size();++i)
 	{
 		auto& task = m_tasks[i];
+		if(task.job)
+		{
+			if (task.job->isDone()) {
+				task.afterT();
+				toRemove.push_back(i);
+				deallocateJob(task.job);
+			}
+			continue;
+		}
 		++task.ticksFromLastTick;
 		if (task.ticksFromLastTick >= task.tickTarget) {
 			task.ticksFromLastTick = 0;
@@ -32,10 +61,4 @@ void Scheduler::update()
 	for (int j = toRemove.size() - 1; j >= 0; --j)
 		m_tasks.erase(m_tasks.begin() + toRemove[j]);
 	
-}
-
-void Scheduler::kill(int task_id)
-{//maybe todo add smart id which will consist of index in array as well as some number to determine if id is valid
-	//is not working
-	m_tasks.erase(m_tasks.begin() + task_id);
 }

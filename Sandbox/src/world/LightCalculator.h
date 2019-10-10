@@ -2,6 +2,7 @@
 #include "ndpch.h"
 
 #include "block/BlockRegistry.h"
+#include "ChunkPack.h"
 
 #define MAX_SNAPSHOT_NUMBER 5
 
@@ -17,6 +18,7 @@ public:
 typedef uint8_t half;//maybe in future replace with half float to save space
 typedef std::pair<int, int> ChunkPos;
 class World;
+class BlockAccess;
 
 class LightCalculator
 {
@@ -54,18 +56,30 @@ public:
 
 	struct ChunkQuadro
 	{
-		std::pair<int, int> src[4];
+		std::array<std::pair<int, int>,5> src;
+		ChunkQuadro()
+		{
+			for (int i = 0; i < src.size(); ++i)
+				src[i] = std::make_pair(-1, -1);
+		}
 
-		std::pair<int, int>& operator[](size_t index)
+		inline std::pair<int, int>& operator[](size_t index)
 		{
 			return src[index];
 		}
 
+		void assignLightJob(BlockAccess& access);
+		void markDoneLightJob(BlockAccess& access);
+		inline auto begin() { return src.begin(); }
+		inline auto begin() const { return src.begin(); }
+		inline auto end() { return src.end(); }
+		inline auto end() const { return src.end(); }
+
 	};
 	// returns 4 chunks that will be needed to proccess cached light change
-	static ChunkQuadro computeQuadroSquare(int wx, int wy);
+	static ChunkQuadro createQuadroSquare(int wx, int wy);
 	// returns 4 chunks that will be needed to proccess cached light chunkborder change
-	static ChunkQuadro createQuadroCross(int wx, int wy);
+	static ChunkQuadro createQuadroCross(int cx, int cy);
 
 	// adds work for light thread and returns
 	// don't forget to assign lightjob for all neighbour chunks as well with LightCalculator::computeQuadroSquare()
@@ -80,12 +94,13 @@ public:
 	// adds work for light thread and returns
 	// floods light from all external boundary blocks (block that are around the chunk but not within)
 	// don't forget to assign lightjob for all neighbour chunks as well with LightCalculator::createQuadroCross()
-	void assignComputeChunkBorders(int cx,int cy);
+	void assignComputeChunkBorders(int cx,int cy,const ChunkPack& res);
 
 private:
 	std::condition_variable m_wait_condition_variable;
+	std::thread m_t;
 
-	 
+
 	struct Assignment
 	{
 		int x, y;
@@ -95,6 +110,7 @@ private:
 			CHUNK,
 			BORDERS
 		} type;
+		ChunkPack res;
 	};
 	struct Pos
 	{
@@ -161,8 +177,12 @@ private:
 	inline half& lightValueSky(int x, int y);
 	template<int DefaultVal=std::numeric_limits<half>::max()>
 	inline half getBlockOpacity(int x, int y);
+	template<int DefaultVal=std::numeric_limits<half>::max()>
+	inline half getBlockOpacity(int x, int y,ChunkPack& res);
 	template<uint8_t DefaultValue=0>
 	inline uint8_t& blockLightLevel(int x, int y);
+	template<uint8_t DefaultValue=0>
+	inline uint8_t& blockLightLevel(int x, int y, ChunkPack& res);
 
 	// runs flood algorithm using worldblocks' opacity (without blocks' light level) and edits local map
 	// depends only on		map, 
@@ -175,16 +195,16 @@ private:
 
 	void computeLT(Snapshot& snapshot);
 	void runInnerLT();
-	void updateMapLT(Snapshot& sn);
+	void updateLocalMapLT(Snapshot& sn);
 	void darkenLT(Snapshot& sn);
 	void setDimensionsInnerLT();
 
 	// clears all light data and recalculates the chunk lighting (without affecting or being affected by others)
 // (chunks passed should be locked) maybe
-	void computeChunkLT(int cx,int cy);
+	void computeChunkLT(int cx, int cy);
 	// floods light from all external boundary blocks (block that are around the chunk but not within)
 	// (chunks passed should be locked) maybe
-	void computeChunkBordersLT(int cx, int cy);
+	void computeChunkBordersLT(int cx, int cy,ChunkPack& res);
 
 
 

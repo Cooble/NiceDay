@@ -51,6 +51,8 @@ static void* playerBuff;
 static EntityID playerID;
 static SpriteSheetResource* res;
 
+static bool m_is_world_ready = false;
+
 void WorldLayer::registerEverything()
 {
 	//blocks
@@ -93,6 +95,8 @@ void WorldLayer::registerEverything()
 	ParticleList::initDefaultParticles(ParticleRegistry::get());
 }
 
+constexpr int particleAtlasSize = 8;
+
 WorldLayer::WorldLayer()
 	: Layer("WorldLayer")
 {
@@ -104,7 +108,6 @@ WorldLayer::WorldLayer()
 	std::string particleAtlasFolder = "D:/Dev/C++/NiceDay/Sandbox/res/images/particleAtlas/";
 
 	TextureAtlas particleAtlas;
-	constexpr int particleAtlasSize = 8;
 	particleAtlas.createAtlas(particleAtlasFolder, particleAtlasSize, 8);
 
 	registerEverything();
@@ -112,37 +115,21 @@ WorldLayer::WorldLayer()
 	ParticleRegistry::get().initTextures(particleAtlas);
 	BlockRegistry::get().initTextures(blockAtlas);
 
-	WorldInfo info;
-	strcpy_s(info.name, "NiceWorld");
-	info.chunk_width = 50;
-	info.chunk_height = 50;
-	info.seed = 0;
-	info.terrain_level = (info.chunk_height - 4) * WORLD_CHUNK_SIZE;
-
-	m_world = new World(std::string(info.name) + ".world", info);
-
-
-	bool genW = true;
-
-
-	if (genW)
-		m_world->genWorld();
-	else
 	{
-		if (!m_world->loadWorld())
-		{
-			ND_WARN("Cannot load world: {}\nGenerating new one", m_world->getFilePath());
-			m_world->genWorld();
-		}
+		//call all constructors of entities to load static data on main thread
+		size_t max = 0;
+		for (auto& bucket : EntityRegistry::get().getData())
+			max = std::max(bucket.byte_size, max);
+		auto entityBuff = malloc(max);
+		for (auto& bucket : EntityRegistry::get().getData())
+			EntityRegistry::get().createInstance(bucket.entity_type, entityBuff);
+		free(entityBuff);
 	}
-	Stats::world = m_world;
-
-	m_cam = new Camera();
-
-	m_chunk_loader = new ChunkLoader(m_world);
 
 	ChunkMesh::init();
-	m_render_manager = new WorldRenderManager(m_cam, m_world);
+
+
+	m_cam = new Camera();
 
 	m_batch_renderer = new BatchRenderer2D();
 	m_particle_renderer = new ParticleRenderer();
@@ -157,17 +144,59 @@ WorldLayer::WorldLayer()
 	Stats::bound_sprite->setPosition(glm::vec3(0, 0, 0));
 	Stats::bound_sprite->setSize(glm::vec2(1, 1));
 
-	Texture* particleAtlasT = Texture::create(
-		TextureInfo("res/images/particleAtlas/atlas.png")
-		.filterMode(TextureFilterMode::NEAREST)
-		.format(TextureFormat::RGBA));
+	//world===================================================
+	WorldInfo info;
+	strcpy_s(info.name, "NiceWorld");
+	info.chunk_width = 50;
+	info.chunk_height = 50;
+	info.seed = 0;
+	info.terrain_level = (info.chunk_height - 4) * WORLD_CHUNK_SIZE;
 
-	*m_world->particleManager() = new ParticleManager(5000, particleAtlasT, particleAtlasSize);
+	m_world = new World(std::string(info.name) + ".world", info);
+
+
+	bool genW = false;
+	bool worldAlreadyLoaded = true;
+
+	if (genW)
+	{
+		m_world->genWorld();
+		ND_INFO("New world generated.");
+	}
+	else
+	{
+		auto world = m_world;
+		auto job = m_world->loadWorld();
+		if (job == nullptr)
+		{
+			ND_INFO("World is missing: {}, generating new one", std::string(info.name) + ".world");
+			m_world->genWorld();
+		}
+		else
+		{
+			worldAlreadyLoaded = false;
+			ND_SCHED.callWhenDone([this,job, world,info]()
+				{
+					if (job->m_variable != JobAssignment::JOB_SUCCESS)
+					{
+						ND_INFO("World is corrupted: {}, generating new one", std::string(info.name) + ".world");
+						world->genWorld();
+					}
+					else
+						ND_INFO("World loaded: {}", std::string(info.name) + ".world");
+					onWorldLoaded();
+				}, job);
+		}
+	}
+	if (worldAlreadyLoaded)
+		onWorldLoaded();
 }
 
 EntityPlayer& WorldLayer::getPlayer()
 {
-	return *dynamic_cast<EntityPlayer*>(m_world->getEntityManager().entity(playerID));
+	auto p = dynamic_cast<EntityPlayer*>(m_world->getEntityManager().entity(playerID));
+	ASSERT(p, "Player is not loaded");
+	return *p;
 }
 
 WorldLayer::~WorldLayer()
@@ -181,6 +210,21 @@ WorldLayer::~WorldLayer()
 
 void WorldLayer::onAttach()
 {
+}
+
+//called after world was gen or loaded
+void WorldLayer::onWorldLoaded()
+{
+	Stats::world = m_world;
+	m_chunk_loader = new ChunkLoader(m_world);
+
+	m_render_manager = new WorldRenderManager(m_cam, m_world);
+	Texture* particleAtlasT = Texture::create(
+		TextureInfo("res/images/particleAtlas/atlas.png")
+		.filterMode(TextureFilterMode::NEAREST)
+		.format(TextureFormat::RGBA));
+	*m_world->particleManager() = new ParticleManager(5000, particleAtlasT, particleAtlasSize);
+
 	//load entity manager
 	if (m_world->getWorldNBT().exists<EntityID>("playerID"))
 	{
@@ -193,8 +237,26 @@ void WorldLayer::onAttach()
 		{
 			ND_ERROR("corrupted world file:(");
 			ND_WAIT_FOR_INPUT;
-			exit(1);
+		exit(1);
 		}*/
+		int timeout = App::get().getTPS()*1;//wait n seconds to load entity
+		ND_SCHED.runTaskTimer([this, timeout]() mutable
+			{
+				if (m_world->getLoadedEntity(playerID))
+				{
+					afterPlayerLoaded();
+					return true;
+				}
+				else
+				{
+					if (timeout-- == 0)
+					{
+						ND_ERROR("World save was corrupted, cannot load player");
+						return true;
+					}
+				}
+				return false;
+			});
 	}
 	else
 	{
@@ -205,9 +267,15 @@ void WorldLayer::onAttach()
 		getPlayer().getPosition() = {
 			m_world->getInfo().chunk_width * WORLD_CHUNK_SIZE / 2, m_world->getInfo().terrain_level
 		};
+		afterPlayerLoaded();
 	}
+}
 
+//called after chunk with player was loaded
+void WorldLayer::afterPlayerLoaded()
+{
 	LightCalculator& c = m_world->getLightCalculator();
+	c.run();
 
 	//add camera
 	m_cam->setPosition(getPlayer().getPosition().asGLM());
@@ -215,7 +283,7 @@ void WorldLayer::onAttach()
 	c.registerLight(dynamic_cast<LightSource*>(m_cam));
 
 	m_chunk_loader->registerEntity(dynamic_cast<IChunkLoaderEntity*>(m_cam));
-	c.run();
+	m_is_world_ready = true;
 }
 
 void WorldLayer::onDetach()
@@ -229,13 +297,30 @@ void WorldLayer::onDetach()
 	m_chunk_loader->clearEntities();
 	m_chunk_loader->onUpdate(); //this will unload all chunks
 
-	m_world->saveWorld();
+	auto job = m_world->saveWorld();
+	while (!job->isDone())
+		std::this_thread::sleep_for(std::chrono::milliseconds(200));
+
+	if (job->m_variable != JobAssignment::JOB_SUCCESS)
+		ND_INFO("Cannot save world");
+	else
+		ND_INFO("World saved");
+	ND_SCHED.deallocateJob(job);
 }
 
 static int fpsCount;
 
 void WorldLayer::onUpdate()
 {
+	if (!m_is_world_ready)
+		return;
+
+	auto& play = getPlayer();
+
+	m_world->onUpdate();
+	m_cam->setPosition(play.getPosition().asGLM());
+	m_chunk_loader->onUpdate();
+
 	m_cam->m_light_intensity = Stats::player_light_intensity;
 	fpsCount++;
 	static int lightCalcDelay = 0;
@@ -368,9 +453,11 @@ void WorldLayer::onUpdate()
 			}
 		}
 
+
+	//camera movement===================================================================
 	glm::vec2 accel = glm::vec2(0, 0);
 	accel.y = -9.0f / 60;
-	glm::vec2& velocity = getPlayer().getVelocity().asGLM();
+	glm::vec2& velocity = play.getVelocity().asGLM();
 	float acc = 0.3f;
 	float moveThroughBlockSpeed = 6;
 
@@ -439,9 +526,6 @@ void WorldLayer::onUpdate()
 	WORLD_CHUNK_WIDTH = m_world->getInfo().chunk_width;
 	WORLD_CHUNK_HEIGHT = m_world->getInfo().chunk_height;
 
-	m_world->onUpdate();
-	m_cam->setPosition(getPlayer().getPosition().asGLM());
-	m_chunk_loader->onUpdate();
 
 	return;
 	//rain
@@ -480,6 +564,9 @@ void WorldLayer::onUpdate()
 
 void WorldLayer::onRender()
 {
+	if (!m_is_world_ready)
+		return;
+
 	m_render_manager->onUpdate();
 
 	//world
@@ -739,11 +826,11 @@ static std::string toString(World::ChunkState s)
 {
 	switch (s)
 	{
-	case World::BEING_LOADED:		return "BE_LOADED";
-	case World::BEING_GENERATED: 	return "BE_GENERA";
-	case World::GENERATED: 			return "GENERATED";
-	case World::BEING_UNLOADED: 	return "BE_UNLOAD";
-	case World::UNLOADED:			return "UNLOADED ";
+	case World::BEING_LOADED: return "BE_LOADED";
+	case World::BEING_GENERATED: return "BE_GENERA";
+	case World::GENERATED: return "GENERATED";
+	case World::BEING_UNLOADED: return "BE_UNLOAD";
+	case World::UNLOADED: return "UNLOADED ";
 	default: return "INVAL";
 	}
 }
@@ -762,25 +849,27 @@ void WorldLayer::onImGuiRenderChunks()
 	int offset = 0;
 	for (auto& header : t)
 	{
-		if (offset < 10) {
+		if (offset < 10)
+		{
 			ImGui::Text("0%d: (%d/%d), %s, ac:%d, ID:%d",
-				offset++,
-				(int)header.getJobConst().m_worker,
-				(int)header.getJobConst().m_main,
-				toString(header.getState()).c_str(),
-				header.isAccessible(),
-				header.getChunkID()
+			            offset++,
+			            (int)header.getJobConst().m_worker,
+			            (int)header.getJobConst().m_main,
+			            toString(header.getState()).c_str(),
+			            header.isAccessible(),
+			            header.getChunkID()
 
 			);
-		}else
+		}
+		else
 		{
 			ImGui::Text("%d: (%d/%d), %s, ac:%d, ID:%d",
-				offset++,
-				(int)header.getJobConst().m_worker,
-				(int)header.getJobConst().m_main,
-				toString(header.getState()).c_str(),
-				header.isAccessible(),
-				header.getChunkID()
+			            offset++,
+			            (int)header.getJobConst().m_worker,
+			            (int)header.getJobConst().m_main,
+			            toString(header.getState()).c_str(),
+			            header.isAccessible(),
+			            header.getChunkID()
 
 			);
 		}

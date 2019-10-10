@@ -43,27 +43,34 @@ void ChunkLoader::tickInner()
 		auto pos = w.e->getPosition();
 
 		int newID = Chunk::getChunkIDFromWorldPos((int)pos.x, (int)pos.y);
+		int lastID = w.last_chunk_id;
 		half_int newRadius = w.e->getChunkRadius();
 
 		w.last_chunk_id = newID;
 		w.last_chunk_radius = newRadius;
+		for (int i = 0; i < (newID==lastID?1:2); ++i)
+		{
+			int id = i == 0 ? lastID : newID;
 
-		int cx = (int)pos.x >> WORLD_CHUNK_BIT_SIZE;
-		int cy = (int)pos.y >> WORLD_CHUNK_BIT_SIZE;
+			int cx = half_int::X(id);
+			int cy = half_int::Y(id);
 
-		for (int x = cx - newRadius.x; x < cx + newRadius.x; x++) {
-			if ((x < 0) || (x >= m_world->getInfo().chunk_width))
-				continue;
-			for (int y = cy - newRadius.y; y < cy + newRadius.y; y++) {
-				if ((y < 0) || (y >= m_world->getInfo().chunk_height))
+			for (int x = cx - newRadius.x; x < cx + newRadius.x; x++) {
+				if ((x < 0) || (x >= m_world->getInfo().chunk_width))
 					continue;
+				for (int y = cy - newRadius.y; y < cy + newRadius.y; y++) {
+					if ((y < 0) || (y >= m_world->getInfo().chunk_height))
+						continue;
 
-				if (!m_world->isChunkFullyLoaded(half_int(x,y)))
-					toLoadList.insert(half_int(x, y));
+					if (!m_world->isChunkFullyLoaded(half_int(x, y)))
+						toLoadList.insert(half_int(x, y));
 
-				toRemoveList.erase(half_int(x, y));
+					toRemoveList.erase(half_int(x, y));
+				}
 			}
 		}
+
+		
 	}
 	if (!toRemoveList.empty())
 		m_world->unloadChunks(toRemoveList);
@@ -81,9 +88,6 @@ void ChunkLoader::onUpdate()
 	for (const EntityWrapper& w : m_loader_entities) {
 		auto pos = w.e->getPosition();
 		int newID = Chunk::getChunkIDFromWorldPos((int)pos.x, (int)pos.y);
-
-		int cx = (int)pos.x >> WORLD_CHUNK_BIT_SIZE;
-		int cy = (int)pos.y >> WORLD_CHUNK_BIT_SIZE;
 
 		half_int newRadius = w.e->getChunkRadius();
 		if (newID != w.last_chunk_id || newRadius != w.last_chunk_radius) {//we have change here!

@@ -314,7 +314,7 @@ void WorldRenderManager::refreshChunkList()
 			auto cc = m_world->getChunkM(targetX, targetY);
 			if (cc == nullptr)
 			{
-				ND_WARN("Cannot render unloaded chunk {},{}", mid.x, mid.y);
+				//ND_WARN("Cannot render unloaded chunk {},{}", mid.x, mid.y);
 				continue;
 			}
 			if (m_offset_map.find(mid) == m_offset_map.end())

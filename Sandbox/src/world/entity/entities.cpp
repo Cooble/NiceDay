@@ -749,7 +749,7 @@ void EntityTNT::update(World& w)
 		//if (point)
 		//	w.setWall(m_pos.x, m_pos.y, 0);//leave the wall be
 
-		w.beginBlockSet();
+		//w.beginBlockSet();
 		for (int i = -7; i < 7; ++i)
 		{
 			for (int j = -7; j < 7; ++j)
@@ -758,11 +758,11 @@ void EntityTNT::update(World& w)
 				{
 					if (auto point = w.getBlock(m_pos.x + i, m_pos.y + j))
 						if (point && !point->isAir())
-							w.setBlock(m_pos.x + i, m_pos.y + j, 0);
+							w.setBlockWithNotify(m_pos.x + i, m_pos.y + j, 0);
 				}
 			}
 		}
-		w.flushBlockSet();
+		//w.flushBlockSet();
 		markDead();
 	}
 }

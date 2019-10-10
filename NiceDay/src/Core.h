@@ -1,4 +1,5 @@
 #pragma once
+#include "ndpch.h"
 #include <utility>
 //#ifdef ND_DEBUG
 #define ASSERT(cond,...) if(!(cond))\

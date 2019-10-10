@@ -11,7 +11,8 @@ struct WorldGenAssignment
 	enum
 	{
 		GENERATION,
-		BOUND_UPDATE
+		BOUND_UPDATE,
+		WAIT
 	} type;
 
 	int chunk_id;
@@ -54,4 +55,5 @@ public:
 
 	void assignChunkGen(JobAssignment* job, Chunk* chunk);
 	void assignChunkBoundUpdate(JobAssignment* job, const ChunkPack& pack, int bitBounds);
+	void assignWait(JobAssignmentP job);
 };

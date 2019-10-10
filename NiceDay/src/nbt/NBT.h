@@ -183,8 +183,8 @@ public:
 		
 		//buff[size++] = 0; //null character
 	}
-
-	void deserialize(IStream* strea, char* buff = nullptr)
+private:
+	void deserializeInner(IStream* strea, char* buff)
 	{
 		auto& stream = *strea;
 		bool allocated = false;
@@ -224,10 +224,15 @@ public:
 		{
 			readString(stream, buff, size);
 			auto key = std::string(buff, buff + size);
-			get<NBT>(key).deserialize(&stream, buff);
+			get<NBT>(key).deserializeInner(&stream, buff);
 		}
 		if (allocated)
 			delete[] buff;
+	}
+public:
+	void deserialize(IStream* strea)
+	{
+		deserializeInner(strea, nullptr);
 	}
 
 	//nbt =======================================

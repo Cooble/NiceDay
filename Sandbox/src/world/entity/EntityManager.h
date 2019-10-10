@@ -32,17 +32,42 @@ public:
 
 	void killEntity(EntityID e);
 
-	inline bool isAlive(EntityID e) { return m_generations[index(e)] == generation(e); }
-	inline bool isLoaded(EntityID e) { return m_loaded[index(e)]; }
-	inline void setLoaded(EntityID e, bool loaded) { m_loaded.set(index(e), loaded); }
+	inline bool isAlive(EntityID e) { 
+		auto idx = index(e);
+		return idx<m_p_entities.size()&&m_generations[idx] == generation(e); 
+	}
+	inline bool isLoaded(EntityID e)
+	{
+		auto idx = index(e);
+		return idx < m_p_entities.size() && m_loaded[index(e)];
+	}
+	inline void setLoaded(EntityID e, bool loaded)
+	{
+		auto idx = index(e);
+		if (idx >= m_p_entities.size()) {
+			ASSERT(false, "invalid entityID");
+			return;
+		}
+		m_loaded.set(idx, loaded);
+	}
 
-	inline void setEntityPointer(EntityID id, WorldEntity* pointer) { m_p_entities[index(id)] = pointer; }
+	inline void setEntityPointer(EntityID id, WorldEntity* pointer)
+	{
+		auto idx = index(id);
+		if (idx >= m_p_entities.size()) {
+			ASSERT(false, "invalid entityID");
+			return;
+		}
+		m_p_entities[idx] = pointer;
+	}
 
 	inline WorldEntity* entity(EntityID e)
 	{
 		auto idx = index(e);
+		if (idx >= m_p_entities.size())
+			return nullptr;
 		//this complete utter mess is used instead of if statement to avoid branch misprediction, yay we have saved maybe 5ns :D (and maybe it is even slower) i dont want to check it
-		return (WorldEntity*)(((size_t)m_p_entities[idx]) *(m_loaded[idx] && (m_generations[idx] == generation(e))));//check if entity is loaded (otherwise it would output pointer to invalid location)
+		return (WorldEntity*)(((size_t)m_p_entities[idx]) * (m_loaded[idx] && (m_generations[idx] == generation(e))));//check if entity is loaded (otherwise it would output pointer to invalid location)
 	}
 
 	// returns entity pointer no matter if it was unloaded or not (pointer might reference to invalid location!)

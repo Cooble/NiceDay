@@ -252,15 +252,20 @@ namespace WorldIO
 
 	DynamicSaver::~DynamicSaver()
 	{
-		endSession();
-		beginSession();
-		saveVTable();
-		endSession();
+		if (isOpened())
+			endSession();
 	}
 
 	void DynamicSaver::init()
 	{
 		loadVTable();
+	}
+	bool DynamicSaver::initIfExist()
+	{
+		if (!std::filesystem::exists(m_path))
+			return false;
+		loadVTable();
+		return true;
 	}
 
 	void DynamicSaver::saveVTable()

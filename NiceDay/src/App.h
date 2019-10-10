@@ -6,6 +6,8 @@
 #include "event/WindowEvent.h"
 #include "Scheduler.h"
 
+#define ND_SCHED App::get().getScheduler()
+
 class ImGuiLayer;
 
 class App

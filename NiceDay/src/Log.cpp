@@ -5,8 +5,13 @@
 
 std::shared_ptr<spdlog::logger> Log::s_CoreLogger;
 
+
 void Log::Init()
 {
+	static bool noInit = true;
+	if (!noInit)
+		return;
+	noInit = false;
 	spdlog::set_pattern("%^[%T] %n: %v%$");
 	s_CoreLogger = spdlog::stdout_color_mt("ND");
 	s_CoreLogger->set_level(spdlog::level::trace);

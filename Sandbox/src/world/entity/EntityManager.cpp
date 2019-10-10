@@ -42,21 +42,19 @@ struct MHeader{
 
 void EntityManager::serialize(IStream* stream)
 {
-	MHeader h;
+	MHeader h = {};
 	h.freeListSize = m_freeList.size();
 	h.generationSize = m_generations.size();
 	stream->write(h);
 	for (uint32_t value : m_freeList)
 		stream->write(value);
 
-	stream->write((char*)m_generations.data(), m_generations.size() * sizeof(uint8_t));
-	
-	
+	stream->write((char*)m_generations.data(), h.generationSize * sizeof(uint8_t));
 }
 
 void EntityManager::deserialize(IStream* stream)
 {
-	MHeader h;
+	MHeader h={};
 	stream->read(h);
 	uint32_t fre = 0;
 	for (int i = 0; i < h.freeListSize; ++i)

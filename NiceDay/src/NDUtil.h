@@ -97,7 +97,8 @@ namespace NDUtil
 
 		inline void resize(size_t bits)
 		{
-			if (bits % 32 != 0)
+			m_last_size = bits;
+			if ((bits % 32)!=0)
 				bits = (bits / 32) * 32 + 32;
 			if (m_bits.size() < (bits / 32))
 				m_bits.resize(bits / 32);
@@ -105,11 +106,13 @@ namespace NDUtil
 
 		inline bool get(size_t index) const
 		{
+			ASSERT((index >> 5) < m_bits.size(), "Invalid index");
 			return m_bits[index >> 5][index & ((1 << 5) - 1)];
 		}
 
 		inline void set(size_t index, bool val)
 		{
+			ASSERT((index >> 5) < m_bits.size(), "Invalid index");
 			m_bits[index >> 5][index & ((1 << 5) - 1)] = val;
 		}
 
@@ -145,8 +148,9 @@ namespace NDUtil
 		{
 			int arraySize = 0;
 			stream.read((char*)&arraySize, sizeof(int));
-			m_bits.resize(arraySize);
 			stream.read((char*)&m_last_size, sizeof(int));
+
+			m_bits.resize(arraySize);
 			stream.read((char*)m_bits.data(), byteSize());
 		}
 	};
@@ -163,6 +167,12 @@ namespace NDUtil
 
 struct half_int
 {
+	inline static std::string toString(half_int i)
+	{
+		return std::to_string(i) + ":[" + std::to_string(i.x) + ", " + std::to_string(i.y) + "]";
+	}
+	
+
 	inline static int X(int i)
 	{
 		return ((half_int*)&i)->x;
@@ -175,12 +185,12 @@ struct half_int
 
 	union
 	{
-		uint32_t i;
+		int i;
 
 		const struct
 		{
-			uint16_t x; //lsb
-			uint16_t y; //msb
+			short x; //lsb
+			short y; //msb
 		};
 	};
 
@@ -211,6 +221,11 @@ struct half_int
 		return i;
 	}
 };
+inline std::ostream & operator<<(std::ostream & stream, half_int const & v) {
+	auto s = half_int::toString(v);
+	stream.write(s.c_str(), s.size());
+	return stream;
+}
 
 struct quarter_int
 {
@@ -463,6 +478,8 @@ inline float randDispersedFloat(float absSize = 1) { return (std::rand() % 1000 
 class JobAssignment
 {
 public:
+	static const int64_t JOB_SUCCESS = 0;
+	static const int64_t JOB_FAILURE = std::numeric_limits<int64_t>::max();
 	int64_t m_main = 0;
 	int64_t m_worker = 0;
 public:
@@ -470,6 +487,7 @@ public:
 
 public:
 	inline void assign() { ++m_main; }
+
 	inline void markDone()
 	{
 		ASSERT(m_worker < m_main, "marking Done Job which has not been assigned.");
@@ -494,6 +512,7 @@ template <typename WorkAssignment>
 class Worker
 {
 private:
+	std::thread m_t;
 	bool m_is_buffering_assignments = false;
 	bool m_is_stopped = true;
 	bool m_is_running = false;
@@ -514,7 +533,7 @@ private:
 			m_wait_condition_variable.wait(loopLock);
 
 			bool runAgain = true;
-			while (runAgain)
+			while (runAgain&&m_is_running)
 			{
 				{
 					std::unique_lock<std::mutex> guard(m_queue_mutex);
@@ -529,7 +548,8 @@ private:
 				proccessAssignments(bufferAssigns);
 				{
 					std::unique_lock<std::mutex> guard(m_queue_mutex);
-					runAgain = !m_queue.empty() && m_is_running;//we dont need to wait for m_wait_condition_variable.notify_one();
+					runAgain = !m_queue.empty() && m_is_running;
+					//we dont need to wait for m_wait_condition_variable.notify_one();
 				}
 			}
 		}
@@ -542,7 +562,11 @@ public:
 	{
 		if (!m_is_running)
 			return;
-		stop(); //need wait for thread to finish
+
+		m_is_running = false;
+		m_wait_condition_variable.notify_one();
+
+		m_t.join();
 		while (!m_is_stopped);
 	}
 
@@ -550,8 +574,8 @@ public:
 	// will create separate working thread and return immediately
 	inline void start()
 	{
-		std::thread t(&Worker::runInner, this);
-		t.detach(); //fly daemon, fly
+		m_t = std::thread(&Worker::runInner, this);
+		//t.detach(); //fly daemon, fly ,nope
 	}
 
 	// will notify work thread to stop

@@ -7,7 +7,7 @@
 #include "entity/WorldEntity.h"
 #include "world/WorldTime.h"
 #include "particle/ParticleManager.h"
-#include "entity/Pool.h"
+#include "Pool.h"
 #include "ThreadedWorldGen.h"
 #include "BlockAccess.h"
 
@@ -18,7 +18,7 @@ class IChunkProvider;
 #define CHUNK_BUFFER_LENGTH 100 //5*4
 
 
-constexpr int DYNAMIC_ID_ENITY_MANAGER = std::numeric_limits<int>::max() - 0;
+constexpr int DYNAMIC_ID_ENTITY_MANAGER = std::numeric_limits<int>::max() - 0;
 constexpr int DYNAMIC_ID_WORLD_NBT = std::numeric_limits<int>::max() - 1;
 
 const int WORLD_CHUNK_BIT_SIZE = 5;
@@ -104,15 +104,15 @@ public:
 
 	inline void setBiome(int biome_id) { m_biome = biome_id; }
 
-	inline Phys::Rectangle getChunkRectangle() const
+	/*inline Phys::Rectangle getChunkRectangle() const
 	{
 		return Phys::Rectangle::createFromDimensions(m_x * WORLD_CHUNK_SIZE, m_y * WORLD_CHUNK_SIZE, WORLD_CHUNK_SIZE,
 		                                             WORLD_CHUNK_SIZE);
-	}
+	}*/
 
 	static inline int getChunkIDFromWorldPos(int wx, int wy)
 	{
-		return half_int(wy >> WORLD_CHUNK_BIT_SIZE, wx >> WORLD_CHUNK_BIT_SIZE);
+		return half_int(wx >> WORLD_CHUNK_BIT_SIZE, wy >> WORLD_CHUNK_BIT_SIZE);
 	}
 };
 
@@ -137,6 +137,7 @@ public:
 	{
 		BEING_LOADED,
 		BEING_GENERATED,
+		BEING_BOUNDED,
 		GENERATED,
 		BEING_UNLOADED,
 		UNLOADED
@@ -189,7 +190,6 @@ private:
 	NBT m_world_nbt;
 	IChunkProvider* m_chunk_provider;
 	ThreadedWorldGen m_threaded_gen;
-	Pool<JobAssignment> m_job_pool;
 
 	bool m_has_chunk_changed = false;
 
@@ -221,7 +221,13 @@ private:
 	void onWallsChange(int xx, int yy, BlockStruct& blok);
 	int getNextFreeChunkIndex(int startSearchIndex = 0);
 	void genChunks(defaultable_map<int, int, 0>& toUpdateChunks);
-	void updateBounds(defaultable_map<int, int, 0>& toUpdateChunks);
+	void updateLight(defaultable_map<int, int, 0>& toUpdateChunks);
+
+	void loadEntFinal(defaultable_map<int, int, 0>& toUpdateChunks, std::vector<int>& chunkEntitiesToLoad);
+
+	JobAssignmentP loadEntities2(std::vector<int>& chunksToLoad);
+	
+	JobAssignmentP updateBounds2(defaultable_map<int, int, 0>& toUpdateChunks);
 	void loadLightResources(int x, int y);
 
 	inline ChunkState getChunkState(int chunkID)
@@ -282,11 +288,13 @@ public:
 	glm::vec4 getSkyLight();
 	bool isChunkGenerated(int chunkId);
 
-	inline int getChunkSaveOffset(int x, int y) const { return y * m_info.chunk_width + x; }
-
 	inline int getChunkSaveOffset(int id) const
 	{
-		return getChunkSaveOffset(((half_int*)&id)->x, ((half_int*)&id)->y);
+		return getChunkSaveOffset(half_int::X(id),half_int::Y(id));
+	};
+	inline int getChunkSaveOffset(int cx,int cy) const
+	{
+		return cx + cy*m_info.chunk_width;
 	};
 	//==============CHUNK METHODS========================================================================
 
@@ -299,13 +307,14 @@ public:
 	// return index if chunk is in memory and accessible or -1
 	int getChunkIndex(int id) const;
 	// return index if chunk is in memory (array) or -1
-	int getChunkUnaccessibleIndex(int id) const;
+	int getChunkInaccessibleIndex(int id) const;
 
 	// assign chunk load and gen task and returns
 	void loadChunk(int x, int y);
 
 	// returns if chunk can be normally accessed (it is not in being loaded state)
 	inline bool isChunkFullyLoaded(int id) const { return getChunkIndex(id) != -1; }
+
 	void unloadChunks(std::set<int>& chunk_ids);
 	static void updateChunkBounds(BlockAccess& world, int cx, int cy, int bitBounds);
 	void loadChunksAndGen(std::set<int>& toLoadChunks);
@@ -442,16 +451,16 @@ public:
 public:
 	// saves everything except for loaded chunks (and entities in those chunks)
 	// return true if success
-	bool saveWorld();
+	JobAssignmentP saveWorld();
 
 	// loads everything except for chunks
 	// return true if success
-	bool loadWorld();
+	JobAssignmentP loadWorld();
 
 	// creates all neccessary world files and stuff
 	// no chunk generation
 	// return true if success
-	bool genWorld();
+	void genWorld();
 
 	inline bool isChunkGenerated(int cx, int cy) const
 	{
@@ -463,3 +472,4 @@ public:
 		m_is_chunk_gen_map.set(getChunkSaveOffset(cx, cy), true);
 	}
 };
+

@@ -25,7 +25,6 @@ void World::init()
 	for (int i = 0; i < CHUNK_BUFFER_LENGTH; i++)
 	{
 		m_chunks.emplace_back();
-		//m_chunks.at(i).m_loaded = false; redundant
 	}
 	memset(m_chunks.data(), 0, m_chunks.size() * sizeof(Chunk));
 	ND_INFO("Made world instance");
@@ -34,11 +33,11 @@ void World::init()
 World::World(std::string file_path, const WorldInfo& info)
 	: m_light_calc(this),
 	  m_threaded_gen(this),
-	  m_job_pool(200),
 	  m_info(info),
 	  m_file_path(file_path),
 	  m_nbt_saver(file_path + ".entity")
 {
+	m_nbt_saver.initIfExist();
 	auto provider = new FileChunkProvider(file_path);
 	m_is_chunk_gen_map.resize(info.chunk_width * info.chunk_height);
 	memset((void*)m_is_chunk_gen_map.getSource().data(), 0, m_is_chunk_gen_map.byteSize());
@@ -176,13 +175,13 @@ Chunk* World::getChunkM(int cx, int cy)
 
 int World::getChunkIndex(int id) const
 {
-	auto index = getChunkUnaccessibleIndex(id);
+	auto index = getChunkInaccessibleIndex(id);
 	if (index == -1)
 		return -1;
 	return m_chunk_headers[index].isAccessible() ? index : -1;
 }
 
-int World::getChunkUnaccessibleIndex(int id) const
+int World::getChunkInaccessibleIndex(int id) const
 {
 	auto t = m_local_offset_header_map.find(id);
 	if (t != m_local_offset_header_map.end())
@@ -203,38 +202,42 @@ constexpr int maskLeft = BIT(2);
 constexpr int maskRight = BIT(3);
 constexpr int maskGen = BIT(4);
 constexpr int maskFreshlyOnlyLoaded = BIT(5); //chunk was only loaded by thread, no gen neccessary
+constexpr int maskAllSides = maskUp | maskDown | maskLeft | maskRight;
+//chunk was only loaded by thread, no gen neccessary
 
+static defaultable_map<ChunkID, bool, false> CHUNK_MAP;
+
+// calls genchunks2 with promise:
+//		all chunks in toLoadChunks	are valid
+//									have their header and space
+//									have GENERATED or BEING_LOADED state
+//									maskGen which should be generated
+//									maskFreshlyOnlyLoaded should load their entities
 
 void World::loadChunksAndGen(std::set<int>& toLoadChunks)
 {
-	//auto t = TimerStaper("loadAndGen took: ");
-	// HOW TO LOAD AND GEN CHUNKS
-	// 1.  determine which chunks need generation and which only load
-	// 2.  add all those chunks and chunks around them to ToUpdateList
-	// 3.  check if those chunks are valid and if chunks around don't need to be generated
-	// 4.  lock all chunks to prevent unload,(mark chunks to BEING_LOADED if neccessary)
-	// 5.  assignJob to ChunkProvider
-	// 6.  when done, mark all chunks as loaded in header
-	// 7.  call genChunks 
-	// 8.  assign generation
-	// 9.  when done finally register chunk to local_offset_map
-	// 10. update all neccessary borders on main thread
-
 	defaultable_map<int, int, 0> toupdateChunks;
-	toupdateChunks.reserve(toupdateChunks.size() * 4);
+	std::vector<int> toRemove;
 
-	for (int chunkId : toLoadChunks)
+	for (auto chunkID : toLoadChunks)
 	{
-		int x = half_int::X(chunkId);
-		int y = half_int::Y(chunkId);
+		int x = half_int::X(chunkID);
+		int y = half_int::Y(chunkID);
 
-		ASSERT(isChunkValid(x, y), "Invalid chunk pos");
-		auto state = getChunkState(chunkId);
-		if (!isChunkGenerated(chunkId) && state == UNLOADED)
+		if (!isChunkValid(x, y))
+			continue;
+
+		if (getChunkState(chunkID) == BEING_UNLOADED)
+			continue;
+
+		if (isChunkGenerated(chunkID) || getChunkState(chunkID) != UNLOADED)
 		{
-			//add chunks that need to be loaded and or refreshed
-
-			toupdateChunks[half_int(x, y)] = maskRight | maskLeft | maskUp | maskDown | maskGen;
+			//only load is neccessary
+			toupdateChunks[chunkID] |= 0;
+		}
+		else
+		{
+			toupdateChunks[chunkID] |= maskRight | maskLeft | maskUp | maskDown | maskGen;
 			//yes we need to update even this one
 			toupdateChunks[half_int(x + 1, y)] |= maskLeft;
 			toupdateChunks[half_int(x - 1, y)] |= maskRight;
@@ -247,351 +250,290 @@ void World::loadChunksAndGen(std::set<int>& toLoadChunks)
 			toupdateChunks[half_int(x + 1, y - 1)] |= 0;
 			toupdateChunks[half_int(x + 1, y + 1)] |= 0;
 		}
-		else //add all other chunks that need to be loaded
-			toupdateChunks[chunkId] |= 0;
+	}
+	//filter invalid chunks
+	for (auto& pair : toupdateChunks)
+	{
+		auto chunkID = pair.first;
+		auto flags = pair.second;
+
+		//valid filter
+		if (!isChunkValid(chunkID))
+		{
+			toRemove.push_back(chunkID);
+			continue;
+		}
+		//being unloaded filter
+		if (getChunkState(chunkID) == BEING_UNLOADED)
+		{
+			toRemove.push_back(chunkID);
+			continue;
+		}
+		//unwanted generation filter
+		if (!(flags & maskGen) && !isChunkGenerated(chunkID) && getChunkState(chunkID) == UNLOADED)
+		{
+			toRemove.push_back(chunkID);
+			continue;
+		}
 	}
 
-	std::vector<half_int> toRemove;
-	toRemove.reserve(toupdateChunks.size());
+	for (auto to_remove : toRemove)
+		toupdateChunks.erase(toupdateChunks.find(to_remove));
 
-
-	//now we need to load everything and lock it
-	JobAssignmentP assignment = nullptr;
+	JobAssignmentP loadJob = nullptr;
 	int lastFreeChunk = 0;
-
-	auto p = dynamic_cast<ThreadedChunkProvider*>(m_chunk_provider);
-	p->beginBuffering();
-	for (auto c : toupdateChunks)
+	std::vector<ChunkID> chunksToWaitFor;
+	for (auto& pair : toupdateChunks)
 	{
-		auto chunkId = c.first;
-		auto flags = c.second;
-		if (!isChunkValid(chunkId))
+		auto chunkID = pair.first;
+		auto flags = pair.second;
+		auto state = getChunkState(chunkID);
+
+		//need to find space for chunk and load it if already generated
+		if (state == UNLOADED)
 		{
-			toRemove.emplace_back(chunkId);
-			continue;
+			int chunkOffset = getNextFreeChunkIndex(lastFreeChunk);
+			if (chunkOffset == -1)
+			{
+				ND_WARN("Cannot load chunk, buffer is full. increment CHUNK_BUFFER_LENGTH");
+				//toRemove.emplace_back(chunkID);
+				continue;
+			}
+			lastFreeChunk = chunkOffset + 1;
+
+			auto& header = m_chunk_headers[chunkOffset];
+			header = ChunkHeader(chunkID);
+			header.getJob()->assign();
+			header.setAccessible(false);
+			header.setState(BEING_LOADED);
+
+			m_local_offset_header_map[chunkID] = chunkOffset;
+
+			// assign load if chunk has been generated in the past
+			if (!(flags & maskGen))
+			{
+				toupdateChunks[pair.first] |= maskFreshlyOnlyLoaded;
+				if (loadJob == nullptr)
+					loadJob = ND_SCHED.allocateJob();
+				m_chunk_provider->assignChunkLoad(loadJob, &m_chunks[chunkOffset], getChunkSaveOffset(chunkID));
+			}
 		}
-		int x = half_int::X(chunkId);
-		int y = half_int::Y(chunkId);
-
-		auto state = getChunkState(chunkId);
-
-		//cannot stop unloading proccess
-		if (state == BEING_UNLOADED)
+			//just lock the chunk to prevent unload
+		else if (state == GENERATED)
 		{
-			toRemove.emplace_back(chunkId);
-			continue;
+			auto& header = m_chunk_headers[getChunkInaccessibleIndex(chunkID)];
+			header.getJob()->assign();
 		}
-		//if chunks is already (being) loaded we just lock it to prevent unload 
-		if (state == BEING_LOADED || state == BEING_GENERATED || state == GENERATED)
+			//we will need to wait for chunk_provider and chunk_gen to finish all prior work
+			//lock the chunk to prevent unload
+		else
 		{
-			toupdateChunks[chunkId] = flags & (~maskGen); //remove togenflag
-			m_chunk_headers[getChunkUnaccessibleIndex(chunkId)].getJob()->assign();
-			continue;
+			chunksToWaitFor.push_back(chunkID);
+			auto& header = m_chunk_headers[getChunkInaccessibleIndex(chunkID)];
+			header.getJob()->assign();
 		}
-		//check if chunk to be loaded has not been generated yet, so we don't want to generate it
-		if (!isChunkGenerated(chunkId) && (flags & maskGen) == 0)
-		{
-			toRemove.emplace_back(chunkId);
-			continue;
-		}
-
-		int chunkOffset = getNextFreeChunkIndex(lastFreeChunk);
-		if (chunkOffset == -1)
-		{
-			ND_WARN("Cannot load chunk, buffer is full. increment CHUNK_BUFFER_LENGTH");
-			toRemove.emplace_back(chunkId);
-			continue;
-		}
-		lastFreeChunk = chunkOffset + 1;
-
-		auto& header = m_chunk_headers[chunkOffset];
-		header = ChunkHeader(chunkId);
-		header.getJob()->assign();
-		header.setAccessible(false);
-		header.setState(BEING_LOADED);
-
-		m_local_offset_header_map[chunkId] = chunkOffset;
-		//ND_INFO("chunkload {} {}", chunkId, chunkOffset);
-
-		if (assignment == nullptr)
-			assignment = m_job_pool.allocate();
-		assignment->assign();
-		if (!(maskGen & c.second))
-			toupdateChunks[chunkId] |= maskFreshlyOnlyLoaded;
-		m_chunk_provider->assignChunkLoad(assignment, &m_chunks[chunkOffset], getChunkSaveOffset(x, y));
 	}
-	p->flushBuffering();
-	for (int id : toRemove) //remove invalid chunks from list
-		toupdateChunks.erase(toupdateChunks.find(id));
-
-	//wait for everything to load, then call genChunks
-	//todo use std::move to move array
-	auto afterLoad = [assignment, this, toupdateChunks{std::move(toupdateChunks)}]() mutable -> bool
+	// need to wait for our loading jobs, and all prior jobs of workers (i.e. chunk_provider, threaded_gen)
+	if (!chunksToWaitFor.empty())
 	{
-		if (assignment != nullptr)
-			if (!assignment->isDone())
-				return false;
-		if (assignment)
-			this->m_job_pool.deallocate(assignment);
-		genChunks(toupdateChunks);
-		return true;
-	};
-	App::get().getScheduler().runTaskTimer(afterLoad, 1);
+		JobAssignmentP loadFence = ND_SCHED.allocateJob();
+		JobAssignmentP genFence = ND_SCHED.allocateJob();
+		bool fencesDone = false;
+		m_chunk_provider->assignWait(loadFence);
+		m_threaded_gen.assignWait(genFence);
+		auto waitForWorkFunc = [this, fencesDone, chunksToWaitFor, loadFence, genFence, loadJob, toupdateChunks
+			]()mutable-> bool
+		{
+			if (!fencesDone && loadFence->isDone() && genFence->isDone() && (loadJob == nullptr || loadJob->isDone()))
+			{
+				ND_SCHED.deallocateJob(loadFence);
+				ND_SCHED.deallocateJob(genFence);
+				if (loadJob)
+					ND_SCHED.deallocateJob(loadJob);
+				fencesDone = true;
+			}
+			if (fencesDone)
+			{
+				for (ChunkID chunkID : chunksToWaitFor)
+					if (getChunkState(chunkID) != GENERATED)
+						return false;
+				genChunks(toupdateChunks);
+				return true;
+			}
+			return false;
+		};
+		ND_SCHED.runTaskTimer(waitForWorkFunc);
+	}
+		//need to wait only for our load job
+	else if (loadJob)
+	{
+		ND_SCHED.callWhenDone([this, toupdateChunks]() mutable
+			{
+				genChunks(toupdateChunks);
+			}, loadJob);
+	}
+		//no need to wait for any load
+	else genChunks(toupdateChunks);
 }
 
 void World::genChunks(defaultable_map<int, int, 0>& toUpdateChunks)
 {
-	//auto t = TimerStaper("genchunks took: ");
-	JobAssignment* assignment = nullptr;
-	for (auto c : toUpdateChunks)
+	JobAssignmentP genJob = nullptr;
+	std::vector<ChunkID> entitiesToLoad;
+	for (auto& pair : toUpdateChunks)
 	{
-		auto chunkId = c.first;
-		int offset = getChunkUnaccessibleIndex(chunkId);
-		ASSERT(offset != -1, "This should not happen");
-		
-		if (getChunkState(chunkId) == BEING_LOADED)
+		auto chunkID = pair.first;
+		auto flags = pair.second;
+		ASSERT(getChunkState(chunkID) == BEING_LOADED || getChunkState(chunkID) == GENERATED, "shit");
+		auto offset = getChunkInaccessibleIndex(chunkID);
+		auto& header = m_chunk_headers[offset];
+		if (flags & maskGen)
 		{
-			setChunkState(chunkId, GENERATED); //all needed chunks are loaded
-			m_chunks[offset].markDirty(true); //all loaded chunks need to be rendered
+			header.setState(BEING_GENERATED);
+			if (genJob == nullptr)
+				genJob = ND_SCHED.allocateJob();
+			m_chunks[offset].m_x = half_int::X(chunkID);
+			m_chunks[offset].m_y = half_int::Y(chunkID);
+			m_threaded_gen.assignChunkGen(genJob, &m_chunks[offset]);
 		}
-
-		if (!(c.second & maskGen))
-			continue;
-
-
-		auto& chunk = m_chunks[offset];
-		chunk.m_x = half_int::X(chunkId);
-		chunk.m_y = half_int::Y(chunkId);
-		setChunkState(chunkId, BEING_GENERATED);
-
-		if (assignment == nullptr)
-			assignment = m_job_pool.allocate();
-		assignment->assign();
-		m_threaded_gen.assignChunkGen(assignment, &chunk);
+		else if (flags & maskFreshlyOnlyLoaded)
+			entitiesToLoad.push_back(chunkID);
 	}
-	auto afterGen = [assignment, this, toUpdateChunks{std::move(toUpdateChunks)}]() mutable -> bool
+	if (genJob != nullptr)
 	{
-		if (assignment != nullptr)
-			if (!assignment->isDone())
-				return false;
-		if (assignment)
-			this->m_job_pool.deallocate(assignment);
+		auto afterGen = [this, toUpdateChunks, entitiesToLoad]() mutable
+		{
+			//before bounds, all chunks need to be accessible
+			//all chunks are generated by now
+			for (auto pair : toUpdateChunks)
+			{
+				auto chunkID = pair.first;
+				m_is_chunk_gen_map.set(getChunkSaveOffset(chunkID), true);
+				auto& header = m_chunk_headers[getChunkInaccessibleIndex(chunkID)];
+				header.setAccessible(true);
+			}
 
-		std::vector<ChunkID> chunkEntitiesToLoad;
+			auto job = updateBounds2(toUpdateChunks);
+			auto afterBound = [this, toUpdateChunks, entitiesToLoad]()mutable
+			{
+				updateLight(toUpdateChunks);
+				loadEntFinal(toUpdateChunks, entitiesToLoad);
+			};
+			ND_SCHED.callWhenDone(afterBound, job);
+		};
+		ND_SCHED.callWhenDone(afterGen, genJob);
+	}
+	else
+	{
+		//set all to accessible for entities to enjoy
 		for (auto pair : toUpdateChunks)
 		{
-			half_int chunkID = pair.first;
-			int offset = getChunkUnaccessibleIndex(chunkID);
-
-			//unlock all used chunks
-			//make free access for setBlock() etc..
-			auto& header = m_chunk_headers[offset];
-			header.getJob()->markDone();
-			//mark gen chunks as generated
-			if (pair.second & maskGen)
-			{
-				m_is_chunk_gen_map.set(getChunkSaveOffset(chunkID), true);
-				header.setState(GENERATED);
-			}
+			auto chunkID = pair.first;
+			auto& header = m_chunk_headers[getChunkInaccessibleIndex(chunkID)];
 			header.setAccessible(true);
-
-			if (pair.second & maskFreshlyOnlyLoaded)
-				chunkEntitiesToLoad.push_back(pair.first);
-			/*if (pair.second & maskGen)
-			{
-				m_chunks[offset].getLightJob().assign();
-				m_light_calc.assignComputeChunk(chunkID.x, chunkID.y);
-			}*/
 		}
-
-		//afterEntityLoad mutable resources
-		int mutableState = 0;
-		JobAssignmentP entityLoadJob = nullptr;
-		WorldEntity*** arrayOfEntityArrayPointers = nullptr;
-		int* arrayOfEntityArraySizes = nullptr;
-
-		//entities
-		if (!chunkEntitiesToLoad.empty())
-		{
-			auto afterEntityLoad = [this,
-					entityLoadJob,
-					chunkEntitiesToLoad,
-					mutableState,
-					arrayOfEntityArrayPointers,
-					arrayOfEntityArraySizes]() mutable -> bool
-			{
-				if (mutableState == 0)
-				{
-					mutableState = 1;
-					arrayOfEntityArrayPointers = new WorldEntity**[chunkEntitiesToLoad.size()];
-					arrayOfEntityArraySizes = new int[chunkEntitiesToLoad.size()];
-					entityLoadJob = m_job_pool.allocate();
-					for (int i = 0; i < chunkEntitiesToLoad.size(); ++i)
-					{
-						ChunkID id = chunkEntitiesToLoad[i];
-						entityLoadJob->assign();
-						m_chunk_provider->assignEntityLoad(entityLoadJob, id,
-						                                   &arrayOfEntityArrayPointers[i],
-						                                   &arrayOfEntityArraySizes[i]);
-					}
-				}
-				else
-				{
-					if (entityLoadJob->isDone())
-					{
-						m_job_pool.deallocate(entityLoadJob);
-						for (int i = 0; i < chunkEntitiesToLoad.size(); ++i)
-						{
-							int entityArraySize = arrayOfEntityArraySizes[i];
-							auto entityArray = arrayOfEntityArrayPointers[i];
-							for (int i = 0; i < entityArraySize; ++i)
-							{
-								ASSERT(entityArray[i] != nullptr, "Shi");
-								loadEntity(entityArray[i]);
-							}
-							if (entityArraySize)
-								delete[] entityArray;
-						}
-						delete[] arrayOfEntityArrayPointers;
-						delete[] arrayOfEntityArraySizes;
-
-						return true;
-					}
-				}
-				return false;
-			};
-
-			afterEntityLoad(); //assign the entity load job
-			App::get().getScheduler().runTaskTimer(afterEntityLoad, 1);
-		}
-
-		updateBounds(toUpdateChunks);
-		return true;
-	};
-	if (assignment == nullptr)
-		afterGen();
-	else
-		App::get().getScheduler().runTaskTimer(afterGen, 1);
-
-	/*//load section============================================================================
-	//load all needed chunks and remove those which are not generated (but toGenChunks)
-	auto stream = WorldIO::Session(m_file_path, true);
-	int lastFreeChunk = 0;
-	std::vector<int> toErase;
-	for (auto chunkId : toupdateChunks)
-	{
-		int id = chunkId.first;
-		int x = half_int::getX(id);
-		int y = half_int::getY(id);
-		if (!isChunkValid(x, y))
-		{
-			toErase.push_back(id);
-			continue;
-		}
-
-		int index = getChunkIndex(id);
-		if (index == -1)
-		{
-			index = getNextFreeChunkIndex(lastFreeChunk);
-			lastFreeChunk = index + 1;
-
-			Chunk& c = m_chunks[index];
-			int saveOffset = getChunkSaveOffset(x, y);
-			stream.loadChunk(&c, saveOffset);
-			//checking if we have not-generated chunk that is not set to be generated
-			if (!c.isGenerated() && toGenChunks.find(id) == toGenChunks.end())
-			{
-				c.setLoaded(false);
-				//ND_INFO("erasing {}, {}",x,y);
-				toErase.push_back(id);
-				continue;
-			}
-			else
-			{
-				m_local_offset_map[c.chunkID()] = index;
-				c.setLoaded(true);
-			}
-		}
-		m_chunks[index].lock(true);
+		updateLight(toUpdateChunks);
+		loadEntFinal(toUpdateChunks, entitiesToLoad);
 	}
-	for (int id : toErase) //remove invalid and nevergenerated (excluding toGenChunks)
-		toupdateChunks.erase(toupdateChunks.find(id));
-	//load section done============================================================================
-
-	int genIndex = 0;
-	int upIndex = 0;
-
-	App::get().getScheduler().runTaskTimer(
-		[genIndex, upIndex, this, toGenChunks, toupdateChunks]() mutable -> bool
-		{
-			taskActive = true;
-			int numberOfGens = 0;
-			auto genIt = toGenChunks.begin();
-			std::advance(genIt, genIndex);
-			while (genIt != toGenChunks.end())
-			{
-				Chunk* c = &m_chunks[getChunkIndex(*genIt)];
-
-				this->m_gen.genLayer0(this->m_info.seed, this, *c);
-
-				c->lightLock();
-				this->m_light_calc.assignComputeChunk(c->getCX(), c->getCY());
-
-				++genIndex;
-				++genIt;
-				++numberOfGens;
-
-				if (numberOfGens >= 1)
-					return false;
-			}
-
-			int numberOfUps = 0;
-			auto upIt = toupdateChunks.begin();
-			std::advance(upIt, upIndex);
-			while (upIt != toupdateChunks.end())
-			{
-				int id = (*upIt).first;
-				int mask = (*upIt).second;
-				auto& c = m_chunks[getChunkIndex(id)];
-
-				auto resources = LightCalculator::createQuadroCross(c.getCX(), c.getCY());
-				for (int i = 0; i < 4; ++i)
-				{
-					auto pC = getLoadedChunkPointerMutable(resources[i].first, resources[i].second);
-					if (pC)
-						pC->lightLock();
-				}
-
-				m_light_calc.assignComputeChunkBorders(c.getCX(), c.getCY());
-				if (mask != 0) //check if chunk is not only for readonly purposes
-				{
-					this->updateChunkBounds(half_int::getX(id), half_int::getY(id), mask);
-				}
-				++upIndex;
-				++upIt;
-				++numberOfUps;
-				if (numberOfUps >= 1)
-				{
-					return false;
-				}
-			}
-
-			for (auto& i : toupdateChunks)
-			{
-				Chunk& c = this->getChunk(half_int::getX(i.first), half_int::getY(i.first));
-				c.lock(false); //unlock chunks so they can be unloaded
-				c.markDirty(true); //need render after change
-			}
-			//ND_INFO("we are done with {} chunks", toupdateChunks.size());
-			taskActive = false;
-			return true;
-		}, 1);*/
 }
 
-void World::updateBounds(defaultable_map<int, int, 0>& toUpdateChunks)
+void World::updateLight(defaultable_map<int, int, 0>& toUpdateChunks)
 {
-	//auto t = TimerStaper("bounds took: ");
+	//compute generated chunks
+	for (auto pair : toUpdateChunks)
+	{
+		half_int chunkID = pair.first;
+		auto flags = pair.second;
+		if (flags & maskGen)
+		{
+			getChunkM(chunkID)->getLightJob().assign();
+			m_light_calc.assignComputeChunk(chunkID.x, chunkID.y);
+		}
+	}
+	//update bounds around others
+	for (auto pair : toUpdateChunks)
+	{
+		half_int chunkID = pair.first;
+		auto flags = pair.second;
+		if (flags & maskAllSides)
+		{
+			ChunkPack res(chunkID,{
+				nullptr,getChunkM(chunkID.x,chunkID.y+1),nullptr,
+				getChunkM(chunkID.x-1,chunkID.y),getChunkM(chunkID),getChunkM(chunkID.x + 1,chunkID.y),
+				nullptr,getChunkM(chunkID.x,chunkID.y-1),nullptr,
+				});
+			res.assignLightJob();
+			m_light_calc.assignComputeChunkBorders(chunkID.x, chunkID.y, res);
+		}
+	}
+}
 
+void World::loadEntFinal(defaultable_map<int, int, 0>& toUpdateChunks, std::vector<int>& chunkEntitiesToLoad)
+{
+	auto afterEntity = [this, toUpdateChunks]()mutable
+	{
+		for (auto pair : toUpdateChunks)
+		{
+			auto chunkID = pair.first;
+			auto& header = m_chunk_headers[getChunkInaccessibleIndex(chunkID)];
+			header.getJob()->markDone(); //unlock all chunks
+			header.setState(GENERATED);
+			m_chunks[getChunkInaccessibleIndex(chunkID)].markDirty(true);
+		}
+		m_has_chunk_changed = true;
+	};
+	auto entityLoadedFence = loadEntities2(chunkEntitiesToLoad);
+	if (entityLoadedFence->isDone())
+	{
+		afterEntity();
+		ND_SCHED.deallocateJob(entityLoadedFence);
+	}
+	else
+		ND_SCHED.callWhenDone(afterEntity, entityLoadedFence);
+}
+
+JobAssignmentP World::loadEntities2(std::vector<int>& chunkEntitiesToLoad)
+{
+	JobAssignmentP p = ND_SCHED.allocateJob();
+
+	JobAssignmentP entityLoadedFence = ND_SCHED.allocateJob();
+	if (chunkEntitiesToLoad.empty())
+		return entityLoadedFence;
+	entityLoadedFence->assign();
+
+	WorldEntity*** entityPointerArrayChunkArray = new WorldEntity**[chunkEntitiesToLoad.size()];
+	int* entityPointerArraySizeChunkArray = new int[chunkEntitiesToLoad.size()];
+
+	for (int i = 0; i < chunkEntitiesToLoad.size(); ++i)
+		m_chunk_provider->assignEntityLoad(p, chunkEntitiesToLoad[i],
+		                                   &entityPointerArrayChunkArray[i],
+		                                   &entityPointerArraySizeChunkArray[i]);
+
+	auto afterLoad = [this, chunkEntitiesToLoad, entityLoadedFence, size{chunkEntitiesToLoad.size()},entityPointerArrayChunkArray,
+			entityPointerArraySizeChunkArray]()mutable
+	{
+		for (int i = 0; i < size; ++i)
+		{
+
+			auto ray = entityPointerArrayChunkArray[i];
+			auto raySize = entityPointerArraySizeChunkArray[i];
+			for (int i = 0; i < raySize; ++i)
+			{
+				loadEntity(ray[i]);
+			}
+			if (raySize)
+				delete[] ray;
+		}
+		delete[] entityPointerArrayChunkArray;
+		delete[] entityPointerArraySizeChunkArray;
+		entityLoadedFence->markDone();
+	};
+	ND_SCHED.callWhenDone(afterLoad, p);
+	return entityLoadedFence;
+}
+
+JobAssignmentP World::updateBounds2(defaultable_map<int, int, 0>& toUpdateChunks)
+{
 	//assign bound update
 	JobAssignmentP boundUpdateJob = nullptr;
 	std::vector<ChunkPack> resources;
@@ -599,7 +541,9 @@ void World::updateBounds(defaultable_map<int, int, 0>& toUpdateChunks)
 	{
 		//update chunk bounds if necessary
 		half_int chunkID = pair.first;
-		if (pair.second == 0)
+		auto flags = pair.second;
+
+		if ((flags & (maskDown | maskUp | maskLeft | maskRight)) == 0)
 			continue;
 
 		auto up = half_int(chunkID.x, chunkID.y + 1);
@@ -614,41 +558,41 @@ void World::updateBounds(defaultable_map<int, int, 0>& toUpdateChunks)
 		});
 		resources.push_back(resource); //todo use emplace instead of push
 		if (boundUpdateJob == nullptr)
-			boundUpdateJob = m_job_pool.allocate();
-		boundUpdateJob->assign();
-		m_threaded_gen.assignChunkBoundUpdate(boundUpdateJob, resource, pair.second);
+			boundUpdateJob = ND_SCHED.allocateJob();
+		m_threaded_gen.assignChunkBoundUpdate(boundUpdateJob, resource, flags);
 	}
 	//lock all chunks which are boun updated and souroundings
 	for (auto& pack : resources)
 		for (auto chunkP : pack)
 			if (chunkP)
 				m_chunk_headers[getChunkIndex(chunkP->chunkID())].getJob()->assign();
-	if (boundUpdateJob)
-		App::get().getScheduler().runTaskTimer(
-			[boundUpdateJob, this, resources]() mutable -> bool
-			{
-				if (!boundUpdateJob->isDone())
-					return false;
-				this->m_job_pool.deallocate(boundUpdateJob);
 
-				//unlock all chunks which are boun updated and souroundings
-				for (auto& pack : resources)
-					for (auto chunkP : pack)
-						if (chunkP)
-						{
-							m_chunk_headers[getChunkIndex(chunkP->chunkID())].getJob()->markDone();
-							chunkP->markDirty(true); //finally shall we render that guy
-						}
-				m_has_chunk_changed = true; //notify worldrender to gather chunks to render
-				return true;
-			});
-	else m_has_chunk_changed = true; //notify worldrender to gather chunks to render
+	JobAssignmentP p = ND_SCHED.allocateJob();
+	if (boundUpdateJob)
+	{
+		p->assign();
+		auto afterBoundUpdate = [this,p, resources]() mutable
+		{
+			//unlock all chunks which are boun updated and souroundings
+			for (auto& pack : resources)
+				for (auto chunkP : pack)
+					if (chunkP)
+					{
+						m_chunk_headers[getChunkIndex(chunkP->chunkID())].getJob()->markDone();
+						chunkP->markDirty(true); //finally shall we render that guy
+					}
+			m_has_chunk_changed = true; //notify worldrender to gather chunks to render
+			p->markDone();
+		};
+		ND_SCHED.callWhenDone(afterBoundUpdate, boundUpdateJob);
+	}
+	return p;
 }
+
 
 void World::unloadChunks(std::set<int>& chunk_ids)
 {
 	JobAssignmentP assignment = nullptr;
-	std::vector<EntityID> toUnload;
 	std::vector<int> chunksToUnload;
 
 
@@ -658,23 +602,26 @@ void World::unloadChunks(std::set<int>& chunk_ids)
 		if (chunkOffset == -1)
 			continue;
 		auto& header = m_chunk_headers[chunkOffset];
+		if (header.getState() != GENERATED) //cannot unload on any other state
+			continue;
 		if (!header.getJob()->isDone())
 			continue;
 
 		auto& chunk = m_chunks[chunkOffset];
 
+
 		//todo maybe mark chunks as markedDead which would unload it after it is not locked
-		//	if (!chunk.getLightJob().isDone())
-		//	continue;
+		if (!chunk.getLightJob().isDone())
+			continue;
 
 		header.setAccessible(false);
+		header.setState(BEING_UNLOADED);
+		header.getJob()->assign();
 		chunk.last_save_time = getWorldTicks();
 		if (assignment == nullptr)
-			assignment = m_job_pool.allocate();
-		assignment->assign();
+			assignment = ND_SCHED.allocateJob();
 		m_chunk_provider->assignChunkSave(assignment, &chunk, getChunkSaveOffset(chunkId));
 		chunksToUnload.push_back(chunkId);
-		setChunkState(chunkId, BEING_UNLOADED);
 	}
 	if (chunksToUnload.empty())
 		return;
@@ -685,25 +632,27 @@ void World::unloadChunks(std::set<int>& chunk_ids)
 	for (int chunkIdx = 0; chunkIdx < chunksToUnload.size(); ++chunkIdx)
 	{
 		ChunkID chunkId = chunksToUnload[chunkIdx];
-		auto& chunk = m_chunks[getChunkUnaccessibleIndex(chunkId)];
-		auto rect = chunk.getChunkRectangle();
+		auto& chunk = m_chunks[getChunkInaccessibleIndex(chunkId)];
+
+		//ASSERT(CHUNK_MAP[chunkId], "unloadig loaded chunk");
+		//CHUNK_MAP[chunkId] = false;
 
 		std::vector<WorldEntity*> entities;
 
-		for (int entityIdx = m_entity_array.size()-1; entityIdx >=0 ; --entityIdx)
+		for (int entityIdx = m_entity_array.size() - 1; entityIdx >= 0; --entityIdx)
 		{
 			EntityID id = m_entity_array[entityIdx];
 			auto pointer = m_entity_manager.entity(id);
 			ASSERT(pointer, "world array contains unloaded entities");
-			if (rect.containsPoint(pointer->getPosition()))
+			if (chunkId == half_int(pointer->getPosition().x/WORLD_CHUNK_SIZE,pointer->getPosition().y / WORLD_CHUNK_SIZE))
 			{
 				bool temp = pointer->hasFlag(EFLAG_TEMPORARY);
 				unloadEntityNoDestruction(pointer, temp);
-				m_entity_array.erase(m_entity_array.begin()+entityIdx);
-				if(!temp)//save if not temporary
-					entities.push_back(pointer);
-				else 
+				m_entity_array.erase(m_entity_array.begin() + entityIdx);
+				if (temp) //save if not temporary
 					free(pointer);
+				else
+					entities.push_back(pointer);
 			}
 		}
 		arrayOfEntityArraySizes[chunkIdx] = entities.size();
@@ -712,105 +661,36 @@ void World::unloadChunks(std::set<int>& chunk_ids)
 		{
 			arrayOfEntityArrayPointers[chunkIdx] = new WorldEntity*[entities.size()];
 			memcpy(arrayOfEntityArrayPointers[chunkIdx], entities.data(), entities.size() * sizeof(WorldEntity*));
-			assignment->assign();
-			m_chunk_provider->assignEntitySave(assignment, chunkId, arrayOfEntityArrayPointers[chunkIdx],
-			                                   arrayOfEntityArraySizes[chunkIdx]);
+
 		}
+		m_chunk_provider->assignEntitySave(assignment, chunkId, arrayOfEntityArrayPointers[chunkIdx],
+		                                   arrayOfEntityArraySizes[chunkIdx]);
 	}
-
-	App::get().getScheduler().runTaskTimer(
-		[assignment, this, arrayOfEntityArrayPointers, arrayOfEntityArraySizes, chunksToUnload{
-			std::move(chunksToUnload)
-		}]() mutable -> bool
-		{
-			if (!assignment->isDone())
-				return false;
-			this->m_job_pool.deallocate(assignment);
-
-			for (int chunkIdx = 0; chunkIdx < chunksToUnload.size(); ++chunkIdx)
-			{
-				auto id = chunksToUnload[chunkIdx];
-				auto offset = getChunkUnaccessibleIndex(id);
-				m_local_offset_header_map.erase(id);
-				m_chunk_headers[offset] = ChunkHeader(); //reset head
-
-				//free entitypointers
-				for (int entityIdx = 0; entityIdx < arrayOfEntityArraySizes[chunkIdx]; ++entityIdx)
-					free(arrayOfEntityArrayPointers[chunkIdx][entityIdx]);
-				if (arrayOfEntityArraySizes[chunkIdx])
-					delete[] arrayOfEntityArrayPointers[chunkIdx];
-
-				//ND_INFO("chunkunlo {} {}", id, offset);
-			}
-			delete[] arrayOfEntityArraySizes;
-			delete[] arrayOfEntityArrayPointers;
-
-			return true;
-		}, 1);
-
-	/*WorldIO::Session stream = WorldIO::Session(m_file_path, true);
-	m_nbt_saver.beginSession();
-	std::vector<EntityID> toUnload;
-
-	for (int chunkId : chunk_ids)
+	auto afterUnload = [this, arrayOfEntityArrayPointers, arrayOfEntityArraySizes,
+			chunksToUnload]() mutable
 	{
-		auto& c = m_chunks[getChunkIndex(chunkId)];
-		ASSERT(c.isLoaded(), "unloading not loaded chunks");
-		if (!c.isLoaded())
-			continue;
-		auto rect = c.getChunkRectangle();
-		//ND_INFO("Unloaded chunk {},{}", half_int(chunkId).x, half_int(chunkId).y);
-		m_local_offset_map.erase(chunkId); //is complexity bad? nope
-		c.setLoaded(false);
-		c.last_save_time = getWorldTicks();
-		stream.saveChunk(&c, getChunkSaveOffset(c.chunkID()));
+		for (int chunkIdx = 0; chunkIdx < chunksToUnload.size(); ++chunkIdx)
+		{
+			//reset head
+			auto id = chunksToUnload[chunkIdx];
+			//ND_TRACE("unload ent chunk {}", half_int::toString(id));
 
-		int toUnloadRealSize = 0;
-		for (EntityID id : m_entity_array)
-		{
-			auto e = m_entity_manager.entityDangerous(id);
-			ASSERT(m_entity_manager.isLoaded(id) && m_entity_manager.isAlive(id), "Shit");
-			if (rect.containsPoint(e->getPosition()))
-			{
-				toUnload.push_back(id);
-				if (!e->hasFlag(EFLAG_TEMPORARY))
-					toUnloadRealSize++;
-			}
+			auto offset = getChunkInaccessibleIndex(id);
+			m_local_offset_header_map.erase(id);
+			m_chunk_headers[offset] = ChunkHeader();
+
+			//free entitypointers
+			for (int entityIdx = 0; entityIdx < arrayOfEntityArraySizes[chunkIdx]; ++entityIdx)
+				free(arrayOfEntityArrayPointers[chunkIdx][entityIdx]);
+			if (arrayOfEntityArraySizes[chunkIdx])
+				delete[] arrayOfEntityArrayPointers[chunkIdx];
+
+			//ND_INFO("chunkunlo {} {}", id, offset);
 		}
-		for (auto& pair : m_tile_entity_map)
-		{
-			auto e = m_entity_manager.entityDangerous(pair.second);
-			ASSERT(m_entity_manager.isLoaded(pair.second) && m_entity_manager.isAlive(pair.second), "Shit");
-			if (rect.containsPoint(e->getPosition()))
-			{
-				toUnload.push_back(pair.second);
-				if (!e->hasFlag(EFLAG_TEMPORARY))
-					toUnloadRealSize++;
-			}
-		}
-		m_nbt_saver.setWriteChunkID(chunkId);
-		if (toUnloadRealSize)
-			m_nbt_saver.write(toUnloadRealSize); //if chunk is blank no need to write anything
-		NBT nbt;
-		for (auto entity : toUnload)
-		{
-			auto entiP = m_entity_manager.entity(entity);
-			if (entiP->hasFlag(EFLAG_TEMPORARY))
-			{
-				killEntity(entiP->getID()); //those which temporary are, on chunk-unload shall be killed
-			}
-			else
-			{
-				entiP->save(nbt);
-				nbt.serialize(&m_nbt_saver);
-				nbt.clear();
-				unloadEntity(entity);
-			}
-		}
-		m_nbt_saver.flushWrite();
-		toUnload.clear();
-	}
-	m_nbt_saver.endSession();*/
+		delete[] arrayOfEntityArraySizes;
+		delete[] arrayOfEntityArrayPointers;
+	};
+	ND_SCHED.callWhenDone(afterUnload, assignment);
 }
 
 void World::updateChunkBounds(BlockAccess& world, int cx, int cy, int bitBounds)
@@ -863,7 +743,7 @@ void World::updateChunkBounds(BlockAccess& world, int cx, int cy, int bitBounds)
 void World::loadLightResources(int x, int y)
 {
 	//todo this needs rework
-	auto resources = LightCalculator::computeQuadroSquare(x, y);
+	auto resources = LightCalculator::createQuadroSquare(x, y);
 	for (int i = 0; i < 4; ++i)
 	{
 		auto p = resources[i];
@@ -942,8 +822,9 @@ void World::flushBlockSet()
 		onBlocksChange(pair.first, pair.second);
 
 		//todo this is big bullshit we will need to separate it somehow to update in batches
-		//loadLightResources(pair.first, pair.second);
-		//m_light_calc.assignComputeChange(pair.first, pair.second); //refresh light around the block
+		auto res = LightCalculator::createQuadroSquare(pair.first, pair.second);
+		res.assignLightJob(*this);
+		m_light_calc.assignComputeChange(pair.first, pair.second); //refresh light around the block
 	}
 }
 
@@ -970,8 +851,9 @@ void World::setBlockWithNotify(int x, int y, BlockStruct& newBlock)
 		regNew.onNeighbourBlockChange(*this, x, y);
 		onBlocksChange(x, y);
 
-		//loadLightResources(x, y);
-		//m_light_calc.assignComputeChange(x, y); //refresh light around the block
+		auto res = LightCalculator::createQuadroSquare(x, y);
+		res.assignLightJob(*this);
+		m_light_calc.assignComputeChange(x, y); //refresh light around the block
 	}
 	else
 		m_edit_buffer.emplace(x, y);
@@ -1048,8 +930,10 @@ void World::setWall(int x, int y, int wall_id)
 		return;
 	blok->setWall(wall_id);
 	onWallsChange(x, y, *blok);
-	//loadLightResources(x, y);
-	//m_light_calc.assignComputeChange(x, y);
+
+	auto res = LightCalculator::createQuadroSquare(x, y);
+	res.assignLightJob(*this);
+	m_light_calc.assignComputeChange(x, y);
 
 	getChunkM(x >> WORLD_CHUNK_BIT_SIZE, y >> WORLD_CHUNK_BIT_SIZE)->markDirty(true);
 }
@@ -1109,8 +993,6 @@ EntityID World::spawnEntity(WorldEntity* pEntity)
 void World::unloadEntityNoDestruction(WorldEntity* entity, bool isKilled)
 {
 	auto id = entity->getID();
-	if (dynamic_cast<EntityPlayer*>(entity))
-		ND_INFO("UNLO: {}", id);
 
 	ASSERT(entity, "entity is null but is in m_entity_array");
 	entity->onUnloaded(*this);
@@ -1184,11 +1066,11 @@ void World::loadEntity(WorldEntity* pEntity)
 {
 	auto id = pEntity->getID();
 	ASSERT(m_entity_manager.isAlive(id), "loading of dead entity");
+	auto pointerToOld = m_entity_manager.entity(id);
+
 	ASSERT(!m_entity_manager.isLoaded(id), "loading of loaded entity");
 	m_entity_manager.setLoaded(id, true);
 	m_entity_manager.setEntityPointer(id, pEntity);
-	if (dynamic_cast<EntityPlayer*>(pEntity))
-		ND_INFO("LOAD: {}", id);
 	if (dynamic_cast<TileEntity*>(pEntity))
 	{
 		m_tile_entity_map[Phys::Vecti(pEntity->getPosition().x, pEntity->getPosition().y).toInt64()] = pEntity->getID();
@@ -1200,73 +1082,51 @@ void World::loadEntity(WorldEntity* pEntity)
 
 //======================WORLD IO=========================
 
-bool World::saveWorld()
+JobAssignmentP World::saveWorld()
 {
+	JobAssignmentP job = App::get().getScheduler().allocateJob();
+	
 	//world metadata
-	auto session = WorldIO::Session(m_file_path, true);
-	session.saveWorldMetadata(&m_info);
-	session.saveGenBoolMap(&m_is_chunk_gen_map);
-	session.close();
-
-	m_nbt_saver.beginSession();
-
+	m_chunk_provider->assignWorldInfoSave(job, &m_info);
+	//bool gen
+	m_chunk_provider->assignBoolGenSave(job, &m_is_chunk_gen_map);
 	//entity manager
-	m_nbt_saver.setWriteChunkID(DYNAMIC_ID_ENITY_MANAGER);
-	m_entity_manager.serialize(&m_nbt_saver);
-	m_nbt_saver.flushWrite();
-
+	m_chunk_provider->assignSerialize(job, DYNAMIC_ID_ENTITY_MANAGER, std::bind(&EntityManager::serialize, &m_entity_manager, std::placeholders::_1));
 	//world nbt
-	m_nbt_saver.setWriteChunkID(DYNAMIC_ID_WORLD_NBT);
-	m_world_nbt.serialize(&m_nbt_saver);
-	m_nbt_saver.flushWrite();
+	m_world_nbt.set<std::string>("teststring", "saving worldnbt");
+	m_chunk_provider->assignNBTSave(job, DYNAMIC_ID_WORLD_NBT, &m_world_nbt);
 
-	m_nbt_saver.saveVTable();
-	m_nbt_saver.endSession();
-
-	return true;
+	return job;
 }
 
-bool World::loadWorld()
+JobAssignmentP World::loadWorld()
 {
 	if (!std::filesystem::exists(m_file_path))
-		return false;
+		return nullptr;
 
-	//load worldinfo
-	auto session = WorldIO::Session(m_file_path, true);
-	if (!session.loadWorldMetadata(&m_info))
-	{
-		ND_WARN("World file: {} is corrupted", m_file_path);
-		return false;
-	}
-	session.loadGenBoolMap(&m_is_chunk_gen_map);
-	session.close();
+	JobAssignmentP job = App::get().getScheduler().allocateJob();
 
-	m_nbt_saver.init();
-	m_nbt_saver.beginSession();
+	//world metadata
+	m_chunk_provider->assignWorldInfoLoad(job, &m_info);
+	//bool gen
+	m_chunk_provider->assignBoolGenLoad(job, &m_is_chunk_gen_map);
+	//entity manager
+	m_chunk_provider->assignDeserialize(job, DYNAMIC_ID_ENTITY_MANAGER, std::bind(&EntityManager::deserialize, &m_entity_manager, std::placeholders::_1));
+	//world nbt
+	m_chunk_provider->assignNBTLoad(job, DYNAMIC_ID_WORLD_NBT, &m_world_nbt);
 
-	//load entitymanager
-	if (m_nbt_saver.setReadChunkID(DYNAMIC_ID_ENITY_MANAGER))
-		m_entity_manager.deserialize(&m_nbt_saver);
-	else ND_WARN("World file: {}.entity is corrupted", m_file_path);
-
-	//load worldnbt
-	if (m_nbt_saver.setReadChunkID(DYNAMIC_ID_WORLD_NBT))
-		m_world_nbt.deserialize(&m_nbt_saver);
-	else ND_WARN("World file: {}.entity is corrupted (cannot read worldnbt)", m_file_path);
-
-	m_nbt_saver.endSession();
-	return true;
+	return job;
 }
 
-bool World::genWorld()
+void World::genWorld()
 {
 	auto session = WorldIO::Session(m_file_path, true, true);
 	session.genWorldFile(&m_info);
 	session.close();
 
+	//todo this should be on another thread as well
 	m_nbt_saver.clearEverything();
 	m_nbt_saver.init();
-	return true;
 }
 
 //=========================PARTICLES=====================

@@ -14,8 +14,18 @@ void FileChunkProvider::proccessAssignments(std::vector<WorldIOAssignment>& assi
 	auto stream = WorldIO::Session(m_file_path, true);
 	for (auto& assignment : assignments)
 	{
+		if (assignment.job->m_variable == JobAssignment::JOB_FAILURE)
+			continue;
 		switch (assignment.type)
 		{
+		case WorldIOAssignment::WAIT:
+			break;
+		case WorldIOAssignment::BOOL_GEN_SAVE:
+			stream.saveGenBoolMap(assignment.bool_gen);
+			break;
+		case WorldIOAssignment::BOOL_GEN_LOAD:
+			stream.loadGenBoolMap(assignment.bool_gen);
+			break;
 		case WorldIOAssignment::CHUNK_SAVE:
 			stream.saveChunk(assignment.chunk, assignment.chunkOffset);
 			break;
@@ -26,22 +36,26 @@ void FileChunkProvider::proccessAssignments(std::vector<WorldIOAssignment>& assi
 			stream.saveWorldMetadata(assignment.worldInfo);
 			break;
 		case WorldIOAssignment::WORLD_META_LOAD:
-			stream.loadWorldMetadata(assignment.worldInfo);
+			{
+				bool success = stream.loadWorldMetadata(assignment.worldInfo);
+				if (!success)
+					assignment.job->m_variable = JobAssignment::JOB_FAILURE;
+			}
 			break;
-		case WorldIOAssignment::NBT_READ:
+		case WorldIOAssignment::DESERIALIZE:
 			if (!m_nbt_saver.isOpened())
 				m_nbt_saver.beginSession();
 
-			if(m_nbt_saver.setReadChunkID(assignment.chunkID))
-				assignment.nbt->deserialize(&m_nbt_saver);
-			//assignment.job->m_variable = 1;//mark as fucked up
-
+			if (m_nbt_saver.setReadChunkID(assignment.chunkID))
+				assignment.func(&m_nbt_saver);
+			//else 
+			//	assignment.job->m_variable = JobAssignment::JOB_FAILURE;//mark as fucked up
 			break;
-		case WorldIOAssignment::NBT_WRITE:
+		case WorldIOAssignment::SERIALIZE:
 			if (!m_nbt_saver.isOpened())
 				m_nbt_saver.beginSession();
 			m_nbt_saver.setWriteChunkID(assignment.chunkID);
-			assignment.nbt->serialize(&m_nbt_saver);
+			assignment.func(&m_nbt_saver);
 			m_nbt_saver.flushWrite();
 			break;
 		case WorldIOAssignment::ENTITY_WRITE:
@@ -49,16 +63,20 @@ void FileChunkProvider::proccessAssignments(std::vector<WorldIOAssignment>& assi
 				if (!m_nbt_saver.isOpened())
 					m_nbt_saver.beginSession();
 				m_nbt_saver.setWriteChunkID(assignment.chunkID);
-				NBT t;
-				t.set("entity_count", (int)assignment.entitySize);
-				for (int i = 0; i < assignment.entitySize; ++i)
+				if (assignment.entitySize)
 				{
-					auto entity = assignment.entities[i];
-					auto& entityNBT = t.get("ent_" + std::to_string(i), NBT());
-					//todo building and coppying nbt = slow as f
-					entity->save(entityNBT);
+					NBT t;
+
+					t.set("entity_count", (int)assignment.entitySize);
+					for (int i = 0; i < assignment.entitySize; ++i)
+					{
+						auto entity = assignment.entities[i];
+						auto& entityNBT = t.get("ent_" + std::to_string(i), NBT());
+						//todo building and coppying nbt = slow as f
+						entity->save(entityNBT);
+					}
+					t.serialize(&m_nbt_saver);
 				}
-				t.serialize(&m_nbt_saver);
 				m_nbt_saver.flushWrite();
 			}
 			break;
@@ -67,7 +85,8 @@ void FileChunkProvider::proccessAssignments(std::vector<WorldIOAssignment>& assi
 				if (!m_nbt_saver.isOpened())
 					m_nbt_saver.beginSession();
 				int number = 0;
-				if (m_nbt_saver.setReadChunkID(assignment.chunkID)) {
+				if (m_nbt_saver.setReadChunkID(assignment.chunkID))
+				{
 					NBT t;
 					t.deserialize(&m_nbt_saver);
 					number = t.get("entity_count", 0);
@@ -78,7 +97,8 @@ void FileChunkProvider::proccessAssignments(std::vector<WorldIOAssignment>& assi
 						auto entities = new WorldEntity*[number];
 						for (int i = 0; i < number; ++i)
 						{
-							if (!t.exists<NBT>("ent_" + std::to_string(i))) {
+							if (!t.exists<NBT>("ent_" + std::to_string(i)))
+							{
 								ND_WARN("World chunk corruption detected,cannot load, entity is missing");
 								//	throw "World chunk corruption detected,cannot load, entity is missing";
 								entities[i] = nullptr;
@@ -89,7 +109,8 @@ void FileChunkProvider::proccessAssignments(std::vector<WorldIOAssignment>& assi
 						}
 						*assignment.entitiesPointer = entities; //set array pointer to foreign(boss) variable
 					}
-				}else 	
+				}
+				else
 					*assignment.entitySizePointer = number;
 			}
 			break;
@@ -100,5 +121,8 @@ void FileChunkProvider::proccessAssignments(std::vector<WorldIOAssignment>& assi
 		assignment.job->markDone();
 	}
 	if (m_nbt_saver.isOpened())
+	{
+		m_nbt_saver.saveVTable(); //is it really necessary to save Vtable so often?
 		m_nbt_saver.endSession();
+	}
 }
