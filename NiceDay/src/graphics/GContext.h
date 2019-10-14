@@ -35,6 +35,13 @@ enum class BlendEquation :unsigned int
 	MAX = GL_MAX,
 	NONE
 };
+enum class Topology : unsigned int
+{
+	LINE=GL_LINE,
+	TRIANGLES = GL_TRIANGLES,
+	TRIANGLE_FAN = GL_TRIANGLE_FAN,
+	TRIANGLES_ADJACENCY = GL_TRIANGLES_ADJACENCY,
+};
 
 class GContext
 {
@@ -62,5 +69,6 @@ public:
 	virtual void setClearColor(float r, float g, float b, float a) = 0;
 	virtual void setViewport(int x, int y, int width, int height) = 0;
 	inline void setViewport(int width, int height) { setViewport(0, 0, width, height); }
+	virtual void cmdDrawElements(Topology t, size_t elementLength)=0;
 	
 };

@@ -24,6 +24,7 @@ public:
 	void clear(BufferBit bits) override;
 	void setClearColor(float r, float g, float b, float a) override;
 	void setViewport(int x, int y, int width, int height) override;
+	void cmdDrawElements(Topology t, size_t elementLength) override;
 };
 
 

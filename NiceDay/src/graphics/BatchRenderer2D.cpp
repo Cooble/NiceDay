@@ -2,7 +2,7 @@
 #include "BatchRenderer2D.h"
 #include "Renderable2D.h"
 #include "API/Texture.h"
-#include "platform/OpenGL/GLRenderer.h"
+#include "GContext.h"
 
 #define MAX_TEXTURES 16
 
@@ -18,7 +18,7 @@ BatchRenderer2D::BatchRenderer2D()
 #if !USE_MAP_BUF
 	m_buff = new VertexData[MAX_VERTICES];
 #endif
-	m_transformation_stack.push_back(glm::mat4(1.0f));
+	m_transformation_stack.emplace_back(1.0f);
 	m_back = m_transformation_stack[0];
 
 	auto uniforms = new int[MAX_TEXTURES];
@@ -118,10 +118,10 @@ void BatchRenderer2D::begin()
 
 static glm::vec3 operator*(const glm::mat4& m, const glm::vec3& v)
 {
-	glm::vec4 inV = *((glm::vec4*)&v);
-	inV.w = 1;
-	glm::vec4 ss = m * inV;
-	return *((glm::vec3*)&ss);
+	glm::vec4 inV = { 0,0,0,1 };
+	memcpy((char*)&inV, (char*)&v, sizeof(v));
+	inV = m * inV;
+	return *((glm::vec3*)&inV);
 }
 
 void BatchRenderer2D::submit(const Renderable2D& renderable)
@@ -213,8 +213,7 @@ void BatchRenderer2D::flush()
 	for (int i = 0; i < m_textures.size(); ++i)
 		m_textures[i]->bind(i);
 
-	GLCall(glEnable(GL_BLEND));
-	GLCall(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
-	GLCall(glDrawElements(GL_TRIANGLES, m_indices_count, GL_UNSIGNED_INT, nullptr));
-
+	Gcon.enableBlend();
+	Gcon.setBlendFunc(Blend::SRC_ALPHA, Blend::ONE_MINUS_SRC_ALPHA);
+	Gcon.cmdDrawElements(Topology::TRIANGLES, m_indices_count);
 }

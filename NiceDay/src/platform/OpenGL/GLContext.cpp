@@ -140,3 +140,8 @@ void GLContext::setViewport(int x, int y, int width, int height)
 	m_viewport[3] = height;
 }
 
+void GLContext::cmdDrawElements(Topology t, size_t elementLength)
+{
+	GLCall(glDrawElements((uint32_t)t,elementLength,GL_UNSIGNED_INT, nullptr));
+}
+
