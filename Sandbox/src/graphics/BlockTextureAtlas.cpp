@@ -4,7 +4,7 @@
 #include "stb_image.h"
 #include "stb_image_write.h"
 #include <filesystem>
-#include "world/ChunkMesh.h"
+#include "world/ChunkMeshNew.h"
 
 //should print everything
 #define VERBOSE_TEXTURE_ATLAS 0

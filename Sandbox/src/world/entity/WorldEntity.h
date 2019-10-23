@@ -51,14 +51,10 @@ public:
 	void save(NBT& src) override;
 	void load(NBT& src) override;
 
-#ifdef ND_DEBUG
 	inline virtual std::string toString() const { return "UNDEFINED_ENTITY"; }
 
 #define TO_ENTITY_STRING(x)\
 	inline std::string toString() const override {return #x;}
-#else
-#define TO_ENTITY_STRING(X)
-#endif
 
 };
 

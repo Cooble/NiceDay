@@ -36,27 +36,30 @@ public:
 	//=====telemetry====
 
 	inline float getFPS() const{ return m_fps; }
-	inline int getTickMillis() const { return m_tick_millis; }
-	inline int getRenderMillis() const { return m_render_millis; }
+	inline int getTickMillis() const { return m_tel_tick_millis; }
+	inline int getRenderMillis() const { return m_tel_render_millis; }
+	inline int getUpdatesPerFrame() { return m_tel_updates_per_frame; }
 
 private:
 	static App* s_Instance;
 	void init(int width,int height,const std::string& title);
 	void update();
 	void render();
+	int m_tel_updates_per_frame;
 protected:
 	int current_fps=0;
 	long long lastFPSMillis;
 
 	float m_fps;
-	int m_tick_millis;
-	int m_render_millis;
+	int m_tel_tick_millis;
+	int m_tel_render_millis;
 	int m_target_tps=60;
+	bool m_imgui_enable = true;
 
 	Window* m_Window;
 	Input m_Input;
 	LayerStack m_LayerStack;
-	ImGuiLayer* m_ImGuiLayer;
+	ImGuiLayer* m_ImGuiLayer=nullptr;
 	Scheduler m_scheduler;
 	bool m_running=false;
 	
@@ -72,5 +75,8 @@ public:
 	void begin();
 	void end();
 	void onImGuiRender();
+	void onUpdate() override;
+	void updateTelemetry();
+	void drawTelemetry();
 };
 

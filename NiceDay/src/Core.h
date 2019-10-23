@@ -45,3 +45,22 @@ inline TimerStaper::~TimerStaper()
 	if (!stop)
 		time();
 }
+#define ND_RESLOC(x)\
+	ResourceMan::getResourceLoc(x)
+class ResourceMan
+{
+public:
+	static std::string getResourceLoc(const std::string& resPath);
+};
+inline std::string ResourceMan::getResourceLoc(const std::string& resPath)
+{
+	if (resPath._Starts_with("res") || resPath._Starts_with("/res"))
+	{
+		auto currentDir = std::filesystem::current_path();
+		currentDir = currentDir.parent_path();
+		return currentDir.string()+"/"+resPath;
+	}
+	return resPath;
+}
+
+

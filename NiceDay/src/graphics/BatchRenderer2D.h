@@ -4,7 +4,7 @@
 
 
 //should use mapbuffer or subdata
-#define USE_MAP_BUF 1
+#define USE_MAP_BUF 0
 
 struct UVQuad;
 class Texture;

@@ -146,6 +146,7 @@
   <ItemGroup>
     <ClInclude Include="src\App.h" />
     <ClInclude Include="src\Core.h" />
+    <ClInclude Include="src\graphics\font\TextBuilder.h" />
     <ClInclude Include="src\Input.h" />
     <ClInclude Include="src\Log.h" />
     <ClInclude Include="src\NDUtil.h" />
@@ -174,10 +175,10 @@
     <ClInclude Include="src\graphics\TestQuad.h" />
     <ClInclude Include="src\graphics\TextureAtlas.h" />
     <ClInclude Include="src\graphics\TextureManager.h" />
+    <ClInclude Include="src\graphics\font\FontParser.h" />
     <ClInclude Include="src\imgui_utils.h" />
     <ClInclude Include="src\layer\Layer.h" />
     <ClInclude Include="src\layer\LayerStack.h" />
-    <ClInclude Include="src\layer\imguiplotvar.h" />
     <ClInclude Include="src\nbt\NBT.h" />
     <ClInclude Include="src\ndpch.h" />
     <ClInclude Include="src\physShapes.h" />
@@ -557,6 +558,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\App.cpp" />
+    <ClCompile Include="src\graphics\font\TextBuilder.cpp" />
     <ClCompile Include="src\Input.cpp" />
     <ClCompile Include="src\Log.cpp" />
     <ClCompile Include="src\Pool.cpp" />
@@ -580,11 +582,11 @@
     <ClCompile Include="src\graphics\TestQuad.cpp" />
     <ClCompile Include="src\graphics\TextureAtlas.cpp" />
     <ClCompile Include="src\graphics\TextureManager.cpp" />
+    <ClCompile Include="src\graphics\font\FontParser.cpp" />
     <ClCompile Include="src\imgui_utils.cpp" />
     <ClCompile Include="src\layer\Layer.cpp" />
     <ClCompile Include="src\layer\LayerStack.cpp" />
     <ClCompile Include="src\layer\imgui_build.cpp" />
-    <ClCompile Include="src\layer\imguiplotvar.cpp" />
     <ClCompile Include="src\nbt\NBT.cpp" />
     <ClCompile Include="src\ndpch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>

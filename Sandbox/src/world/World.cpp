@@ -457,11 +457,12 @@ void World::updateLight(defaultable_map<int, int, 0>& toUpdateChunks)
 		auto flags = pair.second;
 		if (flags & maskAllSides)
 		{
-			ChunkPack res(chunkID,{
-				nullptr,getChunkM(chunkID.x,chunkID.y+1),nullptr,
-				getChunkM(chunkID.x-1,chunkID.y),getChunkM(chunkID),getChunkM(chunkID.x + 1,chunkID.y),
-				nullptr,getChunkM(chunkID.x,chunkID.y-1),nullptr,
-				});
+			ChunkPack res(chunkID, {
+				              nullptr, getChunkM(chunkID.x, chunkID.y + 1), nullptr,
+				              getChunkM(chunkID.x - 1, chunkID.y), getChunkM(chunkID),
+				              getChunkM(chunkID.x + 1, chunkID.y),
+				              nullptr, getChunkM(chunkID.x, chunkID.y - 1), nullptr,
+			              });
 			res.assignLightJob();
 			m_light_calc.assignComputeChunkBorders(chunkID.x, chunkID.y, res);
 		}
@@ -509,12 +510,12 @@ JobAssignmentP World::loadEntities2(std::vector<int>& chunkEntitiesToLoad)
 		                                   &entityPointerArrayChunkArray[i],
 		                                   &entityPointerArraySizeChunkArray[i]);
 
-	auto afterLoad = [this, chunkEntitiesToLoad, entityLoadedFence, size{chunkEntitiesToLoad.size()},entityPointerArrayChunkArray,
+	auto afterLoad = [this, chunkEntitiesToLoad, entityLoadedFence, size{chunkEntitiesToLoad.size()},
+			entityPointerArrayChunkArray,
 			entityPointerArraySizeChunkArray]()mutable
 	{
 		for (int i = 0; i < size; ++i)
 		{
-
 			auto ray = entityPointerArrayChunkArray[i];
 			auto raySize = entityPointerArraySizeChunkArray[i];
 			for (int i = 0; i < raySize; ++i)
@@ -552,10 +553,10 @@ JobAssignmentP World::updateBounds2(defaultable_map<int, int, 0>& toUpdateChunks
 		auto left = half_int(chunkID.x - 1, chunkID.y);
 
 		ChunkPack resource(chunkID, {
-			nullptr, getChunkM(down), nullptr,
-			getChunkM(left), getChunkM(chunkID), getChunkM(right),
-			nullptr, getChunkM(up), nullptr
-		});
+			                   nullptr, getChunkM(down), nullptr,
+			                   getChunkM(left), getChunkM(chunkID), getChunkM(right),
+			                   nullptr, getChunkM(up), nullptr
+		                   });
 		resources.push_back(resource); //todo use emplace instead of push
 		if (boundUpdateJob == nullptr)
 			boundUpdateJob = ND_SCHED.allocateJob();
@@ -644,7 +645,8 @@ void World::unloadChunks(std::set<int>& chunk_ids)
 			EntityID id = m_entity_array[entityIdx];
 			auto pointer = m_entity_manager.entity(id);
 			ASSERT(pointer, "world array contains unloaded entities");
-			if (chunkId == half_int(pointer->getPosition().x/WORLD_CHUNK_SIZE,pointer->getPosition().y / WORLD_CHUNK_SIZE))
+			if (chunkId == half_int(pointer->getPosition().x / WORLD_CHUNK_SIZE,
+			                        pointer->getPosition().y / WORLD_CHUNK_SIZE))
 			{
 				bool temp = pointer->hasFlag(EFLAG_TEMPORARY);
 				unloadEntityNoDestruction(pointer, temp);
@@ -661,7 +663,6 @@ void World::unloadChunks(std::set<int>& chunk_ids)
 		{
 			arrayOfEntityArrayPointers[chunkIdx] = new WorldEntity*[entities.size()];
 			memcpy(arrayOfEntityArrayPointers[chunkIdx], entities.data(), entities.size() * sizeof(WorldEntity*));
-
 		}
 		m_chunk_provider->assignEntitySave(assignment, chunkId, arrayOfEntityArrayPointers[chunkIdx],
 		                                   arrayOfEntityArraySizes[chunkIdx]);
@@ -788,7 +789,7 @@ const BlockStruct* World::getBlock(int x, int y) const
 {
 	if (!isValidLocation(x, y))
 	{
-		ND_WARN("INvalid world location");
+		//ND_WARN("INvalid world location");
 		return nullptr;
 	}
 	int index = getChunkIndex(half_int(x >> WORLD_CHUNK_BIT_SIZE, y >> WORLD_CHUNK_BIT_SIZE));
@@ -887,31 +888,29 @@ void World::onBlocksChange(int x, int y, int deep)
 		ND_WARN("Block update too deep! protecting stack");
 		return;
 	}
-	if (isBlockValid(x, y + 1) && BlockRegistry::get()
-	                              .getBlock(getBlockM(x, y + 1)->block_id).onNeighbourBlockChange(*this, x, y + 1))
+
+	auto p = getBlockM(x, y + 1);
+	if (p && BlockRegistry::get().getBlock(p->block_id).onNeighbourBlockChange(*this, x, y + 1))
 	{
-		getChunkM(World::toChunkCoord(x), World::toChunkCoord(y + 1))->markDirty(true);
+		getChunkM(Chunk::getChunkIDFromWorldPos(x, y + 1))->markDirty(true);
 		onBlocksChange(x, y + 1, deep);
 	}
-
-	if (isBlockValid(x, y - 1) && BlockRegistry::get()
-	                              .getBlock(getBlockM(x, y - 1)->block_id).onNeighbourBlockChange(*this, x, y - 1))
+	p = getBlockM(x, y - 1);
+	if (p && BlockRegistry::get().getBlock(p->block_id).onNeighbourBlockChange(*this, x, y - 1))
 	{
-		getChunkM(World::toChunkCoord(x), World::toChunkCoord(y - 1))->markDirty(true);
+		getChunkM(Chunk::getChunkIDFromWorldPos(x, y - 1))->markDirty(true);
 		onBlocksChange(x, y - 1, deep);
 	}
-
-	if (isBlockValid(x + 1, y) && BlockRegistry::get()
-	                              .getBlock(getBlockM(x + 1, y)->block_id).onNeighbourBlockChange(*this, x + 1, y))
+	p = getBlockM(x + 1, y);
+	if (p && BlockRegistry::get().getBlock(p->block_id).onNeighbourBlockChange(*this, x + 1, y))
 	{
-		getChunkM(World::toChunkCoord(x + 1), World::toChunkCoord(y))->markDirty(true);
+		getChunkM(Chunk::getChunkIDFromWorldPos(x+1, y))->markDirty(true);
 		onBlocksChange(x + 1, y, deep);
 	}
-
-	if (isBlockValid(x - 1, y) && BlockRegistry::get()
-	                              .getBlock(getBlockM(x - 1, y)->block_id).onNeighbourBlockChange(*this, x - 1, y))
+	p = getBlockM(x - 1, y);
+	if (p && BlockRegistry::get().getBlock(p->block_id).onNeighbourBlockChange(*this, x - 1, y))
 	{
-		getChunkM(World::toChunkCoord(x - 1), World::toChunkCoord(y))->markDirty(true);
+		getChunkM(Chunk::getChunkIDFromWorldPos(x-1, y ))->markDirty(true);
 		onBlocksChange(x - 1, y, deep);
 	}
 }
@@ -1085,13 +1084,14 @@ void World::loadEntity(WorldEntity* pEntity)
 JobAssignmentP World::saveWorld()
 {
 	JobAssignmentP job = App::get().getScheduler().allocateJob();
-	
+
 	//world metadata
 	m_chunk_provider->assignWorldInfoSave(job, &m_info);
 	//bool gen
 	m_chunk_provider->assignBoolGenSave(job, &m_is_chunk_gen_map);
 	//entity manager
-	m_chunk_provider->assignSerialize(job, DYNAMIC_ID_ENTITY_MANAGER, std::bind(&EntityManager::serialize, &m_entity_manager, std::placeholders::_1));
+	m_chunk_provider->assignSerialize(job, DYNAMIC_ID_ENTITY_MANAGER,
+	                                  std::bind(&EntityManager::serialize, &m_entity_manager, std::placeholders::_1));
 	//world nbt
 	m_world_nbt.set<std::string>("teststring", "saving worldnbt");
 	m_chunk_provider->assignNBTSave(job, DYNAMIC_ID_WORLD_NBT, &m_world_nbt);
@@ -1111,7 +1111,9 @@ JobAssignmentP World::loadWorld()
 	//bool gen
 	m_chunk_provider->assignBoolGenLoad(job, &m_is_chunk_gen_map);
 	//entity manager
-	m_chunk_provider->assignDeserialize(job, DYNAMIC_ID_ENTITY_MANAGER, std::bind(&EntityManager::deserialize, &m_entity_manager, std::placeholders::_1));
+	m_chunk_provider->assignDeserialize(job, DYNAMIC_ID_ENTITY_MANAGER,
+	                                    std::bind(&EntityManager::deserialize, &m_entity_manager,
+	                                              std::placeholders::_1));
 	//world nbt
 	m_chunk_provider->assignNBTLoad(job, DYNAMIC_ID_WORLD_NBT, &m_world_nbt);
 
@@ -1124,9 +1126,12 @@ void World::genWorld()
 	session.genWorldFile(&m_info);
 	session.close();
 
+	m_is_chunk_gen_map.resize(m_info.chunk_width * m_info.chunk_height);
+
 	//todo this should be on another thread as well
 	m_nbt_saver.clearEverything();
 	m_nbt_saver.init();
+	
 }
 
 //=========================PARTICLES=====================

@@ -13,6 +13,9 @@
     <Filter Include="src\graphics\API">
       <UniqueIdentifier>{9625F57B-821E-14CE-AB50-F95297A8F3D9}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\graphics\font">
+      <UniqueIdentifier>{73ABAEFA-DFC1-AC90-2839-38B2948E7D18}</UniqueIdentifier>
+    </Filter>
     <Filter Include="src\layer">
       <UniqueIdentifier>{D9A595B5-4510-4A2C-8E4E-FBD1FAF72781}</UniqueIdentifier>
     </Filter>
@@ -141,6 +144,9 @@
     <ClInclude Include="src\graphics\TextureManager.h">
       <Filter>src\graphics</Filter>
     </ClInclude>
+    <ClInclude Include="src\graphics\font\FontParser.h">
+      <Filter>src\graphics\font</Filter>
+    </ClInclude>
     <ClInclude Include="src\imgui_utils.h">
       <Filter>src</Filter>
     </ClInclude>
@@ -148,9 +154,6 @@
       <Filter>src\layer</Filter>
     </ClInclude>
     <ClInclude Include="src\layer\LayerStack.h">
-      <Filter>src\layer</Filter>
-    </ClInclude>
-    <ClInclude Include="src\layer\imguiplotvar.h">
       <Filter>src\layer</Filter>
     </ClInclude>
     <ClInclude Include="src\nbt\NBT.h">
@@ -1281,6 +1284,7 @@
     <ClInclude Include="vendor\stb_image\stb_image_write.h">
       <Filter>vendor\stb_image</Filter>
     </ClInclude>
+    <ClInclude Include="src\graphics\font\TextBuilder.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\App.cpp">
@@ -1355,6 +1359,9 @@
     <ClCompile Include="src\graphics\TextureManager.cpp">
       <Filter>src\graphics</Filter>
     </ClCompile>
+    <ClCompile Include="src\graphics\font\FontParser.cpp">
+      <Filter>src\graphics\font</Filter>
+    </ClCompile>
     <ClCompile Include="src\imgui_utils.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -1365,9 +1372,6 @@
       <Filter>src\layer</Filter>
     </ClCompile>
     <ClCompile Include="src\layer\imgui_build.cpp">
-      <Filter>src\layer</Filter>
-    </ClCompile>
-    <ClCompile Include="src\layer\imguiplotvar.cpp">
       <Filter>src\layer</Filter>
     </ClCompile>
     <ClCompile Include="src\nbt\NBT.cpp">
@@ -1400,5 +1404,6 @@
     <ClCompile Include="vendor\stb_image\stb_image.cpp">
       <Filter>vendor\stb_image</Filter>
     </ClCompile>
+    <ClCompile Include="src\graphics\font\TextBuilder.cpp" />
   </ItemGroup>
 </Project>

@@ -1,5 +1,5 @@
 #pragma once
-/*#include "ndpch.h"
+#include "ndpch.h"
 #include "world/World.h"
 #include "graphics/API/Buffer.h"
 #include "graphics/API/Shader.h"
@@ -20,23 +20,11 @@ constexpr unsigned int EDGE_COLOR_TRANSFORMATION_FACTOR = 4;//how much should i 
 
 class Renderer;
 
-class ChunkMesh
+class ChunkMeshNew
 {
-	struct PosVertexData
-	{
-		float x, y;
-	};
-	struct OffsetVertexData
-	{
-		unsigned int offset;
-	};
 
 private:
-	static VertexBufferLayout s_pos_layout;
-	static VertexBufferLayout s_offset_buffer_layout;
-	
-	static VertexBuffer* s_position_vbo;
-	static VertexBuffer* s_wall_position_vbo;
+	static VertexBufferLayout s_layout;
 	
 	static Shader* s_program;
 	
@@ -44,26 +32,29 @@ private:
 	static Texture* s_texture_corners;
 
 public:
+
+	struct PosVertexData
+	{
+		glm::vec2 pos;
+		glm::vec2 uv_0;
+		glm::vec2 uv_1;
+	};
+	
 	static void init();
-	static inline const VertexBufferLayout& getPosLayout() { return s_pos_layout; }
-	static inline const VertexBufferLayout& getOffsetLayout() { return s_offset_buffer_layout; }
+	static inline const VertexBufferLayout& getLayout() { return s_layout; }
 	static inline Shader* getProgram() { return s_program; }
-	static inline VertexBuffer* getVBO() { return s_position_vbo; }
-	static inline VertexBuffer* getWallVBO() { return s_wall_position_vbo; }
 	static inline Texture* getAtlas() { return s_texture; }
 	static inline Texture* getCornerAtlas() { return s_texture_corners; }
-
-
-
 };
 
-class ChunkMeshInstance
+class ChunkMeshInstanceNew
 {
 private:
 	uint8_t* m_light_cache;
 
 	VertexArray* m_vao;
 	VertexArray* m_wall_vao;
+	
 	VertexBuffer* m_vbo;
 	VertexBuffer* m_wall_vbo;
 	char* m_buff;
@@ -72,7 +63,7 @@ private:
 
 public:
 	bool m_enabled;
-	ChunkMeshInstance();
+	ChunkMeshInstanceNew();
 
 	void updateMesh(const World& world, const Chunk& chunk);
 
@@ -81,8 +72,8 @@ public:
 	inline VertexArray& getWallVAO() { return *m_wall_vao; }
 	inline uint8_t* getLightCache() { return m_light_cache; }
 
-	~ChunkMeshInstance();
+	~ChunkMeshInstanceNew();
 
 };
-*/
+
 

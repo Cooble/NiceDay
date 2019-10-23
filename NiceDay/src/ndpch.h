@@ -2,6 +2,7 @@
 //precompiled header file
 
 //streams
+#include <filesystem>
 #include <iostream>
 #include <sstream>
 #include <fstream>

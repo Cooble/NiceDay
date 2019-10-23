@@ -9,7 +9,6 @@
 #include "event/MouseEvent.h"
 #include "App.h"
 #include "Stats.h"
-#include "layer/imguiplotvar.h"
 #include <GLFW/glfw3.h>
 
 #include "world/biome/BiomeForest.h"
@@ -30,6 +29,8 @@
 #include "graphics/TextureAtlas.h"
 #include "world/particle/ParticleRegistry.h"
 #include "world/particle/particles.h"
+#include "world/ChunkMeshNew.h"
+#include "imgui_utils.h"
 
 const char* WORLD_FILE_PATH;
 int CHUNKS_LOADED;
@@ -52,6 +53,7 @@ static EntityID playerID;
 static SpriteSheetResource* res;
 
 static bool m_is_world_ready = false;
+static bool s_no_save = false;
 
 void WorldLayer::registerEverything()
 {
@@ -100,12 +102,12 @@ constexpr int particleAtlasSize = 8;
 WorldLayer::WorldLayer()
 	: Layer("WorldLayer")
 {
-	std::string blockAtlasFolder = "D:/Dev/C++/NiceDay/Sandbox/res/images/blockAtlas/";
+	std::string blockAtlasFolder = ND_RESLOC("res/images/blockAtlas/");
 
 	BlockTextureAtlas blockAtlas;
 	blockAtlas.createAtlas(blockAtlasFolder, 32, 8);
 
-	std::string particleAtlasFolder = "D:/Dev/C++/NiceDay/Sandbox/res/images/particleAtlas/";
+	std::string particleAtlasFolder = ND_RESLOC("res/images/particleAtlas/");
 
 	TextureAtlas particleAtlas;
 	particleAtlas.createAtlas(particleAtlasFolder, particleAtlasSize, 8);
@@ -126,10 +128,13 @@ WorldLayer::WorldLayer()
 		free(entityBuff);
 	}
 
-	ChunkMesh::init();
+	//ChunkMesh::init();
+	ChunkMeshNew::init();
 
 
 	m_cam = new Camera();
+	m_cam->setChunkRadius({ 3, 2 });
+
 
 	m_batch_renderer = new BatchRenderer2D();
 	m_particle_renderer = new ParticleRenderer();
@@ -279,7 +284,6 @@ void WorldLayer::afterPlayerLoaded()
 
 	//add camera
 	m_cam->setPosition(getPlayer().getPosition().asGLM());
-	m_cam->setChunkRadius({4, 3});
 	c.registerLight(dynamic_cast<LightSource*>(m_cam));
 
 	m_chunk_loader->registerEntity(dynamic_cast<IChunkLoaderEntity*>(m_cam));
@@ -289,7 +293,8 @@ void WorldLayer::afterPlayerLoaded()
 void WorldLayer::onDetach()
 {
 	m_world->getLightCalculator().stop();
-
+	if (s_no_save)
+		return;
 	auto pos = getPlayer().getPosition();
 	m_world->getWorldNBT().set("player_chunkID", Chunk::getChunkIDFromWorldPos(pos.x, pos.y));
 	m_world->getWorldNBT().set("playerID", playerID);
@@ -343,9 +348,7 @@ void WorldLayer::onUpdate()
 	if (m_world->isBlockValid(CURSOR_X, CURSOR_Y))
 	{
 		CURRENT_BLOCK = m_world->getBlockOrAir(CURSOR_X, CURSOR_Y);
-#ifdef ND_DEBUG
 		CURRENT_BLOCK_ID = BlockRegistry::get().getBlock(CURRENT_BLOCK->block_id).toString();
-#endif
 	}
 
 	bool istsunderBlock = !m_world->isAir(m_cam->getPosition().x, m_cam->getPosition().y - 1);
@@ -413,8 +416,8 @@ void WorldLayer::onUpdate()
 			}
 		}
 	}
-
-	if (!ImGui::IsMouseHoveringAnyWindow())
+	
+	//if (!ImGui::IsMouseHoveringAnyWindow())
 		if (App::get().getInput().isMousePressed(GLFW_MOUSE_BUTTON_1))
 		{
 			if (Stats::gun_enable)
@@ -453,7 +456,7 @@ void WorldLayer::onUpdate()
 			}
 		}
 
-
+		
 	//camera movement===================================================================
 	glm::vec2 accel = glm::vec2(0, 0);
 	accel.y = -9.0f / 60;
@@ -566,12 +569,14 @@ void WorldLayer::onRender()
 {
 	if (!m_is_world_ready)
 		return;
+	//auto t = TimerStaper("WorldLayer::onRender");
+
+	
 
 	m_render_manager->onUpdate();
-
-	//world
-	m_render_manager->render();
-
+		//world
+		m_render_manager->render();
+	
 	//entities
 	auto worldMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(-m_cam->getPosition().x, -m_cam->getPosition().y, 0));
 
@@ -588,14 +593,15 @@ void WorldLayer::onRender()
 
 	m_batch_renderer->pop();
 	m_batch_renderer->flush();
+	{
 
-
-	//particles
-	m_particle_renderer->begin();
-	m_particle_renderer->push(m_render_manager->getProjMatrix() * worldMatrix);
-	(*m_world->particleManager())->render(*m_particle_renderer);
-	m_particle_renderer->pop();
-	m_particle_renderer->flush();
+		//particles
+		m_particle_renderer->begin();
+		m_particle_renderer->push(m_render_manager->getProjMatrix() * worldMatrix);
+		(*m_world->particleManager())->render(*m_particle_renderer);
+		m_particle_renderer->pop();
+		m_particle_renderer->flush();
+	}
 }
 
 static bool showTelem = false;
@@ -618,45 +624,14 @@ void WorldLayer::onImGuiRender()
 void WorldLayer::onImGuiRenderTelemetrics()
 {
 	static bool showTelemetrics = false;
-	if (!ImGui::Begin("Telemetrics", &showTelemetrics))
+	if (!ImGui::Begin("Telemetrics", &showTelemetrics, ImGuiWindowFlags_NoNav))
 	{
 		ImGui::End();
 		return;
 	}
-
-	static int maxMillis = 0;
-	static int maxMillisLight = 0;
-	static int maxupdatesPerFrame = 0;
-	static int maxmillisrender = 0;
-	constexpr int MAX_maxmillisUpdateInterval = 60 * 2; //evry two sec will reset the max millis tick duiration checkr
-	static int maxMillisUpdateInterval = MAX_maxmillisUpdateInterval;
-	if (maxMillisUpdateInterval-- == 0)
-	{
-		maxMillisUpdateInterval = MAX_maxmillisUpdateInterval;
-		maxMillis = 0;
-		maxMillisLight = 0;
-		maxupdatesPerFrame = 0;
-		maxmillisrender = 0;
-	}
-	maxMillis = max(maxMillis, App::get().getTickMillis());
-	maxMillisLight = max(maxMillisLight, Stats::light_millis);
-	maxupdatesPerFrame = max(Stats::updates_per_frame, maxupdatesPerFrame);
-	maxmillisrender = max(App::get().getRenderMillis(), maxmillisrender);
-
-	ImGui::PlotVar("Tick Millis", App::get().getTickMillis());
-	ImGui::Text("Max tick   millis: %d", maxMillis);
-	ImGui::PlotVar("Render Millis", App::get().getRenderMillis());
-	ImGui::Text("Max render millis: %d", maxmillisrender);
-
-
-	ImGui::PlotVar("Updates per Frame", Stats::updates_per_frame);
-	ImGui::Text("Max Updates: %d", maxupdatesPerFrame);
-
-	ImGui::PlotVar("FPS", App::get().getFPS());
 	if (Stats::light_enable)
 	{
-		ImGui::PlotVar("Light millis", Stats::light_millis);
-		ImGui::Text("Max millis: %d", maxMillisLight);
+		ImGui::PlotVar("Light millis", Stats::light_millis,true);
 	}
 	ImGui::End();
 }
@@ -719,7 +694,6 @@ void WorldLayer::onImGuiRenderWorld()
 	ImGui::Separator();
 	ImGui::Text("Dynamic segments: %d", m_world->getNBTSaver().getSegmentCount());
 	ImGui::Text("Dynamic free segments: %d", m_world->getNBTSaver().getFreeSegmentCount());
-#ifdef ND_DEBUG
 
 	if (auto current = m_world->getBlock(CURSOR_X, CURSOR_Y))
 	{
@@ -798,7 +772,6 @@ void WorldLayer::onImGuiRenderWorld()
 		}
 		ImGui::TreePop();
 	}
-#endif
 	ImGui::Separator();
 
 	/*ImGui::Text("Drawn Chunks:");
@@ -886,15 +859,16 @@ void WorldLayer::onEvent(Event& e)
 
 		if (event->getKey() == GLFW_KEY_ESCAPE)
 		{
+			if (App::get().getInput().isKeyPressed(GLFW_KEY_DELETE))
+			{
+				s_no_save = true;
+				std::remove(m_world->getFilePath().c_str());
+				ND_INFO("Erasing world");
+			}
 			auto e = WindowCloseEvent();
 			App::get().fireEvent(e);
 			event->handled = true;
 
-			if (App::get().getInput().isKeyPressed(GLFW_KEY_DELETE))
-			{
-				std::remove(m_world->getFilePath().c_str());
-				ND_INFO("Erasing world");
-			}
 		}
 	}
 
@@ -903,7 +877,7 @@ void WorldLayer::onEvent(Event& e)
 		auto event = dynamic_cast<WindowResizeEvent*>(&e);
 		m_render_manager->onScreenResize();
 	}
-	if (!ImGui::IsMouseHoveringAnyWindow())
+	//if (!ImGui::IsMouseHoveringAnyWindow())
 		if (e.getEventType() == Event::EventType::MousePress)
 		{
 			auto event = dynamic_cast<MousePressEvent*>(&e);

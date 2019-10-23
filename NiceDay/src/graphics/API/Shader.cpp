@@ -27,7 +27,7 @@ static void shaderTypeToString(unsigned int t)
 
 static Shader::ShaderProgramSources parseShader(const std::string &file_path) {
 	s_current_file = file_path.c_str();
-	ASSERT(std::filesystem::exists(file_path), "Invalid shader path");
+	ASSERT(std::filesystem::exists(s_current_file), "Invalid shader path");
 	std::ifstream stream(file_path);
 
 	enum class ShaderType {
@@ -73,9 +73,10 @@ static unsigned int compileShader(unsigned int type, const std::string& src) {
 		shaderTypeToString(type);
 		int length;
 		GLCall(glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length));
-		char * message = (char*)alloca(length * sizeof(char));
+		char * message = (char*)malloc(length * sizeof(char));
 		GLCall(glGetShaderInfoLog(id, length, &length, message));
 		ND_ERROR(message);
+		free(message);
 		#if BREAK_IF_SHADER_COMPILE_ERROR == 1
 		ASSERT(false, "Shader compile error");
 		#endif
@@ -116,49 +117,61 @@ Shader::Shader(const Shader::ShaderProgramSources& src) :m_id(0) {
 }
 
 Shader::Shader(const std::string &file_path) : m_id(0) {
-	Shader::ShaderProgramSources& s = parseShader(file_path);
+	Shader::ShaderProgramSources& s = parseShader(ND_RESLOC(file_path));
 	m_id = buildProgram(s);
 }
 
 void Shader::bind() const {
+#ifdef ND_DEBUG
+	const_cast<bool&>(m_isBound)= true;
+#endif
 	GLCall(glUseProgram(m_id));
 }
 
 void Shader::unbind() const {
+#ifdef ND_DEBUG
+	const_cast<bool&>(m_isBound) = false;
+#endif
 	GLCall(glUseProgram(0));
 }
 
-void Shader::setUniformMat4(const std::string& name, glm::mat4 matrix)
+void Shader::setUniformMat4(const std::string& name, const glm::mat4 matrix)
 {
+	SHADER_CHECK_BOUNDIN
 	GLCall(glUniformMatrix4fv(getUniformLocation(name), 1, false, glm::value_ptr(matrix)));
 }
 
 void Shader::setUniform4f(const std::string& name, float f0, float f1, float f2, float f3)
 {
+	SHADER_CHECK_BOUNDIN
 	GLCall(glUniform4f(getUniformLocation(name), f0, f1, f2, f3));
 }
-void Shader::setUniformVec4f(const std::string& name, glm::vec4 vec) {
+void Shader::setUniformVec4f(const std::string& name, const glm::vec4 vec) {
 	setUniform4f(name, vec[0], vec[1], vec[2], vec[3]);
 }
 
 
 void Shader::setUniform1f(const std::string & name, float f0)
 {
+	SHADER_CHECK_BOUNDIN
 	GLCall(glUniform1f(getUniformLocation(name), f0));
 }
 void Shader::setUniform2f(const std::string & name, float f0, float f1)
 {
+	SHADER_CHECK_BOUNDIN
 	GLCall(glUniform2f(getUniformLocation(name), f0, f1));
 }
 
 void Shader::setUniform1i(const std::string & name, int v)
 {
+	SHADER_CHECK_BOUNDIN
 	GLCall(glUniform1i(getUniformLocation(name), v));
 
 }
 
 void Shader::setUniform1iv(const std::string& name, int count, int* v)
 {
+	SHADER_CHECK_BOUNDIN
 	GLCall(glUniform1iv(getUniformLocation(name),count, v));
 }
 

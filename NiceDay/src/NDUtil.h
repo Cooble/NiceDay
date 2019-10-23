@@ -3,6 +3,26 @@
 
 namespace NDUtil
 {
+	static void splitString(const std::string& line, std::vector<std::string>& words, const std::string& divider = " \n\t")
+	{
+		auto beginIdx = line.find_first_not_of(divider, 0);
+
+		while (beginIdx != std::string::npos)
+		{
+			auto endIdx = line.find_first_of(divider, beginIdx);
+			if (endIdx != std::string::npos)
+			{
+				words.push_back(line.substr(beginIdx, endIdx - beginIdx));
+				beginIdx = line.find_first_not_of(divider, endIdx);
+			}
+			else {
+				words.push_back(line.substr(beginIdx));
+				break;
+			}
+
+		}
+
+	}
 	//List is dynamically allocated, will get bigger if more items are pushed
 	//1. push() items to list
 	//2. call popMode()
@@ -625,3 +645,5 @@ public:
 		assignWork(&assignment, 1);
 	}
 };
+
+

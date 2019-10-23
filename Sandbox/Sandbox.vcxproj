@@ -135,7 +135,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="src\core\EntryPoint.h" />
     <ClInclude Include="src\core\Sandbox.h" />
     <ClInclude Include="src\graphics\Bar.h" />
     <ClInclude Include="src\graphics\BlockTextureAtlas.h" />
@@ -147,6 +146,7 @@
     <ClInclude Include="src\world\Camera.h" />
     <ClInclude Include="src\world\ChunkLoader.h" />
     <ClInclude Include="src\world\ChunkMesh.h" />
+    <ClInclude Include="src\world\ChunkMeshNew.h" />
     <ClInclude Include="src\world\ChunkPack.h" />
     <ClInclude Include="src\world\FileChunkProvider.h" />
     <ClInclude Include="src\world\I2DLocalable.h" />
@@ -198,6 +198,7 @@
     <ClCompile Include="src\world\Camera.cpp" />
     <ClCompile Include="src\world\ChunkLoader.cpp" />
     <ClCompile Include="src\world\ChunkMesh.cpp" />
+    <ClCompile Include="src\world\ChunkMeshNew.cpp" />
     <ClCompile Include="src\world\ChunkPack.cpp" />
     <ClCompile Include="src\world\FileChunkProvider.cpp" />
     <ClCompile Include="src\world\LightCalculator.cpp" />

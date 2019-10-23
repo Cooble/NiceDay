@@ -18,7 +18,7 @@ void main() {
 //The geometry shader is run on every primitive(triangle, line, point) and can discard it or output more primitives than came in.
 //This is similar to the tessellation shader, but much more flexible.
 //However, it is not used much in today's applications
-//!! because the performance is not that good on most graphics cards except for Intel's integrated GPUs.!!
+//!! because the performance is not that good on most graphics cards except for Intel's integrated GPUs.!! jep thats it
 
 #shader geometry////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -92,7 +92,6 @@ void main() {
 uniform sampler2D u_texture;
 uniform sampler2D u_corners;
 uniform int u_texture_atlas_pixel_width;
-//uniform int u_texture_atlas_width;//number of icons in a row
 uniform int u_texture_atlas_pixel_width_corner;
 
 

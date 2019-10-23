@@ -8,7 +8,7 @@ GLTexture::GLTexture(const TextureInfo& info)
 	:m_width(info.width),
 	m_height(info.height),
 	m_format(info.f_format),
-	m_filePath(info.file_path)
+	m_filePath(ND_RESLOC(info.file_path))
 {
 	GLCall(glGenTextures(1, &m_id));
 	GLCall(glBindTexture(GL_TEXTURE_2D, m_id));
@@ -23,12 +23,12 @@ GLTexture::GLTexture(const TextureInfo& info)
 	if (!info.file_path.empty())
 	{
 		stbi_set_flip_vertically_on_load(true);
-		m_buffer = stbi_load(info.file_path.c_str(), &m_width, &m_height, &m_BPP, 4);
+		m_buffer = stbi_load(m_filePath.c_str(), &m_width, &m_height, &m_BPP, 4);
 		GLCall(glTexImage2D(GL_TEXTURE_2D, 0, (int)m_format, m_width, m_height, 0, (int)m_format, GL_UNSIGNED_BYTE, m_buffer));
 		if (m_buffer)
 			stbi_image_free(m_buffer);
 		else
-			ND_ERROR("Invalid texture path: {}", info.file_path.c_str());
+			ND_ERROR("Invalid texture path: {}", m_filePath.c_str());
 	}
 	else
 	{

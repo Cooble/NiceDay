@@ -11,7 +11,7 @@
 static void blankFun(Event& e) {}
 static bool is_glfw_initialized = false;
 
-Window::Window(int width, int height, const std::string& title) :
+Window::Window(int width, int height, const std::string& title,bool fullscreen) :
 	m_window(nullptr)
 {
 	m_data.width = width;
@@ -118,11 +118,18 @@ Window::Window(int width, int height, const std::string& title) :
 	const GLubyte* renderer = glad_glGetString(GL_RENDERER); // Returns a hint to the model
 	const GLubyte* gl = glad_glGetString(GL_VERSION); // Returns a hint to the model
 	const GLubyte* glsl = glad_glGetString(GL_SHADING_LANGUAGE_VERSION); // Returns a hint to the model
-	ND_INFO("Graphics card info:");
-	ND_INFO((char*)vendor);
-	ND_INFO((char*)renderer);
-	ND_INFO("GL version: {}", gl);
-	ND_INFO("GLSL version: {}", glsl);
+
+	ND_TRACE("Graphics card info:");
+	ND_TRACE((char*)vendor);
+	ND_TRACE((char*)renderer);
+	ND_TRACE("GL version: {}", gl);
+	ND_TRACE("GLSL version: {}", glsl);
+
+	if(fullscreen)
+		setFullScreen(true);
+	
+	ND_TRACE("Window created with dimensions: [{}, {}], fullscreen: {}",width,height,fullscreen);
+
 
 }
 
@@ -172,15 +179,18 @@ void Window::close()
 {
 	m_destroyed = true;
 	glfwDestroyWindow(m_window);
-	
 }
 
-void Window::update()
+void Window::swapBuffers()
 {
-	glfwPollEvents();
 	glfwSwapBuffers(m_window);
 	glClearColor(1, 0, 1, 1);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+}
+
+void Window::pollEvents()
+{
+	glfwPollEvents();
 }
 
 bool Window::shouldClose()

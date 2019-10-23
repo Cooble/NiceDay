@@ -1,6 +1,6 @@
 ﻿#pragma once
 #include "ndpch.h"
-#include "ChunkMesh.h"
+#include "ChunkMeshNew.h"
 #include "world/Camera.h"
 #include "LightCalculator.h"
 #include "graphics/TestQuad.h"
@@ -69,7 +69,7 @@ private:
 	//converts from camera space to screen space (-1,-1,1,1)
 	glm::mat4 m_proj_matrix;
 
-	std::vector<ChunkMeshInstance*> m_chunks;
+	std::vector<ChunkMeshInstanceNew*> m_chunks;
 
 	World* m_world;
 	Camera* m_camera;

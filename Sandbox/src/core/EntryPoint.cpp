@@ -1,4 +1,3 @@
-#include "EntryPoint.h"
 #include "Sandbox.h"
 
 std::string getName()
@@ -70,9 +69,10 @@ bool equalsNBT(NBT& one,NBT& two)
 			return false;
 	return true;
 }
+#ifndef ND_TEST
 int main()
 {
-	Log::Init();
+	Log::init();
 
 
 	Sandbox game;
@@ -82,3 +82,4 @@ int main()
 
 	return 0;
 }
+#endif

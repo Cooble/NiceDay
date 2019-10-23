@@ -3,7 +3,7 @@
 #include "App.h"
 #include "Stats.h"
 #include "graphics/Renderer.h"
-#include "world/ChunkMesh.h"
+#include "world/ChunkMeshNew.h"
 
 
 #include "platform/OpenGL/GLRenderer.h"
@@ -90,7 +90,7 @@ WorldRenderManager::WorldRenderManager(Camera* cam, World* world)
 
 WorldRenderManager::~WorldRenderManager()
 {
-	for (ChunkMeshInstance* m : m_chunks)
+	for (auto m : m_chunks)
 		delete m;
 
 	delete m_bg_layer_fbo;
@@ -145,11 +145,11 @@ void WorldRenderManager::onScreenResize()
 
 	m_offset_map.clear();
 
-	for (ChunkMeshInstance* m : m_chunks)
+	for (auto m : m_chunks)
 		m->m_enabled = false;
 
 	while (m_chunks.size() < getChunksSize())
-		m_chunks.push_back(new ChunkMeshInstance());
+		m_chunks.push_back(new ChunkMeshInstanceNew());
 
 	//made default light texture with 1 channel
 	if (m_light_simple_texture)
@@ -339,7 +339,7 @@ void WorldRenderManager::refreshChunkList()
 		bool foundFreeChunk = false;
 		for (int i = lastFreeChunk; i < m_chunks.size(); i++)
 		{
-			ChunkMeshInstance& c = *m_chunks[i];
+			auto& c = *m_chunks[i];
 			if (!c.m_enabled)
 			{
 				lastFreeChunk = i + 1;
@@ -496,7 +496,7 @@ void WorldRenderManager::render()
 		renderLightMap();
 
 	//chunk render
-	auto& chunkProgram = *ChunkMesh::getProgram();
+	auto& chunkProgram = *ChunkMeshNew::getProgram();
 
 	//bg
 	renderBiomeBackgroundToFBO();
@@ -535,12 +535,12 @@ void WorldRenderManager::render()
 
 		//walls
 		chunkProgram.bind();
-		chunkProgram.setUniform1i("u_texture_atlas_width", WALL_TEXTURE_ATLAS_SIZE);
-		chunkProgram.setUniform1i("u_corner_atlas_width", WALL_CORNER_ATLAS_SIZE);
-		ChunkMesh::getAtlas()->bind(0);
-		ChunkMesh::getCornerAtlas()->bind(1);
+		//chunkProgram.setUniform1i("u_texture_atlas_width", WALL_TEXTURE_ATLAS_SIZE);
+		//chunkProgram.setUniform1i("u_corner_atlas_width", WALL_CORNER_ATLAS_SIZE);
+		ChunkMeshNew::getAtlas()->bind(0);
+		ChunkMeshNew::getCornerAtlas()->bind(1);
 
-		for (ChunkMeshInstance* mesh : m_chunks)
+		for (auto mesh : m_chunks)
 		{
 			if (!(mesh->m_enabled))
 				continue;
@@ -552,7 +552,7 @@ void WorldRenderManager::render()
 			chunkProgram.setUniformMat4("u_transform", getProjMatrix() * worldMatrix);
 
 			mesh->getWallVAO().bind();
-			GLCall(glDrawArrays(GL_POINTS, 0, WORLD_CHUNK_AREA * 4));
+			GLCall(glDrawArrays(GL_TRIANGLES, 0, WORLD_CHUNK_AREA * 4 * 6));
 		}
 		m_wall_fbo->unbind();
 
@@ -574,11 +574,11 @@ void WorldRenderManager::render()
 		Gcon.enableBlend();
 		Gcon.setBlendFunc(Blend::SRC_ALPHA, Blend::ONE_MINUS_SRC_ALPHA);
 		chunkProgram.bind();
-		ChunkMesh::getAtlas()->bind(0);
-		ChunkMesh::getCornerAtlas()->bind(1);
-		chunkProgram.setUniform1i("u_texture_atlas_width", BLOCK_TEXTURE_ATLAS_SIZE);
-		chunkProgram.setUniform1i("u_corner_atlas_width", BLOCK_CORNER_ATLAS_SIZE);
-		for (ChunkMeshInstance* mesh : m_chunks)
+		ChunkMeshNew::getAtlas()->bind(0);
+		ChunkMeshNew::getCornerAtlas()->bind(1);
+		//chunkProgram.setUniform1i("u_texture_atlas_width", BLOCK_TEXTURE_ATLAS_SIZE);
+		//chunkProgram.setUniform1i("u_corner_atlas_width", BLOCK_CORNER_ATLAS_SIZE);
+		for (auto mesh : m_chunks)
 		{
 			if (!(mesh->m_enabled))
 				continue;
@@ -589,7 +589,7 @@ void WorldRenderManager::render()
 			chunkProgram.setUniformMat4("u_transform", getProjMatrix() * world_matrix);
 
 			mesh->getVAO().bind();
-			GLCall(glDrawArrays(GL_POINTS, 0, WORLD_CHUNK_AREA));
+			GLCall(glDrawArrays(GL_TRIANGLES, 0, WORLD_CHUNK_AREA*6));
 		}
 		if (Stats::light_enable)
 			applyLightMap(m_light_fbo->getTexture());

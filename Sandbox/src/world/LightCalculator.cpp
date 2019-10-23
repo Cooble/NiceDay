@@ -875,7 +875,6 @@ void LightCalculator::computeLT(Snapshot& sn)
 		|| sn.offsetY != lastDim.offsetY
 	)
 	{
-		//memset(m_map_sky, 0, WORLD_CHUNK_AREA * lastDim.chunkWidth * lastDim.chunkHeight * sizeof(half));
 		//clear everything
 
 		lastDim.chunkWidth = sn.chunkWidth;
@@ -902,7 +901,6 @@ void LightCalculator::computeLT(Snapshot& sn)
 				if (!biome.hasSkyLighting())
 					continue;
 				uint8_t backLight = biome.getBackgroundLight(m_world);
-
 				for (int y = 0; y < WORLD_CHUNK_SIZE; ++y)
 				{
 					for (int x = 0; x < WORLD_CHUNK_SIZE; ++x)
@@ -921,7 +919,6 @@ void LightCalculator::computeLT(Snapshot& sn)
 				}
 			}
 		}
-
 		runFloodSky(minX, minY, width, height, current_list, new_list);
 	}
 
@@ -965,9 +962,7 @@ void LightCalculator::computeLT(Snapshot& sn)
 			break;
 		}
 	}
-
 	memcpy(m_map_sky_out, m_map_sky, sn.chunkWidth * sn.chunkHeight * WORLD_CHUNK_AREA * sizeof(half));
-
 
 	updateLocalMapLT(sn); //set map content to cached chunk light
 

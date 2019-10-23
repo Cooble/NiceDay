@@ -12,6 +12,7 @@ static std::string s_title = "Niceday - Release";
 Sandbox::Sandbox():
 App(1280,720, s_title)
 {
+	//m_imgui_enable = false;
 	Sprite2D::init();
 	m_LayerStack.PushLayer(new MainLayer());
 

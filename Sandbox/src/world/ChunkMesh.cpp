@@ -1,5 +1,5 @@
 #include "ndpch.h"
-#include "world/block/BlockRegistry.h"
+/*#include "world/block/BlockRegistry.h"
 #include "world/World.h"
 #include "graphics/Renderer.h"
 #include "ChunkMesh.h"
@@ -198,3 +198,4 @@ ChunkMeshInstance::~ChunkMeshInstance()
 	delete[] m_wall_buff;
 	delete m_vbo;
 }
+*/

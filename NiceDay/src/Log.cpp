@@ -6,13 +6,13 @@
 std::shared_ptr<spdlog::logger> Log::s_CoreLogger;
 
 
-void Log::Init()
+void Log::init()
 {
 	static bool noInit = true;
 	if (!noInit)
 		return;
 	noInit = false;
-	spdlog::set_pattern("%^[%T] %n: %v%$");
+	spdlog::set_pattern("[%@] %^[%T] %n: %v%$");
 	s_CoreLogger = spdlog::stdout_color_mt("ND");
 	s_CoreLogger->set_level(spdlog::level::trace);
 	ND_INFO("Logger running");

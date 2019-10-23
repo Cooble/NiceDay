@@ -144,4 +144,9 @@ void GLContext::cmdDrawElements(Topology t, size_t elementLength)
 {
 	GLCall(glDrawElements((uint32_t)t,elementLength,GL_UNSIGNED_INT, nullptr));
 }
+void GLContext::cmdDrawArrays(Topology t, size_t elementLength)
+{
+	GLCall(glDrawArrays((uint32_t)t,0, elementLength));
+}
+
 

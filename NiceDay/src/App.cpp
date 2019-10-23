@@ -4,11 +4,12 @@
 #include "event/WindowEvent.h"
 #include <chrono>
 #include "graphics/GContext.h"
-#include "Stats.h"
 #include <imgui.h>
 #include <examples/imgui_impl_glfw.h>
 #include <examples/imgui_impl_opengl3.h>
 #include "graphics/Effect.h"
+#include "GLFW/glfw3.h"
+#include "imgui_utils.h"
 
 #define BIND_EVENT_FN(x) std::bind(&App::x, &App::get(), std::placeholders::_1)
 
@@ -25,14 +26,16 @@ App::App(int width, int height, const std::string& title)
 static void eventCallback(Event& e);
 void App::init(int width, int height, const std::string& title)
 {
-	Log::Init();
+	Log::init();
 	m_Window = new Window(width, height, title);
 	GContext::init(Renderer::getAPI());
 	Effect::init();
 	m_Window->setEventCallback(eventCallback);
-
-	m_ImGuiLayer = new ImGuiLayer();
-	m_LayerStack.PushOverlay(m_ImGuiLayer);
+	m_imgui_enable = true;
+	if (m_imgui_enable) {
+		m_ImGuiLayer = new ImGuiLayer();
+		m_LayerStack.PushOverlay(m_ImGuiLayer);
+	}
 }
 
 App::~App()
@@ -74,19 +77,21 @@ uint64_t nowTime()
 
 void App::start()
 {
-	using namespace std::chrono;
 	ND_TRACE("Game started");
+	
+	using namespace std::chrono;
 	m_running = true;
 	auto lastTime = nowTime();
 	int millisPerTick = 1000 / m_target_tps;
 	uint64_t accomodator = 0;
+	auto lastRenderTime = nowTime();
 	while (m_running)
 	{
 		auto now = nowTime();
 		accomodator += now - lastTime;
 		lastTime = now;
-		Stats::updates_per_frame = accomodator / millisPerTick;
-		if (Stats::updates_per_frame > 20)
+		m_tel_updates_per_frame = accomodator / millisPerTick;
+		if (m_tel_updates_per_frame > 20)
 			accomodator = 0;//lets slow the game to catch up
 		int maxMil = 0;
 		while (accomodator >= millisPerTick)
@@ -97,10 +102,22 @@ void App::start()
 			update();
 			maxMil = std::max((int)(nowTime() - tt),maxMil);
 		}
-		m_tick_millis = maxMil;
+		m_tel_tick_millis = maxMil;
+		
+		if(nowTime()-lastRenderTime<1000/m_target_tps)
+			continue;//skip render
 		now = nowTime();
+		lastRenderTime = now;
 		render();
-		m_render_millis = nowTime() - now;
+		m_tel_render_millis = nowTime() - now;
+		static int totalMil = 0;
+		totalMil += m_tel_render_millis;
+		static int divi = 0;
+		if (divi++ == 60) {
+			divi = 0;
+			totalMil /= 61;
+			totalMil = 0;
+		}
 
 		current_fps++;
 		auto noww = nowTime();
@@ -120,6 +137,7 @@ void App::start()
 
 void App::update()
 {
+	m_Window->pollEvents();
 	m_Input.update();
 	for (Layer* l : m_LayerStack)
 		l->onUpdate();
@@ -128,14 +146,16 @@ void App::update()
 
 void App::render()
 {
-	m_Window->update();
+	m_Window->swapBuffers();
 	for (Layer* l : m_LayerStack)
 		l->onRender();
-
-	m_ImGuiLayer->begin();
-	for (Layer* l : m_LayerStack)
-		l->onImGuiRender();
-	m_ImGuiLayer->end();
+	
+	if (m_imgui_enable) {
+		m_ImGuiLayer->begin();
+		for (Layer* l : m_LayerStack)
+			l->onImGuiRender();
+		m_ImGuiLayer->end();
+	}
 }
 
 void App::stop()
@@ -218,10 +238,75 @@ void ImGuiLayer::end()
 	}*/
 }
 
+static int maxValResetDelay = 60 * 2;
+static bool openTelemetrics = false;
+static bool showTelemetrics = false;
+
 void ImGuiLayer::onImGuiRender()
 {
 	//static bool show = true;
 	//ImGui::ShowDemoWindow(&show);
+	if (openTelemetrics)
+		drawTelemetry();
+}
+template <typename T>
+T max(T a, T b)
+{
+	if (a < b)
+		return b;
+	return a;
+}
+
+
+void ImGuiLayer::onUpdate()
+{
+	
+	updateTelemetry();
+	
+	
+}
+
+void ImGuiLayer::updateTelemetry()
+{
+	if (App::get().getInput().isKeyFreshlyPressed(GLFW_KEY_D))
+		if (App::get().getInput().isKeyPressed(GLFW_KEY_LEFT_CONTROL)) {
+			openTelemetrics = !openTelemetrics;
+			if (openTelemetrics)
+				showTelemetrics = true;
+		}
+}
+
+
+void ImGuiLayer::drawTelemetry()
+{
+
+	if (!ImGui::Begin("Telemetrics", &showTelemetrics,ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_AlwaysAutoResize))
+	{
+		ImGui::End();
+		return;
+	}
+	if (!showTelemetrics) {
+		openTelemetrics = false;
+	}
+	//todo following lines should be called by onupdate()
+	if (ImGui::TreeNode("Tick")) {
+		ImGui::PlotVar("Tick Millis", App::get().getTickMillis(),true, maxValResetDelay);
+		ImGui::TreePop();
+	}
+	if (ImGui::TreeNode("Render")) {
+		ImGui::PlotVar("Render Millis", App::get().getRenderMillis(),true, maxValResetDelay);
+		ImGui::TreePop();
+	}
+	if (ImGui::TreeNode("FPS")) {
+		ImGui::PlotVar("FPS", App::get().getFPS(),false, maxValResetDelay);
+		ImGui::PlotVar("Updates per Frame", App::get().getUpdatesPerFrame());
+		ImGui::TreePop();
+	}
+	ImGui::Separator();
+	ImGui::InputInt("Max val reset delay (ticks)", &maxValResetDelay);
+	ImGui::Separator();
+	ImGui::Value("Scheduled Tasks: ", ND_SCHED.size());
+	ImGui::End();
 }
 
 

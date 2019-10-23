@@ -14,8 +14,10 @@ void FileChunkProvider::proccessAssignments(std::vector<WorldIOAssignment>& assi
 	auto stream = WorldIO::Session(m_file_path, true);
 	for (auto& assignment : assignments)
 	{
-		if (assignment.job->m_variable == JobAssignment::JOB_FAILURE)
+		if (assignment.job->m_variable == JobAssignment::JOB_FAILURE) {
+			assignment.job->markDone();
 			continue;
+		}
 		switch (assignment.type)
 		{
 		case WorldIOAssignment::WAIT:
@@ -25,6 +27,8 @@ void FileChunkProvider::proccessAssignments(std::vector<WorldIOAssignment>& assi
 			break;
 		case WorldIOAssignment::BOOL_GEN_LOAD:
 			stream.loadGenBoolMap(assignment.bool_gen);
+			if (assignment.bool_gen->bitSize() == 0)
+				assignment.job->m_variable = JobAssignment::JOB_FAILURE;
 			break;
 		case WorldIOAssignment::CHUNK_SAVE:
 			stream.saveChunk(assignment.chunk, assignment.chunkOffset);

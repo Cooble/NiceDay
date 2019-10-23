@@ -25,14 +25,15 @@ private:
 
 
 public:
-	Window(int width, int height, const std::string& title);
+	Window(int width, int height, const std::string& title,bool fullscreen=false);
 	~Window();
 
 	void setSize(int width, int height);
 	void setFullScreen(bool fullscreen);
 	void setTitle(const char* title);
 	void close();
-	void update();
+	void swapBuffers();
+	void pollEvents();
 	inline void setEventCallback(const EventCallbackFn& func) { m_data.eventCallback = func; };
 	inline bool shouldClose();
 

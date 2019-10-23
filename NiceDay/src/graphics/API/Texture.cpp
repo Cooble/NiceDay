@@ -1,7 +1,6 @@
 #include "ndpch.h"
 #include "Texture.h"
 
-#include <stb_image.h>
 #include "platform/OpenGL/GLTexture.h"
 #include "graphics/Renderer.h"
 

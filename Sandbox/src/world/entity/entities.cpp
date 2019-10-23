@@ -328,7 +328,8 @@ bool Bullet::checkCollisions(World& w, float dt)
 		if (e == nullptr)
 			nulls++;
 	}
-	ASSERT(nulls==0, "Shi");
+	
+	//ASSERT(nulls==0, "Shi");
 
 	for (auto entityID : entities)
 	{
