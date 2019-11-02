@@ -7,65 +7,117 @@
 #include "graphics/API/Shader.h"
 #include "graphics/API/VertexArray.h"
 #include "graphics/GContext.h"
+#include "graphics/BatchRenderer2D.h"
+#include "graphics/Sprite.h"
+#include "graphics/FontMaterial.h"
 
+static bool textChange;
+static int textSize;
+
+static BatchRenderer2D* renderer2d;
 class TestLayer:public Layer
 {
 private:
 	Texture* fontTexture;
-	TextMesh textMesh= TextMesh(200);
 	Shader* fontShader;
+	TextMesh* textMesh;
 	Font font;
-	VertexArray* fontVAO;
-	VertexBuffer* fontVBO;
+	char textInput[1024];
+	Sprite m_sprite;
+	FontMaterial* fontMat;
+	
 public:
 	TestLayer() = default;
 	
 	inline void onAttach() override
 	{
+
+		static SpriteSheetResource res(Texture::create(
+			TextureInfo("res/images/player.png")
+			.filterMode(TextureFilterMode::NEAREST)
+			.format(TextureFormat::RGBA)), 4, 4);
+		m_sprite = Sprite(&res);
+		m_sprite.setSpriteIndex(0, 0);
+		float size = 0.3f;
+		m_sprite.setPosition(glm::vec3(-size / 2, -size / 2, 0));
+		m_sprite.setSize(glm::vec2(size, size));
 		
+		renderer2d = new BatchRenderer2D();
+		textMesh = new TextMesh(300);
 		ND_INFO("TestLayer attached");
 
 		FontParser::parse(font,"arial_distance_field.fnt");
+		font.xSpace = -10;
+		font.ySpace= -5;
 
-		TextBuilder::buildMesh("Wwi\nihesKarelbgngb\nllo this is \njust very interest",
-			font, textMesh, 1000);
+		TextBuilder::buildMesh("Wwi\nihesKarelbgngb\nllo this is \njust very interest",1000,
+			font, *textMesh,TextBuilder::ALIGN_CENTER);
 		
 		fontTexture = Texture::create(TextureInfo(font.texturePath));
-		fontShader = new Shader("res/shaders/Font.shader");
-		glm::mat4 trans = glm::scale(glm::mat4(1.f), glm::vec3(4*1.f/App::get().getWindow()->getWidth(), 4*1.f/App::get().getWindow()->getHeight(), 1.f));
-		fontShader->bind();
-		fontShader->setUniformMat4("u_transform", trans);
 
-		fontVBO = VertexBuffer::create(textMesh.getSrc(), textMesh.getByteSize());
-		VertexBufferLayout layout;
-		layout.push<float>(2);
-		layout.push<float>(2);
-		fontVBO->setLayout(layout);
-		fontVAO = VertexArray::create();
-		fontVAO->addBuffer(*fontVBO);
-		
-		
+		fontMat = new FontMaterial();
+		fontMat->color = glm::vec4(0, 0, 1, 1);
+		fontMat->border_color = glm::vec4(0, 0, 1, 1);
+		fontMat->thickness = glm::vec2(0.5, 0);
+		fontMat->font = &font;
+		fontMat->texture = fontTexture;
+
 		ND_INFO("font loaded");
+	}
+	void onDetach() override
+	{
+		delete renderer2d;
 	}
 	void onRender() override
 	{
+		
 		Gcon.enableBlend();
 		Gcon.setBlendEquation(BlendEquation::FUNC_ADD);
 		Gcon.setBlendFunc(Blend::SRC_ALPHA, Blend::ONE_MINUS_SRC_ALPHA);
-		fontShader->bind();
-		fontVAO->bind();
-		fontTexture->bind(0);
-		Gcon.cmdDrawArrays(Topology::TRIANGLES, textMesh.getVertexCount());
+		
+		renderer2d->begin();
+		renderer2d->submitColorQuad(glm::vec3(0, 0, 0), glm::vec2(0.3f, 0.2f), glm::vec4(0, 1, 0, 1));
+		renderer2d->submit(m_sprite);
+		renderer2d->push(glm::scale(glm::mat4(1.f), glm::vec3(1.f / App::get().getWindow()->getWidth(), 1.f / App::get().getWindow()->getHeight(), 1)));
+		renderer2d->submitText(*textMesh, fontMat);
+		renderer2d->pop();
+		renderer2d->flush();
 	}
 	void onUpdate() override
 	{
+		if(textChange)
+		{
+			textChange = false;
+			TextBuilder::buildMesh(std::string(textInput).substr(0,textSize),1000,
+				font, *textMesh, TextBuilder::ALIGN_CENTER);
+		}
+	}
+	static int textBack(ImGuiInputTextCallbackData* data)
+	{
+		textSize = data->BufTextLen;
+		textChange = true;
+		return 1;
 	}
 	void onImGuiRender() override
 	{
-		
+
+		bool t = true;
+		ImGui::ShowDemoWindow(&t);
 		if(ImGui::Begin("Karel"))
 		{
 			ImGui::Text("Sup dawg");
+			ImGui::InputTextMultiline("Texttik", textInput, sizeof(textInput), ImVec2(0, 0), 
+				ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CallbackResize, &textBack);
+			static float c[4];
+			static float cBo[4];
+			static float width[2];
+			if(ImGui::ColorPicker4("text", c)|| ImGui::ColorPicker4("border", cBo)||ImGui::InputFloat2("thick", width))
+			{
+				fontMat->color = *(glm::vec4*) & c;
+				fontMat->border_color = *(glm::vec4*) & cBo;
+				fontMat->thickness = glm::vec2(width[0], width[1]);
+			}
+
 		}
 		ImGui::End();
 	}

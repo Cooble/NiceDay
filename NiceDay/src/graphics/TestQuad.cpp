@@ -2,6 +2,7 @@
 #include "TestQuad.h"
 #include "Renderer.h"
 #include "platform/OpenGL/GLRenderer.h"
+#include "platform/OpenGL/GLShader.h"
 
 TestQuad::TestQuad(bool centered)
 {
@@ -23,7 +24,7 @@ TestQuad::TestQuad(bool centered)
 	l.push<float>(2);
 	vbo->setLayout(l);
 	vao->addBuffer(*vbo);
-	shader = new Shader("res/shaders/Test.shader");
+	shader = ShaderLib::loadOrGetShader("res/shaders/Test.shader");
 }
 
 TestQuad::~TestQuad()
@@ -36,7 +37,7 @@ TestQuad::~TestQuad()
 void TestQuad::render(const glm::mat4& transform)
 {
 	shader->bind();
-	shader->setUniformMat4("u_transform", transform);
+	dynamic_cast<GLShader*>(shader)->setUniformMat4("u_transform", transform);
 	vao->bind();
 	GLCall(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
 	shader->unbind();

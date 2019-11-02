@@ -1285,6 +1285,9 @@
       <Filter>vendor\stb_image</Filter>
     </ClInclude>
     <ClInclude Include="src\graphics\font\TextBuilder.h" />
+    <ClInclude Include="src\graphics\FontObject.h" />
+    <ClInclude Include="src\platform\OpenGL\GLShader.h" />
+    <ClInclude Include="src\graphics\FontMaterial.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\App.cpp">
@@ -1405,5 +1408,8 @@
       <Filter>vendor\stb_image</Filter>
     </ClCompile>
     <ClCompile Include="src\graphics\font\TextBuilder.cpp" />
+    <ClCompile Include="src\graphics\FontObject.cpp" />
+    <ClCompile Include="src\platform\OpenGL\GLShader.cpp" />
+    <ClCompile Include="src\graphics\FontMaterial.cpp" />
   </ItemGroup>
 </Project>

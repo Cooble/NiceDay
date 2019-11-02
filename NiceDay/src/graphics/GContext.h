@@ -70,6 +70,7 @@ public:
 	virtual void setViewport(int x, int y, int width, int height) = 0;
 	inline void setViewport(int width, int height) { setViewport(0, 0, width, height); }
 	virtual void cmdDrawElements(Topology t, size_t elementLength)=0;
+	virtual void cmdDrawMultiElements(Topology t, uint32_t* startIndexes, int* lengths, int multiSize) =0;
 	virtual void cmdDrawArrays(Topology t, size_t elementLength)=0;
 	
 };

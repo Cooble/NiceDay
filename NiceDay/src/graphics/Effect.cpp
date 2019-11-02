@@ -95,7 +95,7 @@ ScaleEdgesEffect::ScaleEdgesEffect(const TextureInfo& targetTexture)
 void ScaleEdgesEffect::render(const Texture* t, float scale, bool toFBO)
 {
 	getShader()->bind();
-	getShader()->setUniform1f("u_scale", scale);
+	dynamic_cast<GLShader*>(getShader())->setUniform1f("u_scale", scale);
 	t->bind(0);
 
 	if (toFBO) {
@@ -146,7 +146,7 @@ HorizontalBlur::HorizontalBlur(const TextureInfo& targetTexture)
 void HorizontalBlur::render(const Texture* t, bool toFBO)
 {
 	getShader()->bind();
-	getShader()->setUniform2f("u_pixel_size", 1.f / m_output_texture->getWidth(), 0);
+	dynamic_cast<GLShader*>(getShader())->setUniform2f("u_pixel_size", 1.f / m_output_texture->getWidth(), 0);
 	t->bind(0);
 
 
@@ -172,7 +172,7 @@ VerticalBlur::VerticalBlur(const TextureInfo& targetTexture)
 void VerticalBlur::render(const Texture* t, bool toFBO)
 {
 	getShader()->bind();
-	getShader()->setUniform2f("u_pixel_size",0, 1.f / m_output_texture->getHeight());
+	dynamic_cast<GLShader*>(getShader())->setUniform2f("u_pixel_size",0, 1.f / m_output_texture->getHeight());
 	t->bind(0);
 
 

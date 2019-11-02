@@ -1,5 +1,6 @@
 #include "ndpch.h"
 #include "Sprite2D.h"
+#include "platform/OpenGL/GLShader.h"
 
 
 VertexBuffer* Sprite2D::s_vbo=nullptr;
@@ -23,9 +24,9 @@ void Sprite2D::init()
 	s_vbo->setLayout(l);
 	s_vao->addBuffer(*s_vbo);
 
-	s_program = new Shader("res/shaders/Sprite2D.shader");
+	s_program = ShaderLib::loadOrGetShader("res/shaders/Sprite2D.shader");
 	s_program->bind();
-	s_program->setUniform1i("u_texture", 0);
+	dynamic_cast<GLShader*>(s_program)->setUniform1i("u_texture", 0);
 	s_program->unbind();
 }
 

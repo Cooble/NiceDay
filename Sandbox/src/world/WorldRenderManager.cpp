@@ -38,7 +38,7 @@ WorldRenderManager::WorldRenderManager(Camera* cam, World* world)
 	m_test_quad = new TestQuad();
 
 	//setup sky
-	m_sky_program = new Shader("res/shaders/Sky.shader");
+	m_sky_program = ShaderLib::loadOrGetShader("res/shaders/Sky.shader");
 
 	//setup bg
 	m_bg_layer_fbo = new FrameBufferTexturePair();
@@ -48,9 +48,9 @@ WorldRenderManager::WorldRenderManager(Camera* cam, World* world)
 	m_light_smooth_fbo = new FrameBufferTexturePair();
 	m_block_fbo = new FrameBufferTexturePair();
 	m_wall_fbo = new FrameBufferTexturePair();
-	m_light_program = new Shader("res/shaders/Light.shader");
+	m_light_program = ShaderLib::loadOrGetShader("res/shaders/Light.shader");
 	m_light_program->bind();
-	m_light_program->setUniform1i("u_texture", 0);
+	dynamic_cast<GLShader*>(m_light_program)->setUniform1i("u_texture", 0);
 	m_light_program->unbind();
 	float quad[] = {
 		1, 0,
@@ -66,10 +66,10 @@ WorldRenderManager::WorldRenderManager(Camera* cam, World* world)
 	m_light_VAO->addBuffer(*m_light_VBO);
 
 	//setup simple light texture
-	m_light_simple_program = new Shader("res/shaders/LightTexturePiece.shader");
+	m_light_simple_program = ShaderLib::loadOrGetShader("res/shaders/LightTexturePiece.shader");
 	m_light_simple_program->bind();
-	m_light_simple_program->setUniform1i("u_texture_0", 0);
-	m_light_simple_program->setUniform1i("u_texture_1", 1);
+	dynamic_cast<GLShader*>(m_light_simple_program)->setUniform1i("u_texture_0", 0);
+	dynamic_cast<GLShader*>(m_light_simple_program)->setUniform1i("u_texture_1", 1);
 	m_light_simple_program->unbind();
 	float simpleQuad[] = {
 		1, -1,
@@ -462,8 +462,8 @@ void WorldRenderManager::renderBiomeBackgroundToFBO()
 		for (int i = 0; i < b.getBGSpritesSize(); i++)
 		{
 			Sprite2D& sprite = *sprites[i];
-			sprite.getProgram().setUniformMat4("u_model_transform", sprite.getModelMatrix());
-			sprite.getProgram().setUniformMat4("u_uv_transform", sprite.getUVMatrix());
+			dynamic_cast<GLShader*>(&sprite.getProgram())->setUniformMat4("u_model_transform", sprite.getModelMatrix());
+			dynamic_cast<GLShader*>(&sprite.getProgram())->setUniformMat4("u_uv_transform", sprite.getUVMatrix());
 
 			sprite.getTexture().bind(0);
 			GLCall(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
@@ -479,8 +479,8 @@ void WorldRenderManager::renderBiomeBackgroundToFBO()
 		Sprite2D::getVAOStatic().bind();
 		auto m = glm::translate(glm::mat4(1.0f), glm::vec3(-1, -1, 0));
 		m = glm::scale(m, glm::vec3(2, 2, 0));
-		Sprite2D::getProgramStatic().setUniformMat4("u_model_transform", m);
-		Sprite2D::getProgramStatic().setUniformMat4("u_uv_transform", glm::mat4(1.0f));
+		dynamic_cast<GLShader*>(&Sprite2D::getProgramStatic())->setUniformMat4("u_model_transform", m);
+		dynamic_cast<GLShader*>(&Sprite2D::getProgramStatic())->setUniformMat4("u_uv_transform", glm::mat4(1.0f));
 		m_bg_layer_fbo->getTexture()->bind(0);
 		GLCall(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
 	}
@@ -514,8 +514,8 @@ void WorldRenderManager::render()
 		m_sky_program->bind();
 		auto upColor = getSkyColor(CURSOR_Y);
 		auto downColor = getSkyColor(CURSOR_YY);
-		m_sky_program->setUniform4f("u_up_color", upColor.r, upColor.g, upColor.b, upColor.a);
-		m_sky_program->setUniform4f("u_down_color", downColor.r, downColor.g, downColor.b, downColor.a);
+		dynamic_cast<GLShader*>(m_sky_program)->setUniform4f("u_up_color", upColor.r, upColor.g, upColor.b, upColor.a);
+		dynamic_cast<GLShader*>(m_sky_program)->setUniform4f("u_down_color", downColor.r, downColor.g, downColor.b, downColor.a);
 		m_full_screen_quad_VAO->bind();
 		GLCall(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
 
@@ -528,8 +528,8 @@ void WorldRenderManager::render()
 		Sprite2D::getVAOStatic().bind();
 		auto m = glm::translate(glm::mat4(1.0f), glm::vec3(-1, -1, 0));
 		m = glm::scale(m, glm::vec3(2, 2, 0));
-		Sprite2D::getProgramStatic().setUniformMat4("u_model_transform", m);
-		Sprite2D::getProgramStatic().setUniformMat4("u_uv_transform", glm::mat4(1.0f));
+		dynamic_cast<GLShader*>(&Sprite2D::getProgramStatic())->setUniformMat4("u_model_transform", m);
+		dynamic_cast<GLShader*>(&Sprite2D::getProgramStatic())->setUniformMat4("u_uv_transform", glm::mat4(1.0f));
 		m_bg_fbo->getTexture()->bind(0);
 		GLCall(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
 
@@ -549,7 +549,7 @@ void WorldRenderManager::render()
 				                                  mesh->getPos().x - m_camera->getPosition().x,
 				                                  mesh->getPos().y - m_camera->getPosition().y, 0.0f));
 			worldMatrix = glm::scale(worldMatrix, glm::vec3(0.5f, 0.5f, 1));
-			chunkProgram.setUniformMat4("u_transform", getProjMatrix() * worldMatrix);
+			dynamic_cast<GLShader*>(&chunkProgram)->setUniformMat4("u_transform", getProjMatrix() * worldMatrix);
 
 			mesh->getWallVAO().bind();
 			GLCall(glDrawArrays(GL_TRIANGLES, 0, WORLD_CHUNK_AREA * 4 * 6));
@@ -586,7 +586,7 @@ void WorldRenderManager::render()
 			auto world_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(
 				                                   mesh->getPos().x - m_camera->getPosition().x,
 				                                   mesh->getPos().y - m_camera->getPosition().y, 0.0f));
-			chunkProgram.setUniformMat4("u_transform", getProjMatrix() * world_matrix);
+			dynamic_cast<GLShader*>(&chunkProgram)->setUniformMat4("u_transform", getProjMatrix() * world_matrix);
 
 			mesh->getVAO().bind();
 			GLCall(glDrawArrays(GL_TRIANGLES, 0, WORLD_CHUNK_AREA*6));
@@ -617,7 +617,7 @@ void WorldRenderManager::renderLightMap()
 	Gcon.setClearColor(1, 1, 1, 0);
 
 	m_light_simple_program->bind();
-	m_light_simple_program->setUniformVec4f("u_chunkback_color", m_world->getSkyLight());
+	dynamic_cast<GLShader*>(m_light_simple_program)->setUniformVec4f("u_chunkback_color", m_world->getSkyLight());
 	m_light_simple_texture->bind(0);
 	m_light_sky_simple_texture->bind(1);
 	m_full_screen_quad_VAO->bind();
@@ -648,7 +648,7 @@ void WorldRenderManager::applyLightMap(Texture* lightmap)
 	lightmap->bind(0);
 
 	m_light_program->bind();
-	m_light_program->setUniformMat4("u_transform", getProjMatrix() * worldMatrix);
+	dynamic_cast<GLShader*>(m_light_program)->setUniformMat4("u_transform", getProjMatrix() * worldMatrix);
 
 	m_light_VAO->bind();
 

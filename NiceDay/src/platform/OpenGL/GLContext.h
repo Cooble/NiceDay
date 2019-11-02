@@ -25,6 +25,7 @@ public:
 	void setClearColor(float r, float g, float b, float a) override;
 	void setViewport(int x, int y, int width, int height) override;
 	void cmdDrawElements(Topology t, size_t elementLength) override;
+	void cmdDrawMultiElements(Topology t, uint32_t* startIndexes, int* lengths, int multiSize) override;
 	void cmdDrawArrays(Topology t, size_t elementLength) override;
 };
 

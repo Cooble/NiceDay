@@ -4,6 +4,7 @@
 #include "API/Buffer.h"
 #include "API/VertexArray.h"
 #include "API/Shader.h"
+#include "platform/OpenGL/GLShader.h"
 
 class Effect
 {
@@ -34,7 +35,7 @@ public:
 		s_vao = VertexArray::create();
 		s_vao->addBuffer(*s_vbo);
 
-		s_shader = new Shader("res/shaders/TextureQuad.shader");
+		s_shader = ShaderLib::loadOrGetShader("res/shaders/TextureQuad.shader");
 	}
 
 	//inline static const VertexBuffer& getDefaultVBO() { return *s_vbo; }
@@ -105,9 +106,9 @@ private:
 		static Shader* s = nullptr;
 		if (s == nullptr)
 		{
-			s = new Shader("res/shaders/AlphaMask.shader");
+			s = ShaderLib::loadOrGetShader("res/shaders/AlphaMask.shader");
 			s->bind();
-			s->setUniform1i("u_attachment", 0); //txture input
+			dynamic_cast<GLShader*>(s)->setUniform1i("u_attachment", 0); //txture input
 			s->unbind();
 		}
 		return s;
@@ -128,9 +129,9 @@ private:
 		static Shader* s = nullptr;
 		if (s == nullptr)
 		{
-			s = new Shader("res/shaders/ScaleEdge.shader");
+			s = ShaderLib::loadOrGetShader("res/shaders/ScaleEdge.shader");
 			s->bind();
-			s->setUniform1i("u_attachment", 0); //txture input
+			dynamic_cast<GLShader*>(s)->setUniform1i("u_attachment", 0); //txture input
 			s->unbind();
 		}
 		return s;
@@ -176,9 +177,9 @@ protected:
 		static Shader* s = nullptr;
 		if (s == nullptr)
 		{
-			s = new Shader("res/shaders/Blur.shader");
+			s = ShaderLib::loadOrGetShader("res/shaders/Blur.shader");
 			s->bind();
-			s->setUniform1i("u_attachment", 0); //txture input
+			dynamic_cast<GLShader*>(s)->setUniform1i("u_attachment", 0); //txture input
 			s->unbind();
 		}
 		return s;

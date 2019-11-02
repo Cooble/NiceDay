@@ -10,7 +10,8 @@ TextMesh::TextMesh(int characterCount)
 
 TextMesh::~TextMesh()
 {
-	delete[] src;
+	if(src)
+		delete[] src;
 }
 
 void TextMesh::setChar(int index, float x, float y, float x1, float y1, const Character& ch)
@@ -20,10 +21,8 @@ void TextMesh::setChar(int index, float x, float y, float x1, float y1, const Ch
 	che[0] = {x, y, ch.u, ch.v};
 	che[1] = {x1, y, ch.u1, ch.v};
 	che[2] = {x1, y1, ch.u1, ch.v1};
+	che[3] = {x, y1, ch.u, ch.v1};
 
-	che[3] = che[0];
-	che[4] = che[2];
-	che[5] = {x, y1, ch.u, ch.v1};
 }
 
 void TextBuilder::convertToLines(const std::string& text, const Font& font, int maxLineWidth,
@@ -71,6 +70,7 @@ bool TextBuilder::buildMesh(const std::vector<std::string>& lines, const Font& f
 		{
 		case ALIGN_CENTER:
 			currentX = -(float)font.getTextWidth(line)/2;
+			break;
 		case ALIGN_LEFT:
 			currentX = 0;
 			break;
@@ -97,10 +97,10 @@ bool TextBuilder::buildMesh(const std::vector<std::string>& lines, const Font& f
 				yLoc + cc.yoffset,
 			             currentX + cc.xoffset + cc.width, 
 				yLoc + cc.yoffset + cc.height, cc);
-			currentX += cc.xadvance;
+			currentX += cc.xadvance+font.xSpace;
 			mesh.currentCharCount++;
 		}
-		yLoc -= font.lineHeight;
+		yLoc -= font.lineHeight+font.ySpace;
 	}
 
 	return true;

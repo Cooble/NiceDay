@@ -7,6 +7,7 @@
 #include "API/Shader.h"
 #include "API/Buffer.h"
 #include "API/VertexArray.h"
+#include "platform/OpenGL/GLShader.h"
 
 #define MAX_TEXTURES 16
 
@@ -30,10 +31,10 @@ ParticleRenderer::ParticleRenderer()
 	{
 		uniforms[i] = i;
 	}
-	m_shader = new Shader("res/shaders/ParticleSprite.shader");
+	m_shader = ShaderLib::loadOrGetShader("res/shaders/ParticleSprite.shader");
 	m_shader->bind();
-	m_shader->setUniform1iv("u_textures", MAX_TEXTURES, uniforms);
-	m_shader->setUniformMat4("u_projectionMatrix", mat4(1.0f));
+	dynamic_cast<GLShader*>(m_shader)->setUniform1iv("u_textures", MAX_TEXTURES, uniforms);
+	dynamic_cast<GLShader*>(m_shader)->setUniformMat4("u_projectionMatrix", mat4(1.0f));
 	m_shader->unbind();
 	delete[] uniforms;
 

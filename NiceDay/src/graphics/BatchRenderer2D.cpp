@@ -3,6 +3,9 @@
 #include "Renderable2D.h"
 #include "API/Texture.h"
 #include "GContext.h"
+#include "font/TextBuilder.h"
+#include "FontMaterial.h"
+#include "platform/OpenGL/GLShader.h"
 
 #define MAX_TEXTURES 16
 
@@ -15,21 +18,27 @@
 
 BatchRenderer2D::BatchRenderer2D()
 {
+	m_transformation_stack.emplace_back(1.0f);
+	m_back = m_transformation_stack[0];
+
+	prepareQuad();
+	prepareText();
+}
+void BatchRenderer2D::prepareQuad()
+{
 #if !USE_MAP_BUF
 	m_buff = new VertexData[MAX_VERTICES];
 #endif
-	m_transformation_stack.emplace_back(1.0f);
-	m_back = m_transformation_stack[0];
 
 	auto uniforms = new int[MAX_TEXTURES];
 	for (int i = 0; i < MAX_TEXTURES; ++i)
 	{
 		uniforms[i] = i;
 	}
-	m_shader = new Shader("res/shaders/Sprite.shader");
+	m_shader = ShaderLib::loadOrGetShader("res/shaders/Sprite.shader");
 	m_shader->bind();
-	m_shader->setUniform1iv("u_textures", MAX_TEXTURES, uniforms);
-	m_shader->setUniformMat4("u_projectionMatrix", mat4(1.0f));
+	dynamic_cast<GLShader*>(m_shader)->setUniform1iv("u_textures", MAX_TEXTURES, uniforms);
+	dynamic_cast<GLShader*>(m_shader)->setUniformMat4("u_projectionMatrix", mat4(1.0f));
 	m_shader->unbind();
 	delete[] uniforms;
 
@@ -37,8 +46,9 @@ BatchRenderer2D::BatchRenderer2D()
 	l.push<float>(3);			//POS
 	l.push<float>(2);			//UV
 	l.push<unsigned int>(1);	//TEXTURE_SLOT
-	
-	m_vbo = VertexBuffer::create(nullptr, MAX_VERTICES*sizeof(VertexData), BufferUsage::STREAM_DRAW);
+	l.push<unsigned int>(1);	//COLOR
+
+	m_vbo = VertexBuffer::create(nullptr, MAX_VERTICES * sizeof(VertexData), BufferUsage::STREAM_DRAW);
 	m_vbo->setLayout(l);
 
 	m_vao = VertexArray::create();
@@ -62,6 +72,31 @@ BatchRenderer2D::BatchRenderer2D()
 	delete[] indices;
 }
 
+void BatchRenderer2D::prepareText()
+{
+#if !USE_MAP_BUF
+	m_text_buff = new TextVertexData[MAX_VERTICES];
+#endif
+
+	m_text_shader = ShaderLib::loadOrGetShader("res/shaders/Font.shader");
+	m_text_shader->bind();
+	dynamic_cast<GLShader*>(m_text_shader)->setUniform1i("u_texture", 0);
+	dynamic_cast<GLShader*>(m_text_shader)->setUniformMat4("u_transform", mat4(1.0f));
+	m_text_shader->unbind();
+
+	VertexBufferLayout l;
+	l.push<float>(3);			//POS
+	l.push<float>(2);			//UV
+
+	m_text_vbo = VertexBuffer::create(nullptr, MAX_VERTICES * sizeof(TextVertexData), BufferUsage::STREAM_DRAW);
+	m_text_vbo->setLayout(l);
+
+	m_text_vao = VertexArray::create();
+	m_text_vao->addBuffer(*m_text_vbo);
+}
+
+
+
 BatchRenderer2D::~BatchRenderer2D()
 {
 	delete m_vbo;
@@ -69,6 +104,12 @@ BatchRenderer2D::~BatchRenderer2D()
 	delete m_ibo;
 #if !USE_MAP_BUF
 	delete m_buff;
+#endif
+	
+	delete m_text_vbo;
+	delete m_text_vao;
+#if !USE_MAP_BUF
+	delete m_text_buff;
 #endif
 }
 
@@ -97,12 +138,80 @@ int BatchRenderer2D::bindTexture(const Texture* t)
 		return m_textures.size() - 1;
 	}
 
-	flush();
-	begin();
+	flushQuad();
+	beginQuad();
 	return bindTexture(t);
 }
 
+
 void BatchRenderer2D::begin()
+{
+	beginQuad();
+	beginText();
+	
+
+}
+void BatchRenderer2D::beginText()
+{
+	m_text_indices_count = 0;
+#if USE_MAP_BUF
+	m_vbo->bind();
+	m_vertex_data = (VertexData*)m_vbo->mapPointer();
+#else
+	m_text_vertex_data = m_text_buff;
+#endif
+}
+
+void BatchRenderer2D::flushText()
+{
+	if (m_text_indices_count == 0)
+		return;
+#if USE_MAP_BUF
+	m_text_vbo->unMapPointer();
+#else
+	m_text_vbo->bind();
+	m_text_vbo->changeData((char*)m_text_buff, sizeof(TextVertexData) * MAX_VERTICES, 0);
+#endif
+	m_text_vao->bind();
+	m_ibo->bind();
+	m_text_shader->bind();
+
+	Gcon.enableBlend();
+	Gcon.setBlendFunc(Blend::SRC_ALPHA, Blend::ONE_MINUS_SRC_ALPHA);
+
+	static int BUF_S = 500;
+	static auto lengths = new int[BUF_S];
+	static auto indices = new uint32_t[BUF_S];
+
+	for(auto& fontMat:m_fonts)
+	{
+		if(fontMat.second.empty())
+			continue;
+		fontMat.first->texture->bind(0);
+		dynamic_cast<GLShader*>(m_text_shader)->setUniformVec4f("u_textColor", fontMat.first->color);
+		dynamic_cast<GLShader*>(m_text_shader)->setUniformVec4f("u_borderColor", fontMat.first->border_color);
+		dynamic_cast<GLShader*>(m_text_shader)->setUniformVec2f("u_colorWidths", fontMat.first->thickness);
+
+		if(fontMat.second.size()> BUF_S)
+		{
+			delete[] lengths;
+			delete[] indices;
+			BUF_S = fontMat.second.size();
+			lengths = new int[BUF_S];
+			indices = new uint32_t[BUF_S];
+		}
+		
+		for (int i = 0; i < fontMat.second.size(); ++i)
+		{
+			lengths[i] = (int)fontMat.second[i].length;
+			indices[i] = (uint32)fontMat.second[i].fromIndex;
+		}
+		Gcon.cmdDrawMultiElements(Topology::TRIANGLES, indices, lengths, fontMat.second.size());
+		fontMat.second.clear();
+	}
+}
+
+void BatchRenderer2D::beginQuad()
 {
 	m_indices_count = 0;
 	m_textures.clear();
@@ -112,98 +221,17 @@ void BatchRenderer2D::begin()
 #else
 	m_vertex_data = m_buff;
 #endif
-	
-
 }
 
-static glm::vec3 operator*(const glm::mat4& m, const glm::vec3& v)
+void BatchRenderer2D::flushQuad()
 {
-	glm::vec4 inV = { 0,0,0,1 };
-	memcpy((char*)&inV, (char*)&v, sizeof(v));
-	inV = m * inV;
-	return *((glm::vec3*)&inV);
-}
-
-void BatchRenderer2D::submit(const Renderable2D& renderable)
-{
-	int textureSlot = bindTexture(renderable.getTexture());
-	auto& pos = renderable.getPosition();
-	auto& size = renderable.getSize();
-	auto& uv = renderable.getUV();
-
-	//m_back = glm::mat4(1.0f);
-
-	m_vertex_data->position = (m_back) * pos;
-	m_vertex_data->uv = uv.uv[0];
-	m_vertex_data->textureSlot = textureSlot;
-	++m_vertex_data;
-
-	m_vertex_data->position = (m_back) * (pos + vec3(size.x, 0, 0));
-	m_vertex_data->uv = uv.uv[1];
-	m_vertex_data->textureSlot = textureSlot;
-	++m_vertex_data;
-
-	m_vertex_data->position = (m_back) * (pos + vec3(size.x, size.y, 0));
-	m_vertex_data->uv = uv.uv[2];
-	m_vertex_data->textureSlot = textureSlot;
-	++m_vertex_data;
-
-	m_vertex_data->position = (m_back) * (pos + vec3(0, size.y, 0));
-	m_vertex_data->uv = uv.uv[3];
-	m_vertex_data->textureSlot = textureSlot;
-	++m_vertex_data;
-
-	m_indices_count += 6;
-	if (m_indices_count == MAX_INDICES)
-	{
-		flush();
-		begin();
-	}
-
-
-}
-void BatchRenderer2D::submit(const glm::vec3& pos,const glm::vec2& size,const UVQuad& uv,Texture* t)
-{
-	int textureSlot = bindTexture(t);
-	
-
-	m_vertex_data->position = (m_back) * pos;
-	m_vertex_data->uv = uv.uv[0];
-	m_vertex_data->textureSlot = textureSlot;
-	++m_vertex_data;
-
-	m_vertex_data->position = (m_back) * (pos + vec3(size.x, 0, 0));
-	m_vertex_data->uv = uv.uv[1];
-	m_vertex_data->textureSlot = textureSlot;
-	++m_vertex_data;
-
-	m_vertex_data->position = (m_back) * (pos + vec3(size.x, size.y, 0));
-	m_vertex_data->uv = uv.uv[2];
-	m_vertex_data->textureSlot = textureSlot;
-	++m_vertex_data;
-
-	m_vertex_data->position = (m_back) * (pos + vec3(0, size.y, 0));
-	m_vertex_data->uv = uv.uv[3];
-	m_vertex_data->textureSlot = textureSlot;
-	++m_vertex_data;
-
-	m_indices_count += 6;
-	if (m_indices_count == MAX_INDICES)
-	{
-		flush();
-		begin();
-	}
-
-
-}
-
-void BatchRenderer2D::flush()
-{
+	if (m_indices_count == 0)
+		return;
 #if USE_MAP_BUF
 	m_vbo->unMapPointer();
 #else
 	m_vbo->bind();
-	m_vbo->changeData((char*)m_buff, sizeof(VertexData)*MAX_VERTICES, 0);
+	m_vbo->changeData((char*)m_buff, sizeof(VertexData) * MAX_VERTICES, 0);
 	//m_vbo->changeData((char*)m_buff, sizeof(VertexData)*(m_indices_count/6)*4, 0);
 #endif
 	m_vao->bind();
@@ -216,4 +244,148 @@ void BatchRenderer2D::flush()
 	Gcon.enableBlend();
 	Gcon.setBlendFunc(Blend::SRC_ALPHA, Blend::ONE_MINUS_SRC_ALPHA);
 	Gcon.cmdDrawElements(Topology::TRIANGLES, m_indices_count);
+}
+
+static glm::vec3 operator*(const glm::mat4& m, const glm::vec3& v)
+{
+	glm::vec4 inV = { v.x,v.y,v.z,1 };
+	inV = m * inV;
+	return *((glm::vec3*)&inV);
+}
+
+void BatchRenderer2D::submit(const Renderable2D& renderable)
+{
+	auto& pos = renderable.getPosition();
+	auto& size = renderable.getSize();
+	auto& uv = renderable.getUV();
+
+	
+	submitTextureQuad(pos, size, uv, renderable.getTexture());
+		
+}
+void BatchRenderer2D::submitTextureQuad(const glm::vec3& pos,const glm::vec2& size,const UVQuad& uv,const Texture* t)
+{
+	int textureSlot = bindTexture(t);
+
+	m_vertex_data->position = (m_back) * pos;
+	m_vertex_data->uv = uv.uv[0];
+	m_vertex_data->textureSlot = textureSlot;
+	++m_vertex_data;
+
+	m_vertex_data->position = (m_back) * (pos + vec3(size.x, 0, 0));
+	m_vertex_data->uv = uv.uv[1];
+	m_vertex_data->textureSlot = textureSlot;
+	++m_vertex_data;
+
+	m_vertex_data->position = (m_back) * (pos + vec3(size.x, size.y, 0));
+	m_vertex_data->uv = uv.uv[2];
+	m_vertex_data->textureSlot = textureSlot;
+	++m_vertex_data;
+
+	m_vertex_data->position = (m_back) * (pos + vec3(0, size.y, 0));
+	m_vertex_data->uv = uv.uv[3];
+	m_vertex_data->textureSlot = textureSlot;
+	++m_vertex_data;
+
+	m_indices_count += 6;
+	if (m_indices_count == MAX_INDICES)
+	{
+		flush();
+		begin();
+	}
+
+
+}
+
+void BatchRenderer2D::submitColorQuad(const glm::vec3& pos, const glm::vec2& size, const glm::vec4& color)
+{
+	uint32_t col = (
+		((int)(color.r * 255) << 0) | 
+		((int)(color.g * 255) << 8) |
+		((int)(color.b * 255) << 16)| 
+		((int)(color.a * 255) << 24));
+	m_vertex_data->position = (m_back)*pos;
+	m_vertex_data->textureSlot = std::numeric_limits<int>::max();
+	m_vertex_data->color = col;
+	++m_vertex_data;
+
+	m_vertex_data->position = (m_back) * (pos + vec3(size.x, 0, 0));
+	m_vertex_data->textureSlot = std::numeric_limits<int>::max();
+	m_vertex_data->color = col;
+	++m_vertex_data;
+
+	m_vertex_data->position = (m_back) * (pos + vec3(size.x, size.y, 0));
+	m_vertex_data->textureSlot = std::numeric_limits<int>::max();
+	m_vertex_data->color = col;
+	++m_vertex_data;
+
+	m_vertex_data->position = (m_back) * (pos + vec3(0, size.y, 0));
+	m_vertex_data->textureSlot = std::numeric_limits<int>::max();
+	m_vertex_data->color = col;
+	++m_vertex_data;
+
+	m_indices_count += 6;
+	if (m_indices_count == MAX_INDICES)
+	{
+		flushQuad();
+		beginQuad();
+	}
+}
+
+void BatchRenderer2D::submitText(const TextMesh& mesh, const FontMaterial* material)
+{
+	if (mesh.getVertexCount() == 0)
+		return;
+	auto data = mesh.getSrc();
+
+	if(m_text_indices_count+ mesh.currentCharCount*6>= MAX_INDICES)
+	{
+		flushText();
+		beginText();
+	}
+	m_fonts[material].push_back({ m_text_indices_count,mesh.currentCharCount * 6 });
+	for (int i = 0; i < mesh.currentCharCount; ++i)
+	{
+		const auto& ch = data[i];
+		
+		const auto& v00 = ch.vertex[0];
+		const auto& v01 = ch.vertex[1];
+		const auto& v02 = ch.vertex[2];
+		const auto& v03 = ch.vertex[3];
+		
+		auto& v0 = (m_text_vertex_data + 0)->position;
+		auto& v1 = (m_text_vertex_data + 1)->position;
+		auto& v2 = (m_text_vertex_data + 2)->position;
+		auto& v3 = (m_text_vertex_data + 3)->position;
+
+		v0 = glm::vec3(v00.x, v00.y, 0);
+		v1 = glm::vec3(v01.x, v01.y, 0);
+		v2 = glm::vec3(v02.x, v02.y, 0);
+		v3 = glm::vec3(v03.x, v03.y, 0);
+
+		v0 = m_back * v0;
+		//v1 = m_back * v1;
+		v2 = m_back * v2;
+		//v3 = m_back * v3;
+
+		v1 = glm::vec3(v2.x, v0.y, 0);
+		v3 = glm::vec3(v0.x, v2.y, 0);
+		
+		(m_text_vertex_data + 0)->uv = v00.uv;
+		(m_text_vertex_data + 1)->uv = v01.uv;
+		(m_text_vertex_data + 2)->uv = v02.uv;
+		(m_text_vertex_data + 3)->uv = v03.uv;
+
+		m_text_vertex_data += 4;
+		m_text_indices_count += 6;
+	}
+	
+
+	
+}
+
+void BatchRenderer2D::flush()
+{
+	flushQuad();
+	flushText();
 }
