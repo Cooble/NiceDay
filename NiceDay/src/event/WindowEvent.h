@@ -4,7 +4,8 @@ class WindowCloseEvent :public Event
 {
 public:
 	EVENT_TYPE_BUILD(WindowClose)
-	EVENT_CATEGORY_BUILD(EventCategoryWindow)
+	EVENT_CATEGORY_BUILD(Window)
+	EVENT_COPY(WindowCloseEvent)
 
 
 };
@@ -17,11 +18,12 @@ public:
 	WindowResizeEvent(int neww,int newh):
 		m_neww(neww), m_newh(newh)
 	{}
-	inline const int getWidth() const { return m_neww; }
-	inline const int getHeight() const { return m_newh; }
+	inline int getWidth() const { return m_neww; }
+	inline int getHeight() const { return m_newh; }
 
 	EVENT_TYPE_BUILD(WindowResize)
-	EVENT_CATEGORY_BUILD(EventCategoryWindow)
+	EVENT_CATEGORY_BUILD(Window)
+	EVENT_COPY(WindowResizeEvent)
 
 
 };

@@ -10,11 +10,13 @@
 #include "graphics/BatchRenderer2D.h"
 #include "graphics/Sprite.h"
 #include "graphics/FontMaterial.h"
+#include "GUITestLayer.h"
 
 static bool textChange;
 static int textSize;
 
-static BatchRenderer2D* renderer2d;
+extern BatchRenderer2D* g_batch_render;
+
 class TestLayer:public Layer
 {
 private:
@@ -42,7 +44,6 @@ public:
 		m_sprite.setPosition(glm::vec3(-size / 2, -size / 2, 0));
 		m_sprite.setSize(glm::vec2(size, size));
 		
-		renderer2d = new BatchRenderer2D();
 		textMesh = new TextMesh(300);
 		ND_INFO("TestLayer attached");
 
@@ -66,12 +67,12 @@ public:
 	}
 	void onDetach() override
 	{
-		delete renderer2d;
+		//delete renderer2d;
 	}
 	void onRender() override
 	{
 		
-		Gcon.enableBlend();
+		/*Gcon.enableBlend();
 		Gcon.setBlendEquation(BlendEquation::FUNC_ADD);
 		Gcon.setBlendFunc(Blend::SRC_ALPHA, Blend::ONE_MINUS_SRC_ALPHA);
 		
@@ -81,7 +82,7 @@ public:
 		renderer2d->push(glm::scale(glm::mat4(1.f), glm::vec3(1.f / App::get().getWindow()->getWidth(), 1.f / App::get().getWindow()->getHeight(), 1)));
 		renderer2d->submitText(*textMesh, fontMat);
 		renderer2d->pop();
-		renderer2d->flush();
+		renderer2d->flush();*/
 	}
 	void onUpdate() override
 	{
@@ -101,7 +102,7 @@ public:
 	void onImGuiRender() override
 	{
 
-		bool t = true;
+		/*bool t = true;
 		ImGui::ShowDemoWindow(&t);
 		if(ImGui::Begin("Karel"))
 		{
@@ -119,7 +120,7 @@ public:
 			}
 
 		}
-		ImGui::End();
+		ImGui::End();*/
 	}
 };
 class TestApp:public App
@@ -127,7 +128,8 @@ class TestApp:public App
 public:
 	TestApp()
 	{
-		m_LayerStack.PushLayer(new TestLayer());
+		m_LayerStack.PushLayer(new GUITestLayer());
+		//m_LayerStack.PushLayer(new TestLayer());
 	}
 	
 };

@@ -149,6 +149,10 @@
     <ClInclude Include="src\graphics\FontMaterial.h" />
     <ClInclude Include="src\graphics\FontObject.h" />
     <ClInclude Include="src\graphics\font\TextBuilder.h" />
+    <ClInclude Include="src\gui\GUIContext.h" />
+    <ClInclude Include="src\gui\GUIElement.h" />
+    <ClInclude Include="src\gui\GUIRenderer.h" />
+    <ClInclude Include="src\gui\GUIBasic.h" />
     <ClInclude Include="src\Input.h" />
     <ClInclude Include="src\Log.h" />
     <ClInclude Include="src\NDUtil.h" />
@@ -564,6 +568,10 @@
     <ClCompile Include="src\graphics\FontMaterial.cpp" />
     <ClCompile Include="src\graphics\FontObject.cpp" />
     <ClCompile Include="src\graphics\font\TextBuilder.cpp" />
+    <ClCompile Include="src\gui\GUIContext.cpp" />
+    <ClCompile Include="src\gui\GUIElement.cpp" />
+    <ClCompile Include="src\gui\GUIRenderer.cpp" />
+    <ClCompile Include="src\gui\GUIBasic.cpp" />
     <ClCompile Include="src\Input.cpp" />
     <ClCompile Include="src\Log.cpp" />
     <ClCompile Include="src\platform\OpenGL\GLShader.cpp" />

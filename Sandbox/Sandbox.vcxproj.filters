@@ -177,6 +177,9 @@
     <ClInclude Include="src\world\particle\particles.h">
       <Filter>world\particle</Filter>
     </ClInclude>
+    <ClInclude Include="src\inventory\Item.h" />
+    <ClInclude Include="src\inventory\ItemBlock.h" />
+    <ClInclude Include="src\inventory\Inventory.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\core\EntryPoint.cpp">
@@ -311,5 +314,8 @@
     <ClCompile Include="src\world\particle\particles.cpp">
       <Filter>world\particle</Filter>
     </ClCompile>
+    <ClCompile Include="src\inventory\Item.cpp" />
+    <ClCompile Include="src\inventory\ItemBlock.cpp" />
+    <ClCompile Include="src\inventory\Inventory.cpp" />
   </ItemGroup>
 </Project>

@@ -5,7 +5,9 @@
 TextMesh::TextMesh(int characterCount)
 	: charCount(characterCount) //char_count * vertex_count * x+y * pos+uv 
 {
-	src = new CharM[charCount];
+	if (charCount)
+		src = new CharM[charCount];
+	else src = nullptr;
 }
 
 TextMesh::~TextMesh()
@@ -23,6 +25,16 @@ void TextMesh::setChar(int index, float x, float y, float x1, float y1, const Ch
 	che[2] = {x1, y1, ch.u1, ch.v1};
 	che[3] = {x, y1, ch.u, ch.v1};
 
+}
+
+void TextMesh::resize(int size)
+{
+	if (src)
+		delete[] src;
+	charCount = size;
+	
+	src = new CharM[charCount];
+	currentCharCount = 0;
 }
 
 void TextBuilder::convertToLines(const std::string& text, const Font& font, int maxLineWidth,

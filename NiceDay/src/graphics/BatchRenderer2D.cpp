@@ -115,6 +115,7 @@ BatchRenderer2D::~BatchRenderer2D()
 
 void BatchRenderer2D::push(const mat4& trans)
 {
+	ASSERT(m_transformation_stack.size() < 500, "Somebody forget to call pop()..");
 	m_transformation_stack.push_back(m_back * trans);
 	m_back = m_transformation_stack[m_transformation_stack.size() - 1];
 }
@@ -181,8 +182,9 @@ void BatchRenderer2D::flushText()
 
 	static int BUF_S = 500;
 	static auto lengths = new int[BUF_S];
-	static auto indices = new uint32_t[BUF_S];
-
+	static auto indices = new uint64_t[BUF_S];
+	memset(lengths, 0, BUF_S * sizeof(int));
+	memset(indices, 0, BUF_S * sizeof(int)*2);
 	for(auto& fontMat:m_fonts)
 	{
 		if(fontMat.second.empty())
@@ -198,15 +200,17 @@ void BatchRenderer2D::flushText()
 			delete[] indices;
 			BUF_S = fontMat.second.size();
 			lengths = new int[BUF_S];
-			indices = new uint32_t[BUF_S];
+			indices = new uint64_t[BUF_S];
 		}
 		
 		for (int i = 0; i < fontMat.second.size(); ++i)
 		{
+			
 			lengths[i] = (int)fontMat.second[i].length;
-			indices[i] = (uint32)fontMat.second[i].fromIndex;
+			indices[i] = fontMat.second[i].fromIndex *sizeof(int);		
+			
 		}
-		Gcon.cmdDrawMultiElements(Topology::TRIANGLES, indices, lengths, fontMat.second.size());
+		Gcon.cmdDrawMultiElements(Topology::TRIANGLES, reinterpret_cast<uint32_t*>(indices), lengths, fontMat.second.size());
 		fontMat.second.clear();
 	}
 }
@@ -368,8 +372,9 @@ void BatchRenderer2D::submitText(const TextMesh& mesh, const FontMaterial* mater
 		v2 = m_back * v2;
 		//v3 = m_back * v3;
 
-		v1 = glm::vec3(v2.x, v0.y, 0);
-		v3 = glm::vec3(v0.x, v2.y, 0);
+
+		v1 = glm::vec3(v2.x, v0.y, v0.z);
+		v3 = glm::vec3(v0.x, v2.y, v0.z);
 		
 		(m_text_vertex_data + 0)->uv = v00.uv;
 		(m_text_vertex_data + 1)->uv = v01.uv;
@@ -379,9 +384,6 @@ void BatchRenderer2D::submitText(const TextMesh& mesh, const FontMaterial* mater
 		m_text_vertex_data += 4;
 		m_text_indices_count += 6;
 	}
-	
-
-	
 }
 
 void BatchRenderer2D::flush()

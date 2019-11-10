@@ -27,14 +27,11 @@ uniform vec2 u_colorWidths;
 in vec2 v_uv;
 
 void main() {
-	//color = vec4(1, 1, 1, 1);
-	//return;
-	color = texture2D(u_texture, v_uv);
-	//color.a = color.a * 2;
-	if (color.a > 1- u_colorWidths.x)
-		color = u_textColor;
-	else if (color.a > 1- u_colorWidths.x- u_colorWidths.y)
-		color = u_borderColor;
-	else discard;
+	float tt = u_colorWidths.x;
+	vec4 c = texture2D(u_texture, v_uv);
+	color = mix(u_borderColor, u_textColor, c.r);
+	color.a = c.a;
+	if (c.a == 0)
+		discard;
 }
 

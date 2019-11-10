@@ -31,6 +31,7 @@
 #include "world/particle/particles.h"
 #include "world/ChunkMeshNew.h"
 #include "imgui_utils.h"
+#include "inventory/Item.h"
 
 const char* WORLD_FILE_PATH;
 int CHUNKS_LOADED;
@@ -80,6 +81,9 @@ void WorldLayer::registerEverything()
 	ND_REGISTER_WALL(new WallDirt());
 	ND_REGISTER_WALL(new WallStone());
 	ND_REGISTER_WALL(new WallGlass());
+
+	//items
+	//ND_REGISTER_ITEM();
 
 	//entities
 	ND_REGISTER_ENTITY(ENTITY_TYPE_PLAYER, EntityPlayer);

@@ -19,3 +19,7 @@ public:
 	glm::vec2 thickness;
 	
 };
+class FontMatLib
+{
+	//todo make parser
+};

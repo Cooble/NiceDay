@@ -5,6 +5,8 @@ struct Font;
 
 class TextMesh
 {
+private:
+	int charCount;
 public:
 	struct Vertex
 	{
@@ -28,14 +30,14 @@ public:
 
 	
 	
-	const int charCount;
 	CharM* src;
 	
 public:
 	//how many chars are active
 	//range from 0 to getCharCount()
 	int currentCharCount=0;
-	TextMesh(int characterCount);
+	TextMesh(int characterCount=0);
+
 	~TextMesh();
 
 	inline int getMaxCharCount() const { return charCount; }
@@ -49,6 +51,8 @@ public:
 	{
 		return currentCharCount * 4;
 	}
+
+	void resize(int size);
 };
 
 class TextBuilder

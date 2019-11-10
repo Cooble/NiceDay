@@ -1,65 +1,121 @@
 #pragma once
 #include "Event.h"
-class MouseEvent :public Event
+
+class MouseEvent : public Event
 {
 private:
-	float m_x;
-	float m_y;
+	union {
+		struct {
+			float m_x;
+			float m_y;
+		};
+		glm::vec2 m_pos;
+	};
 
 public:
-	MouseEvent(float x,float y) :
+	MouseEvent(float x, float y) :
 		m_x(x), m_y(y)
 	{
 	}
-	inline const float getX() const { return m_x; }
-	inline const float getY() const { return m_y; }
+	inline void flipY(float screenHeight)
+	{
+		m_y = screenHeight - 1 - m_y;
+	}
+	inline float getX() const { return m_x; }
+	inline float getY() const { return m_y; }
+	inline const glm::vec2& getPos() const { return m_pos; }
 };
-class MouseScrollEvent :public MouseEvent
+
+class MouseScrollEvent : public MouseEvent
 {
 private:
+
 	float m_scrollX;
 	float m_scrollY;
 
 public:
-	MouseScrollEvent(float x,float y,float scrollX,float scrollY):
-		MouseEvent(x,y),m_scrollX(scrollX),m_scrollY(scrollY)
+	MouseScrollEvent(float x, float y, float scrollX, float scrollY):
+		MouseEvent(x, y), m_scrollX(scrollX), m_scrollY(scrollY)
 	{
 	}
-	inline const float getScrollX() const { return m_scrollX; }
-	inline const float getScrollY() const { return m_scrollY; }
+
+	inline float getScrollX() const { return m_scrollX; }
+	inline float getScrollY() const { return m_scrollY; }
 	EVENT_TYPE_BUILD(MouseScroll)
-	EVENT_CATEGORY_BUILD(EventCategoryMouse)
-
-
-	
+	EVENT_CATEGORY_BUILD(Mouse)
+	EVENT_COPY(MouseScrollEvent)
 };
-class MouseMoveEvent :public MouseEvent
+
+class MouseFocusGain : public MouseEvent
+{
+public:
+	MouseFocusGain(float x, float y) :
+		MouseEvent(x, y)
+	{
+	}
+
+	EVENT_TYPE_BUILD(MouseFocusGain)
+	EVENT_CATEGORY_BUILD(Mouse)
+	EVENT_COPY(MouseFocusGain)
+};
+
+class MouseFocusLost : public MouseEvent
+{
+public:
+	MouseFocusLost(float x, float y) :
+		MouseEvent(x, y)
+	{
+	}
+
+	EVENT_TYPE_BUILD(MouseFocusLost)
+	EVENT_CATEGORY_BUILD(Mouse)
+	EVENT_COPY(MouseFocusLost)
+
+};
+
+class MouseDrag : public MouseEvent
+{
+public:
+	MouseDrag(float x, float y) :
+		MouseEvent(x, y)
+	{
+	}
+
+	EVENT_TYPE_BUILD(MouseDrag)
+	EVENT_CATEGORY_BUILD(Mouse)
+	EVENT_COPY(MouseDrag)
+};
+
+class MouseMoveEvent : public MouseEvent
 {
 public:
 	MouseMoveEvent(float x, float y) :
 		MouseEvent(x, y)
 	{
 	}
+
 	EVENT_TYPE_BUILD(MouseMove)
-	EVENT_CATEGORY_BUILD(EventCategoryMouse)
-
-
+	EVENT_CATEGORY_BUILD(Mouse)
+	EVENT_COPY(MouseMoveEvent)
 };
-class MousePressEvent :public MouseEvent
+
+class MousePressEvent : public MouseEvent
 {
 private:
 	int m_button;
 public:
-	MousePressEvent(float x, float y,int button) :
+	MousePressEvent(float x, float y, int button) :
 		MouseEvent(x, y), m_button(button)
 	{
 	}
-	inline const int getButton() const { return m_button; }
-	EVENT_TYPE_BUILD(MousePress)
-	EVENT_CATEGORY_BUILD(EventCategoryMouse | EventCategoryMouseKey)
 
+	inline int getButton() const { return m_button; }
+	EVENT_TYPE_BUILD(MousePress)
+	EVENT_CATEGORY_BUILD(Mouse | MouseKey)
+	EVENT_COPY(MousePressEvent)
 };
-class MouseReleaseEvent :public MouseEvent
+
+class MouseReleaseEvent : public MouseEvent
 {
 private:
 	int m_button;
@@ -68,9 +124,9 @@ public:
 		MouseEvent(x, y), m_button(button)
 	{
 	}
-	inline const int getButton() const { return m_button; }
+
+	inline int getButton() const { return m_button; }
 	EVENT_TYPE_BUILD(MouseRelease)
-	EVENT_CATEGORY_BUILD(EventCategoryMouse | EventCategoryMouseKey)
-
+	EVENT_CATEGORY_BUILD(Mouse | MouseKey)
+	EVENT_COPY(MouseReleaseEvent)
 };
-

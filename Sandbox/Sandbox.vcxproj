@@ -139,6 +139,9 @@
     <ClInclude Include="src\graphics\Bar.h" />
     <ClInclude Include="src\graphics\BlockTextureAtlas.h" />
     <ClInclude Include="src\graphics\Sprite2D.h" />
+    <ClInclude Include="src\inventory\Inventory.h" />
+    <ClInclude Include="src\inventory\Item.h" />
+    <ClInclude Include="src\inventory\ItemBlock.h" />
     <ClInclude Include="src\layer\MainLayer.h" />
     <ClInclude Include="src\layer\PriorGenLayer.h" />
     <ClInclude Include="src\layer\WorldLayer.h" />
@@ -191,6 +194,9 @@
     <ClCompile Include="src\graphics\Bar.cpp" />
     <ClCompile Include="src\graphics\BlockTextureAtlas.cpp" />
     <ClCompile Include="src\graphics\Sprite2D.cpp" />
+    <ClCompile Include="src\inventory\Inventory.cpp" />
+    <ClCompile Include="src\inventory\Item.cpp" />
+    <ClCompile Include="src\inventory\ItemBlock.cpp" />
     <ClCompile Include="src\layer\MainLayer.cpp" />
     <ClCompile Include="src\layer\PriorGenLayer.cpp" />
     <ClCompile Include="src\layer\WorldLayer.cpp" />

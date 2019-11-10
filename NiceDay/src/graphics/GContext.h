@@ -64,6 +64,7 @@ public:
 	virtual void setBlendFuncSeparate(Blend src, Blend dst, Blend srcA, Blend dstA)=0;
 	virtual void setBlendFunc(Blend src, Blend dst)=0;
 	virtual void setBlendConstant(float r, float g, float b, float a) = 0;
+	virtual void enableDepthTest(bool enable) = 0;
 
 	virtual void clear(BufferBit bits) = 0;
 	virtual void setClearColor(float r, float g, float b, float a) = 0;

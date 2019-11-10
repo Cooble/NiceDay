@@ -15,7 +15,8 @@ public:
 	inline int getKey() const { return m_key; }
 	inline int getNumber() const { return m_number; }
 	EVENT_TYPE_BUILD(KeyPress)
-	EVENT_CATEGORY_BUILD(EventCategoryKey)
+	EVENT_CATEGORY_BUILD(Key)
+	EVENT_COPY(KeyPressEvent)
 
 
 };
@@ -31,7 +32,8 @@ public:
 	}
 	inline const int getKey() const { return m_key; }
 	EVENT_TYPE_BUILD(KeyRelease)
-	EVENT_CATEGORY_BUILD(EventCategoryKey)
+	EVENT_CATEGORY_BUILD(Key)
+	EVENT_COPY(KeyReleaseEvent)
 
 
 };
@@ -47,7 +49,8 @@ public:
 	}
 	inline const int getKey() const { return m_key; }
 	EVENT_TYPE_BUILD(KeyType)
-	EVENT_CATEGORY_BUILD(EventCategoryKey)
+	EVENT_CATEGORY_BUILD(Key)
+	EVENT_COPY(KeyTypeEvent)
 
 
 };

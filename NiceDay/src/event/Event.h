@@ -6,15 +6,16 @@ class Event {
 public:
 	enum class EventType {
 		WindowClose,WindowResize,
-		MousePress, MouseRelease, MouseScroll,MouseMove,
+		MousePress, MouseRelease, MouseScroll,MouseMove, MouseFocusGain, MouseFocusLost, MouseDrag,
 		KeyPress,KeyRelease,KeyType,
+		
 	};
 	enum EventCategory {
-		EventCategoryNone = 0,
-		EventCategoryMouse = BIT(0),
-		EventCategoryMouseKey = BIT(1),
-		EventCategoryKey = BIT(2),
-		EventCategoryWindow = BIT(3),
+		None = 0,
+		Mouse = BIT(0),
+		MouseKey = BIT(1),
+		Key = BIT(2),
+		Window = BIT(3),
 	};
 
 	bool handled = false;
@@ -23,6 +24,7 @@ public:
 	virtual int getEventCategories() const = 0;
 	virtual const char* getName() const = 0;
 	virtual inline std::string toString() const { return getName(); };
+	virtual Event* allocateCopy() const = 0;
 
 	inline bool isInCategory(int category) const { return category & getEventCategories(); }
 };
@@ -35,10 +37,14 @@ virtual const char* getName() const override {return #type;};
 #define EVENT_CATEGORY_BUILD(category) \
 virtual int getEventCategories() const override {return category;};
 
-class EventDispatcher {
+#define EVENT_COPY(classe) \
+virtual Event* allocateCopy() const{return new classe(*this);}
 
-	template<typename T>
-	using EventConsumer = std::function<bool(T&)>;
+template<typename T>
+using EventConsumer = std::function<bool(T&)>;
+
+class EventDispatcher {
+	
 	
 private:
 	Event& m_event;

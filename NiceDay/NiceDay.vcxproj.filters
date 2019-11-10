@@ -1288,6 +1288,10 @@
     <ClInclude Include="src\graphics\FontObject.h" />
     <ClInclude Include="src\platform\OpenGL\GLShader.h" />
     <ClInclude Include="src\graphics\FontMaterial.h" />
+    <ClInclude Include="src\gui\GUIElement.h" />
+    <ClInclude Include="src\gui\GUIRenderer.h" />
+    <ClInclude Include="src\gui\GUIContext.h" />
+    <ClInclude Include="src\gui\GUIBasic.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\App.cpp">
@@ -1411,5 +1415,9 @@
     <ClCompile Include="src\graphics\FontObject.cpp" />
     <ClCompile Include="src\platform\OpenGL\GLShader.cpp" />
     <ClCompile Include="src\graphics\FontMaterial.cpp" />
+    <ClCompile Include="src\gui\GUIElement.cpp" />
+    <ClCompile Include="src\gui\GUIRenderer.cpp" />
+    <ClCompile Include="src\gui\GUIContext.cpp" />
+    <ClCompile Include="src\gui\GUIBasic.cpp" />
   </ItemGroup>
 </Project>

@@ -21,6 +21,7 @@ public:
 	void setBlendFuncSeparate(Blend src, Blend dst, Blend srcA, Blend dstA) override;
 	void setBlendFunc(Blend src, Blend dst) override;
 	void setBlendConstant(float r, float g, float b, float a) override;
+	void enableDepthTest(bool enable) override;
 	void clear(BufferBit bits) override;
 	void setClearColor(float r, float g, float b, float a) override;
 	void setViewport(int x, int y, int width, int height) override;
