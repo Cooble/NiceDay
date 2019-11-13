@@ -77,6 +77,11 @@ Window::Window(int width, int height, const std::string& title,bool fullscreen) 
 			KeyReleaseEvent e(key);
 			d.eventCallback(e);
 		}
+		else if(action==GLFW_REPEAT)
+		{
+			KeyPressEvent e(key, mods,true);
+			d.eventCallback(e);
+		}
 	});
 	glfwSetCharCallback(m_window, [](GLFWwindow * window, unsigned int key) {
 		WindowData& d = *(WindowData*)glfwGetWindowUserPointer(window);

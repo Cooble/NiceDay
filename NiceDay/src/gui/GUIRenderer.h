@@ -18,9 +18,13 @@ private:
 	}
 	void updateTextMeshIfNec(const std::string& val, TextMesh& mesh, bool& isDirty, int alignment);
 	void renderButton(BatchRenderer2D& renderer, GUIButton& e);
+	void renderCheckBox(BatchRenderer2D& renderer, GUICheckBox& e);
+	void renderSlider(BatchRenderer2D& renderer, GUISlider& e);
 	void renderLabel(BatchRenderer2D& renderer, GUILabel& e);
+	void renderTextBox(BatchRenderer2D& renderer, GUITextBox& e);
 	void renderWindow(BatchRenderer2D& renderer, GUIWindow& btn);
-	
+
+	void renderImage(BatchRenderer2D& renderer, GUIImage& guiImage);
 	void renderElement(BatchRenderer2D& renderer, GUIElement& e);
 	void renderElements(BatchRenderer2D& renderer, GUIElement& e);
 public:
@@ -30,3 +34,4 @@ public:
 
 	void render(BatchRenderer2D& renderer);
 };
+

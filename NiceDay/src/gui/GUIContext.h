@@ -36,12 +36,20 @@ public:
 	}
 private:
 	bool m_destroyed = false;
+	GUIElement* m_focused_element;
 	std::vector<GUIWindow*> m_windows;
 	std::vector<Event*> m_event_buffer;
 	
 	glm::vec2 currentStackPos={0,0};
 	
 public:
+	// when element is submitted here, all events (except broadcasts) will go directly to that element onEvent(),
+	// no other elements like windows are called (except broadcasts), the element has full control over whole context
+	// to exit this mode, one needs to setFocusedElement(nullptr)
+	// when element calls setFocusElement(nullptr) in some event, the event will be delivered to all elements later on
+	// you can check if focus on focused element was lost and if positive -> set nullptr to allow other elements to react
+	inline void setFocusedElement(GUIElement* e) { m_focused_element = e; }
+	inline GUIElement* getFocusedElement() { return m_focused_element; }
 	inline void destroy()
 	{
 		m_destroyed = true;

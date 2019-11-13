@@ -20,6 +20,11 @@ enum class GETYPE
 	Column,
 	Row,
 	Grid,
+	Image,
+	CheckBox,
+	RadioButton,
+	Slider,
+	TextBox
 };
 
 typedef std::string GECLASS;

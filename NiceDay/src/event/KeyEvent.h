@@ -5,15 +5,17 @@ class KeyPressEvent :public Event
 private:
 	int m_key;
 	/*Tells how long it was pressed, if 0 then it was pressed freshly*/
-	int m_number;
+	int m_mods;
+	bool m_repeat;
 
 public:
-	KeyPressEvent(int key,int number) :
-		m_key(key), m_number(number)
+	KeyPressEvent(int key,int mods,bool repeat=false) :
+		m_key(key), m_mods(mods)
 	{
 	}
 	inline int getKey() const { return m_key; }
-	inline int getNumber() const { return m_number; }
+	inline int getMods() const { return m_mods; }
+	inline int isRepeating() const { return m_repeat; }
 	EVENT_TYPE_BUILD(KeyPress)
 	EVENT_CATEGORY_BUILD(Key)
 	EVENT_COPY(KeyPressEvent)

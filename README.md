@@ -12,6 +12,7 @@ Let's make Terraria in C++!
 - [Multithreaded lights,  Inheritance Entity System](#multithreaded-lights--inheritance-entity-system-maybe-will-change-to-ecs-in-the-future22_07_2019)
 - [Smooth wallLight vs edgy blockLight, Day/Night cycle](#smooth-walllight-vs-edgy-blocklight-daynight-cycle-12_08_2019)
 - [ParticleSystem, Trees, Flowers, PlayerSprite, Walking on steep floor, fullscreen](#particlesystem-trees-flowers-playersprite-walking-on-steep-floor-fullscreen-25_08_2019)  
+- [Basic GUI module in engine](#basic-gui-module-in-engine-13_11_2019)  
 ## Pictured changelog:
 
 #### Basic tile render (03_05_2019)
@@ -63,7 +64,17 @@ Oh, shoot!
 - Added multiblock structure = tree and its generator. After placing a sapling block, sapling tile entity counts the worldtime and then calls TreeGen. Trees have random number of branches(dry or normal) and random corona.  
 - Everybody loves flowers. and graaasss. (Sheep are in sight :D)  
 
-![Alt text](screenshots/25_08_2019.png?raw=false "")  
+![Alt text](screenshots/25_08_2019.png?raw=false "")    
+  
+#### Basic GUI module in engine (13_11_2019)  
+- in order to start with inventory, one must create some sort of GUI before...   
+- currently contains Windows (which can overlapp), Label, Button, CheckBox, TextBox, Horizontalslider and Image + layouts: (Column, Row, Grid)  
+- There is one GUIContext which cares about parent-child structure and events of GUIElements and GUIRenderer, which renders those elements  
+- positions are relative to the parental element  
+- currently no resizability  
+- to change a color, one have to change the GUIRenderer  
+
+![Alt text](screenshots/13_11_2019.png?raw=false "")  
 
 
 

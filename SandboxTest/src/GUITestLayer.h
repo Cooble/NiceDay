@@ -71,62 +71,48 @@ public:
 			window.x += i * 50;
 			window.y += i * 50;
 
-			int sizeStuff = 5;
-			std::string stuff[] = {
-				"File",
-				"Data",
-				"Something entirely",
-				"stuff",
-				"ABBA",
-			};
-
 			{
-				auto grid = new GUIGrid();
-				window.appendChild(grid);
-				
-				for (int ii = 0; ii < sizeStuff; ++ii)
-				{
-					auto btn = new GUIButton();
-					btn->setValue(stuff[ii]);
-					btn->dim = { fontMat->font->getTextWidth(stuff[ii]) + 10, fontMat->font->lineHeight + 6 };
-					btn->on_pressed = [](GUIElement& e)
-					{
-						ND_INFO("I have pressed " + static_cast<GUIButton&>(e).getValue());
-					};
-					grid->appendChild(btn);
-				}
-				for (int ii = 0; ii < 15; ++ii)
-				{
-					auto e = new GUILabel();
-					e->dim = { ii%2?(ii*20):(ii*10),ii % 2 ? (ii * 10) : (ii * 20) };
-					grid->appendChild(e);
+				auto layout = new GUIColumn();
+				layout->alignment = GUIAlign::LEFT;
+				window.appendChild(layout);
 
-					auto ee = new GUILabel();
-					ee->dim = { 50,100 };
-					grid->appendChild(ee);
-				}
-				continue; 
-				
-			}
 
-			{
-				auto row = new GUIRow();
-				window.appendChild(row);
-				if (i == 1)
-					row->alignment = GUIAlign::RIGHT;
-				row->space = 5;
-				
-				for (int ii = 0; ii < sizeStuff; ++ii)
+				auto box = new GUICheckBox();
+				box->setText("Happiness: Enabled", "Happiness: Disabled");
+				box->setValue(false);
+				box->dim = {500, 42};
+				layout->appendChild(box);
+
+				auto slider = new GUISlider();
+				slider->dim = {400, 30};
+				slider->setValue(0);
+				slider->on_changed = [](GUIElement& e)
 				{
-					auto btn = new GUIButton();
-					btn->setValue(stuff[ii]);
-					btn->dim = {fontMat->font->getTextWidth(stuff[ii]) + 10, fontMat->font->lineHeight + 6};
-					btn->on_pressed = [](GUIElement& e)
-					{
-						ND_INFO("I have pressed " + static_cast<GUIButton&>(e).getValue());
-					};
-					row->appendChild(btn);
-				}
+					ND_INFO("val " + std::to_string((static_cast<GUISlider&>(e).getValue())));
+				};
+				slider->dividor = 10;
+				layout->appendChild(slider);
+
+				auto textBox = new GUITextBox();
+				textBox->dim = {400, 50};
+				layout->appendChild(textBox);
+				textBox->setValue("herro");
+
+				auto btn = new GUIButton();
+				btn->setText("buttonek");
+				btn->dim = { fontMat->font->getTextWidth("buttonek") + 10, fontMat->font->lineHeight + 6 };
+				layout->appendChild(btn);
+
+				auto lbl = new GUILabel();
+				lbl->setValue("LABEL 01");
+				lbl->dim = { 300, 50 };
+				layout->appendChild(lbl);
+
+				auto img = new GUIImage();
+				img->setValue(backSprite);
+				img->dim = { 300, 300 };
+				layout->appendChild(img);
+				
 				continue;
 			}
 
@@ -138,11 +124,11 @@ public:
 				for (int i = 0; i < 3; ++i)
 				{
 					auto btn = new GUIButton();
-					btn->setValue("Clickme" + std::to_string(i));
+					btn->setText("Clickme" + std::to_string(i));
 					btn->dim = {200, 50};
 					btn->on_pressed = [](GUIElement& e)
 					{
-						ND_INFO("I have pressed this shit jaj " + static_cast<GUIButton&>(e).getValue());
+						ND_INFO("I have pressed this shit jaj " + static_cast<GUIButton&>(e).getText());
 					};
 					col->appendChild(btn);
 				}

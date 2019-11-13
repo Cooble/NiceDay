@@ -62,6 +62,9 @@ void GUIElement::onEvent(Event& e)
 	case Event::EventType::MouseMove:
 	case Event::EventType::MouseDrag:
 	case Event::EventType::MouseRelease:
+	case Event::EventType::KeyPress:
+	case Event::EventType::KeyRelease:
+	case Event::EventType::KeyType:
 		GUIContext::get().pushPos(x, y);
 		for (auto child : children)
 			child->onEvent(e);

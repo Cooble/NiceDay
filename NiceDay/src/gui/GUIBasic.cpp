@@ -1,6 +1,10 @@
 ﻿#include "ndpch.h"
 #include "GUIBasic.h"
 #include "App.h"
+#include "graphics/API/Texture.h"
+#include "GUIContext.h"
+#include "event/KeyEvent.h"
+#include "GLFW/glfw3.h"
 
 GUILabel::GUILabel() : GUIElement(GETYPE::Label)
 {
@@ -13,14 +17,84 @@ void GUILabel::setValue(const std::string& val)
 	markDirty();
 }
 
-GUIButton::GUIButton() : GUIElement(GETYPE::Button)
+GUITextBox::GUITextBox(): GUIElement(GETYPE::TextBox)
+{
+	setPadding(10);
+}
+
+void GUITextBox::setValue(const std::string& val)
+{
+	is_dirty = true;
+	m_value = val;
+}
+
+void GUITextBox::onMyEvent(Event& e)
+{
+	GUIElement::onMyEvent(e);
+	switch (e.getEventType())
+	{
+	case Event::EventType::MousePress:
+		{
+			auto m = static_cast<MousePressEvent&>(e);
+			m_has_total_focus = false;
+			if (contains(m.getX(), m.getY())) {
+				GUIContext::get().setFocusedElement(this);
+				m_has_total_focus = true;
+			}
+			else if (GUIContext::get().getFocusedElement() == this)
+				GUIContext::get().setFocusedElement(nullptr);
+		}
+		break;
+	
+	case Event::EventType::KeyPress:
+		if (GUIContext::get().getFocusedElement() == this)
+		{
+			auto m = static_cast<KeyPressEvent&>(e);
+			switch (m.getKey())
+			{
+			case GLFW_KEY_ENTER:
+			case GLFW_KEY_ESCAPE:
+				GUIContext::get().setFocusedElement(nullptr);
+				m_has_total_focus = false;
+				e.handled = true;
+				break;
+			case GLFW_KEY_BACKSPACE:
+				if (m_value.size())
+				{
+					m_value = m_value.substr(0, m_value.size() - 1);
+					is_dirty = true;
+				}
+				break;
+			}
+		}
+		break;
+	case Event::EventType::KeyType:
+		if (GUIContext::get().getFocusedElement() == this)
+		{
+			auto m = static_cast<KeyTypeEvent&>(e);
+			auto key = m.getKey();
+			if (key != GLFW_KEY_UNKNOWN)
+			{
+				m_value += (char)key;
+				is_dirty = true;
+			}
+		}
+		break;
+	default: ;
+	}
+}
+
+
+GUIButton::GUIButton()
+	:
+	GUIElement(GETYPE::Button)
 {
 	is_final_element = true;
 }
 
-void GUIButton::setValue(const std::string& val)
+void GUIButton::setText(const std::string& val)
 {
-	m_value = val;
+	m_text = val;
 	markDirty();
 }
 
@@ -35,7 +109,74 @@ void GUIButton::onMyEvent(Event& e)
 	}
 }
 
-GUIWindow::GUIWindow(): GUIElement(GETYPE::Window)
+GUICheckBox::GUICheckBox()
+	:
+	GUIElement(GETYPE::CheckBox)
+{
+	static SpriteSheetResource* res = new SpriteSheetResource(
+		Texture::create(TextureInfo("res/images/gui_atlas.png")),
+		4, 4);
+	static Sprite* sTrue = nullptr;
+	static Sprite* sFalse = nullptr;
+
+	if (sTrue == nullptr)
+	{
+		sTrue = new Sprite(res);
+		sFalse = new Sprite(res);
+		sTrue->setSpriteIndex(0, 3);
+		sFalse->setSpriteIndex(1, 3);
+	}
+
+	spriteTrue = sTrue;
+	spriteFalse = sFalse;
+}
+
+void GUICheckBox::setText(const std::string& trueText, const std::string& falseText)
+{
+	m_textFalse = falseText;
+	m_textTrue = trueText;
+	markDirty();
+}
+
+void GUICheckBox::setValue(bool b)
+{
+	is_dirty = b != value;
+	value = b;
+}
+
+void GUICheckBox::onMyEvent(Event& e)
+{
+	GUIElement::onMyEvent(e);
+
+	if (e.getEventType() == Event::EventType::MousePress)
+	{
+		value = !value;
+		is_dirty = true;
+		if (on_pressed)
+			on_pressed(*this);
+	}
+}
+
+GUIImage::GUIImage()
+	:
+	GUIElement(GETYPE::Image)
+{
+}
+
+void GUIImage::setValue(Sprite* sprite)
+{
+	this->src = sprite;
+	this->dim = sprite->getSize();
+}
+
+Sprite* GUIImage::getValue()
+{
+	return this->src;
+}
+
+GUIWindow::GUIWindow()
+	:
+	GUIElement(GETYPE::Window)
 {
 	setPadding(10);
 }
@@ -57,7 +198,9 @@ void GUIWindow::onMyEvent(Event& e)
 }
 
 
-GUIColumn::GUIColumn(): GUIElement(GETYPE::Column)
+GUIColumn::GUIColumn()
+	:
+	GUIElement(GETYPE::Column)
 {
 	is_diplayed = false;
 	is_not_spacial = true;
@@ -90,7 +233,9 @@ void GUIColumn::appendChild(GUIElement* element)
 	GUIElement::appendChild(element);
 }
 
-GUIRow::GUIRow(): GUIElement(GETYPE::Row)
+GUIRow::GUIRow()
+	:
+	GUIElement(GETYPE::Row)
 {
 	is_diplayed = false;
 	is_not_spacial = true;
@@ -133,7 +278,9 @@ float GUIGrid::getLowestY()
 	return y;
 }
 
-GUIGrid::GUIGrid(): GUIElement(GETYPE::Grid)
+GUIGrid::GUIGrid()
+	:
+	GUIElement(GETYPE::Grid)
 {
 	is_diplayed = false;
 	is_not_spacial = true;
@@ -164,4 +311,45 @@ void GUIGrid::appendChild(GUIElement* element)
 	}
 
 	GUIElement::appendChild(element);
+}
+
+GUISlider::GUISlider()
+	:
+	GUIElement(GETYPE::Slider)
+{
+	setPadding(10);
+}
+
+void GUISlider::onMyEvent(Event& e)
+{
+	GUIElement::onMyEvent(e);
+
+	if (e.getEventType() == Event::EventType::MousePress)
+	{
+		auto& m = static_cast<MousePressEvent&>(e);
+	}
+	if (e.getEventType() == Event::EventType::MouseMove && is_pressed)
+	{
+		auto& m = static_cast<MousePressEvent&>(e);
+
+		float old = value;
+		value = std::clamp(
+			(m.getPos().x - GUIContext::get().getStackPos().x - x - padding[GUI_LEFT]) / (width - padding[GUI_LEFT]
+				-
+				padding[GUI_RIGHT]), 0.f, 1.f);
+
+		if (dividor)
+		{
+			value *= dividor;
+			value = std::round(value) / dividor;;
+		}
+
+		if (old != value && on_changed)
+			on_changed(*this);
+	}
+}
+
+void GUISlider::setValue(float v)
+{
+	value = v;
 }
