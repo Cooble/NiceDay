@@ -68,11 +68,11 @@ Oh, shoot!
   
 #### Basic GUI module in engine (13_11_2019)  
 - in order to start with inventory, one must create some sort of GUI before...   
-- currently contains Windows (which can overlapp), Label, Button, CheckBox, TextBox, Horizontalslider and Image + layouts: (Column, Row, Grid)  
+- currently contains Windows (which can overlap), Label, Button, CheckBox, TextBox, HorizontalSlider and Image + layouts: (Column, Row, Grid)  
 - There is one GUIContext which cares about parent-child structure and events of GUIElements and GUIRenderer, which renders those elements  
 - positions are relative to the parental element  
 - currently no resizability  
-- to change a color, one have to change the GUIRenderer  
+- to change a color, one has to change the GUIRenderer  
 
 ![Alt text](screenshots/13_11_2019.png?raw=false "")  
 
