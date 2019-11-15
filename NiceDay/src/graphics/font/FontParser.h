@@ -49,6 +49,12 @@ struct Font
 			out += getChar(c).xadvance+xSpace;
 		return out;
 	}
+
+	//wont work on textures that are not square
+	inline float getPixelRatio() const
+	{
+		return 1.f / scaleW;
+	}
 private:
 	void bakeUVChars();
 };

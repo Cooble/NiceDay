@@ -20,13 +20,21 @@ class GUITextBox :public GUIElement
 	std::string m_value;
 	bool m_has_total_focus=false;
 public:
+	int cursorBlink = 0;
+	int textClipOffset=0;
 	TextMesh m_text_mesh;
+	TextMesh m_cursorMesh;
+	CursorProp prop;
+	int cursorPos=0;
+	char cursorChar = '|';
 public:
 	GUITextBox();
 
 	virtual bool hasTotalFocus() const { return m_has_total_focus; }
 	virtual void setValue(const std::string& val);
 	inline auto& getValue() const { return m_value; }
+	virtual void moveCursor(int delta);
+	
 
 	void onMyEvent(Event& e) override;
 };

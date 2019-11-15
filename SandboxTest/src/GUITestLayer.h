@@ -62,7 +62,7 @@ public:
 
 
 		auto& context = GUIContext::get();
-		for (int i = 0; i < 3; ++i)
+		for (int i = 0; i < 1; ++i)
 		{
 			context.getWindows().push_back(new GUIWindow());
 			auto& window = *context.getFocusedWindow();

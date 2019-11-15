@@ -17,6 +17,8 @@ private:
 		m_z_pos -= Z_DIR_STEP;
 	}
 	void updateTextMeshIfNec(const std::string& val, TextMesh& mesh, bool& isDirty, int alignment);
+	void updateTextMeshIfNec(const std::string& val, TextMesh& mesh, bool& isDirty, int alignment, glm::vec<4, int> clip,CursorProp* prop);
+
 	void renderButton(BatchRenderer2D& renderer, GUIButton& e);
 	void renderCheckBox(BatchRenderer2D& renderer, GUICheckBox& e);
 	void renderSlider(BatchRenderer2D& renderer, GUISlider& e);

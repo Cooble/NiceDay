@@ -17,15 +17,28 @@ void GUILabel::setValue(const std::string& val)
 	markDirty();
 }
 
-GUITextBox::GUITextBox(): GUIElement(GETYPE::TextBox)
+GUITextBox::GUITextBox(): GUIElement(GETYPE::TextBox),m_cursorMesh(1)
 {
 	setPadding(10);
+	
 }
 
 void GUITextBox::setValue(const std::string& val)
 {
 	is_dirty = true;
 	m_value = val;
+	cursorPos = m_value.size();
+}
+
+void GUITextBox::moveCursor(int delta)
+{
+	int oldcur = cursorPos;
+	cursorPos += delta;
+	cursorPos = std::clamp(cursorPos,0,(int)m_value.size());
+
+	is_dirty = oldcur!=cursorPos;
+
+
 }
 
 void GUITextBox::onMyEvent(Event& e)
@@ -40,9 +53,12 @@ void GUITextBox::onMyEvent(Event& e)
 			if (contains(m.getX(), m.getY())) {
 				GUIContext::get().setFocusedElement(this);
 				m_has_total_focus = true;
+				cursorPos = m_value.size();
+				is_dirty = true;
 			}
-			else if (GUIContext::get().getFocusedElement() == this)
+			else if (GUIContext::get().getFocusedElement() == this) 
 				GUIContext::get().setFocusedElement(nullptr);
+			
 		}
 		break;
 	
@@ -59,11 +75,26 @@ void GUITextBox::onMyEvent(Event& e)
 				e.handled = true;
 				break;
 			case GLFW_KEY_BACKSPACE:
-				if (m_value.size())
+				if (m_value.size()&&cursorPos>0)
 				{
-					m_value = m_value.substr(0, m_value.size() - 1);
+					m_value = m_value.substr(0, cursorPos-1)+m_value.substr(cursorPos);
+					is_dirty = true;
+					moveCursor(-1);
+				}
+				break;
+			case GLFW_KEY_DELETE:
+				if (cursorPos < m_value.size())
+				{
+					m_value = m_value.substr(0, cursorPos)+ m_value.substr(cursorPos+1);
 					is_dirty = true;
 				}
+				break;
+
+			case GLFW_KEY_LEFT:
+				moveCursor(-1);
+				break;
+			case GLFW_KEY_RIGHT:
+				moveCursor(1);
 				break;
 			}
 		}
@@ -75,8 +106,8 @@ void GUITextBox::onMyEvent(Event& e)
 			auto key = m.getKey();
 			if (key != GLFW_KEY_UNKNOWN)
 			{
-				m_value += (char)key;
-				is_dirty = true;
+				m_value.insert(m_value.begin()+cursorPos,(char)key);
+				moveCursor(1);
 			}
 		}
 		break;
