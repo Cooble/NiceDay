@@ -23,8 +23,8 @@ void GUIRenderer::render(BatchRenderer2D& renderer)
 void GUIRenderer::renderElements(BatchRenderer2D& renderer, GUIElement& e)
 {
 	m_stackPos += e.pos;
-	if (e.isDisplayed())
-		renderElement(renderer, e);
+	
+	renderElement(renderer, e);
 	for (auto& element : e.getChildren())
 		renderElements(renderer, *element);
 	m_stackPos -= e.pos;
@@ -57,15 +57,9 @@ void GUIRenderer::renderElement(BatchRenderer2D& renderer, GUIElement& e)
 		renderSlider(renderer, static_cast<GUISlider&>(e));
 		break;
 	default:
-		glm::vec4 color;
-
-		if (e.clas == "white")
-			color = {1, 1, 1, 1};
-		else if (e.clas == "black")
-			color = {0, 0, 0, 1};
-		else
-			color = {0, 0, 1, 1};
-		renderer.submitColorQuad({m_stackPos.x, m_stackPos.y, m_z_pos}, {e.width, e.height}, color);
+		if(e.color.a!=0)
+			renderer.submitColorQuad({m_stackPos.x, m_stackPos.y, m_z_pos}, {e.width, e.height}, e.color);
+		break;
 	}
 }
 

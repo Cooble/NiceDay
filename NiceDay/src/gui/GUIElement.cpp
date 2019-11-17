@@ -16,7 +16,8 @@ void GUIElement::checkFocus(MouseMoveEvent& e)
 			//GUIContext::get().submitBroadcastEvent(MouseFocusLost(this->id, GUIElement_InvalidNumber));
 		}
 	}
-	else if (has_focus) {
+	else if (has_focus)
+	{
 		has_focus = false;
 		onMyEvent(MouseFocusLost(e.getX(), e.getY()));
 	}
@@ -41,6 +42,169 @@ GUIElement::~GUIElement()
 	for (auto child : children)
 	{
 		delete child;
+	}
+}
+
+void GUIElement::onDimensionChange()
+{
+	for (auto child : children)
+		child->onParentChanged();
+
+	if (is_always_packed)
+		packDimensions();
+
+	repositionChildren();
+}
+
+void GUIElement::repositionChildren()
+{
+	for (auto child : children)
+	{
+		switch (child->m_alignment)
+		{
+		case GUIAlign::INVALID:
+			break;
+		case GUIAlign::RIGHT:
+			child->x = this->width - child->width - padding[GUI_RIGHT];
+			child->y = (this->height - child->height) / 2;
+			break;
+		case GUIAlign::RIGHT_UP:
+			child->x = this->width - child->width - padding[GUI_RIGHT];
+			child->y = this->height - child->height - padding[GUI_TOP];
+			break;
+		case GUIAlign::RIGHT_DOWN:
+			child->x = this->width - child->width - padding[GUI_RIGHT];
+			child->y = padding[GUI_BOTTOM];
+			break;
+		case GUIAlign::LEFT:
+			child->x = padding[GUI_LEFT];
+			child->y = (this->height - child->height) / 2;
+			break;
+		case GUIAlign::LEFT_UP:
+			child->x = padding[GUI_LEFT];
+			child->y = this->height - child->height - padding[GUI_TOP];
+			break;
+		case GUIAlign::LEFT_DOWN:
+			child->x = padding[GUI_LEFT];
+			child->y = padding[GUI_BOTTOM];
+			break;
+		case GUIAlign::CENTER:
+			child->x = (this->width - child->width) / 2;
+			child->y = (this->height - child->height) / 2;
+			break;
+		case GUIAlign::CENTER_UP:
+		case GUIAlign::UP:
+			child->x = (this->width - child->width) / 2;
+			child->y = this->height - child->height - padding[GUI_TOP];
+			break;
+		case GUIAlign::CENTER_DOWN:
+		case GUIAlign::DOWN:
+			child->x = (this->width - child->width) / 2;
+			child->y = padding[GUI_BOTTOM];
+			break;
+		}
+	}
+}
+
+bool GUIElement::packDimensions()
+{
+	if (dimension_inherit == GUIDimensionInherit::WIDTH_HEIGHT)
+		return false;
+	float lineW[3] = {0, 0, 0};
+	float lineH[3] = {0, 0, 0};
+
+	float maxW, maxH;
+	for (auto child : children)
+	{
+		switch (child->m_alignment)
+		{
+		case GUIAlign::INVALID:
+			maxW = std::max(maxW, child->x + child->width);
+			maxH = std::max(maxH, child->y + child->height);
+			break;
+		case GUIAlign::RIGHT_UP:
+		case GUIAlign::UP:
+		case GUIAlign::LEFT_UP:
+			lineH[0] = std::max(lineH[0], child->height);
+			break;
+		case GUIAlign::RIGHT:
+		case GUIAlign::CENTER:
+		case GUIAlign::LEFT:
+			lineH[1] = std::max(lineH[1], child->height);
+			break;
+		case GUIAlign::RIGHT_DOWN:
+		case GUIAlign::DOWN:
+		case GUIAlign::LEFT_DOWN:
+			lineH[2] = std::max(lineH[2], child->height);
+			break;
+		}
+
+		switch (child->m_alignment)
+		{
+		case GUIAlign::INVALID:
+			maxW = std::max(maxW, child->x + child->width);
+			maxH = std::max(maxH, child->y + child->height);
+			break;
+		case GUIAlign::RIGHT_UP:
+		case GUIAlign::RIGHT:
+		case GUIAlign::RIGHT_DOWN:
+			lineW[2] = std::max(lineW[2], child->width);
+			break;
+		case GUIAlign::UP:
+		case GUIAlign::CENTER:
+		case GUIAlign::DOWN:
+			lineW[1] = std::max(lineW[1], child->width);
+
+			break;
+		case GUIAlign::LEFT_UP:
+		case GUIAlign::LEFT:
+		case GUIAlign::LEFT_DOWN:
+			lineW[0] = std::max(lineW[0], child->width);
+			break;
+		}
+	}
+
+
+	maxW = std::max(maxW, lineW[0] + space + lineW[1] + space + lineW[2]);
+	maxH = std::max(maxH, lineH[0] + space + lineH[1] + space + lineH[2]);
+
+	bool change;
+	switch (dimension_inherit)
+	{
+	case GUIDimensionInherit::WIDTH:
+		change = height != maxH;
+		height = maxH;
+		return change;
+	case GUIDimensionInherit::HEIGHT:
+		change = width != maxW;
+		width = maxW;
+		return change;
+	case GUIDimensionInherit::INVALID:
+		change = width != maxW||height!=maxH;
+		height = maxH;
+		width = maxW;
+		return change;
+	}
+}
+
+void GUIElement::onParentChanged()
+{
+	if (dimension_inherit != GUIDimensionInherit::INVALID)
+	{
+		switch (dimension_inherit)
+		{
+		case GUIDimensionInherit::WIDTH:
+			width = getParent()->width - getParent()->padding[GUI_LEFT] - getParent()->padding[GUI_RIGHT];
+			break;
+		case GUIDimensionInherit::HEIGHT:
+			height = getParent()->height - getParent()->padding[GUI_TOP] - getParent()->padding[GUI_BOTTOM];
+
+			break;
+		case GUIDimensionInherit::WIDTH_HEIGHT:
+			width = getParent()->width - getParent()->padding[GUI_LEFT] - getParent()->padding[GUI_RIGHT];
+			height = getParent()->height - getParent()->padding[GUI_TOP] - getParent()->padding[GUI_BOTTOM];
+		}
+		onDimensionChange();
 	}
 }
 
@@ -116,7 +280,8 @@ void GUIElement::onMyEvent(Event& e)
 	case Event::EventType::MouseFocusLost:
 		{
 			auto& ev = dynamic_cast<MouseEvent&>(e);
-			if (ev.getPos() != glm::vec2(this->id, GUIElement_InvalidNumber))//this is an event that we have sent to the other cause we have gained focus
+			if (ev.getPos() != glm::vec2(this->id, GUIElement_InvalidNumber))
+				//this is an event that we have sent to the other cause we have gained focus
 				has_focus = false;
 		}
 		break;

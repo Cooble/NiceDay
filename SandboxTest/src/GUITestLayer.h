@@ -9,6 +9,7 @@
 #include "gui/GUIRenderer.h"
 #include "App.h"
 #include "graphics/Sprite.h"
+#include "GUIExampleWindow.h"
 
 inline static BatchRenderer2D* g_batch_render;
 
@@ -38,7 +39,7 @@ public:
 		ND_INFO("TestLayer attached");
 
 		FontParser::parse(font, "res/fonts/basic.fnt");
-		//font.xSpace = -10;
+		font.xSpace = 0;
 		font.ySpace = -5;
 
 		fontTexture = Texture::create(TextureInfo(font.texturePath).filterMode(TextureFilterMode::NEAREST));
@@ -70,18 +71,49 @@ public:
 			window.setCenterPosition(App::get().getWindow()->getWidth(), App::get().getWindow()->getHeight());
 			window.x += i * 50;
 			window.y += i * 50;
+			window.resizable = false;
+			{
+				auto layout = new GUIGrid();
+				layout->width = 500;
+				for (int i = 0; i < 25; ++i)
+				{
 
+					auto btn = new GUIButton();
+					btn->setText("ss");
+					btn->dim ={30+ i*5,30};
+					layout->appendChild(btn);
+					if(i==10)
+					{
+						auto img = new GUIImage();
+						img->setValue(backSprite);
+						img->dim = { 100, 100 };
+						layout->appendChild(img);
+					}
+				}
+				layout->setAlignment(GUIAlign::LEFT_UP);
+				window.appendChild(layout);
+			}
+			
 			{
 				auto layout = new GUIColumn();
-				layout->alignment = GUIAlign::LEFT;
+				layout->child_alignment = GUIAlign::CENTER;
+				layout->setAlignment(GUIAlign::RIGHT_UP);
 				window.appendChild(layout);
 
-
+				auto row = new GUIRow(GUIAlign::CENTER);
+				
 				auto box = new GUICheckBox();
 				box->setText("Happiness: Enabled", "Happiness: Disabled");
 				box->setValue(false);
 				box->dim = {500, 42};
-				layout->appendChild(box);
+				row->appendChild(box);
+				{
+					auto btn = new GUIButton();
+					btn->setText("buttonek");
+					btn->dim = { fontMat->font->getTextWidth("buttonek") + 10, fontMat->font->lineHeight + 6 };
+					row->appendChild(btn);
+				}
+				layout->appendChild(row);
 
 				auto slider = new GUISlider();
 				slider->dim = {400, 30};
@@ -118,7 +150,7 @@ public:
 
 			{
 				auto col = new GUIColumn();
-				col->alignment = GUIAlign::RIGHT;
+				col->child_alignment = GUIAlign::RIGHT;
 				window.appendChild(col);
 
 				for (int i = 0; i < 3; ++i)
@@ -153,6 +185,9 @@ public:
 			}
 		}
 
+		auto newWin = new GUIExampleWindow();
+		context.getWindows().push_back(newWin);
+		
 
 		/*auto lbl = new GUILabel();
 		lbl->setValue("This is label i think");
