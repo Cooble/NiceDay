@@ -22,18 +22,14 @@ uniform sampler2D u_texture;
 
 uniform vec4 u_textColor;
 uniform vec4 u_borderColor;
-uniform vec2 u_colorWidths;
 
 in vec2 v_uv;
 
 void main() {
-	//color = vec4(1, 1, 1, 1);
-	//return;
-	float tt = u_colorWidths.x;
 	vec4 c = texture2D(u_texture, v_uv);
-	color = mix(u_borderColor, u_textColor, c.r);
-	color.a = c.a;
 	if (c.a == 0)
 		discard;
+	color = mix(u_borderColor, u_textColor, c.r);
+	color.a = c.a;
 }
 

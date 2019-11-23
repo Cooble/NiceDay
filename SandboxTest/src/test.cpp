@@ -47,7 +47,7 @@ public:
 		textMesh = new TextMesh(300);
 		ND_INFO("TestLayer attached");
 
-		FontParser::parse(font,"arial_distance_field.fnt");
+		FontParser::parse(font,"andrew.fnt");
 		font.xSpace = -10;
 		font.ySpace= -5;
 
@@ -57,9 +57,8 @@ public:
 		fontTexture = Texture::create(TextureInfo(font.texturePath));
 
 		fontMat = new FontMaterial();
-		fontMat->color = glm::vec4(0, 0, 1, 1);
-		fontMat->border_color = glm::vec4(0, 0, 1, 1);
-		fontMat->thickness = glm::vec2(0.5, 0);
+		fontMat->color = glm::vec4(0, 0.5, 0.1, 1);
+		fontMat->border_color = glm::vec4(1, 1, 1, 1);
 		fontMat->font = &font;
 		fontMat->texture = fontTexture;
 
@@ -92,6 +91,7 @@ public:
 			TextBuilder::buildMesh(std::string(textInput).substr(0,textSize),1000,
 				font, *textMesh, TextBuilder::ALIGN_CENTER);
 		}
+		GUIContext::get().onUpdate();
 	}
 	static int textBack(ImGuiInputTextCallbackData* data)
 	{

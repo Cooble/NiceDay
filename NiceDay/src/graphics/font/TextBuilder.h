@@ -53,8 +53,10 @@ public:
 	{
 		return currentCharCount * 4;
 	}
-
+	//sets this->size to match size
 	void resize(int size);
+	//ensures that this->size is at least param size
+	void reserve(int size);
 };
 
 struct CursorProp

@@ -47,6 +47,12 @@ void TextMesh::resize(int size)
 	currentCharCount = 0;
 }
 
+void TextMesh::reserve(int size)
+{
+	if (this->getMaxCharCount() < size)
+		resize(size);
+}
+
 void TextBuilder::convertToLines(const std::string& text, const Font& font, int maxLineWidth,
                                  std::vector<std::string>& lines)
 {
@@ -141,9 +147,10 @@ bool TextBuilder::buildMesh(const std::vector<std::string>& lines, const Font& f
 			ASSERT(false, "Invalid ALIGNMENT");
 			break;
 		}
-
+		char lastC = 0;
 		for (char c : line)
 		{
+			float kerning = font.getKerning(lastC, c);
 			if (mesh.currentCharCount == mesh.getMaxCharCount())
 			{
 				ND_WARN("TextMesh too small");
@@ -151,7 +158,7 @@ bool TextBuilder::buildMesh(const std::vector<std::string>& lines, const Font& f
 			}
 			auto& cc = font.getChar(c);
 
-			float x0 = currentX + cc.xoffset;
+			float x0 = currentX + cc.xoffset+kerning;
 			float y0 = yLoc + cc.yoffset;
 
 			float x1 = x0 + cc.width;
@@ -180,8 +187,9 @@ bool TextBuilder::buildMesh(const std::vector<std::string>& lines, const Font& f
 				}
 			}
 
-			currentX += cc.xadvance + font.xSpace;
+			currentX += cc.xadvance + font.xSpace+ kerning;
 			currentCharPos++;
+			lastC = c;
 		}
 		//on the edge of line
 		if (cursor && currentCharPos == cursor->cursorPos)

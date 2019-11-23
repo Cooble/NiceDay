@@ -145,6 +145,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="src\App.h" />
+    <ClInclude Include="src\AppGlobals.h" />
     <ClInclude Include="src\Core.h" />
     <ClInclude Include="src\graphics\FontMaterial.h" />
     <ClInclude Include="src\graphics\FontObject.h" />
@@ -565,6 +566,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\App.cpp" />
+    <ClCompile Include="src\AppGlobals.cpp" />
     <ClCompile Include="src\graphics\FontMaterial.cpp" />
     <ClCompile Include="src\graphics\FontObject.cpp" />
     <ClCompile Include="src\graphics\font\TextBuilder.cpp" />

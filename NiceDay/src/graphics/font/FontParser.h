@@ -1,5 +1,6 @@
 #pragma once
 #include "ndpch.h"
+
 struct Character
 {
 	int id;
@@ -9,14 +10,16 @@ struct Character
 	int width, height;
 	int xadvance;
 };
+
 class FontParser;
 
 typedef int FontID;
+
 struct Font
 {
 	FontID id;
 	friend FontParser;
-	
+
 	std::string face;
 	std::string texturePath;
 	int size;
@@ -30,23 +33,42 @@ struct Font
 	float xSpace = 0, ySpace = 0;
 	float xThickness = 0.5, yThickness = 0;
 	std::vector<Character> chars;
+	std::unordered_map<int, int> kerning;
 
+	inline int getKerning(int firstIndex, int secondIndex) const
+	{
+		//todo kerning search is probably slow
+		auto t = kerning.find(half_int(firstIndex, secondIndex));
+		if (t == kerning.end())
+			return 0;
+		return t->second;
+	}
+
+	inline void setKerning(int firstIndex, int secondIndex, int amount)
+	{
+		kerning[half_int(firstIndex, secondIndex)] = amount;
+	}
 
 	const Character& getChar(int id) const
 	{
-		for (auto & char_ : chars)
+		for (auto& char_ : chars)
 		{
 			if (char_.id == id)
 				return char_;
 		}
-		ND_WARN("Invalid font character id request");
+		//ND_WARN("Invalid font character id request");
 		return chars[0];
 	}
+
 	int getTextWidth(const std::string& text) const
 	{
 		int out = 0;
-		for (auto c : text)
-			out += getChar(c).xadvance+xSpace;
+		char lastC = 0;
+		for (char c : text)
+		{
+			out += getChar(c).xadvance + xSpace + getKerning(lastC, c);
+			lastC = c;
+		}
 		return out;
 	}
 
@@ -55,11 +77,13 @@ struct Font
 	{
 		return 1.f / scaleW;
 	}
+
 private:
 	void bakeUVChars();
 };
 
 #define ND_FONT_LIB_MAX_SIZE 10
+
 class FontLib
 {
 private:
@@ -69,31 +93,24 @@ public:
 	inline static FontID registerFont(const Font& font)
 	{
 		ASSERT(s_current_index < s_fonts.max_size(), "ND_FONT_LIB_MAX_SIZE too low");
-		s_fonts[s_current_index++]=font;
-		FontID id = s_current_index-1;
-		s_fonts[id].id= id;
+		s_fonts[s_current_index++] = font;
+		FontID id = s_current_index - 1;
+		s_fonts[id].id = id;
 		return id;
 	}
+
 	inline static const Font* getFont(FontID id)
 	{
 		ASSERT(id < s_current_index, "Invalid FontID");
 		return &s_fonts[id];
 	}
-	inline static void clear() { s_current_index=0; }
-	
+
+	inline static void clear() { s_current_index = 0; }
 };
 
 class FontParser
 {
-	
 public:
 	// parse font from file, returns false if parsing failed
-	static bool parse(Font& font,const std::string& filePath);
-
-	
-
-	
-
-	
+	static bool parse(Font& font, const std::string& filePath);
 };
-

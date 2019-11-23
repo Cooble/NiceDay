@@ -16,7 +16,6 @@ public:
 	
 	glm::vec4 color;
 	glm::vec4 border_color;
-	glm::vec2 thickness;
 	
 };
 class FontMatLib

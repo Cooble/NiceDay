@@ -144,6 +144,37 @@ bool FontParser::parse(Font& font,const std::string& filePath)
 			}
 			font.chars.push_back(ch);
 		}
+		else if (title == "kernings")
+		{
+			for (int i = 1; i < words.size(); ++i)
+			{
+				auto& var = words[i];
+				auto arg = var.substr(var.find_first_of('=') + 1);
+
+				if (var._Starts_with("count="))
+					font.kerning.reserve(std::stoi(arg));
+			}
+		}
+		else if (title == "kerning")
+		{
+			int first=0, second, amount;
+			for (int i = 1; i < words.size(); ++i)
+			{
+				auto& var = words[i];
+				auto arg = var.substr(var.find_first_of('=') + 1);
+
+				if (var._Starts_with("first="))
+					first = std::stoi(arg);
+				else if (var._Starts_with("second="))
+					second = std::stoi(arg);
+				else if (var._Starts_with("amount="))
+					amount = std::stoi(arg);
+			}
+			font.setKerning(first, second, amount);
+		
+		}
+
+
 	}
 #ifdef ND_DEBUG
 	if(font.chars.size() != charCount)

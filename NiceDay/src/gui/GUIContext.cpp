@@ -1,5 +1,12 @@
 ﻿#include "ndpch.h"
 #include "GUIContext.h"
+#include "AppGlobals.h"
+
+void GUIContext::onUpdate()
+{
+	for (int i = m_windows.size() - 1; i >= 0; --i)
+		m_windows[i]->update();
+}
 
 void GUIContext::onEvent(Event& e)
 {
@@ -10,6 +17,7 @@ void GUIContext::onEvent(Event& e)
 		case Event::EventType::MouseMove:
 		case Event::EventType::MouseDrag:
 		case Event::EventType::MouseRelease:
+		case Event::EventType::MouseScroll:
 			for (int i = m_windows.size() - 1; i >= 0; --i)
 			{
 				m_windows[i]->onEvent(e);
@@ -44,6 +52,7 @@ void GUIContext::onEvent(Event& e)
 			case Event::EventType::MouseMove:
 			case Event::EventType::MouseDrag:
 			case Event::EventType::MouseRelease:
+			case Event::EventType::MouseScroll:
 				m_windows[i]->onEvent(e);
 				auto& m = dynamic_cast<MouseEvent&>(e);
 				if (m_windows[i]->contains(m.getX(), m.getY()))

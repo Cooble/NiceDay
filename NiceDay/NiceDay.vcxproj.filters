@@ -1292,6 +1292,7 @@
     <ClInclude Include="src\gui\GUIRenderer.h" />
     <ClInclude Include="src\gui\GUIContext.h" />
     <ClInclude Include="src\gui\GUIBasic.h" />
+    <ClInclude Include="src\AppGlobals.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\App.cpp">
@@ -1419,5 +1420,6 @@
     <ClCompile Include="src\gui\GUIRenderer.cpp" />
     <ClCompile Include="src\gui\GUIContext.cpp" />
     <ClCompile Include="src\gui\GUIBasic.cpp" />
+    <ClCompile Include="src\AppGlobals.cpp" />
   </ItemGroup>
 </Project>

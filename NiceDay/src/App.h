@@ -78,5 +78,7 @@ public:
 	void onUpdate() override;
 	void updateTelemetry();
 	void drawTelemetry();
+
+	void drawGlobals();
 };
 

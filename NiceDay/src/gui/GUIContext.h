@@ -74,6 +74,7 @@ public:
 		currentStackPos.x -= x;
 		currentStackPos.y -= y;
 	}
+	void onUpdate();
 	void onEvent(Event& e);
 	void submitBroadcastEvent(Event& e);
 	inline const glm::vec2& getStackPos()const { return currentStackPos; }

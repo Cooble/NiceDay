@@ -2,28 +2,73 @@
 #include "GUIElement.h"
 #include "graphics/font/TextBuilder.h"
 #include "graphics/Sprite.h"
+#include "graphics/FontMaterial.h"
 
-class GUILabel :public GUIElement
+// Basic
+class GUIBlank :public GUIElement
 {
-	std::string m_value;
 public:
-	TextMesh m_text_mesh;
-	
+	GUIBlank();
+};
+class GUIText :public GUIElement
+{
+	std::string m_text;
 public:
-	GUILabel();
+	FontMaterial* fontMaterial;
+	TextMesh textMesh;
+	float textScale = 1;
+public:
+	GUIText(FontMaterial* mat);
+	bool packDimensions() override;
+	virtual void setText(const std::string& val);
+	inline auto& getText() const { return m_text; }
+};
+class GUIButton :public GUIElement
+{
+public:
+	ActionF onPressed;
+public:
+	GUIButton();
+	void onMyEvent(Event& e) override;
+};
+class GUIImage :public GUIElement
+{
+public:
+	Sprite* src;
+	GUIImage();
+	void setImage(Sprite* sprite);
 
-	virtual void setValue(const std::string& val);
-	inline auto& getValue() const { return m_value; }
+};
+class GUIWindow:public GUIElement
+{
+	
+private:
+	glm::vec2 m_draggedCursor;
+
+	enum
+	{
+		invalid,
+		up, down, left, right,
+		left_up, left_down, right_up, right_down
+	}m_resizeMode = invalid;
+	float m_resize_x, m_resize_y,m_resize_w,m_resize_h;
+public:
+	bool moveable = true;
+	bool resizable = true;
+	GUIWindow();
+	void onMyEvent(Event& e) override;
 };
 class GUITextBox :public GUIElement
 {
-	std::string m_value;
+protected:
+	std::string m_text;
 	bool m_has_total_focus=false;
 public:
 	int cursorBlink = 0;
 	int textClipOffset=0;
-	TextMesh m_text_mesh;
-	TextMesh m_cursorMesh;
+	TextMesh textMesh;
+	TextMesh cursorMesh;
+	FontMaterial* font;
 	CursorProp prop;
 	int cursorPos=0;
 	char cursorChar = '|';
@@ -32,23 +77,10 @@ public:
 
 	virtual bool hasTotalFocus() const { return m_has_total_focus; }
 	virtual void setValue(const std::string& val);
-	inline auto& getValue() const { return m_value; }
+	virtual void onValueModified();
+	inline auto& getValue() const { return m_text; }
 	virtual void moveCursor(int delta);
-	
 
-	void onMyEvent(Event& e) override;
-};
-class GUIButton :public GUIElement
-{
-	std::string m_text;
-public:
-	ActionF on_pressed;
-	TextMesh m_text_mesh;
-public:
-	GUIButton();
-	virtual void setText(const std::string& val);
-	inline auto& getText() const { return m_text; }
-	inline void setTextWidth(float width) { this->width = width + padding[GUI_LEFT] + padding[GUI_RIGHT]; }
 	void onMyEvent(Event& e) override;
 };
 class GUICheckBox :public GUIElement
@@ -75,35 +107,7 @@ public:
 	void onMyEvent(Event& e) override;
 };
 
-class GUIImage :public GUIElement
-{
-
-public:
-	Sprite* src;
-	GUIImage();
-	void setValue(Sprite* sprite);
-	Sprite* getValue();
-};
-class GUIWindow:public GUIElement
-{
-	
-private:
-	glm::vec2 m_draggedCursor;
-
-	enum
-	{
-		invalid,
-		up, down, left, right,
-		left_up, left_down, right_up, right_down
-	}m_resizeMode = invalid;
-	float m_resize_x, m_resize_y,m_resize_w,m_resize_h;
-public:
-	bool moveable = true;
-	bool resizable = true;
-	GUIWindow();
-	void onMyEvent(Event& e) override;
-};
-
+// Positional
 class GUIColumn :public GUIElement
 {
 public:
@@ -112,8 +116,6 @@ public:
 
 	void repositionChildren() override;
 };
-
-
 class GUIRow :public GUIElement
 {
 public:
@@ -122,35 +124,15 @@ public:
 	void repositionChildren() override;
 
 };
-
 class GUIGrid :public GUIElement
 {
 public:
 	GUIGrid();
 	void repositionChildren() override;
+	void onChildChange() override;
 };
 
-
-class GUISlider :public GUIElement
-{
-	float value=0;
-	glm::vec2 m_draggedCursor;
-
-public:
-	int dividor=0;
-	ActionF on_changed;
-	GUISlider();
-	void onMyEvent(Event& e) override;
-	virtual void setValue(float v);
-	virtual float getValue()const { return value; }
-};
-
-class GUIBlank :public GUIElement
-{
-
-public:
-	GUIBlank();
-};
+// Split
 class GUIHorizontalSplit :public GUIElement
 {
 protected:
@@ -169,14 +151,12 @@ public:
 	void appendChild(GUIElement* element) override;
 	void removeChild(int index) override;
 };
-
 class GUIVerticalSplit :public GUIElement
 {
 protected:
 	bool m_is_left_main;
 
 public:
-	GUIVerticalSplit(GUIElement* eUp, GUIElement* eDown, bool isleftMain = true);
 	GUIVerticalSplit(bool isLeftMain = true);
 
 	void repositionChildren() override;
@@ -188,5 +168,76 @@ public:
 	void appendChild(GUIElement* element) override;
 	void removeChild(int index) override;
 };
+
+// Slider
+class GUISlider :public GUIElement
+{
+	float value=0;
+	glm::vec2 m_draggedCursor;
+
+public:
+	int dividor=0;
+	ActionF on_changed;
+	GUISlider();
+	void onMyEvent(Event& e) override;
+	virtual void setValue(float v);
+	virtual float getValue()const { return value; }
+};
+class GUIVSlider :public GUIElement
+{
+	float value = 0;
+	glm::vec2 m_draggedCursor;
+	float m_oldVal;
+
+public:
+	float sliderRatio=0.1f;
+	float sliderHeight = 50;
+	int dividor = 0;
+	ActionF on_changed;
+	GUIVSlider();
+	void onMyEvent(Event& e) override;
+	virtual void setValue(float v);
+	virtual float getValue()const { return value; }
+};
+class GUIView :public GUIElement
+{
+public:
+	GUIView();
+
+	inline GUIElement* getInside() { return getChildren()[0]; }
+
+	void appendChild(GUIElement* element) override;
+	void removeChild(int index) override;
+};
+
+//Special
+class GUITextButton :public GUIButton
+{
+public:
+	GUITextButton(const std::string& text, FontMaterial* material);
+	inline GUIText* getTextElement() { return static_cast<GUIText*>(getChildren()[0]); }
+};
+class GUIImageButton :public GUIButton
+{
+public:
+	GUIImageButton(Sprite* image);
+	inline GUIImage* getTextElement() { return static_cast<GUIImage*>(getChildren()[0]); }
+};
+
+class GUISpecialTextButton :public GUITextButton
+{
+public:
+	float currentScale=1;
+	float minScale=1;
+	float maxScale=1.5;
+	float animationSpeed=0.1f;
+public:
+	GUISpecialTextButton(const std::string& text, FontMaterial* material);
+	void update() override;
+};
+
+
+GUIVerticalSplit* createGUISliderView(bool sliderOnLeft=true);
+
 
 

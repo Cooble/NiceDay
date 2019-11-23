@@ -13,6 +13,7 @@ Let's make Terraria in C++!
 - [Smooth wallLight vs edgy blockLight, Day/Night cycle](#smooth-walllight-vs-edgy-blocklight-daynight-cycle-12_08_2019)
 - [ParticleSystem, Trees, Flowers, PlayerSprite, Walking on steep floor, fullscreen](#particlesystem-trees-flowers-playersprite-walking-on-steep-floor-fullscreen-25_08_2019)  
 - [Basic GUI module in engine](#basic-gui-module-in-engine-13_11_2019)  
+- [Advanced GUI in engine](#advanced-gui-in-engine-23_11_2019)   
 ## Pictured changelog:
 
 #### Basic tile render (03_05_2019)
@@ -76,11 +77,14 @@ Oh, shoot!
 
 ![Alt text](screenshots/13_11_2019.png?raw=false "")  
 
+#### Advanced GUI in engine (23_11_2019)  
+- Added view, (which is rendered to another texture before being rendered on the screen)  
+- Better text render, added kerning!  
+- Vertical Slider  
+- Horizontal and Vertical Split  
+- Its really dynamic :D - resizable, ability to inherit dimensions from parent nodes  
+- And last but not least..             HAPPY 100TH COMMIT!  Yay :D  
 
-
-  
- 
-
-  
+![Alt text](screenshots/23_11_2019.gif?raw=false "")  
 
 

@@ -192,7 +192,6 @@ void BatchRenderer2D::flushText()
 		fontMat.first->texture->bind(0);
 		dynamic_cast<GLShader*>(m_text_shader)->setUniformVec4f("u_textColor", fontMat.first->color);
 		dynamic_cast<GLShader*>(m_text_shader)->setUniformVec4f("u_borderColor", fontMat.first->border_color);
-		dynamic_cast<GLShader*>(m_text_shader)->setUniformVec2f("u_colorWidths", fontMat.first->thickness);
 
 		if(fontMat.second.size()> BUF_S)
 		{

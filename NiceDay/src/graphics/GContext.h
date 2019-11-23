@@ -74,4 +74,5 @@ public:
 	virtual void cmdDrawMultiElements(Topology t, uint32_t* startIndexes, int* lengths, int multiSize) =0;
 	virtual void cmdDrawArrays(Topology t, size_t elementLength)=0;
 	
+	inline void setClearColor(const glm::vec4& c) { setClearColor(c.r, c.g, c.b, c.a); }
 };

@@ -4,6 +4,29 @@
 #include "GLFW/glfw3.h"
 
 
+static GEID getGUIID()
+{
+	static GEID currentId = 0;
+	return currentId++;
+}
+
+GUIElement::GUIElement(GETYPE type):
+	id(getGUIID()),
+	type(type),
+	pos({0, 0}),
+	dim({0, 0})
+{
+	setPadding(0);
+}
+
+GUIElement::~GUIElement()
+{
+	for (auto child : children)
+	{
+		delete child;
+	}
+}
+
 void GUIElement::checkFocus(MouseMoveEvent& e)
 {
 	if (contains(e.getX(), e.getY()))
@@ -23,26 +46,43 @@ void GUIElement::checkFocus(MouseMoveEvent& e)
 	}
 }
 
-
-static GEID getGUIID()
+void GUIElement::appendChild(GUIElement* element)
 {
-	static GEID currentId = 0;
-	return currentId++;
+	children.push_back(element);
+	children[children.size() - 1]->parent = this;
+	element->onParentAttached();
+	element->onParentChanged();
+	onChildChange();
 }
 
-GUIElement::GUIElement(GETYPE type): id(getGUIID()), type(type)
+void GUIElement::onChildChange()
 {
-	pos = {0, 0};
-	dim = {0, 0};
-	setPadding(0);
+	bool callParent = false;
+	if (is_always_packed)
+		callParent = packDimensions();
+	repositionChildren();
+
+	if (parent && callParent)
+		parent->onChildChange();
+	if (callParent)
+		if (on_dimension_change)
+			on_dimension_change(*this);
 }
 
-GUIElement::~GUIElement()
+void GUIElement::removeChild(int index)
 {
-	for (auto child : children)
-	{
-		delete child;
-	}
+	ASSERT(index < children.size(), "Invalid child id");
+
+	auto child = children[index];
+	delete child;
+	children.erase(children.begin() + index);
+
+	onChildChange();
+}
+
+void GUIElement::onParentAttached()
+{
+	onDimensionChange();
 }
 
 void GUIElement::onDimensionChange()
@@ -54,6 +94,8 @@ void GUIElement::onDimensionChange()
 		packDimensions();
 
 	repositionChildren();
+	if (on_dimension_change)
+		on_dimension_change(*this);
 }
 
 void GUIElement::repositionChildren()
@@ -113,7 +155,8 @@ bool GUIElement::packDimensions()
 	float lineW[3] = {0, 0, 0};
 	float lineH[3] = {0, 0, 0};
 
-	float maxW, maxH;
+
+	float maxW = 0, maxH = 0;
 	for (auto child : children)
 	{
 		switch (child->m_alignment)
@@ -121,6 +164,7 @@ bool GUIElement::packDimensions()
 		case GUIAlign::INVALID:
 			maxW = std::max(maxW, child->x + child->width);
 			maxH = std::max(maxH, child->y + child->height);
+
 			break;
 		case GUIAlign::RIGHT_UP:
 		case GUIAlign::UP:
@@ -165,8 +209,8 @@ bool GUIElement::packDimensions()
 	}
 
 
-	maxW = std::max(maxW, lineW[0] + space + lineW[1] + space + lineW[2]);
-	maxH = std::max(maxH, lineH[0] + space + lineH[1] + space + lineH[2]);
+	maxW = std::max(maxW, lineW[0] + space + lineW[1] + space + lineW[2] + widthPadding());
+	maxH = std::max(maxH, lineH[0] + space + lineH[1] + space + lineH[2] + heightPadding());
 
 	bool change;
 	switch (dimension_inherit)
@@ -180,11 +224,12 @@ bool GUIElement::packDimensions()
 		width = maxW;
 		return change;
 	case GUIDimensionInherit::INVALID:
-		change = width != maxW||height!=maxH;
+		change = width != maxW || height != maxH;
 		height = maxH;
 		width = maxW;
 		return change;
 	}
+	return false;
 }
 
 void GUIElement::onParentChanged()
@@ -194,15 +239,15 @@ void GUIElement::onParentChanged()
 		switch (dimension_inherit)
 		{
 		case GUIDimensionInherit::WIDTH:
-			width = getParent()->width - getParent()->padding[GUI_LEFT] - getParent()->padding[GUI_RIGHT];
+			width = getParent()->width - getParent()->widthPadding();
 			break;
 		case GUIDimensionInherit::HEIGHT:
-			height = getParent()->height - getParent()->padding[GUI_TOP] - getParent()->padding[GUI_BOTTOM];
-
+			height = getParent()->height - getParent()->heightPadding();
 			break;
 		case GUIDimensionInherit::WIDTH_HEIGHT:
-			width = getParent()->width - getParent()->padding[GUI_LEFT] - getParent()->padding[GUI_RIGHT];
-			height = getParent()->height - getParent()->padding[GUI_TOP] - getParent()->padding[GUI_BOTTOM];
+			width = getParent()->width - getParent()->widthPadding();
+			height = getParent()->height - getParent()->heightPadding();
+			break;
 		}
 		onDimensionChange();
 	}
@@ -218,12 +263,19 @@ bool GUIElement::contains(float xx, float yy) const
 	return xx >= x && xx < x + width && yy >= y && yy < y + height;
 }
 
+void GUIElement::update()
+{
+	for (auto child : children)
+		child->update();
+}
+
 void GUIElement::onEvent(Event& e)
 {
 	//get all broadcast types
 	switch (e.getEventType())
 	{
 	case Event::EventType::MouseMove:
+	case Event::EventType::MouseScroll:
 	case Event::EventType::MouseDrag:
 	case Event::EventType::MouseRelease:
 	case Event::EventType::KeyPress:

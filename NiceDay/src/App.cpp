@@ -10,6 +10,7 @@
 #include "graphics/Effect.h"
 #include "GLFW/glfw3.h"
 #include "imgui_utils.h"
+#include "AppGlobals.h"
 
 #define BIND_EVENT_FN(x) std::bind(&App::x, &App::get(), std::placeholders::_1)
 
@@ -306,7 +307,36 @@ void ImGuiLayer::drawTelemetry()
 	ImGui::InputInt("Max val reset delay (ticks)", &maxValResetDelay);
 	ImGui::Separator();
 	ImGui::Value("Scheduled Tasks: ", ND_SCHED.size());
+
+	ImGui::Separator();
+	drawGlobals();
 	ImGui::End();
+}
+
+void ImGuiLayer::drawGlobals()
+{
+	if (ImGui::TreeNode("Globals")) {
+
+		if (ImGui::TreeNode("Ints")) {
+
+			for (auto& val : AppGlobals::get().nbt.m_ints)
+				ImGui::Value(val.first.c_str(), val.second);
+			ImGui::TreePop();
+		}
+		if (ImGui::TreeNode("Floats")) {
+
+			for (auto& val : AppGlobals::get().nbt.m_ints)
+				ImGui::Value(val.first.c_str(), *(float*)&val.second);
+			ImGui::TreePop();
+		}
+		if (ImGui::TreeNode("Strings")) {
+			for (auto& val : AppGlobals::get().nbt.m_strings)
+				ImGui::Value(val.first.c_str(), val.second.c_str());
+			ImGui::TreePop();
+		}
+		ImGui::TreePop();
+	}
+	
 }
 
 

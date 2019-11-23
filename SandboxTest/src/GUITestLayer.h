@@ -10,6 +10,8 @@
 #include "App.h"
 #include "graphics/Sprite.h"
 #include "GUIExampleWindow.h"
+#include "globals.h"
+
 
 inline static BatchRenderer2D* g_batch_render;
 
@@ -24,7 +26,6 @@ private:
 	Shader* fontShader;
 	Font font;
 
-	FontMaterial* fontMat;
 
 public:
 	GUITestLayer()
@@ -38,7 +39,7 @@ public:
 
 		ND_INFO("TestLayer attached");
 
-		FontParser::parse(font, "res/fonts/basic.fnt");
+		FontParser::parse(font, "res/fonts/andrew.fnt");
 		font.xSpace = 0;
 		font.ySpace = -5;
 
@@ -49,12 +50,12 @@ public:
 		backSprite->setPosition({-1, -1, 0.1});
 		backSprite->setSize({2, 2});
 
-		fontMat = new FontMaterial();
-		fontMat->color = {1, 1, 1, 1};
-		fontMat->border_color = {0, 0, 0, 0};
-		fontMat->font = &font;
-		fontMat->texture = fontTexture;
-		guiRender.m_font_material = fontMat;
+		g_fontMat = new FontMaterial();
+		g_fontMat->color = {1, 1, 1, 1};
+		g_fontMat->border_color = {0, 0.1, 0.7, 1};
+		g_fontMat->font = &font;
+		g_fontMat->texture = fontTexture;
+		guiRender.m_font_material = g_fontMat;
 
 		currentContext = GUIContext::create();
 		guiRender.setContext(&GUIContext::get());
@@ -67,7 +68,7 @@ public:
 		{
 			context.getWindows().push_back(new GUIWindow());
 			auto& window = *context.getFocusedWindow();
-			window.dim = {1200 + i * 50, 400};
+			window.dim = { 1200 + i * 50, 400 };
 			window.setCenterPosition(App::get().getWindow()->getWidth(), App::get().getWindow()->getHeight());
 			window.x += i * 50;
 			window.y += i * 50;
@@ -78,14 +79,13 @@ public:
 				for (int i = 0; i < 25; ++i)
 				{
 
-					auto btn = new GUIButton();
-					btn->setText("ss");
-					btn->dim ={30+ i*5,30};
+					auto btn = new GUITextButton("ss",g_fontMat);
+					btn->dim = { 30 + i * 5,30 };
 					layout->appendChild(btn);
-					if(i==10)
+					if (i == 10)
 					{
 						auto img = new GUIImage();
-						img->setValue(backSprite);
+						img->setImage(backSprite);
 						img->dim = { 100, 100 };
 						layout->appendChild(img);
 					}
@@ -93,7 +93,7 @@ public:
 				layout->setAlignment(GUIAlign::LEFT_UP);
 				window.appendChild(layout);
 			}
-			
+
 			{
 				auto layout = new GUIColumn();
 				layout->child_alignment = GUIAlign::CENTER;
@@ -101,22 +101,25 @@ public:
 				window.appendChild(layout);
 
 				auto row = new GUIRow(GUIAlign::CENTER);
-				
+
 				auto box = new GUICheckBox();
 				box->setText("Happiness: Enabled", "Happiness: Disabled");
 				box->setValue(false);
-				box->dim = {500, 42};
+				box->dim = { 500, 42 };
 				row->appendChild(box);
 				{
-					auto btn = new GUIButton();
-					btn->setText("buttonek");
-					btn->dim = { fontMat->font->getTextWidth("buttonek") + 10, fontMat->font->lineHeight + 6 };
+					auto btn = new GUITextButton("buttonek",g_fontMat);
+					btn->dim ={ 200, g_fontMat->font->lineHeight+btn->heightPadding()};
+					btn->onPressed = [](GUIElement& e)
+					{
+						ND_INFO("clicked 1");
+					};
 					row->appendChild(btn);
 				}
 				layout->appendChild(row);
 
 				auto slider = new GUISlider();
-				slider->dim = {400, 30};
+				slider->dim = { 400, 30 };
 				slider->setValue(0);
 				slider->on_changed = [](GUIElement& e)
 				{
@@ -126,74 +129,32 @@ public:
 				layout->appendChild(slider);
 
 				auto textBox = new GUITextBox();
-				textBox->dim = {400, 50};
+				textBox->dim = { 400, 50 };
 				layout->appendChild(textBox);
 				textBox->setValue("herro");
-
-				auto btn = new GUIButton();
-				btn->setText("buttonek");
-				btn->dim = { fontMat->font->getTextWidth("buttonek") + 10, fontMat->font->lineHeight + 6 };
+				
+				auto btn = new GUISpecialTextButton("buttonek",g_fontMat);
+				btn->dim = { g_fontMat->font->getTextWidth("buttonek") + 10, g_fontMat->font->lineHeight + btn->heightPadding() };
 				layout->appendChild(btn);
 
-				auto lbl = new GUILabel();
-				lbl->setValue("LABEL 01");
+				auto lbl = new GUIText(g_fontMat);
+				lbl->setText("yBEL 01");
+				lbl->textScale = 2;
 				lbl->dim = { 300, 50 };
 				layout->appendChild(lbl);
 
 				auto img = new GUIImage();
-				img->setValue(backSprite);
+				img->setImage(backSprite);
 				img->dim = { 300, 300 };
 				layout->appendChild(img);
-				
+
 				continue;
 			}
 
-			{
-				auto col = new GUIColumn();
-				col->child_alignment = GUIAlign::RIGHT;
-				window.appendChild(col);
-
-				for (int i = 0; i < 3; ++i)
-				{
-					auto btn = new GUIButton();
-					btn->setText("Clickme" + std::to_string(i));
-					btn->dim = {200, 50};
-					btn->on_pressed = [](GUIElement& e)
-					{
-						ND_INFO("I have pressed this shit jaj " + static_cast<GUIButton&>(e).getText());
-					};
-					col->appendChild(btn);
-				}
-				{
-					auto btn = new GUILabel();
-					btn->setValue("ABCDEDGHIJK");
-					btn->dim = {300, 50};
-					col->appendChild(btn);
-				}
-				{
-					auto btn = new GUILabel();
-					btn->setValue("B");
-					btn->dim = {50, 50};
-					col->appendChild(btn);
-				}
-				{
-					auto btn = new GUILabel();
-					btn->setValue("A");
-					btn->dim = {50, 50};
-					col->appendChild(btn);
-				}
-			}
 		}
 
 		auto newWin = new GUIExampleWindow();
 		context.getWindows().push_back(newWin);
-		
-
-		/*auto lbl = new GUILabel();
-		lbl->setValue("This is label i think");
-		lbl->dim = { 150,50 };
-		lbl->pos = { 200,100 };
-		window.appendChild(lbl);*/
 	}
 
 	void onDetach() override
@@ -230,11 +191,21 @@ public:
 
 	void onEvent(Event& e) override
 	{
+		if(e.getEventType()==Event::EventType::WindowResize)
+		{
+			auto m = static_cast<WindowResizeEvent&>(e);
+			guiRender.setScreenDimensions(m.getWidth(), m.getHeight());
+		}
 		bool flipped = e.isInCategory(Event::EventCategory::Mouse);
 		if (flipped)
 			static_cast<MouseMoveEvent&>(e).flipY(App::get().getWindow()->getHeight());
 		GUIContext::get().onEvent(e);
 		if (flipped)
 			static_cast<MouseMoveEvent&>(e).flipY(App::get().getWindow()->getHeight());
+	}
+
+	void onUpdate() override
+	{
+		GUIContext::get().onUpdate();
 	}
 };

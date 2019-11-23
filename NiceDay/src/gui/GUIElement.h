@@ -15,7 +15,7 @@ typedef int GEID;
 enum class GETYPE
 {
 	Window,
-	Label,
+	Text,
 	Button,
 	Column,
 	Row,
@@ -24,10 +24,14 @@ enum class GETYPE
 	CheckBox,
 	RadioButton,
 	Slider,
+	VSlider,
 	TextBox,
+	TextArea,
 	SplitHorizontal,
 	SplitVertical,
-	Blank
+	View,
+	Blank,
+	Other //doesn!t have custom render (usually aglomeration of elements)
 };
 
 typedef std::string GECLASS;
@@ -66,15 +70,12 @@ protected:
 
 	// is mouse over the element
 	bool has_focus = false;
+	
 	//need onUpdate() to be called
 	bool is_updatable = false;
-	//if should be rendered (children will be rendered regardless
-	bool is_diplayed = true;
 	
-
-	//promise that this element wont have any children
-	//all events will be consumed by it
-	bool is_final_element = true;
+	//if should be rendered (children will be rendered regardless)
+	bool is_diplayed = true;
 	
 	//has no dimensions on its own
 	//usually some column,row grid or something which is fully embedded in its parent
@@ -86,6 +87,9 @@ protected:
 	void checkFocus(MouseMoveEvent& e);
 
 public:
+	ActionF on_dimension_change;
+
+	// always adapts dimensions based on the sizes of children
 	bool is_always_packed = false;
 	glm::vec4 color={0,0,0,0};
 	float space=0;
@@ -93,7 +97,7 @@ public:
 	//every element gets unique id in constructor
 	const GEID id;
 	const GECLASS clas;
-	const GETYPE type;
+	GETYPE type;
 
 	union
 	{
@@ -137,7 +141,7 @@ public:
 	
 	inline GUIAlign getAlignment() const { return m_alignment; }
 	inline void setAlignment(GUIAlign align) { m_alignment = align; }
-	
+
 
 	inline void markDirty() { is_dirty = true; }
 
@@ -147,36 +151,23 @@ public:
 	}
 
 	inline auto& getChildren() { return children; }
+	inline GUIElement* getFirstChild()
+	{
+		ASSERT(!children.empty(), "no children");
+		return children[0];
+	}
 
 	//takes ownership
-	inline virtual void appendChild(GUIElement* element)
-	{
-		children.push_back(element);
-		children[children.size() - 1]->parent = this;
-		element->onParentChanged();
-		
-		onChildDimensionChange();
-	}
-	virtual void onChildDimensionChange()
-	{
-		if (is_always_packed)
-			if (packDimensions())
-				if (parent)
-					parent->onChildDimensionChange();
+	inline virtual void appendChild(GUIElement* element);
 
-		repositionChildren();
-	}
+	inline virtual void removeChild(int index);
+
+	// called when this instance was given as a child to some parent element
+	// used to update all static positions and stuff
+	virtual void onParentAttached();
 	
-	inline virtual void removeChild(int index)
-	{
-		ASSERT(index < children.size(), "Invalid child id");
+	virtual void onChildChange();
 
-		auto child = children[index];
-		delete child;
-		children.erase(children.begin() + index);
-		
-		onChildDimensionChange();
-	}
 	//called when the dimensions were changed
 	virtual void onDimensionChange();
 
@@ -193,7 +184,7 @@ public:
 	//used to adapt dimensions to those of the parent
 	virtual void onParentChanged();
 	
-	inline bool contains(float xx, float yy) const;
+	bool contains(float xx, float yy) const;
 
 	//will center element to the center of width and height
 	inline void setCenterPosition(float width,float height)
@@ -202,7 +193,10 @@ public:
 		y = (height - this->height) / 2;
 	}
 	//will be called each tick if is_updatable
-	inline virtual void update(){}
+	virtual void update();
+	
+	inline float widthPadding()const { return padding[GUI_LEFT] + padding[GUI_RIGHT]; }
+	inline float heightPadding()const { return padding[GUI_BOTTOM] + padding[GUI_TOP]; }
 
 	inline virtual void onEvent(Event& e);
 

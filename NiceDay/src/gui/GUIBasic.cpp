@@ -6,18 +6,32 @@
 #include "event/KeyEvent.h"
 #include "GLFW/glfw3.h"
 
-GUILabel::GUILabel() : GUIElement(GETYPE::Label)
+
+GUIText::GUIText(FontMaterial* mat) : GUIElement(GETYPE::Text),fontMaterial(mat)
 {
-	is_final_element = true;
+	is_always_packed = true;
+	is_not_spacial = true;
 }
 
-void GUILabel::setValue(const std::string& val)
+bool GUIText::packDimensions()
 {
-	m_value = val;
+	auto lastW = width;
+	width = widthPadding() + fontMaterial->font->getTextWidth(m_text);
+	height = fontMaterial->font->lineHeight+heightPadding();
+	if (lastW != width)
+		onDimensionChange();
+	markDirty();
+	return lastW != width;
+}
+
+void GUIText::setText(const std::string& val)
+{
+	m_text = val;
+	packDimensions();
 	markDirty();
 }
 
-GUITextBox::GUITextBox(): GUIElement(GETYPE::TextBox), m_cursorMesh(1)
+GUITextBox::GUITextBox(): GUIElement(GETYPE::TextBox), cursorMesh(1)
 {
 	setPadding(10);
 }
@@ -25,9 +39,13 @@ GUITextBox::GUITextBox(): GUIElement(GETYPE::TextBox), m_cursorMesh(1)
 void GUITextBox::setValue(const std::string& val)
 {
 	is_dirty = true;
-	m_value = val;
-	cursorPos = m_value.size();
+	m_text = val;
+	cursorPos = m_text.size();
 	textClipOffset = 0;
+}
+
+void GUITextBox::onValueModified()
+{
 	
 }
 
@@ -35,7 +53,7 @@ void GUITextBox::moveCursor(int delta)
 {
 	int oldcur = cursorPos;
 	cursorPos += delta;
-	cursorPos = std::clamp(cursorPos, 0, (int)m_value.size());
+	cursorPos = std::clamp(cursorPos, 0, (int)m_text.size());
 
 	is_dirty = oldcur != cursorPos;
 }
@@ -53,7 +71,7 @@ void GUITextBox::onMyEvent(Event& e)
 			{
 				GUIContext::get().setFocusedElement(this);
 				m_has_total_focus = true;
-				cursorPos = m_value.size();
+				cursorPos = m_text.size();
 				is_dirty = true;
 			}
 			else if (GUIContext::get().getFocusedElement() == this)
@@ -74,18 +92,20 @@ void GUITextBox::onMyEvent(Event& e)
 				e.handled = true;
 				break;
 			case GLFW_KEY_BACKSPACE:
-				if (m_value.size() && cursorPos > 0)
+				if (m_text.size() && cursorPos > 0)
 				{
-					m_value = m_value.substr(0, cursorPos - 1) + m_value.substr(cursorPos);
+					m_text = m_text.substr(0, cursorPos - 1) + m_text.substr(cursorPos);
 					is_dirty = true;
 					moveCursor(-1);
+					onValueModified();
 				}
 				break;
 			case GLFW_KEY_DELETE:
-				if (cursorPos < m_value.size())
+				if (cursorPos < m_text.size())
 				{
-					m_value = m_value.substr(0, cursorPos) + m_value.substr(cursorPos + 1);
+					m_text = m_text.substr(0, cursorPos) + m_text.substr(cursorPos + 1);
 					is_dirty = true;
+					onValueModified();
 				}
 				break;
 
@@ -105,8 +125,9 @@ void GUITextBox::onMyEvent(Event& e)
 			auto key = m.getKey();
 			if (key != GLFW_KEY_UNKNOWN)
 			{
-				m_value.insert(m_value.begin() + cursorPos, (char)key);
+				m_text.insert(m_text.begin() + cursorPos, (char)key);
 				moveCursor(1);
+				onValueModified();
 			}
 		}
 		break;
@@ -114,18 +135,9 @@ void GUITextBox::onMyEvent(Event& e)
 	}
 }
 
-
 GUIButton::GUIButton()
-	:
-	GUIElement(GETYPE::Button)
+	:GUIElement(GETYPE::Button)
 {
-	is_final_element = true;
-}
-
-void GUIButton::setText(const std::string& val)
-{
-	m_text = val;
-	markDirty();
 }
 
 void GUIButton::onMyEvent(Event& e)
@@ -134,10 +146,27 @@ void GUIButton::onMyEvent(Event& e)
 
 	if (e.getEventType() == Event::EventType::MousePress)
 	{
-		if (on_pressed)
-			on_pressed(*this);
+		if (onPressed)
+			onPressed(*this);
 	}
 }
+
+GUITextButton::GUITextButton(const std::string& text, FontMaterial* material)
+{
+	auto t = new GUIText(material);
+	t->setText(text);
+	t->setAlignment(GUIAlign::CENTER);
+	GUIButton::appendChild(t);
+}
+
+GUIImageButton::GUIImageButton(Sprite* image)
+{
+	auto t = new GUIImage();
+	t->setAlignment(GUIAlign::CENTER);
+	t->setImage(image);
+	GUIButton::appendChild(t);
+}
+
 
 GUICheckBox::GUICheckBox()
 	:
@@ -193,15 +222,10 @@ GUIImage::GUIImage()
 {
 }
 
-void GUIImage::setValue(Sprite* sprite)
+void GUIImage::setImage(Sprite* sprite)
 {
 	this->src = sprite;
 	this->dim = sprite->getSize();
-}
-
-Sprite* GUIImage::getValue()
-{
-	return this->src;
 }
 
 GUIWindow::GUIWindow()
@@ -218,7 +242,7 @@ void GUIWindow::onMyEvent(Event& e)
 	if (e.getEventType() == Event::EventType::MousePress)
 	{
 		auto& m = static_cast<MousePressEvent&>(e);
-		m_draggedCursor = m.getPos() - glm::vec2(x, y);
+		m_draggedCursor = m.getPos() - GUIContext::get().getStackPos() - pos;
 
 
 		constexpr float borderThickness = 10;
@@ -310,7 +334,6 @@ GUIColumn::GUIColumn(GUIAlign childAlignment) : GUIElement(GETYPE::Column)
 {
 	is_not_spacial = true;
 	is_diplayed = false;
-	is_final_element = false;
 	child_alignment = childAlignment;
 	space = 5;
 }
@@ -363,7 +386,6 @@ GUIRow::GUIRow(GUIAlign childAlignment) :
 	GUIElement(GETYPE::Row)
 {
 	is_diplayed = false;
-	is_final_element = false;
 	is_not_spacial = true;
 	child_alignment = childAlignment;
 	space = 5;
@@ -417,7 +439,6 @@ GUIGrid::GUIGrid() :
 {
 	is_diplayed = false;
 	is_not_spacial = true;
-	is_final_element = false;
 	space = 5;
 }
 
@@ -455,6 +476,20 @@ void GUIGrid::repositionChildren()
 	for (auto child : getChildren())
 		child->y += height;
 }
+
+void GUIGrid::onChildChange()
+{
+	bool lastHeight = height;
+	repositionChildren();
+	if(lastHeight!=height)
+	{
+		if (parent)
+			parent->onChildChange();
+		if (on_dimension_change)
+			on_dimension_change(*this);
+	}
+}
+
 
 GUISlider::GUISlider()
 	:
@@ -497,11 +532,105 @@ void GUISlider::setValue(float v)
 	value = v;
 }
 
-GUIBlank::GUIBlank():GUIElement(GETYPE::Blank)
+
+GUIVSlider::GUIVSlider()
+	: GUIElement(GETYPE::VSlider)
+{
+	setPadding(1);
+}
+
+constexpr glm::vec2 invalidVec = {10000000, 100000000};
+
+void GUIVSlider::onMyEvent(Event& e)
+{
+	GUIElement::onMyEvent(e);
+
+	float slideHeight = height - padding[GUI_TOP] - padding[GUI_BOTTOM];
+	sliderHeight = slideHeight * this->sliderRatio;
+	slideHeight = slideHeight * (1 - this->sliderRatio);
+
+	if (sliderRatio == 1)
+	{
+		auto old = value;
+		value = 1;
+		if (value != old)
+			if (on_changed)
+				on_changed(*this);
+		return;
+	}
+
+	if (e.getEventType() == Event::EventType::MousePress)
+	{
+		auto& m = static_cast<MousePressEvent&>(e);
+		m_draggedCursor = m.getPos();
+		m_oldVal = value;
+		auto localY = m.getPos().y - GUIContext::get().getStackPos().y - y;
+		bool isUnderSlider = localY < getValue() * slideHeight + padding[GUI_BOTTOM];
+		bool isAboveSlider = localY > getValue() * slideHeight + padding[GUI_BOTTOM] + sliderHeight;
+		if (isUnderSlider || isAboveSlider)
+		{
+			m_draggedCursor = invalidVec;
+			value = std::clamp(value + sliderRatio * (isUnderSlider ? -1 : 1), 0.f, 1.f);
+			if (dividor)
+			{
+				value *= dividor;
+				value = std::round(value) / dividor;;
+			}
+			if (m_oldVal != value && on_changed)
+				on_changed(*this);
+		}
+	}
+	if (e.getEventType() == Event::EventType::MouseMove && is_pressed && m_draggedCursor != invalidVec)
+	{
+		auto& m = static_cast<MousePressEvent&>(e);
+
+		float old = value;
+
+		float delta = m.getY() - m_draggedCursor.y;
+		delta /= slideHeight;
+
+		value = std::clamp(m_oldVal + delta, 0.f, 1.f);
+
+		if (dividor)
+		{
+			value *= dividor;
+			value = std::round(value) / dividor;;
+		}
+
+		if (old != value && on_changed)
+			on_changed(*this);
+	}
+
+	if (e.getEventType() == Event::EventType::MouseScroll && has_focus)
+	{
+		auto& m = static_cast<MouseScrollEvent&>(e);
+
+		float old = value;
+		value = std::clamp(value + (dividor ? (m.getScrollY() / (dividor + 1.f)) : sliderRatio * m.getScrollY()), 0.f,
+		                   1.f);
+
+		if (dividor)
+		{
+			value *= dividor;
+			value = std::round(value) / dividor;;
+		}
+
+		if (old != value && on_changed)
+			on_changed(*this);
+	}
+}
+
+
+void GUIVSlider::setValue(float v)
+{
+	this->value = v;
+	m_oldVal = v;
+}
+
+GUIBlank::GUIBlank(): GUIElement(GETYPE::Blank)
 {
 	is_diplayed = false;
 	is_not_spacial = true;
-	is_final_element = false;
 	is_always_packed = true;
 }
 
@@ -511,7 +640,7 @@ GUIHorizontalSplit::GUIHorizontalSplit(GUIElement* eUp, GUIElement* eDown, bool 
 	getDownChild()->appendChild(eDown);
 }
 
-GUIHorizontalSplit::GUIHorizontalSplit(bool isUpMain) :GUIElement(GETYPE::SplitHorizontal)
+GUIHorizontalSplit::GUIHorizontalSplit(bool isUpMain) : GUIElement(GETYPE::SplitHorizontal)
 {
 	getChildren().reserve(2);
 	getChildren().push_back(new GUIBlank());
@@ -530,7 +659,6 @@ GUIHorizontalSplit::GUIHorizontalSplit(bool isUpMain) :GUIElement(GETYPE::SplitH
 	dimension_inherit = GUIDimensionInherit::WIDTH_HEIGHT;
 	is_diplayed = false;
 	is_not_spacial = true;
-	is_final_element = false;
 	space = 5;
 	setAlignment(GUIAlign::CENTER);
 }
@@ -539,24 +667,26 @@ void GUIHorizontalSplit::repositionChildren()
 {
 	auto upC = getUpChild();
 	auto downC = getDownChild();
-	
-	downC->pos = { 0,0 };
-	
+
+	downC->pos = {0, 0};
+
 	if (m_is_up_main)
 	{
-		upC->pos = { 0,height - upC->height };
+		upC->pos = {0, height - upC->height};
 
-		glm::vec2 newDim = { width,height - upC->height-space };
-		if ((newDim - downC->dim) != glm::vec2(0, 0)) {
+		glm::vec2 newDim = {width, height - upC->height - space};
+		if ((newDim - downC->dim) != glm::vec2(0, 0))
+		{
 			downC->dim = newDim;
 			downC->onDimensionChange();
 		}
 	}
 	else
 	{
-		upC->pos = { 0,downC->height+space };
-		glm::vec2 newDim = { width,height - downC->height-space };
-		if ((newDim - upC->dim) != glm::vec2(0, 0)) {
+		upC->pos = {0, downC->height + space};
+		glm::vec2 newDim = {width, height - downC->height - space};
+		if ((newDim - upC->dim) != glm::vec2(0, 0))
+		{
 			upC->dim = newDim;
 			upC->onDimensionChange();
 		}
@@ -567,22 +697,22 @@ void GUIHorizontalSplit::onDimensionChange()
 {
 	auto upC = getUpChild();
 	auto downC = getDownChild();
-	if(m_is_up_main)
+	if (m_is_up_main)
 	{
 		upC->onParentChanged();
-		upC->pos = { 0,height-upC->height };
-		
-		downC->dim = { width,height -upC->height-space };
-		downC->pos = { 0,0 };
-		downC->onDimensionChange();		
+		upC->pos = {0, height - upC->height};
+
+		downC->dim = {width, height - upC->height - space};
+		downC->pos = {0, 0};
+		downC->onDimensionChange();
 	}
 	else
 	{
 		downC->onParentChanged();
-		downC->pos = { 0,0 };
+		downC->pos = {0, 0};
 
-		upC->dim = { width,height - downC->height-space };
-		upC->pos = { 0,downC->height+space };
+		upC->dim = {width, height - downC->height - space};
+		upC->pos = {0, downC->height + space};
 		upC->onDimensionChange();
 	}
 }
@@ -598,13 +728,7 @@ void GUIHorizontalSplit::removeChild(int index)
 }
 
 
-GUIVerticalSplit::GUIVerticalSplit(GUIElement* eUp, GUIElement* eDown, bool isleftMain) : GUIVerticalSplit(isleftMain)
-{
-	getRightChild()->appendChild(eUp);
-	getLeftChild()->appendChild(eDown);
-}
-
-GUIVerticalSplit::GUIVerticalSplit(bool isLeftMain) :GUIElement(GETYPE::SplitVertical)
+GUIVerticalSplit::GUIVerticalSplit(bool isLeftMain) : GUIElement(GETYPE::SplitVertical)
 {
 	getChildren().reserve(2);
 	getChildren().push_back(new GUIBlank());
@@ -623,7 +747,6 @@ GUIVerticalSplit::GUIVerticalSplit(bool isLeftMain) :GUIElement(GETYPE::SplitVer
 	dimension_inherit = GUIDimensionInherit::WIDTH_HEIGHT;
 	is_diplayed = false;
 	is_not_spacial = true;
-	is_final_element = false;
 	space = 5;
 	setAlignment(GUIAlign::CENTER);
 }
@@ -633,24 +756,25 @@ void GUIVerticalSplit::repositionChildren()
 	auto rightC = getRightChild();
 	auto leftC = getLeftChild();
 
-	leftC->pos = { 0,0 };
-	
+	leftC->pos = {0, 0};
+
 	if (m_is_left_main)
 	{
-
-		rightC->pos = { leftC->width+space,0 };
-		glm::vec2 newDim = { width - leftC->width - space,height };
-		if ((newDim - rightC->dim) != glm::vec2(0, 0)) {
+		rightC->pos = {leftC->width + space, 0};
+		glm::vec2 newDim = {width - leftC->width - space, height};
+		if ((newDim - rightC->dim) != glm::vec2(0, 0))
+		{
 			rightC->dim = newDim;
 			rightC->onDimensionChange();
 		}
 	}
 	else
 	{
-		rightC->pos = { width-rightC->width,0 };
+		rightC->pos = {width - rightC->width, 0};
 
-		glm::vec2 newDim = { width - rightC->width - space,height };
-		if ((newDim - leftC->dim) != glm::vec2(0, 0)) {
+		glm::vec2 newDim = {width - rightC->width - space, height};
+		if ((newDim - leftC->dim) != glm::vec2(0, 0))
+		{
 			leftC->dim = newDim;
 			leftC->onDimensionChange();
 		}
@@ -661,21 +785,21 @@ void GUIVerticalSplit::onDimensionChange()
 {
 	auto rightC = getRightChild();
 	auto leftC = getLeftChild();
-	leftC->pos = { 0,0 };
+	leftC->pos = {0, 0};
 	if (!m_is_left_main)
 	{
 		rightC->onParentChanged();
-		rightC->pos = { width - rightC->width,0 };
+		rightC->pos = {width - rightC->width, 0};
 
-		leftC->dim = { width - rightC->width - space,height };
+		leftC->dim = {width - rightC->width - space, height};
 		leftC->onDimensionChange();
 	}
 	else
 	{
 		leftC->onParentChanged();
 
-		rightC->dim = { width - leftC->width - space,height };
-		rightC->pos = { leftC->width + space,0 };
+		rightC->dim = {width - leftC->width - space, height};
+		rightC->pos = {leftC->width + space, 0};
 		rightC->onDimensionChange();
 	}
 }
@@ -688,4 +812,88 @@ void GUIVerticalSplit::appendChild(GUIElement* element)
 void GUIVerticalSplit::removeChild(int index)
 {
 	ASSERT(false, "Invalid operation");
+}
+
+GUIView::GUIView() : GUIElement(GETYPE::View)
+{
+	getChildren().push_back(new GUIBlank());
+	getInside()->setParent(this);
+	getInside()->is_always_packed = false;
+	getInside()->color = {0.2f, 0.2f, 0.2f, 1};
+	getInside()->dim = {20, 20};
+	setPadding(10);
+	getInside()->pos = {padding[GUI_LEFT], padding[GUI_BOTTOM]};
+}
+
+void GUIView::appendChild(GUIElement* element)
+{
+	ASSERT(false, "Invalid operation");
+}
+
+void GUIView::removeChild(int index)
+{
+	ASSERT(false, "Invalid operation");
+}
+
+GUIVerticalSplit* createGUISliderView(bool sliderOnLeft)
+{
+	auto split = new GUIVerticalSplit(sliderOnLeft);
+	auto slider = new GUIVSlider();
+	auto view = new GUIView();
+	auto inside = view->getInside();
+	inside->is_always_packed = true;
+	inside->setAlignment(GUIAlign::INVALID);
+	inside->dimension_inherit = GUIDimensionInherit::WIDTH;
+	inside->setPadding(10);
+	inside->x = view->padding[GUI_LEFT];
+
+	(sliderOnLeft ? split->getLeftChild() : split->getRightChild())->appendChild(slider);
+	(!sliderOnLeft ? split->getLeftChild() : split->getRightChild())->appendChild(view);
+
+	inside->on_dimension_change = [slider,view](GUIElement& e)
+	{
+		slider->sliderRatio = std::min(1.f, (view->height - view->heightPadding()) / (view->getInside()->height));
+		view->getInside()->y = view->height - view->padding[GUI_TOP] - view->getInside()->height +
+
+			(1 - slider->getValue()) * (view->getInside()->height - (view->height - view->heightPadding()));
+	};
+	view->dimension_inherit = GUIDimensionInherit::WIDTH_HEIGHT;
+	inside->color = {0.2,0.2,0.2,1};
+	slider->dimension_inherit = GUIDimensionInherit::HEIGHT;
+	slider->on_changed = [view,slider](GUIElement& e)
+	{
+		view->getInside()->y = view->height - view->padding[GUI_TOP] - view->getInside()->height +
+
+			(1 - slider->getValue()) * (view->getInside()->height - (view->height - view->heightPadding()));
+	};
+
+	return split;
+}
+
+
+
+static float smootherstep(float x)
+{
+	// Evaluate polynomial
+	return x * x * x * (x * (x * 6 - 15) + 10);
+}
+
+GUISpecialTextButton::GUISpecialTextButton(const std::string& text, FontMaterial* material) :GUITextButton(text, material)
+{
+	is_diplayed = false;
+}
+
+void GUISpecialTextButton::update()
+{
+	if (has_focus)
+	{
+		currentScale += animationSpeed;
+		currentScale = std::min(currentScale, 1.f);
+	}
+	else
+	{
+		currentScale -= animationSpeed;
+		currentScale = std::max(currentScale, 0.f);
+	}
+	getTextElement()->textScale = smootherstep(currentScale) * (maxScale - minScale) + minScale;
 }

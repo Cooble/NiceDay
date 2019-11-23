@@ -145,6 +145,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\globals.h" />
     <ClInclude Include="src\GUIExampleWindow.h" />
     <ClInclude Include="src\GUITestLayer.h" />
   </ItemGroup>
