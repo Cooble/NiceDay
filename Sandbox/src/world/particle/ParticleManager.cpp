@@ -2,7 +2,7 @@
 #include "ParticleManager.h"
 #include "graphics/ParticleRenderer.h"
 #include "graphics/API/Texture.h"
-#include "Stats.h"
+#include "core/Stats.h"
 #include "graphics/Renderable2D.h"
 
 

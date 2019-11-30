@@ -491,6 +491,7 @@ void BlockTextureAtlas::createAtlas(const std::string& folder, int segmentCount,
 		int BPP = 0;
 
 
+		stbi_set_flip_vertically_on_load(false);
 		void* currentImage = stbi_load(path.first.c_str(), &width, &height, &BPP, 4);
 		ASSERT(currentImage,"invalid image");
 

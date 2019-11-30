@@ -2,8 +2,8 @@
 #include "GUIRenderer.h"
 #include "graphics/BatchRenderer2D.h"
 #include "graphics/GContext.h"
-#include "App.h"
-#include "AppGlobals.h"
+#include "core/App.h"
+#include "core/AppGlobals.h"
 
 constexpr glm::vec4 darkColor(30 / 255.f, 30 / 255.f, 30 / 255.f, 1);
 constexpr glm::vec4 backColor(45 / 255.f, 45 / 255.f, 48 / 255.f, 1);
@@ -16,16 +16,15 @@ GUIRenderer::GUIRenderer(glm::vec2 windowSize)
 {
 	m_view_fbo = FrameBuffer::create();
 	setScreenDimensions(windowSize.x, windowSize.y);
-
 }
 
 void GUIRenderer::setScreenDimensions(int w, int h)
 {
 	if (w == 0 || h == 0)
 		return;
-	if(m_view_texture)
+	if (m_view_texture)
 		delete m_view_texture;
-	m_view_texture = Texture::create(TextureInfo().size(w, h).format(TextureFormat::RGB));
+	m_view_texture = Texture::create(TextureInfo().size(w, h).format(TextureFormat::RGBA));
 	m_view_fbo->bind();
 	m_view_fbo->attachTexture(m_view_texture->getID(), 0);
 	m_view_fbo->unbind();
@@ -33,23 +32,19 @@ void GUIRenderer::setScreenDimensions(int w, int h)
 
 void GUIRenderer::render(BatchRenderer2D& renderer)
 {
-	TimerStaper s("");
-
 	Gcon.enableDepthTest(true);
-	m_stackPos = {0, 0};
+	m_stackPos = { 0, 0 };
 	m_z_pos = 0;
 
 	for (auto& window : m_context->getWindows())
 		renderElements(renderer, *window);
-
-	ND_GLOBAL_LOG("GUI render ms", (float)(s.getUS()/1000.f));
 }
 
 void GUIRenderer::renderElements(BatchRenderer2D& renderer, GUIElement& e)
 {
 	m_stackPos += e.pos;
 
-	if(e.isDisplayed())
+	if (e.isVisible)
 		renderElement(renderer, e);
 	if (e.type != GETYPE::View) //view will render children on its own
 		for (auto& element : e.getChildren())
@@ -93,6 +88,9 @@ void GUIRenderer::renderElement(BatchRenderer2D& renderer, GUIElement& e)
 	case GETYPE::View:
 		renderView(renderer, static_cast<GUIView&>(e));
 		break;
+	case GETYPE::Blank:
+		renderBlank(renderer, static_cast<GUIBlank&>(e));
+		break;
 	default:
 		if (e.color.a != 0)
 			renderer.submitColorQuad({m_stackPos.x, m_stackPos.y, m_z_pos}, {e.width, e.height}, e.color);
@@ -100,26 +98,15 @@ void GUIRenderer::renderElement(BatchRenderer2D& renderer, GUIElement& e)
 	}
 }
 
-void GUIRenderer::updateTextMeshIfNec(const std::string& val, TextMesh& mesh, bool& isDirty, int alignment)
+void GUIRenderer::updateTextMeshIfNec(const std::string& val, FontMaterial* mat, TextMesh& mesh, bool& isDirty,
+                                      int alignment)
 {
 	if (isDirty)
 	{
 		isDirty = false;
 		if (mesh.getMaxCharCount() < val.size() + 1)
 			mesh.resize(val.size() + 1);
-		TextBuilder::buildMesh({val}, *m_font_material->font, mesh, alignment);
-	}
-}
-
-void GUIRenderer::updateTextMeshIfNec(const std::string& val, TextMesh& mesh, bool& isDirty, int alignment,
-                                      glm::vec<4, int> clip, CursorProp* cursor)
-{
-	if (isDirty)
-	{
-		isDirty = false;
-		if (mesh.getMaxCharCount() < val.size() + 1)
-			mesh.resize(val.size() + 1);
-		TextBuilder::buildMesh({val}, *m_font_material->font, mesh, alignment, clip, cursor);
+		TextBuilder::buildMesh({val}, *mat->font, mesh, alignment);
 	}
 }
 
@@ -131,7 +118,7 @@ void GUIRenderer::renderButton(BatchRenderer2D& renderer, GUIButton& e)
 
 void GUIRenderer::renderCheckBox(BatchRenderer2D& renderer, GUICheckBox& e)
 {
-	updateTextMeshIfNec(e.getValue() ? e.getTrueText() : e.getFalseText(), e.m_text_mesh, e.is_dirty,
+	updateTextMeshIfNec(e.getValue() ? e.getTrueText() : e.getFalseText(), m_font_material, e.m_text_mesh, e.is_dirty,
 	                    TextBuilder::ALIGN_LEFT);
 
 
@@ -201,16 +188,15 @@ void GUIRenderer::renderText(BatchRenderer2D& renderer, GUIText& e)
 	default:
 		align = TextBuilder::ALIGN_CENTER;
 		break;
-
 	}
-	updateTextMeshIfNec(e.getText(), e.textMesh, e.is_dirty, align);
+	updateTextMeshIfNec(e.getText(), e.fontMaterial, e.textMesh, e.is_dirty, align);
 
 	//renderer.submitColorQuad({m_stackPos.x, m_stackPos.y, m_z_pos}, {e.width, e.height}, darkColor);
 	//incrementZ();
 	glm::mat4 mat(1.f);
 
 	float x = m_stackPos.x;
-	float y = m_stackPos.y+ (e.height - m_font_material->font->lineHeight * e.textScale) / 2;
+	float y = m_stackPos.y + (e.height - e.fontMaterial->font->lineHeight * e.textScale) / 2;
 	switch (e.getAlignment())
 	{
 	case GUIAlign::RIGHT:
@@ -223,7 +209,7 @@ void GUIRenderer::renderText(BatchRenderer2D& renderer, GUIText& e)
 
 	case GUIAlign::CENTER:
 	default:
-		x += e.padding[GUI_LEFT]+(e.width - e.widthPadding())/2;
+		x += e.padding[GUI_LEFT] + (e.width - e.widthPadding()) / 2;
 		break;
 	}
 	mat = glm::translate(mat, {x, y, m_z_pos});
@@ -231,7 +217,7 @@ void GUIRenderer::renderText(BatchRenderer2D& renderer, GUIText& e)
 	mat = glm::scale(mat, {e.textScale, e.textScale, 1});
 
 	renderer.push(mat);
-	renderer.submitText(e.textMesh, m_font_material);
+	renderer.submitText(e.textMesh, e.fontMaterial);
 	renderer.pop();
 }
 
@@ -248,7 +234,7 @@ void GUIRenderer::renderTextBox(BatchRenderer2D& renderer, GUITextBox& e)
 		e.cursorBlink = 0;
 		e.is_dirty = false;
 
-		int textWidth = m_font_material->font->getTextWidth(e.getValue().substr(0, e.cursorPos));
+		int textWidth = e.font->font->getTextWidth(e.getValue().substr(0, e.cursorPos));
 		int neededOffset = textWidth + e.textClipOffset;
 
 		if (neededOffset > trueWidth)
@@ -262,7 +248,7 @@ void GUIRenderer::renderTextBox(BatchRenderer2D& renderer, GUITextBox& e)
 
 
 		e.textMesh.reserve(e.getValue().size());
-		TextBuilder::buildMesh({e.getValue()}, *m_font_material->font, e.textMesh, TextBuilder::ALIGN_LEFT,
+		TextBuilder::buildMesh({e.getValue()}, *e.font->font, e.textMesh, TextBuilder::ALIGN_LEFT,
 		                       {-e.textClipOffset, -1000, -e.textClipOffset + trueWidth, 2000}, &prop);
 	}
 
@@ -271,8 +257,8 @@ void GUIRenderer::renderTextBox(BatchRenderer2D& renderer, GUITextBox& e)
 		e.prop = prop;
 		//change cursor pos
 		e.cursorMesh.setChar(0,
-		                       prop.positions.x, prop.positions.y, prop.positions.z, prop.positions.w,
-		                       m_font_material->font->getChar(e.cursorChar));
+		                     prop.positions.x, prop.positions.y, prop.positions.z, prop.positions.w,
+		                     e.font->font->getChar(e.cursorChar));
 		e.cursorMesh.currentCharCount = 1;
 	}
 
@@ -284,10 +270,10 @@ void GUIRenderer::renderTextBox(BatchRenderer2D& renderer, GUITextBox& e)
 	incrementZ();
 	renderer.push(glm::translate(glm::mat4(1.0), {
 		                             m_stackPos.x + e.padding[GUI_LEFT] + e.textClipOffset,
-		                             m_stackPos.y + (e.height - m_font_material->font->lineHeight) / 2,
+		                             m_stackPos.y + (e.height - e.font->font->lineHeight) / 2,
 		                             m_z_pos
 	                             }));
-	renderer.submitText(e.textMesh, m_font_material);
+	renderer.submitText(e.textMesh, e.font);
 
 
 	renderer.pop();
@@ -303,10 +289,10 @@ void GUIRenderer::renderTextBox(BatchRenderer2D& renderer, GUITextBox& e)
 		incrementZ();
 		renderer.push(glm::translate(glm::mat4(1.0), {
 			                             m_stackPos.x + e.padding[GUI_LEFT] + e.textClipOffset,
-			                             m_stackPos.y + (e.height - m_font_material->font->lineHeight) / 2,
+			                             m_stackPos.y + (e.height - e.font->font->lineHeight) / 2,
 			                             m_z_pos
 		                             }));
-		renderer.submitText(e.cursorMesh, m_font_material);
+		renderer.submitText(e.cursorMesh, e.font);
 		renderer.pop();
 	}
 }
@@ -354,9 +340,14 @@ void GUIRenderer::renderView(BatchRenderer2D& renderer, GUIView& e)
 		uv, m_view_texture);
 }
 
+void GUIRenderer::renderBlank(BatchRenderer2D& renderer, GUIBlank& e)
+{
+	if (e.color.a != 0)
+		renderer.submitColorQuad({ m_stackPos.x, m_stackPos.y, m_z_pos }, { e.width, e.height }, e.color);
+}
+
 void GUIRenderer::renderImage(BatchRenderer2D& renderer, GUIImage& e)
 {
-	if (e.src)
-		renderer.submitTextureQuad({m_stackPos.x, m_stackPos.y, m_z_pos}, {e.width, e.height}, e.src->getUV(),
-		                           e.src->getTexture());
+	if (e.image)
+		renderer.submitTextureQuad({m_stackPos.x, m_stackPos.y, m_z_pos}, {e.width, e.height}, e.image->getUV(), e.image->getTexture());
 }

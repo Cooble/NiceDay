@@ -74,7 +74,6 @@ int main()
 {
 	Log::init();
 
-
 	Sandbox game;
 	game.start();
 

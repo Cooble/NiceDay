@@ -23,13 +23,13 @@ Sprite::Sprite()
 {
 }
 
-void Sprite::setSpriteIndex(uint32_t u, uint32_t v, bool horizontalFlip, bool verticalFlip)
+void Sprite::setSpriteIndex(uint32_t u, uint32_t v, bool horizontalFlip, bool verticalFlip, bool rotate90)
 {
 	float xPiece = 1.f / m_resource->getIconsWidth();
 	float yPiece = 1.f / m_resource->getIconsHeight();
 
 	m_uv_quad = UVQuad::build(glm::vec2(xPiece * u, yPiece * v), glm::vec2(xPiece, yPiece), horizontalFlip,
-	                          verticalFlip);
+	                          verticalFlip,rotate90);
 }
 
 void Sprite::render(BatchRenderer2D& r)

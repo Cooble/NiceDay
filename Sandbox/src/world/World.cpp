@@ -4,7 +4,7 @@
 #include "WorldIO.h"
 #include "block/BlockRegistry.h"
 #include "biome/BiomeRegistry.h"
-#include "App.h"
+#include "core/App.h"
 #include "entity/EntityRegistry.h"
 #include <filesystem>
 #include "entity/entities.h"
@@ -84,6 +84,7 @@ void World::tick()
 	if (m_entity_array_buff.size() != m_entity_array.size())
 		m_entity_array_buff.resize(m_entity_array.size()); //make sure there is enough space in buff
 	memcpy(m_entity_array_buff.data(), m_entity_array.data(), m_entity_array.size() * sizeof(EntityID));
+
 
 	for (auto id : m_entity_array_buff)
 	{
@@ -360,6 +361,7 @@ void World::loadChunksAndGen(std::set<int>& toLoadChunks)
 				genChunks(toupdateChunks);
 				return true;
 			}
+
 			return false;
 		};
 		ND_SCHED.runTaskTimer(waitForWorkFunc);
@@ -483,14 +485,19 @@ void World::loadEntFinal(defaultable_map<int, int, 0>& toUpdateChunks, std::vect
 		}
 		m_has_chunk_changed = true;
 	};
-	auto entityLoadedFence = loadEntities2(chunkEntitiesToLoad);
-	if (entityLoadedFence->isDone())
-	{
+	if (chunkEntitiesToLoad.empty())
 		afterEntity();
-		ND_SCHED.deallocateJob(entityLoadedFence);
-	}
 	else
-		ND_SCHED.callWhenDone(afterEntity, entityLoadedFence);
+	{
+		auto entityLoadedFence = loadEntities2(chunkEntitiesToLoad);
+		if (entityLoadedFence->isDone())
+		{
+			afterEntity();
+			ND_SCHED.deallocateJob(entityLoadedFence);
+		}
+		else
+			ND_SCHED.callWhenDone(afterEntity, entityLoadedFence);
+	}
 }
 
 JobAssignmentP World::loadEntities2(std::vector<int>& chunkEntitiesToLoad)
@@ -498,17 +505,20 @@ JobAssignmentP World::loadEntities2(std::vector<int>& chunkEntitiesToLoad)
 	JobAssignmentP p = ND_SCHED.allocateJob();
 
 	JobAssignmentP entityLoadedFence = ND_SCHED.allocateJob();
-	if (chunkEntitiesToLoad.empty())
-		return entityLoadedFence;
 	entityLoadedFence->assign();
 
 	WorldEntity*** entityPointerArrayChunkArray = new WorldEntity**[chunkEntitiesToLoad.size()];
 	int* entityPointerArraySizeChunkArray = new int[chunkEntitiesToLoad.size()];
 
 	for (int i = 0; i < chunkEntitiesToLoad.size(); ++i)
+	{
+		//lock before entity load
+		//m_chunk_headers[getChunkInaccessibleIndex(chunkEntitiesToLoad[i])].getJob()->assign();
+
 		m_chunk_provider->assignEntityLoad(p, chunkEntitiesToLoad[i],
 		                                   &entityPointerArrayChunkArray[i],
 		                                   &entityPointerArraySizeChunkArray[i]);
+	}
 
 	auto afterLoad = [this, chunkEntitiesToLoad, entityLoadedFence, size{chunkEntitiesToLoad.size()},
 			entityPointerArrayChunkArray,
@@ -518,12 +528,12 @@ JobAssignmentP World::loadEntities2(std::vector<int>& chunkEntitiesToLoad)
 		{
 			auto ray = entityPointerArrayChunkArray[i];
 			auto raySize = entityPointerArraySizeChunkArray[i];
-			for (int i = 0; i < raySize; ++i)
-			{
-				loadEntity(ray[i]);
-			}
+			for (int ii = 0; ii < raySize; ++ii)
+				loadEntity(ray[ii]);
 			if (raySize)
 				delete[] ray;
+			//unlock after entity load
+			//m_chunk_headers[getChunkInaccessibleIndex(chunkEntitiesToLoad[i])].getJob()->markDone();
 		}
 		delete[] entityPointerArrayChunkArray;
 		delete[] entityPointerArraySizeChunkArray;
@@ -595,6 +605,7 @@ void World::unloadChunks(std::set<int>& chunk_ids)
 {
 	JobAssignmentP assignment = nullptr;
 	std::vector<int> chunksToUnload;
+	chunksToUnload.reserve(chunk_ids.size());
 
 
 	for (half_int chunkId : chunk_ids)
@@ -625,7 +636,9 @@ void World::unloadChunks(std::set<int>& chunk_ids)
 		chunksToUnload.push_back(chunkId);
 	}
 	if (chunksToUnload.empty())
+	{
 		return;
+	}
 
 	WorldEntity*** arrayOfEntityArrayPointers = new WorldEntity**[chunksToUnload.size()];
 	int* arrayOfEntityArraySizes = new int[chunksToUnload.size()];
@@ -634,9 +647,6 @@ void World::unloadChunks(std::set<int>& chunk_ids)
 	{
 		ChunkID chunkId = chunksToUnload[chunkIdx];
 		auto& chunk = m_chunks[getChunkInaccessibleIndex(chunkId)];
-
-		//ASSERT(CHUNK_MAP[chunkId], "unloadig loaded chunk");
-		//CHUNK_MAP[chunkId] = false;
 
 		std::vector<WorldEntity*> entities;
 
@@ -904,13 +914,13 @@ void World::onBlocksChange(int x, int y, int deep)
 	p = getBlockM(x + 1, y);
 	if (p && BlockRegistry::get().getBlock(p->block_id).onNeighbourBlockChange(*this, x + 1, y))
 	{
-		getChunkM(Chunk::getChunkIDFromWorldPos(x+1, y))->markDirty(true);
+		getChunkM(Chunk::getChunkIDFromWorldPos(x + 1, y))->markDirty(true);
 		onBlocksChange(x + 1, y, deep);
 	}
 	p = getBlockM(x - 1, y);
 	if (p && BlockRegistry::get().getBlock(p->block_id).onNeighbourBlockChange(*this, x - 1, y))
 	{
-		getChunkM(Chunk::getChunkIDFromWorldPos(x-1, y ))->markDirty(true);
+		getChunkM(Chunk::getChunkIDFromWorldPos(x - 1, y))->markDirty(true);
 		onBlocksChange(x - 1, y, deep);
 	}
 }
@@ -983,6 +993,7 @@ void World::onWallsChange(int xx, int yy, BlockStruct& blok)
 EntityID World::spawnEntity(WorldEntity* pEntity)
 {
 	auto id = m_entity_manager.createEntity();
+
 	pEntity->m_id = id;
 	loadEntity(pEntity);
 	pEntity->onSpawned(*this);
@@ -1070,8 +1081,10 @@ void World::loadEntity(WorldEntity* pEntity)
 	ASSERT(!m_entity_manager.isLoaded(id), "loading of loaded entity");
 	m_entity_manager.setLoaded(id, true);
 	m_entity_manager.setEntityPointer(id, pEntity);
+
 	if (dynamic_cast<TileEntity*>(pEntity))
 	{
+		ND_INFO("spawned tile entity");
 		m_tile_entity_map[Phys::Vecti(pEntity->getPosition().x, pEntity->getPosition().y).toInt64()] = pEntity->getID();
 	}
 	else
@@ -1131,7 +1144,6 @@ void World::genWorld()
 	//todo this should be on another thread as well
 	m_nbt_saver.clearEverything();
 	m_nbt_saver.init();
-	
 }
 
 //=========================PARTICLES=====================

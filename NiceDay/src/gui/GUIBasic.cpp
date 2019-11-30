@@ -1,6 +1,6 @@
 ﻿#include "ndpch.h"
 #include "GUIBasic.h"
-#include "App.h"
+#include "core/App.h"
 #include "graphics/API/Texture.h"
 #include "GUIContext.h"
 #include "event/KeyEvent.h"
@@ -9,8 +9,8 @@
 
 GUIText::GUIText(FontMaterial* mat) : GUIElement(GETYPE::Text),fontMaterial(mat)
 {
-	is_always_packed = true;
-	is_not_spacial = true;
+	isAlwaysPacked = true;
+	m_is_not_spacial = true;
 }
 
 bool GUIText::packDimensions()
@@ -86,6 +86,8 @@ void GUITextBox::onMyEvent(Event& e)
 			switch (m.getKey())
 			{
 			case GLFW_KEY_ENTER:
+				if (onValueEntered)
+					onValueEntered(*this);
 			case GLFW_KEY_ESCAPE:
 				GUIContext::get().setFocusedElement(nullptr);
 				m_has_total_focus = false;
@@ -142,12 +144,22 @@ GUIButton::GUIButton()
 
 void GUIButton::onMyEvent(Event& e)
 {
+	
 	GUIElement::onMyEvent(e);
 
 	if (e.getEventType() == Event::EventType::MousePress)
 	{
 		if (onPressed)
 			onPressed(*this);
+	}
+	else if (e.getEventType() == Event::EventType::MouseFocusGain) {
+		if (onFocusGain)
+			onFocusGain(*this);
+	}
+	else if(e.getEventType()==Event::EventType::MouseFocusLost)
+	{
+		if (onFocusLost)
+			onFocusLost(*this);
 	}
 }
 
@@ -220,12 +232,22 @@ GUIImage::GUIImage()
 	:
 	GUIElement(GETYPE::Image)
 {
+	m_is_not_spacial = true;
+}
+
+bool GUIImage::packDimensions()
+{
+	auto old = dim;
+	if(image)
+		this->dim = image->getSize();
+	return old != dim;
 }
 
 void GUIImage::setImage(Sprite* sprite)
 {
-	this->src = sprite;
+	this->image = sprite;
 	this->dim = sprite->getSize();
+	onDimensionChange();
 }
 
 GUIWindow::GUIWindow()
@@ -270,7 +292,7 @@ void GUIWindow::onMyEvent(Event& e)
 			else if (m_draggedCursor.y > height - borderThickness)
 				m_resizeMode = up;
 		}
-		if (m_resizeMode != invalid && resizable)
+		if (m_resizeMode != invalid && isResizable)
 		{
 			m_draggedCursor = m.getPos();
 			m_resize_x = x;
@@ -279,11 +301,11 @@ void GUIWindow::onMyEvent(Event& e)
 			m_resize_h = height;
 		}
 	}
-	if (e.getEventType() == Event::EventType::MouseMove && is_pressed)
+	if (e.getEventType() == Event::EventType::MouseMove && m_is_pressed)
 	{
 		auto& m = static_cast<MousePressEvent&>(e);
 		auto delta = m.getPos() - m_draggedCursor;
-		if (m_resizeMode != invalid && resizable && moveable)
+		if (m_resizeMode != invalid && isResizable && isMoveable)
 		{
 			switch (m_resizeMode)
 			{
@@ -325,15 +347,15 @@ void GUIWindow::onMyEvent(Event& e)
 			}
 			onDimensionChange();
 		}
-		else if (moveable)
+		else if (isMoveable)
 			pos = m.getPos() - m_draggedCursor;
 	}
 }
 
 GUIColumn::GUIColumn(GUIAlign childAlignment) : GUIElement(GETYPE::Column)
 {
-	is_not_spacial = true;
-	is_diplayed = false;
+	m_is_not_spacial = true;
+	isVisible = false;
 	child_alignment = childAlignment;
 	space = 5;
 }
@@ -385,8 +407,8 @@ void GUIColumn::repositionChildren()
 GUIRow::GUIRow(GUIAlign childAlignment) :
 	GUIElement(GETYPE::Row)
 {
-	is_diplayed = false;
-	is_not_spacial = true;
+	isVisible = false;
+	m_is_not_spacial = true;
 	child_alignment = childAlignment;
 	space = 5;
 }
@@ -437,8 +459,8 @@ void GUIRow::repositionChildren()
 GUIGrid::GUIGrid() :
 	GUIElement(GETYPE::Grid)
 {
-	is_diplayed = false;
-	is_not_spacial = true;
+	isVisible = false;
+	m_is_not_spacial = true;
 	space = 5;
 }
 
@@ -483,10 +505,10 @@ void GUIGrid::onChildChange()
 	repositionChildren();
 	if(lastHeight!=height)
 	{
-		if (parent)
-			parent->onChildChange();
-		if (on_dimension_change)
-			on_dimension_change(*this);
+		if (m_parent)
+			m_parent->onChildChange();
+		if (onDimChange)
+			onDimChange(*this);
 	}
 }
 
@@ -506,7 +528,7 @@ void GUISlider::onMyEvent(Event& e)
 	{
 		auto& m = static_cast<MousePressEvent&>(e);
 	}
-	if (e.getEventType() == Event::EventType::MouseMove && is_pressed)
+	if (e.getEventType() == Event::EventType::MouseMove && m_is_pressed)
 	{
 		auto& m = static_cast<MousePressEvent&>(e);
 
@@ -580,7 +602,7 @@ void GUIVSlider::onMyEvent(Event& e)
 				on_changed(*this);
 		}
 	}
-	if (e.getEventType() == Event::EventType::MouseMove && is_pressed && m_draggedCursor != invalidVec)
+	if (e.getEventType() == Event::EventType::MouseMove && m_is_pressed && m_draggedCursor != invalidVec)
 	{
 		auto& m = static_cast<MousePressEvent&>(e);
 
@@ -601,7 +623,7 @@ void GUIVSlider::onMyEvent(Event& e)
 			on_changed(*this);
 	}
 
-	if (e.getEventType() == Event::EventType::MouseScroll && has_focus)
+	if (e.getEventType() == Event::EventType::MouseScroll && m_has_focus)
 	{
 		auto& m = static_cast<MouseScrollEvent&>(e);
 
@@ -629,9 +651,9 @@ void GUIVSlider::setValue(float v)
 
 GUIBlank::GUIBlank(): GUIElement(GETYPE::Blank)
 {
-	is_diplayed = false;
-	is_not_spacial = true;
-	is_always_packed = true;
+	isVisible = false;
+	m_is_not_spacial = true;
+	isAlwaysPacked = true;
 }
 
 GUIHorizontalSplit::GUIHorizontalSplit(GUIElement* eUp, GUIElement* eDown, bool isUpMain): GUIHorizontalSplit(isUpMain)
@@ -649,16 +671,16 @@ GUIHorizontalSplit::GUIHorizontalSplit(bool isUpMain) : GUIElement(GETYPE::Split
 	getDownChild()->setParent(this);
 
 	if (isUpMain)
-		getDownChild()->is_always_packed = false;
-	else getUpChild()->is_always_packed = false;
+		getDownChild()->isAlwaysPacked = false;
+	else getUpChild()->isAlwaysPacked = false;
 
-	getUpChild()->dimension_inherit = GUIDimensionInherit::WIDTH;
-	getDownChild()->dimension_inherit = GUIDimensionInherit::WIDTH;
+	getUpChild()->dimInherit = GUIDimensionInherit::WIDTH;
+	getDownChild()->dimInherit = GUIDimensionInherit::WIDTH;
 
 	m_is_up_main = isUpMain;
-	dimension_inherit = GUIDimensionInherit::WIDTH_HEIGHT;
-	is_diplayed = false;
-	is_not_spacial = true;
+	dimInherit = GUIDimensionInherit::WIDTH_HEIGHT;
+	isVisible = false;
+	m_is_not_spacial = true;
 	space = 5;
 	setAlignment(GUIAlign::CENTER);
 }
@@ -737,16 +759,16 @@ GUIVerticalSplit::GUIVerticalSplit(bool isLeftMain) : GUIElement(GETYPE::SplitVe
 	getLeftChild()->setParent(this);
 
 	if (isLeftMain)
-		getRightChild()->is_always_packed = false;
-	else getLeftChild()->is_always_packed = false;
+		getRightChild()->isAlwaysPacked = false;
+	else getLeftChild()->isAlwaysPacked = false;
 
-	getRightChild()->dimension_inherit = GUIDimensionInherit::HEIGHT;
-	getLeftChild()->dimension_inherit = GUIDimensionInherit::HEIGHT;
+	getRightChild()->dimInherit = GUIDimensionInherit::HEIGHT;
+	getLeftChild()->dimInherit = GUIDimensionInherit::HEIGHT;
 
 	m_is_left_main = isLeftMain;
-	dimension_inherit = GUIDimensionInherit::WIDTH_HEIGHT;
-	is_diplayed = false;
-	is_not_spacial = true;
+	dimInherit = GUIDimensionInherit::WIDTH_HEIGHT;
+	isVisible = false;
+	m_is_not_spacial = true;
 	space = 5;
 	setAlignment(GUIAlign::CENTER);
 }
@@ -818,7 +840,7 @@ GUIView::GUIView() : GUIElement(GETYPE::View)
 {
 	getChildren().push_back(new GUIBlank());
 	getInside()->setParent(this);
-	getInside()->is_always_packed = false;
+	getInside()->isAlwaysPacked = false;
 	getInside()->color = {0.2f, 0.2f, 0.2f, 1};
 	getInside()->dim = {20, 20};
 	setPadding(10);
@@ -841,31 +863,35 @@ GUIVerticalSplit* createGUISliderView(bool sliderOnLeft)
 	auto slider = new GUIVSlider();
 	auto view = new GUIView();
 	auto inside = view->getInside();
-	inside->is_always_packed = true;
+	inside->isAlwaysPacked = true;
 	inside->setAlignment(GUIAlign::INVALID);
-	inside->dimension_inherit = GUIDimensionInherit::WIDTH;
+	inside->dimInherit = GUIDimensionInherit::WIDTH;
 	inside->setPadding(10);
 	inside->x = view->padding[GUI_LEFT];
 
 	(sliderOnLeft ? split->getLeftChild() : split->getRightChild())->appendChild(slider);
 	(!sliderOnLeft ? split->getLeftChild() : split->getRightChild())->appendChild(view);
 
-	inside->on_dimension_change = [slider,view](GUIElement& e)
+	inside->onDimChange = [slider,view](GUIElement& e)
 	{
 		slider->sliderRatio = std::min(1.f, (view->height - view->heightPadding()) / (view->getInside()->height));
+		view->getInside()->x = view->padding[GUI_LEFT];
 		view->getInside()->y = view->height - view->padding[GUI_TOP] - view->getInside()->height +
 
 			(1 - slider->getValue()) * (view->getInside()->height - (view->height - view->heightPadding()));
 	};
-	view->dimension_inherit = GUIDimensionInherit::WIDTH_HEIGHT;
+	view->dimInherit = GUIDimensionInherit::WIDTH_HEIGHT;
 	inside->color = {0.2,0.2,0.2,1};
-	slider->dimension_inherit = GUIDimensionInherit::HEIGHT;
+	slider->dimInherit = GUIDimensionInherit::HEIGHT;
+	slider->width = 20;
 	slider->on_changed = [view,slider](GUIElement& e)
 	{
+		view->getInside()->x = view->padding[GUI_LEFT];
 		view->getInside()->y = view->height - view->padding[GUI_TOP] - view->getInside()->height +
 
 			(1 - slider->getValue()) * (view->getInside()->height - (view->height - view->heightPadding()));
 	};
+	slider->setValue(1);
 
 	return split;
 }
@@ -880,12 +906,12 @@ static float smootherstep(float x)
 
 GUISpecialTextButton::GUISpecialTextButton(const std::string& text, FontMaterial* material) :GUITextButton(text, material)
 {
-	is_diplayed = false;
+	isVisible = false;
 }
 
 void GUISpecialTextButton::update()
 {
-	if (has_focus)
+	if (m_has_focus)
 	{
 		currentScale += animationSpeed;
 		currentScale = std::min(currentScale, 1.f);

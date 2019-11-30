@@ -39,6 +39,8 @@ private:
 	GUIElement* m_focused_element;
 	std::vector<GUIWindow*> m_windows;
 	std::vector<Event*> m_event_buffer;
+	std::vector<GEID> m_toclose_wins;
+	
 	
 	glm::vec2 currentStackPos={0,0};
 	
@@ -73,6 +75,21 @@ public:
 	{
 		currentStackPos.x -= x;
 		currentStackPos.y -= y;
+	}
+	inline void closeWindow(GEID win) { m_toclose_wins.push_back(win); }
+	inline void closePendingWins()
+	{
+		for (auto toclose_win : m_toclose_wins)
+			for (int i = 0; i < m_windows.size(); ++i)
+			{
+				auto win = m_windows[i];
+				if(win->id==toclose_win)
+				{
+					m_windows.erase(m_windows.begin() + i);
+					delete win;
+				}
+			}
+		m_toclose_wins.clear();
 	}
 	void onUpdate();
 	void onEvent(Event& e);

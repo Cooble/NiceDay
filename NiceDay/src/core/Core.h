@@ -61,6 +61,7 @@ class ResourceMan
 {
 public:
 	static std::string getResourceLoc(const std::string& resPath);
+	//static const char* getResourceLoc(const char* resPath);
 };
 inline std::string ResourceMan::getResourceLoc(const std::string& resPath)
 {
@@ -72,5 +73,16 @@ inline std::string ResourceMan::getResourceLoc(const std::string& resPath)
 	}
 	return resPath;
 }
+/*inline const char* ResourceMan::getResourceLoc(const char* resPath)
+{
+	std::string resPathh = resPath;
+	if (resPathh._Starts_with("res") || resPathh._Starts_with("/res"))
+	{
+		auto currentDir = std::filesystem::current_path();
+		currentDir = currentDir.parent_path();
+		return (currentDir.string() + "/" + resPathh).c_str();
+	}
+	return resPath;
+}*/
 
 

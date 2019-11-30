@@ -7,7 +7,7 @@
 #include "entity/WorldEntity.h"
 #include "world/WorldTime.h"
 #include "particle/ParticleManager.h"
-#include "Pool.h"
+#include "memory/Pool.h"
 #include "ThreadedWorldGen.h"
 #include "BlockAccess.h"
 

@@ -25,7 +25,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 //program specific
-#include "Log.h"
-#include "Core.h"
-#include "NDUtil.h"
+#include "core/Log.h"
+#include "core/Core.h"
+#include "core/NDUtil.h"
 #include "nbt/NBT.h"

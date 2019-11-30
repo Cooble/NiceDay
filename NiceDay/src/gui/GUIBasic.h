@@ -4,6 +4,18 @@
 #include "graphics/Sprite.h"
 #include "graphics/FontMaterial.h"
 
+class GUIAnimation
+{
+private:
+	std::vector<GUIElement> m_poses;
+	GUIElement* m_element;
+	float m_time;
+	
+	
+public:
+	//GUIAnimation(GUIElement* e);
+	
+};
 // Basic
 class GUIBlank :public GUIElement
 {
@@ -27,6 +39,8 @@ class GUIButton :public GUIElement
 {
 public:
 	ActionF onPressed;
+	ActionF onFocusGain;
+	ActionF onFocusLost;
 public:
 	GUIButton();
 	void onMyEvent(Event& e) override;
@@ -34,8 +48,10 @@ public:
 class GUIImage :public GUIElement
 {
 public:
-	Sprite* src;
+	float scale=1;
+	Sprite* image;
 	GUIImage();
+	bool packDimensions() override;
 	void setImage(Sprite* sprite);
 
 };
@@ -53,8 +69,8 @@ private:
 	}m_resizeMode = invalid;
 	float m_resize_x, m_resize_y,m_resize_w,m_resize_h;
 public:
-	bool moveable = true;
-	bool resizable = true;
+	bool isMoveable = true;
+	bool isResizable = true;
 	GUIWindow();
 	void onMyEvent(Event& e) override;
 };
@@ -72,6 +88,7 @@ public:
 	CursorProp prop;
 	int cursorPos=0;
 	char cursorChar = '|';
+	ActionF onValueEntered;
 public:
 	GUITextBox();
 
@@ -221,7 +238,7 @@ class GUIImageButton :public GUIButton
 {
 public:
 	GUIImageButton(Sprite* image);
-	inline GUIImage* getTextElement() { return static_cast<GUIImage*>(getChildren()[0]); }
+	inline GUIImage* getImageElement() { return static_cast<GUIImage*>(getChildren()[0]); }
 };
 
 class GUISpecialTextButton :public GUITextButton
@@ -235,7 +252,6 @@ public:
 	GUISpecialTextButton(const std::string& text, FontMaterial* material);
 	void update() override;
 };
-
 
 GUIVerticalSplit* createGUISliderView(bool sliderOnLeft=true);
 

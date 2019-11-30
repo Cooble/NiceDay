@@ -1,8 +1,8 @@
 #include "ndpch.h"
 #include "MainLayer.h"
-#include "Core.h"
+#include "core/Core.h"
 #include "event/KeyEvent.h"
-#include "App.h"
+#include "core/App.h"
 #include "GLFW/glfw3.h"
 
 MainLayer::MainLayer()

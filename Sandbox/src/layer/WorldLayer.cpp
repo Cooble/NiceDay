@@ -7,8 +7,8 @@
 #include "world/WorldIO.h"
 #include "event/KeyEvent.h"
 #include "event/MouseEvent.h"
-#include "App.h"
-#include "Stats.h"
+#include "core/App.h"
+#include "core/Stats.h"
 #include <GLFW/glfw3.h>
 
 #include "world/biome/BiomeForest.h"
@@ -30,8 +30,10 @@
 #include "world/particle/ParticleRegistry.h"
 #include "world/particle/particles.h"
 #include "world/ChunkMeshNew.h"
-#include "imgui_utils.h"
+#include "core/imgui_utils.h"
 #include "inventory/Item.h"
+#include "graphics/GContext.h"
+#include "core/AppGlobals.h"
 
 const char* WORLD_FILE_PATH;
 int CHUNKS_LOADED;
@@ -155,16 +157,22 @@ WorldLayer::WorldLayer()
 
 	//world===================================================
 	WorldInfo info;
-	strcpy_s(info.name, "NiceWorld");
+	std::string worldName = "NiceWorld";
+	std::string newName = AppGlobals::get().nbt.get("set.worldName",std::string());
+	if (newName != "")
+		worldName = newName;
+	strcpy_s(info.name, worldName.c_str());
 	info.chunk_width = 50;
 	info.chunk_height = 50;
 	info.seed = 0;
 	info.terrain_level = (info.chunk_height - 4) * WORLD_CHUNK_SIZE;
 
-	m_world = new World(std::string(info.name) + ".world", info);
-
+	m_world = new World("worlds/"+std::string(info.name) + ".world", info);
 
 	bool genW = false;
+	if (AppGlobals::get().nbt.get<bool>("set.newWorld"))
+		genW = true;
+
 	bool worldAlreadyLoaded = true;
 
 	if (genW)
@@ -571,6 +579,7 @@ void WorldLayer::onUpdate()
 
 void WorldLayer::onRender()
 {
+	Gcon.enableDepthTest(false);
 	if (!m_is_world_ready)
 		return;
 	//auto t = TimerStaper("WorldLayer::onRender");

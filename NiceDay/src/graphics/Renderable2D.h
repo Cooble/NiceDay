@@ -35,8 +35,11 @@ struct UVQuad
 		uv[2] = uv[0] + size;
 		uv[3] = uv[0] + glm::vec2(0, size.y);
 	}
-
-	inline static UVQuad build(const glm::vec2& pos, const glm::vec2& size, bool horizontalFlip = false, bool verticalFlip = false)
+	inline static UVQuad elementary()
+	{
+		return UVQuad({ 0,0 }, { 1,1 });
+	}
+	inline static UVQuad build(const glm::vec2& pos, const glm::vec2& size, bool horizontalFlip = false, bool verticalFlip = false,bool rotate90=false)
 	{
 		glm::vec2 pos0 = pos;
 		glm::vec2 pos1 = pos+size;
@@ -54,11 +57,22 @@ struct UVQuad
 		}
 
 		UVQuad out;
-
+		
 		out.uv[0] = pos0;
 		out.uv[1] = glm::vec2(pos1.x,pos0.y);
 		out.uv[2] =pos1;
 		out.uv[3] = glm::vec2(pos0.x,pos1.y);
+
+		if(rotate90)
+		{
+			auto last = out.uv[0];
+			out.uv[0] = out.uv[1];
+			out.uv[1] = out.uv[2];
+			out.uv[2] = out.uv[3];
+			out.uv[3] = last;
+		}
+
+		
 		return out;
 	}
 

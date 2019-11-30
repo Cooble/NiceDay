@@ -31,17 +31,17 @@ void GUIElement::checkFocus(MouseMoveEvent& e)
 {
 	if (contains(e.getX(), e.getY()))
 	{
-		if (!has_focus && !e.handled) //if event has been handled we are in a different unfocused window
+		if (!m_has_focus && !e.handled) //if event has been handled we are in a different unfocused window
 		{
-			has_focus = true;
+			m_has_focus = true;
 			onMyEvent(MouseFocusGain(e.getX(), e.getY()));
 			e.handled = true;
 			//GUIContext::get().submitBroadcastEvent(MouseFocusLost(this->id, GUIElement_InvalidNumber));
 		}
 	}
-	else if (has_focus)
+	else if (m_has_focus)
 	{
-		has_focus = false;
+		m_has_focus = false;
 		onMyEvent(MouseFocusLost(e.getX(), e.getY()));
 	}
 }
@@ -49,7 +49,7 @@ void GUIElement::checkFocus(MouseMoveEvent& e)
 void GUIElement::appendChild(GUIElement* element)
 {
 	children.push_back(element);
-	children[children.size() - 1]->parent = this;
+	children[children.size() - 1]->m_parent = this;
 	element->onParentAttached();
 	element->onParentChanged();
 	onChildChange();
@@ -58,15 +58,15 @@ void GUIElement::appendChild(GUIElement* element)
 void GUIElement::onChildChange()
 {
 	bool callParent = false;
-	if (is_always_packed)
+	if (isAlwaysPacked)
 		callParent = packDimensions();
 	repositionChildren();
 
-	if (parent && callParent)
-		parent->onChildChange();
+	if (m_parent && callParent)
+		m_parent->onChildChange();
 	if (callParent)
-		if (on_dimension_change)
-			on_dimension_change(*this);
+		if (onDimChange)
+			onDimChange(*this);
 }
 
 void GUIElement::removeChild(int index)
@@ -90,12 +90,12 @@ void GUIElement::onDimensionChange()
 	for (auto child : children)
 		child->onParentChanged();
 
-	if (is_always_packed)
+	if (isAlwaysPacked)
 		packDimensions();
 
 	repositionChildren();
-	if (on_dimension_change)
-		on_dimension_change(*this);
+	if (onDimChange)
+		onDimChange(*this);
 }
 
 void GUIElement::repositionChildren()
@@ -150,7 +150,7 @@ void GUIElement::repositionChildren()
 
 bool GUIElement::packDimensions()
 {
-	if (dimension_inherit == GUIDimensionInherit::WIDTH_HEIGHT)
+	if (dimInherit == GUIDimensionInherit::WIDTH_HEIGHT)
 		return false;
 	float lineW[3] = {0, 0, 0};
 	float lineH[3] = {0, 0, 0};
@@ -213,7 +213,7 @@ bool GUIElement::packDimensions()
 	maxH = std::max(maxH, lineH[0] + space + lineH[1] + space + lineH[2] + heightPadding());
 
 	bool change;
-	switch (dimension_inherit)
+	switch (dimInherit)
 	{
 	case GUIDimensionInherit::WIDTH:
 		change = height != maxH;
@@ -234,9 +234,9 @@ bool GUIElement::packDimensions()
 
 void GUIElement::onParentChanged()
 {
-	if (dimension_inherit != GUIDimensionInherit::INVALID)
+	if (dimInherit != GUIDimensionInherit::INVALID)
 	{
-		switch (dimension_inherit)
+		switch (dimInherit)
 		{
 		case GUIDimensionInherit::WIDTH:
 			width = getParent()->width - getParent()->widthPadding();
@@ -327,21 +327,21 @@ void GUIElement::onMyEvent(Event& e)
 		checkFocus(static_cast<MouseMoveEvent&>(e));
 		break;
 	case Event::EventType::MouseFocusGain:
-		has_focus = true;
+		m_has_focus = true;
 		break;
 	case Event::EventType::MouseFocusLost:
 		{
 			auto& ev = dynamic_cast<MouseEvent&>(e);
 			if (ev.getPos() != glm::vec2(this->id, GUIElement_InvalidNumber))
 				//this is an event that we have sent to the other cause we have gained focus
-				has_focus = false;
+				m_has_focus = false;
 		}
 		break;
 	case Event::EventType::MousePress:
 		{
 			auto& ev = dynamic_cast<MousePressEvent&>(e);
 			if (ev.getButton() == GLFW_MOUSE_BUTTON_1)
-				is_pressed = true;
+				m_is_pressed = true;
 		}
 		break;
 
@@ -349,7 +349,7 @@ void GUIElement::onMyEvent(Event& e)
 		{
 			auto& ev = dynamic_cast<MouseReleaseEvent&>(e);
 			if (ev.getButton() == GLFW_MOUSE_BUTTON_1)
-				is_pressed = false;
+				m_is_pressed = false;
 		}
 		break;
 	}

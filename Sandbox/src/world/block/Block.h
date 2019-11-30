@@ -1,6 +1,6 @@
 #pragma once
 #include "ndpch.h"
-#include "physShapes.h"
+#include "core/physShapes.h"
 #include "world/entity/EntityManager.h"
 #include "world/entity/entity_datas.h"
 class BlockAccess;

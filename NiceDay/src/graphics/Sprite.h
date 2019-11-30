@@ -31,7 +31,7 @@ public:
 	Sprite();
 
 
-	void setSpriteIndex(uint32_t u, uint32_t v,bool horizontalFlip=false,bool verticalFlip=false);
+	void setSpriteIndex(uint32_t u, uint32_t v,bool horizontalFlip=false,bool verticalFlip=false,bool rotate90=false);
 
 	inline void setPosition(const glm::vec3& pos) { m_position = pos; }
 	inline void setSize(const glm::vec2& size) { m_size = size; }

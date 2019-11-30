@@ -23,7 +23,7 @@ GLTexture::GLTexture(const TextureInfo& info)
 	if (!info.file_path.empty())
 	{
 		stbi_set_flip_vertically_on_load(true);
-		m_buffer = stbi_load(m_filePath.c_str(), &m_width, &m_height, &m_BPP, 4);
+		m_buffer = stbi_load(ND_RESLOC(m_filePath).c_str(), &m_width, &m_height, &m_BPP, 4);
 		GLCall(glTexImage2D(GL_TEXTURE_2D, 0, (int)m_format, m_width, m_height, 0, (int)m_format, GL_UNSIGNED_BYTE, m_buffer));
 		if (m_buffer)
 			stbi_image_free(m_buffer);

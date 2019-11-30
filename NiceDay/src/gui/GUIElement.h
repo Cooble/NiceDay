@@ -66,31 +66,29 @@ private:
 	std::vector<GUIElement*> children;
 	GUIAlign m_alignment=GUIAlign::INVALID;
 protected:
-	GUIElement* parent = nullptr;
+	GUIElement* m_parent = nullptr;
 
 	// is mouse over the element
-	bool has_focus = false;
-	
-	//need onUpdate() to be called
-	bool is_updatable = false;
+	bool m_has_focus = false;
 	
 	//if should be rendered (children will be rendered regardless)
-	bool is_diplayed = true;
 	
 	//has no dimensions on its own
 	//usually some column,row grid or something which is fully embedded in its parent
-	bool is_not_spacial = false;
-	bool is_pressed = false;
+	bool m_is_not_spacial = false;
+	bool m_is_pressed = false;
 
 
 	//checks if element gained or lost focus
 	void checkFocus(MouseMoveEvent& e);
 
 public:
-	ActionF on_dimension_change;
+	float renderAngle=0;
+	bool isVisible = true;
+	ActionF onDimChange;
 
 	// always adapts dimensions based on the sizes of children
-	bool is_always_packed = false;
+	bool isAlwaysPacked = false;
 	glm::vec4 color={0,0,0,0};
 	float space=0;
 
@@ -122,7 +120,7 @@ public:
 	float margin[4];
 	float padding[4];
 	bool is_dirty;
-	GUIDimensionInherit dimension_inherit = GUIDimensionInherit::INVALID;
+	GUIDimensionInherit dimInherit = GUIDimensionInherit::INVALID;
 
 	GUIElement(GETYPE type);
 	virtual ~GUIElement();
@@ -132,12 +130,10 @@ public:
 		for (float& i : padding)
 			i = paddin;
 	}
-	inline bool isUpdateable() const { return is_updatable; }
-	inline bool hasFocus() const { return has_focus; }
-	inline bool isNotSpacial() const { return is_not_spacial; }
-	inline bool isDisplayed() const { return is_diplayed; }
-	inline bool isPressed() const { return is_pressed; }
-	inline void setParent(GUIElement* parent) { this->parent = parent; }
+	inline bool hasFocus() const { return m_has_focus; }
+	inline bool isNotSpacial() const { return m_is_not_spacial; }
+	inline bool isPressed() const { return m_is_pressed; }
+	inline void setParent(GUIElement* parent) { this->m_parent = parent; }
 	
 	inline GUIAlign getAlignment() const { return m_alignment; }
 	inline void setAlignment(GUIAlign align) { m_alignment = align; }
@@ -147,7 +143,7 @@ public:
 
 	inline GUIElement* getParent() const
 	{
-		return parent;
+		return m_parent;
 	}
 
 	inline auto& getChildren() { return children; }

@@ -47,3 +47,39 @@ void LayerStack::PopOverlay(Layer* overlay)
 	overlay->onDetach();
 
 }
+
+void LayerStack::popPending()
+{
+	for (auto to_pop : m_tasks)
+	{
+		if (to_pop.overlay&&!to_pop.add)
+			PopOverlay(to_pop.l);
+		else if(!to_pop.overlay &&!to_pop.add)
+			PopLayer(to_pop.l);
+		else if (to_pop.overlay && to_pop.add)
+			PushOverlay(to_pop.l);
+		else if (!to_pop.overlay && to_pop.add)
+			PushLayer(to_pop.l);
+	}
+	m_tasks.clear();
+}
+
+void LayerStack::PopLayerEventually(Layer* layer)
+{
+	m_tasks.push_back({ false,false,layer });
+}
+
+void LayerStack::PopOverlayEventually(Layer* overlay)
+{
+	m_tasks.push_back({ true,false,overlay });
+}
+
+void LayerStack::PushLayerEventually(Layer* layer)
+{
+	m_tasks.push_back({ false,true,layer });
+}
+
+void LayerStack::PushOverlayEventually(Layer* overlay)
+{
+	m_tasks.push_back({ true,true,overlay });
+}

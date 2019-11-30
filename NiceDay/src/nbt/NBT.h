@@ -1,5 +1,5 @@
 #pragma once
-#include "physShapes.h"
+#include "core/physShapes.h"
 #include "ndpch.h"
 struct NBT;
 
@@ -259,7 +259,7 @@ public:
 	NBT_BUILD_FUNC(uint32_t, m_ints, int32_t)
 	NBT_BUILD_FUNC(float, m_ints, int32_t)
 	NBT_BUILD_FUNC(int32_t, m_ints, int32_t)
-
+	NBT_BUILD_FUNC(bool, m_ints, int32_t)
 
 	//8bytes======================================
 

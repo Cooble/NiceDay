@@ -7,7 +7,7 @@
 #include "graphics/BatchRenderer2D.h"
 #include "graphics/GContext.h"
 #include "gui/GUIRenderer.h"
-#include "App.h"
+#include "core/App.h"
 #include "graphics/Sprite.h"
 #include "GUIExampleWindow.h"
 #include "globals.h"
@@ -72,7 +72,7 @@ public:
 			window.setCenterPosition(App::get().getWindow()->getWidth(), App::get().getWindow()->getHeight());
 			window.x += i * 50;
 			window.y += i * 50;
-			window.resizable = false;
+			window.isResizable = false;
 			{
 				auto layout = new GUIGrid();
 				layout->width = 500;

@@ -1,6 +1,6 @@
 ﻿#pragma once
 #include "ndpch.h"
-#include "Pool.h"
+#include "memory/Pool.h"
 
 typedef std::function<bool()> Task;//return true of should be killed
 typedef std::function<void()> AfterTask;//called when job isDone

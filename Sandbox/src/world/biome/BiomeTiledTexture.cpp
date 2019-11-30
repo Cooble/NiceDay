@@ -1,6 +1,6 @@
 ﻿#include "ndpch.h"
 #include "BiomeTiledTexture.h"
-#include "App.h"
+#include "core/App.h"
 #include "world/WorldRenderManager.h"
 
 BiomeTiledTexture::BiomeTiledTexture(int id, const std::string& texture_path)

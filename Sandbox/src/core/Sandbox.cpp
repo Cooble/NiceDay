@@ -2,6 +2,7 @@
 #include "layer/MainLayer.h"
 #include "layer/WorldLayer.h"
 #include "graphics/Sprite2D.h"
+#include "layer/GUILayer.h"
 
 #ifdef ND_DEBUG
 static std::string s_title = "Niceday - Debug";
@@ -15,8 +16,9 @@ App(1280,720, s_title)
 	//m_imgui_enable = false;
 	Sprite2D::init();
 	m_LayerStack.PushLayer(new MainLayer());
+	m_LayerStack.PushLayer(new GUILayer());
 
-	m_LayerStack.PushLayer(new WorldLayer());
+	//m_LayerStack.PushLayer(new WorldLayer());
 
 	//m_LayerStack.PushLayer(new PriorGenLayer());
 }

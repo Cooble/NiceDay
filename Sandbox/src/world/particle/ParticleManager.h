@@ -1,5 +1,5 @@
 #pragma once
-#include "physShapes.h"
+#include "core/physShapes.h"
 #include "world/particle/ParticleRegistry.h"
 
 class ParticleRenderer;

@@ -1,15 +1,31 @@
 ﻿#include "ndpch.h"
 #include "GUIContext.h"
-#include "AppGlobals.h"
+#include "event/WindowEvent.h"
 
 void GUIContext::onUpdate()
 {
+	currentStackPos = { 0,0 };
 	for (int i = m_windows.size() - 1; i >= 0; --i)
 		m_windows[i]->update();
+	closePendingWins();
 }
 
 void GUIContext::onEvent(Event& e)
 {
+	if(e.getEventType()==Event::EventType::WindowResize)
+	{
+		auto m = static_cast<WindowResizeEvent&>(e);
+		for (auto window : m_windows)
+		{
+			if(window->dimInherit==GUIDimensionInherit::WIDTH_HEIGHT)
+			{
+				window->height = m.getHeight();
+				window->width = m.getWidth();
+				window->onDimensionChange();
+			}
+		}
+		return;
+	}
 	if (m_focused_element)
 	{
 		switch (e.getEventType())
@@ -96,9 +112,12 @@ void GUIContext::onEvent(Event& e)
 			m_event_buffer.clear();
 		}
 	}
+
+	closePendingWins();
 }
 
 void GUIContext::submitBroadcastEvent(Event& e)
 {
 	m_event_buffer.push_back(e.allocateCopy());
+	closePendingWins();
 }

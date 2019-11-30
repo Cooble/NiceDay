@@ -8,8 +8,8 @@
 #include "world/block/block_datas.h"
 #include "world/block/basic_blocks.h"
 
-#include "Stats.h"
-#include "App.h"
+#include "core/Stats.h"
+#include "core/App.h"
 #include "graphics/Sprite.h"
 #include "world/gen/TreeGen.h"
 #include "world/particle/particles.h"

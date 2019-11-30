@@ -1,5 +1,5 @@
 ﻿#include "ndpch.h"
-#include "AppGlobals.h"
+#include "core/AppGlobals.h"
 
 AppGlobals& AppGlobals::get()
 {

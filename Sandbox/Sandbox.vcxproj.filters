@@ -180,6 +180,11 @@
     <ClInclude Include="src\inventory\Item.h" />
     <ClInclude Include="src\inventory\ItemBlock.h" />
     <ClInclude Include="src\inventory\Inventory.h" />
+    <ClInclude Include="src\layer\GUILayer.h" />
+    <ClInclude Include="src\gui\MainWindow.h" />
+    <ClInclude Include="src\layer\CommonMessages.h" />
+    <ClInclude Include="src\gui\GUICustomRenderer.h" />
+    <ClInclude Include="src\world\WorldsProvider.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\core\EntryPoint.cpp">
@@ -317,5 +322,9 @@
     <ClCompile Include="src\inventory\Item.cpp" />
     <ClCompile Include="src\inventory\ItemBlock.cpp" />
     <ClCompile Include="src\inventory\Inventory.cpp" />
+    <ClCompile Include="src\layer\GUILayer.cpp" />
+    <ClCompile Include="src\gui\MainWindow.cpp" />
+    <ClCompile Include="src\gui\GUICustomRenderer.cpp" />
+    <ClCompile Include="src\world\WorldsProvider.cpp" />
   </ItemGroup>
 </Project>

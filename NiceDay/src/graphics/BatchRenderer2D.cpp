@@ -6,6 +6,7 @@
 #include "font/TextBuilder.h"
 #include "FontMaterial.h"
 #include "platform/OpenGL/GLShader.h"
+#include "core/Core.h"
 
 #define MAX_TEXTURES 16
 
@@ -266,6 +267,7 @@ void BatchRenderer2D::submit(const Renderable2D& renderable)
 	submitTextureQuad(pos, size, uv, renderable.getTexture());
 		
 }
+
 void BatchRenderer2D::submitTextureQuad(const glm::vec3& pos,const glm::vec2& size,const UVQuad& uv,const Texture* t)
 {
 	int textureSlot = bindTexture(t);

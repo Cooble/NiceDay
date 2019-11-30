@@ -10,7 +10,7 @@
 #include "graphics/Effect.h"
 #include "GLFW/glfw3.h"
 #include "imgui_utils.h"
-#include "AppGlobals.h"
+#include "core/AppGlobals.h"
 
 #define BIND_EVENT_FN(x) std::bind(&App::x, &App::get(), std::placeholders::_1)
 
@@ -18,7 +18,8 @@
 App* App::s_Instance = nullptr;
 
 App::App(int width, int height, const std::string& title)
-	:m_scheduler(200)
+	:m_scheduler(200),
+	m_dbuff_stackalloc(1000000)//1MB
 {
 	ASSERT(s_Instance == nullptr, "Instance of game already exists!")
 	s_Instance = this;
@@ -143,6 +144,8 @@ void App::update()
 	for (Layer* l : m_LayerStack)
 		l->onUpdate();
 	m_scheduler.update();
+	m_LayerStack.popPending();
+	m_dbuff_stackalloc.swapBuffers();
 }
 
 void App::render()
@@ -166,7 +169,6 @@ void App::stop()
 
 
 //========IMGUILAYER========================
-
 
 ImGuiLayer::ImGuiLayer()
 	: Layer("ImGuiLayer")

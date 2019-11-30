@@ -1,7 +1,6 @@
 ﻿#include "ndpch.h"
 #include "PriorGenLayer.h"
-#include <imgui.h>
-#include <imgui_utils.h>
+#include "core/imgui_utils.h"
 #include "graphics/Effect.h"
 
 

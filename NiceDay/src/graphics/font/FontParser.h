@@ -87,25 +87,20 @@ private:
 class FontLib
 {
 private:
-	inline static std::array<Font,ND_FONT_LIB_MAX_SIZE> s_fonts;
-	static int s_current_index;
+	inline static std::unordered_map<std::string,Font> s_fonts;
 public:
-	inline static FontID registerFont(const Font& font)
+	inline static void registerFont(const std::string& id, const Font& font)
 	{
-		ASSERT(s_current_index < s_fonts.max_size(), "ND_FONT_LIB_MAX_SIZE too low");
-		s_fonts[s_current_index++] = font;
-		FontID id = s_current_index - 1;
-		s_fonts[id].id = id;
-		return id;
+		s_fonts[id] = font;
 	}
 
-	inline static const Font* getFont(FontID id)
+	inline static const Font* getFont(const std::string& id)
 	{
-		ASSERT(id < s_current_index, "Invalid FontID");
+		auto df = s_fonts.find(id);
+		if (df == s_fonts.end())
+			return nullptr;
 		return &s_fonts[id];
 	}
-
-	inline static void clear() { s_current_index = 0; }
 };
 
 class FontParser

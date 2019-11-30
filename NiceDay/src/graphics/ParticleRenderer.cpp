@@ -3,7 +3,6 @@
 #include "Renderable2D.h"
 #include "API/Texture.h"
 #include "platform/OpenGL/GLRenderer.h"
-#include "Stats.h"
 #include "API/Shader.h"
 #include "API/Buffer.h"
 #include "API/VertexArray.h"

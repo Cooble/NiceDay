@@ -86,6 +86,7 @@
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <BasicRuntimeChecks>UninitializedLocalUsageCheck</BasicRuntimeChecks>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -139,12 +140,16 @@
     <ClInclude Include="src\graphics\Bar.h" />
     <ClInclude Include="src\graphics\BlockTextureAtlas.h" />
     <ClInclude Include="src\graphics\Sprite2D.h" />
+    <ClInclude Include="src\gui\GUICustomRenderer.h" />
     <ClInclude Include="src\inventory\Inventory.h" />
     <ClInclude Include="src\inventory\Item.h" />
     <ClInclude Include="src\inventory\ItemBlock.h" />
+    <ClInclude Include="src\layer\CommonMessages.h" />
+    <ClInclude Include="src\layer\GUILayer.h" />
     <ClInclude Include="src\layer\MainLayer.h" />
     <ClInclude Include="src\layer\PriorGenLayer.h" />
     <ClInclude Include="src\layer\WorldLayer.h" />
+    <ClInclude Include="src\gui\MainWindow.h" />
     <ClInclude Include="src\world\BlockAccess.h" />
     <ClInclude Include="src\world\Camera.h" />
     <ClInclude Include="src\world\ChunkLoader.h" />
@@ -161,6 +166,7 @@
     <ClInclude Include="src\world\World.h" />
     <ClInclude Include="src\world\WorldIO.h" />
     <ClInclude Include="src\world\WorldRenderManager.h" />
+    <ClInclude Include="src\world\WorldsProvider.h" />
     <ClInclude Include="src\world\WorldTime.h" />
     <ClInclude Include="src\world\biome\Biome.h" />
     <ClInclude Include="src\world\biome\BiomeForest.h" />
@@ -194,12 +200,15 @@
     <ClCompile Include="src\graphics\Bar.cpp" />
     <ClCompile Include="src\graphics\BlockTextureAtlas.cpp" />
     <ClCompile Include="src\graphics\Sprite2D.cpp" />
+    <ClCompile Include="src\gui\GUICustomRenderer.cpp" />
     <ClCompile Include="src\inventory\Inventory.cpp" />
     <ClCompile Include="src\inventory\Item.cpp" />
     <ClCompile Include="src\inventory\ItemBlock.cpp" />
+    <ClCompile Include="src\layer\GUILayer.cpp" />
     <ClCompile Include="src\layer\MainLayer.cpp" />
     <ClCompile Include="src\layer\PriorGenLayer.cpp" />
     <ClCompile Include="src\layer\WorldLayer.cpp" />
+    <ClCompile Include="src\gui\MainWindow.cpp" />
     <ClCompile Include="src\world\BlockAccess.cpp" />
     <ClCompile Include="src\world\Camera.cpp" />
     <ClCompile Include="src\world\ChunkLoader.cpp" />
@@ -236,6 +245,7 @@
     <ClCompile Include="src\world\particle\ParticleManager.cpp" />
     <ClCompile Include="src\world\particle\ParticleRegistry.cpp" />
     <ClCompile Include="src\world\particle\particles.cpp" />
+    <ClCompile Include="src\world\WorldsProvider.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\NiceDay\NiceDay.vcxproj">

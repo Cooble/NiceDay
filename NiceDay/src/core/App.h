@@ -5,6 +5,7 @@
 #include "event/MouseEvent.h"
 #include "event/WindowEvent.h"
 #include "Scheduler.h"
+#include "memory/StackAllocator.h"
 
 #define ND_SCHED App::get().getScheduler()
 
@@ -28,6 +29,7 @@ public:
 	inline Input& getInput() { return m_Input; }
 	inline LayerStack& getLayerStack() { return m_LayerStack; }
 	inline Scheduler& getScheduler() { return m_scheduler; }
+	inline DoubleBuffStackAllocator& getBufferedAllocator() { return m_dbuff_stackalloc; }
 
 	// return target ticks per second (not actual)
 	inline int getTPS() const{ return m_target_tps; }
@@ -61,6 +63,7 @@ protected:
 	LayerStack m_LayerStack;
 	ImGuiLayer* m_ImGuiLayer=nullptr;
 	Scheduler m_scheduler;
+	DoubleBuffStackAllocator m_dbuff_stackalloc;
 	bool m_running=false;
 	
 };

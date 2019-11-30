@@ -30,7 +30,7 @@ bool FontParser::parse(Font& font,const std::string& filePath)
 	auto stream = std::ifstream(ND_RESLOC(filePath));
 	if (!stream.is_open()) {
 #ifdef ND_DEBUG
-		ND_WARN("Invalid font path: {}", filePath);
+		ND_WARN("Invalid font path: {} / {}", filePath, ND_RESLOC(filePath));
 #endif
 		return false;
 	}

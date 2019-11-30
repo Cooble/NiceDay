@@ -1,8 +1,8 @@
 ﻿#include "ndpch.h"
 #include "Effect.h"
 #include "platform/OpenGL/GLRenderer.h"
-#include "App.h"
 #include "GContext.h"
+#include "core/App.h"
 
 
 void Effect::renderDefault()

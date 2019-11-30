@@ -144,9 +144,11 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="src\App.h" />
-    <ClInclude Include="src\AppGlobals.h" />
-    <ClInclude Include="src\Core.h" />
+    <ClInclude Include="src\core\App.h" />
+    <ClInclude Include="src\core\AppGlobals.h" />
+    <ClInclude Include="src\core\Core.h" />
+    <ClInclude Include="src\core\sid.h" />
+    <ClInclude Include="src\event\MessageEvent.h" />
     <ClInclude Include="src\graphics\FontMaterial.h" />
     <ClInclude Include="src\graphics\FontObject.h" />
     <ClInclude Include="src\graphics\font\TextBuilder.h" />
@@ -154,14 +156,15 @@
     <ClInclude Include="src\gui\GUIElement.h" />
     <ClInclude Include="src\gui\GUIRenderer.h" />
     <ClInclude Include="src\gui\GUIBasic.h" />
-    <ClInclude Include="src\Input.h" />
-    <ClInclude Include="src\Log.h" />
-    <ClInclude Include="src\NDUtil.h" />
+    <ClInclude Include="src\core\Input.h" />
+    <ClInclude Include="src\core\Log.h" />
+    <ClInclude Include="src\core\NDUtil.h" />
+    <ClInclude Include="src\memory\StackAllocator.h" />
     <ClInclude Include="src\platform\OpenGL\GLShader.h" />
-    <ClInclude Include="src\Pool.h" />
-    <ClInclude Include="src\Scheduler.h" />
-    <ClInclude Include="src\Stats.h" />
-    <ClInclude Include="src\Window.h" />
+    <ClInclude Include="src\memory\Pool.h" />
+    <ClInclude Include="src\core\Scheduler.h" />
+    <ClInclude Include="src\core\Stats.h" />
+    <ClInclude Include="src\core\Window.h" />
     <ClInclude Include="src\event\Event.h" />
     <ClInclude Include="src\event\KeyEvent.h" />
     <ClInclude Include="src\event\MouseEvent.h" />
@@ -184,12 +187,12 @@
     <ClInclude Include="src\graphics\TextureAtlas.h" />
     <ClInclude Include="src\graphics\TextureManager.h" />
     <ClInclude Include="src\graphics\font\FontParser.h" />
-    <ClInclude Include="src\imgui_utils.h" />
+    <ClInclude Include="src\core\imgui_utils.h" />
     <ClInclude Include="src\layer\Layer.h" />
     <ClInclude Include="src\layer\LayerStack.h" />
     <ClInclude Include="src\nbt\NBT.h" />
     <ClInclude Include="src\ndpch.h" />
-    <ClInclude Include="src\physShapes.h" />
+    <ClInclude Include="src\core\physShapes.h" />
     <ClInclude Include="src\platform\OpenGL\GLBuffer.h" />
     <ClInclude Include="src\platform\OpenGL\GLContext.h" />
     <ClInclude Include="src\platform\OpenGL\GLFrameBuffer.h" />
@@ -565,8 +568,10 @@
     <ClInclude Include="vendor\stb_image\stb_image_write.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\App.cpp" />
-    <ClCompile Include="src\AppGlobals.cpp" />
+    <ClCompile Include="src\core\App.cpp" />
+    <ClCompile Include="src\core\AppGlobals.cpp" />
+    <ClCompile Include="src\core\sid.cpp" />
+    <ClCompile Include="src\event\MessageEvent.cpp" />
     <ClCompile Include="src\graphics\FontMaterial.cpp" />
     <ClCompile Include="src\graphics\FontObject.cpp" />
     <ClCompile Include="src\graphics\font\TextBuilder.cpp" />
@@ -574,13 +579,14 @@
     <ClCompile Include="src\gui\GUIElement.cpp" />
     <ClCompile Include="src\gui\GUIRenderer.cpp" />
     <ClCompile Include="src\gui\GUIBasic.cpp" />
-    <ClCompile Include="src\Input.cpp" />
-    <ClCompile Include="src\Log.cpp" />
+    <ClCompile Include="src\core\Input.cpp" />
+    <ClCompile Include="src\core\Log.cpp" />
+    <ClCompile Include="src\memory\StackAllocator.cpp" />
     <ClCompile Include="src\platform\OpenGL\GLShader.cpp" />
-    <ClCompile Include="src\Pool.cpp" />
-    <ClCompile Include="src\Scheduler.cpp" />
-    <ClCompile Include="src\State.cpp" />
-    <ClCompile Include="src\Window.cpp" />
+    <ClCompile Include="src\memory\Pool.cpp" />
+    <ClCompile Include="src\core\Scheduler.cpp" />
+    <ClCompile Include="src\core\State.cpp" />
+    <ClCompile Include="src\core\Window.cpp" />
     <ClCompile Include="src\graphics\API\Buffer.cpp" />
     <ClCompile Include="src\graphics\API\FrameBuffer.cpp" />
     <ClCompile Include="src\graphics\API\Shader.cpp" />
@@ -599,7 +605,7 @@
     <ClCompile Include="src\graphics\TextureAtlas.cpp" />
     <ClCompile Include="src\graphics\TextureManager.cpp" />
     <ClCompile Include="src\graphics\font\FontParser.cpp" />
-    <ClCompile Include="src\imgui_utils.cpp" />
+    <ClCompile Include="src\core\imgui_utils.cpp" />
     <ClCompile Include="src\layer\Layer.cpp" />
     <ClCompile Include="src\layer\LayerStack.cpp" />
     <ClCompile Include="src\layer\imgui_build.cpp" />
@@ -607,7 +613,7 @@
     <ClCompile Include="src\ndpch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="src\physShapes.cpp" />
+    <ClCompile Include="src\core\physShapes.cpp" />
     <ClCompile Include="src\platform\OpenGL\GLBuffer.cpp" />
     <ClCompile Include="src\platform\OpenGL\GLContext.cpp" />
     <ClCompile Include="src\platform\OpenGL\GLFrameBuffer.cpp" />
@@ -626,6 +632,9 @@
     <ProjectReference Include="vendor\imgui\imgui.vcxproj">
       <Project>{0098A80F-6CAC-D0C0-352E-7420A101CDF1}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="vendor\sid\LICENSE.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

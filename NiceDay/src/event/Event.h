@@ -1,6 +1,6 @@
 #pragma once
 #include "ndpch.h"
-#include "Core.h"
+#include "core/Core.h"
 class Event {
 
 public:
@@ -8,6 +8,7 @@ public:
 		WindowClose,WindowResize,
 		MousePress, MouseRelease, MouseScroll,MouseMove, MouseFocusGain, MouseFocusLost, MouseDrag,
 		KeyPress,KeyRelease,KeyType,
+		Message
 		
 	};
 	enum EventCategory {
@@ -16,6 +17,7 @@ public:
 		MouseKey = BIT(1),
 		Key = BIT(2),
 		Window = BIT(3),
+		Message = BIT(4),
 	};
 
 	bool handled = false;

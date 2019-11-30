@@ -54,33 +54,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\App.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Core.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Input.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Log.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="src\NDUtil.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Pool.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Scheduler.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Stats.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Window.h">
-      <Filter>src</Filter>
-    </ClInclude>
     <ClInclude Include="src\event\Event.h">
       <Filter>src\event</Filter>
     </ClInclude>
@@ -147,9 +120,6 @@
     <ClInclude Include="src\graphics\font\FontParser.h">
       <Filter>src\graphics\font</Filter>
     </ClInclude>
-    <ClInclude Include="src\imgui_utils.h">
-      <Filter>src</Filter>
-    </ClInclude>
     <ClInclude Include="src\layer\Layer.h">
       <Filter>src\layer</Filter>
     </ClInclude>
@@ -158,12 +128,6 @@
     </ClInclude>
     <ClInclude Include="src\nbt\NBT.h">
       <Filter>src\nbt</Filter>
-    </ClInclude>
-    <ClInclude Include="src\ndpch.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="src\physShapes.h">
-      <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="src\platform\OpenGL\GLBuffer.h">
       <Filter>src\platform\OpenGL</Filter>
@@ -1292,30 +1256,48 @@
     <ClInclude Include="src\gui\GUIRenderer.h" />
     <ClInclude Include="src\gui\GUIContext.h" />
     <ClInclude Include="src\gui\GUIBasic.h" />
-    <ClInclude Include="src\AppGlobals.h" />
+    <ClInclude Include="src\core\Window.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\App.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\AppGlobals.h" />
+    <ClInclude Include="src\core\Core.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\imgui_utils.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\Input.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\Log.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\NDUtil.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\physShapes.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\Scheduler.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\Stats.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ndpch.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\sid.h" />
+    <ClInclude Include="src\memory\Pool.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\memory\StackAllocator.h" />
+    <ClInclude Include="src\event\MessageEvent.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\App.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Input.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Log.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Pool.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Scheduler.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\State.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Window.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="src\graphics\API\Buffer.cpp">
       <Filter>src\graphics\API</Filter>
     </ClCompile>
@@ -1370,9 +1352,6 @@
     <ClCompile Include="src\graphics\font\FontParser.cpp">
       <Filter>src\graphics\font</Filter>
     </ClCompile>
-    <ClCompile Include="src\imgui_utils.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="src\layer\Layer.cpp">
       <Filter>src\layer</Filter>
     </ClCompile>
@@ -1384,12 +1363,6 @@
     </ClCompile>
     <ClCompile Include="src\nbt\NBT.cpp">
       <Filter>src\nbt</Filter>
-    </ClCompile>
-    <ClCompile Include="src\ndpch.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\physShapes.cpp">
-      <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\platform\OpenGL\GLBuffer.cpp">
       <Filter>src\platform\OpenGL</Filter>
@@ -1420,6 +1393,42 @@
     <ClCompile Include="src\gui\GUIRenderer.cpp" />
     <ClCompile Include="src\gui\GUIContext.cpp" />
     <ClCompile Include="src\gui\GUIBasic.cpp" />
-    <ClCompile Include="src\AppGlobals.cpp" />
+    <ClCompile Include="src\core\App.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\AppGlobals.cpp" />
+    <ClCompile Include="src\core\imgui_utils.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\Input.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\Log.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\physShapes.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\Scheduler.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\State.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\Window.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ndpch.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\memory\Pool.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\memory\StackAllocator.cpp" />
+    <ClCompile Include="src\event\MessageEvent.cpp" />
+    <ClCompile Include="src\core\sid.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="vendor\sid\LICENSE.txt" />
   </ItemGroup>
 </Project>

@@ -1,4 +1,5 @@
 #pragma once
+#include "ndpch.h"
 #include <bitset>
 
 namespace NDUtil
@@ -115,10 +116,24 @@ namespace NDUtil
 	public:
 		Bitset() = default;
 
+		//ensures minimum capacity to be bits size
 		inline void resize(size_t bits)
 		{
+			if (m_last_size >= bits)
+				return;
 			m_last_size = bits;
+			
 			if ((bits % 32)!=0)
+				bits = (bits / 32) * 32 + 32;
+			if (m_bits.size() < (bits / 32))
+				m_bits.resize(bits / 32);
+		}
+		
+		inline void resizeHard(size_t bits)
+		{
+			m_last_size = bits;
+
+			if ((bits % 32) != 0)
 				bits = (bits / 32) * 32 + 32;
 			if (m_bits.size() < (bits / 32))
 				m_bits.resize(bits / 32);
@@ -143,8 +158,7 @@ namespace NDUtil
 
 		inline void push_back(bool val)
 		{
-			++m_last_size;
-			resize(m_last_size);
+			resize(m_last_size+1);
 			set(m_last_size - 1, val);
 		}
 
@@ -241,7 +255,7 @@ struct half_int
 		return i;
 	}
 };
-inline std::ostream & operator<<(std::ostream & stream, half_int const & v) {
+inline std::ostream & operator<<(std::ostream& stream,const half_int& v) {
 	auto s = half_int::toString(v);
 	stream.write(s.c_str(), s.size());
 	return stream;
@@ -645,5 +659,6 @@ public:
 		assignWork(&assignment, 1);
 	}
 };
+
 
 

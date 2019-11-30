@@ -1,4 +1,9 @@
 #pragma once
+
+/**
+ * Keeps track of all user mouse and keyboard inputs generated from GLFWWindow
+ * needs update() to check each tick for new data
+ */
 class Input
 {
 private:

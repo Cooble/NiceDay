@@ -98,7 +98,12 @@ void GLContext::setBlendConstant(float r, float g, float b, float a)
 
 void GLContext::enableDepthTest(bool enable)
 {
-	GLCall(glEnable(GL_DEPTH_TEST));
+	if (enable) {
+		GLCall(glEnable(GL_DEPTH_TEST));
+	}
+	else
+		GLCall(glDisable(GL_DEPTH_TEST));
+
 }
 
 void GLContext::clear(BufferBit bits)

@@ -1,7 +1,7 @@
 ﻿#include "ndpch.h"
 #include "WorldRenderManager.h"
-#include "App.h"
-#include "Stats.h"
+#include "core/App.h"
+#include "core/Stats.h"
 #include "graphics/Renderer.h"
 #include "world/ChunkMeshNew.h"
 

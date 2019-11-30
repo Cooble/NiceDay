@@ -1,6 +1,6 @@
 ﻿#include "ndpch.h"
 #include "GUIExampleWindow.h"
-#include "App.h"
+#include "core/App.h"
 #include "graphics/API/Texture.h"
 #include "globals.h"
 
@@ -56,7 +56,7 @@ GUIExampleWindow::GUIExampleWindow()
 	optionsColumn->setPadding(20);
 	lowerSettingSplit->getLeftChild()->appendChild(optionsColumn);
 	lowerSettingSplit->getLeftChild()->color = { 1, 1, 0, 1 };
-	lowerSettingSplit->getLeftChild()->is_always_packed = false;
+	lowerSettingSplit->getLeftChild()->isAlwaysPacked = false;
 	lowerSettingSplit->getLeftChild()->width = 200;
 
 	auto textBox = new GUITextBox();
@@ -130,9 +130,9 @@ GUIExampleWindow::GUIExampleWindow()
 
 	
 		auto grid = new GUIGrid();
-		grid->dimension_inherit = GUIDimensionInherit::WIDTH;
+		grid->dimInherit = GUIDimensionInherit::WIDTH;
 		grid->setAlignment(GUIAlign::CENTER);
-		grid->is_always_packed = true;
+		grid->isAlwaysPacked = true;
 		for (int i = 0; i < 30; ++i)
 		{
 			auto img = new GUIImage();

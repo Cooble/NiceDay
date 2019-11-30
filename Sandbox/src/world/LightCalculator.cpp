@@ -1,7 +1,7 @@
 ﻿#include "ndpch.h"
 #include "LightCalculator.h"
 #include "World.h"
-#include "Stats.h"
+#include "core/Stats.h"
 #include "biome/Biome.h"
 #include "biome/BiomeRegistry.h"
 

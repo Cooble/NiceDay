@@ -20,5 +20,8 @@ public:
 };
 class FontMatLib
 {
-	//todo make parser
+	
+public:
+	// retrives already existing material or loads it
+	static FontMaterial* getMaterial(const std::string& name);
 };
