@@ -1,6 +1,6 @@
-# NiceDay
+# NiceDay - CHANGELOG
 
-Let's make Terraria in C++!  
+Let's see how we're doing...
 ## TimeLine:
 - [Basic Tile Render](#basic-tile-render-03_05_2019)
 - [Corner tile render](#corner-tile-render-06_05_2019)
