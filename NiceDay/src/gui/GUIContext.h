@@ -76,20 +76,37 @@ public:
 		currentStackPos.x -= x;
 		currentStackPos.y -= y;
 	}
-	inline void closeWindow(GEID win) { m_toclose_wins.push_back(win); }
+	inline void closeWindows()
+	{
+		for (int i = 0; i < m_windows.size(); ++i)
+		{
+			auto win = m_windows[i];
+			delete win;
+		}
+		m_windows.clear();
+	}
+	inline void closeWindow(GEID winid)
+	{
+		for (int i = 0; i < m_windows.size(); ++i)
+		{
+			auto win = m_windows[i];
+			if (win->id == winid)
+			{
+				m_windows.erase(m_windows.begin() + i);
+				delete win;
+			}
+		}
+	}
+	inline void closeWindowEventually(GEID win) { m_toclose_wins.push_back(win); }
 	inline void closePendingWins()
 	{
 		for (auto toclose_win : m_toclose_wins)
-			for (int i = 0; i < m_windows.size(); ++i)
-			{
-				auto win = m_windows[i];
-				if(win->id==toclose_win)
-				{
-					m_windows.erase(m_windows.begin() + i);
-					delete win;
-				}
-			}
+			closeWindow(toclose_win);
 		m_toclose_wins.clear();
+	}
+	inline void openWindow(GUIWindow* win)
+	{
+		getWindows().push_back(win);
 	}
 	void onUpdate();
 	void onEvent(Event& e);

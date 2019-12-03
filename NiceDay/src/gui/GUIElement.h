@@ -63,7 +63,7 @@ constexpr float GUIElement_InvalidNumber = -100000;
 class GUIElement
 {
 private:
-	std::vector<GUIElement*> children;
+	std::vector<GUIElement*> m_children;
 	GUIAlign m_alignment=GUIAlign::INVALID;
 protected:
 	GUIElement* m_parent = nullptr;
@@ -146,11 +146,11 @@ public:
 		return m_parent;
 	}
 
-	inline auto& getChildren() { return children; }
+	inline auto& getChildren() { return m_children; }
 	inline GUIElement* getFirstChild()
 	{
-		ASSERT(!children.empty(), "no children");
-		return children[0];
+		ASSERT(!m_children.empty(), "no children");
+		return m_children[0];
 	}
 
 	//takes ownership
@@ -176,8 +176,11 @@ public:
 	// // return true if dimensions were changed
 	virtual bool packDimensions();
 	
+	// used to adapt dimensions to those of the parent
+	// @return true if change in dimensions
+	virtual bool adaptToParent();
+
 	//called on parent dimension change
-	//used to adapt dimensions to those of the parent
 	virtual void onParentChanged();
 	
 	bool contains(float xx, float yy) const;
@@ -201,4 +204,5 @@ public:
 	//called when broadcasting events
 	//called when no child has consumed it
 	inline virtual void onMyEvent(Event& e);
+	void clearChildren();
 };

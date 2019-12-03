@@ -2,7 +2,6 @@
 #include "ChunkLoader.h"
 
 
-
 ChunkLoader::ChunkLoader(World * w)
 	:m_world(w)
 {
@@ -27,8 +26,8 @@ static void printSet(std::set<int>& set) {
 
 void ChunkLoader::tickInner()
 {
-	std::set<int> toLoadList;
-	std::set<int> toRemoveList;
+	nd::temp_set<int> toLoadList;
+	nd::temp_set<int> toRemoveList;
 	
 
 	auto& map = m_world->getMap();

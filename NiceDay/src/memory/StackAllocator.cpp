@@ -25,6 +25,9 @@ void StackAllocator::resizeAndReset(size_t byteSize)
 void StackAllocator::reset()
 {
 	m_current_pointer = m_src;
+#if STACK_ALLOC_MEM_CLEAR_ENABLE
+	memset(m_src, 0, m_byte_size);
+#endif
 }
 
 void* StackAllocator::allocate(size_t size)
@@ -34,7 +37,6 @@ void* StackAllocator::allocate(size_t size)
 	auto out = m_current_pointer;
 	m_current_pointer += size;
 	return out;
-	
 }
 
 DoubleBuffStackAllocator::DoubleBuffStackAllocator(size_t byteSize):

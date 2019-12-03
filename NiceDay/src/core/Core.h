@@ -85,4 +85,6 @@ inline std::string ResourceMan::getResourceLoc(const std::string& resPath)
 	return resPath;
 }*/
 
+#define SCOPE_MEASURE(name)\
+	TimerStaper timer##__LINE__(name);
 

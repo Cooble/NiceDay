@@ -1296,6 +1296,7 @@
     </ClInclude>
     <ClInclude Include="src\memory\StackAllocator.h" />
     <ClInclude Include="src\event\MessageEvent.h" />
+    <ClInclude Include="src\memory\stack_allocator.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\graphics\API\Buffer.cpp">
@@ -1427,6 +1428,7 @@
     <ClCompile Include="src\memory\StackAllocator.cpp" />
     <ClCompile Include="src\event\MessageEvent.cpp" />
     <ClCompile Include="src\core\sid.cpp" />
+    <ClCompile Include="src\memory\stack_allocator.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="vendor\sid\LICENSE.txt" />

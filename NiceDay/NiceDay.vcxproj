@@ -160,6 +160,7 @@
     <ClInclude Include="src\core\Log.h" />
     <ClInclude Include="src\core\NDUtil.h" />
     <ClInclude Include="src\memory\StackAllocator.h" />
+    <ClInclude Include="src\memory\stack_allocator.h" />
     <ClInclude Include="src\platform\OpenGL\GLShader.h" />
     <ClInclude Include="src\memory\Pool.h" />
     <ClInclude Include="src\core\Scheduler.h" />
@@ -581,6 +582,7 @@
     <ClCompile Include="src\gui\GUIBasic.cpp" />
     <ClCompile Include="src\core\Input.cpp" />
     <ClCompile Include="src\core\Log.cpp" />
+    <ClCompile Include="src\memory\stack_allocator.cpp" />
     <ClCompile Include="src\memory\StackAllocator.cpp" />
     <ClCompile Include="src\platform\OpenGL\GLShader.cpp" />
     <ClCompile Include="src\memory\Pool.cpp" />

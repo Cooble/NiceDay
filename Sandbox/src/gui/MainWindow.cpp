@@ -5,11 +5,12 @@
 #include "gui/GUIContext.h"
 #include "GUICustomRenderer.h"
 #include "world/WorldsProvider.h"
+#include "window_messeages.h"
 
 static float logoTransient = -1.3;
 
-MainWindow::MainWindow()
-{
+MainWindow::MainWindow(const MessageConsumer& c)
+	:m_messenger(c) {
 	width = App::get().getWindow()->getWidth();
 	height = App::get().getWindow()->getHeight();
 	isVisible = false;
@@ -23,6 +24,7 @@ MainWindow::MainWindow()
 	auto material = FontMatLib::getMaterial("res/fonts/andrew_big.fnt");
 
 	auto col = new GUIColumn();
+	col->isAlwaysPacked = true;
 	col->setAlignment(GUIAlign::CENTER);
 
 	
@@ -34,12 +36,13 @@ MainWindow::MainWindow()
 	m_logo = new GUIImage();
 	m_logo->setImage(new Sprite(res));
 	m_logo->image->setSize({ logo->getWidth(), logo->getHeight() });
+	m_logo->packDimensions();
 	m_logo->isAlwaysPacked = true;
 	m_logo->scale = 0;
 	col->appendChild(m_logo);
 	
 	auto dims = new GUIElement(GETYPE::Blank);
-	dims->dim = {50,50};
+	dims->dim = {0,25};
 	dims->isVisible = false;
 	col->appendChild(dims);
 	
@@ -47,12 +50,9 @@ MainWindow::MainWindow()
 	playBtn->dim = {200,50};
 	playBtn->maxScale = 1.2;
 	playBtn->minScale = 0.7;
-	auto point = this;
-	playBtn->onPressed=[point](GUIElement& e)
+	playBtn->onPressed=[this](GUIElement& e)
 	{
-		GUIContext::get().closeWindow(point->id);
-		GUIContext::get().getWindows().push_back(new PlayWindow());
-		
+		m_messenger(MessageEvent(WindowMess::MenuPlay));
 		logoTransient = -1;
 	};
 	col->appendChild(playBtn);
@@ -63,11 +63,6 @@ MainWindow::MainWindow()
 	playNew->minScale = 0.7;
 	playNew->onPressed = [](GUIElement& e)
 	{
-
-		auto dat = App::get().getBufferedAllocator().allocate(CommonMessages::PlayMessage());
-		dat->type = CommonMessages::PlayMessage::PLAY;
-		App::get().fireEvent(MessageEvent("PlayNewBtnEvent", 0, dat));
-
 		logoTransient = -1;
 	};
 	col->appendChild(playNew);
@@ -76,10 +71,9 @@ MainWindow::MainWindow()
 	setBtn->dim = { 200,50 };
 	setBtn->maxScale = 1.2;
 	setBtn->minScale = 0.7;
-	point = this;
-	setBtn->onPressed = [point](GUIElement& e)
+	setBtn->onPressed = [this](GUIElement& e)
 	{
-	
+		m_messenger(MessageEvent(WindowMess::MenuSettings));
 	};
 	col->appendChild(setBtn);
 
@@ -87,15 +81,18 @@ MainWindow::MainWindow()
 	exitBtn->dim = { 200,50 };
 	exitBtn->maxScale = 1.2;
 	exitBtn->minScale = 0.7;
-	exitBtn->onPressed = [](GUIElement& e)
+	exitBtn->onPressed = [this](GUIElement& e)
 	{
-		App::get().fireEvent(WindowCloseEvent());
+		m_messenger(MessageEvent(WindowMess::MenuExit));
 	};
 	col->appendChild(exitBtn);
 
 
 	appendChild(col);
 }
+
+
+
 
 void MainWindow::update()
 {
@@ -116,7 +113,7 @@ void MainWindow::update()
 	
 }
 
-GUIWorldEntry::GUIWorldEntry()
+GUIWorldEntry::GUIWorldEntry(MessageConsumer* c):m_messenger(c)
 {
 	auto material = FontMatLib::getMaterial("res/fonts/andrew.fnt");
 
@@ -131,6 +128,7 @@ GUIWorldEntry::GUIWorldEntry()
 	height = 100;
 	m_world_name = new GUIText(material);
 	m_world_name->setAlignment(GUIAlign::LEFT_UP);
+	color = { 1,0,1,1 };
 	appendChild(m_world_name);
 
 	
@@ -150,10 +148,15 @@ GUIWorldEntry::GUIWorldEntry()
 	};
 	playBtn->onPressed= [this](GUIElement& e)
 	{
-		auto dat = App::get().getBufferedAllocator().allocate(CommonMessages::PlayMessage());
-		dat->type = CommonMessages::PlayMessage::PLAY;
+		auto data = ND_TEMP_EMPLACE(WindowMessageData::World);
+		data->worldName = this->getWorldName();
+		auto m = MessageEvent(WindowMess::MenuPlayWorld,0,data);
+		(*m_messenger)(m);
+		
+		/*auto dat = App::get().getBufferedAllocator().emplace<CommonMessages::WorldMessage>();
+		dat->type = CommonMessages::WorldMessage::PLAY;
 		dat->worldName = m_world_name->getText();
-		App::get().fireEvent(MessageEvent("Play", 0, dat));
+		App::get().fireEvent(MessageEvent("Play", 0, dat));*/
 	};
 
 	auto deleteBtn = new GUIImageButton(new Sprite(res));
@@ -170,19 +173,14 @@ GUIWorldEntry::GUIWorldEntry()
 	{
 		deleteBtn->getImageElement()->image->setSpriteIndex(0, 1);
 	};
-	deleteBtn->onPressed = [deleteBtn, this](GUIElement& e)
-	{
-		WorldsProvider::get().deleteWorld(m_world_name->getText());
-		for (int i = 0; i < m_parent->getChildren().size(); ++i)
-		{
-			if(m_parent->getChildren()[i]==this)
-			{
-				//todo fix messes with pos stack
-				m_parent->removeChild(i);
-				return;
-			}
-		}
+	deleteBtn->onPressed = [this](GUIElement& e) {
+
+		auto data = ND_TEMP_EMPLACE(WindowMessageData::World);
+		data->worldName = this->getWorldName();
+		auto m = MessageEvent(WindowMess::MenuDeleteWorld, 0, data);
+		(*m_messenger)(m);
 	};
+	
 	deleteBtn->setAlignment(GUIAlign::RIGHT_DOWN);
 
 	auto row = new GUIRow();
@@ -206,8 +204,9 @@ const std::string& GUIWorldEntry::getWorldName()
 	return m_world_name->getText();
 }
 
-PlayWindow::PlayWindow()
-{
+
+PlayWindow::PlayWindow(const MessageConsumer& c)
+:m_messenger(c){
 	width = App::get().getWindow()->getWidth();
 	height = App::get().getWindow()->getHeight();
 	setCenterPosition(App::get().getWindow()->getWidth(), App::get().getWindow()->getHeight());
@@ -257,20 +256,15 @@ PlayWindow::PlayWindow()
 	split->getLeftChild()->appendChild(textBox);
 	
 
-	auto onWorldCrea = [textBox](GUIElement& e)
+	auto onWorldCrea = [textBox,this](GUIElement& e)
 	{
 		if (textBox->getValue().empty())
 			return;
-		for (auto& world : WorldsProvider::get().getAvailableWorlds())
-		{
-			if (world.name == textBox->getValue())
-				return;
-		}
-		auto dat = App::get().getBufferedAllocator().allocate(CommonMessages::PlayMessage());
-		dat->type = CommonMessages::PlayMessage::CREATE;
-		dat->worldName = textBox->getValue();
-		//todo here is bug with copying string or with allocation on bufstack
-		App::get().fireEvent(MessageEvent("Play", 0, dat));
+		
+		auto data = ND_TEMP_EMPLACE(WindowMessageData::World);
+		data->worldName = textBox->getValue();
+		auto m = MessageEvent(WindowMess::MenuGenerateWorld, 0, data);
+		m_messenger(m);
 	};
 	textBox->onValueEntered = onWorldCrea;
 	createNewBtn->onPressed = onWorldCrea;
@@ -278,7 +272,8 @@ PlayWindow::PlayWindow()
 	//Column
 	auto col = new GUIColumn();
 	col->dimInherit = GUIDimensionInherit::WIDTH_HEIGHT;
-	col->setAlignment(GUIAlign::CENTER_UP);
+	col->space = 15;
+	col->setAlignment(GUIAlign::CENTER);
 	centerBox->appendChild(col);
 
 	//Title
@@ -309,41 +304,45 @@ PlayWindow::PlayWindow()
 	view->dimInherit = GUIDimensionInherit::WIDTH;
 	view->height = 300;
 	GUIView* src = dynamic_cast<GUIView*>(view->getLeftChild()->getFirstChild());
+	m_world_slider = dynamic_cast<GUIVSlider*>(view->getRightChild()->getFirstChild());
 	src->setPadding(0);
 	src->getInside()->color = guiCRColor;
+	col->appendChild(view);
 
 	//view column
-	auto worldCol = new GUIColumn();
-	worldCol->dimInherit = GUIDimensionInherit::WIDTH;
-	worldCol->isAlwaysPacked = true;
-	worldCol->setAlignment(GUIAlign::CENTER);
+	m_world_column = new GUIColumn();
+	m_world_column->dimInherit = GUIDimensionInherit::WIDTH;
+	m_world_column->isAlwaysPacked = true;
+	m_world_column->setAlignment(GUIAlign::CENTER);
 
-	WorldsProvider::get().rescanWorlds();
-	auto& worldsList = WorldsProvider::get().getAvailableWorlds();
-	for (auto& world:worldsList)
-	{
-		auto worlde = new GUIWorldEntry();
-		worlde->setWorldName(world.name);
-		worldCol->appendChild(worlde);
-
-	}
-	src->getInside()->appendChild(worldCol);
-
-
-	col->appendChild(view);
+	
+	src->getInside()->appendChild(m_world_column);
 
 	//back btn
 	auto bckBtn = new GUITextButton("Back", material);
 	bckBtn->dim = { 700, bckBtn->getTextElement()->height + bckBtn->heightPadding() };
 	
-	auto point = this;
-	bckBtn->onPressed = [point](GUIElement& e)
+	bckBtn->onPressed = [this](GUIElement& e)
 	{
-		GUIContext::get().closeWindow(point->id);
-		GUIContext::get().getWindows().push_back(new MainWindow());
+		m_messenger(MessageEvent(WindowMess::MenuBack));
 	};
 
 	mainCol->appendChild(centerBox);
 	mainCol->appendChild(bckBtn);
 	appendChild(mainCol);
+}
+
+void PlayWindow::setWorlds(const std::vector<WorldInfoData>& worlds)
+{
+	m_world_column->clearChildren();
+	m_world_column->adaptToParent();
+	for (auto& world : worlds)
+	{
+		auto worlde = new GUIWorldEntry(&m_messenger);
+		worlde->setWorldName(world.name);
+		m_world_column->appendChild(worlde);
+	}
+	m_world_column->adaptToParent();
+	m_world_slider->setValue(1);
+	//todo fuck you  
 }

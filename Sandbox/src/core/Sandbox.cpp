@@ -16,9 +16,12 @@ App(1280,720, s_title)
 	//m_imgui_enable = false;
 	Sprite2D::init();
 	m_LayerStack.PushLayer(new MainLayer());
-	m_LayerStack.PushLayer(new GUILayer());
 
-	//m_LayerStack.PushLayer(new WorldLayer());
+	auto gui = new GUILayer();
+	auto worudo = new WorldLayer();
+	gui->setWorldLayer(worudo);
+	m_LayerStack.PushLayer(worudo);
+	m_LayerStack.PushLayer(gui);
 
 	//m_LayerStack.PushLayer(new PriorGenLayer());
 }

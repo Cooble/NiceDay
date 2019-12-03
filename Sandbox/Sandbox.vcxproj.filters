@@ -185,6 +185,7 @@
     <ClInclude Include="src\layer\CommonMessages.h" />
     <ClInclude Include="src\gui\GUICustomRenderer.h" />
     <ClInclude Include="src\world\WorldsProvider.h" />
+    <ClInclude Include="src\gui\window_messeages.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\core\EntryPoint.cpp">

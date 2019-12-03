@@ -10,6 +10,7 @@
 #include "memory/Pool.h"
 #include "ThreadedWorldGen.h"
 #include "BlockAccess.h"
+#include "memory/stack_allocator.h"
 
 
 class IChunkProvider;
@@ -315,9 +316,9 @@ public:
 	// returns if chunk can be normally accessed (it is not in being loaded state)
 	inline bool isChunkFullyLoaded(int id) const { return getChunkIndex(id) != -1; }
 
-	void unloadChunks(std::set<int>& chunk_ids);
+	void unloadChunks(nd::temp_set<int>& chunk_ids);
 	static void updateChunkBounds(BlockAccess& world, int cx, int cy, int bitBounds);
-	void loadChunksAndGen(std::set<int>& toLoadChunks);
+	void loadChunksAndGen(nd::temp_set<int>& toLoadChunks);
 
 	//==============BLOCK METHODS=======================================================================
 

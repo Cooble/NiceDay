@@ -355,25 +355,44 @@ void GUIWindow::onMyEvent(Event& e)
 GUIColumn::GUIColumn(GUIAlign childAlignment) : GUIElement(GETYPE::Column)
 {
 	m_is_not_spacial = true;
-	isVisible = false;
 	child_alignment = childAlignment;
 	space = 5;
+	isVisible = false;
+	
+	
 }
 
 void GUIColumn::repositionChildren()
 {
 	auto oldW = this->width;
 	auto oldH = this->height;
-	this->width = 0;
-	this->height = 0;
 
-	for (auto child : getChildren())
-	{
-		this->width = std::max(this->width, child->width);
-		this->height += child->height + space;
+	if (isAlwaysPacked) {
+		this->width = 0;
+		this->height = 0;
+
+		for (auto child : getChildren())
+		{
+			this->width = std::max(this->width, child->width);
+			this->height += child->height + space;
+		}
+		if (this->height)
+			this->height -= space;
 	}
-	if (this->height)
-		this->height -= space;
+	if (getParent())
+		switch(dimInherit)
+		{
+		case GUIDimensionInherit::WIDTH:
+			this->width = getParent()->width-getParent()->widthPadding();
+			break;
+		case GUIDimensionInherit::HEIGHT:
+			this->height = getParent()->height - getParent()->heightPadding();
+			break;
+		case GUIDimensionInherit::WIDTH_HEIGHT:
+			this->width = getParent()->width - getParent()->widthPadding();
+			this->height = getParent()->height - getParent()->heightPadding();
+			break;
+		}
 
 	float yPos = this->height;
 	for (auto child : getChildren())
@@ -401,7 +420,7 @@ void GUIColumn::repositionChildren()
 
 	if (oldW != this->width || oldH != this->height)
 		if (getParent())
-			getParent()->repositionChildren();
+			getParent()->onChildChange();
 }
 
 GUIRow::GUIRow(GUIAlign childAlignment) :
@@ -721,7 +740,7 @@ void GUIHorizontalSplit::onDimensionChange()
 	auto downC = getDownChild();
 	if (m_is_up_main)
 	{
-		upC->onParentChanged();
+		upC->adaptToParent();
 		upC->pos = {0, height - upC->height};
 
 		downC->dim = {width, height - upC->height - space};
@@ -730,7 +749,7 @@ void GUIHorizontalSplit::onDimensionChange()
 	}
 	else
 	{
-		downC->onParentChanged();
+		downC->adaptToParent();
 		downC->pos = {0, 0};
 
 		upC->dim = {width, height - downC->height - space};
@@ -810,7 +829,7 @@ void GUIVerticalSplit::onDimensionChange()
 	leftC->pos = {0, 0};
 	if (!m_is_left_main)
 	{
-		rightC->onParentChanged();
+		rightC->adaptToParent();
 		rightC->pos = {width - rightC->width, 0};
 
 		leftC->dim = {width - rightC->width - space, height};
@@ -818,7 +837,7 @@ void GUIVerticalSplit::onDimensionChange()
 	}
 	else
 	{
-		leftC->onParentChanged();
+		leftC->adaptToParent();
 
 		rightC->dim = {width - leftC->width - space, height};
 		rightC->pos = {leftC->width + space, 0};

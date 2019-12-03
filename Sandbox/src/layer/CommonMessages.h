@@ -1,15 +1,19 @@
 #pragma once
 
+
 namespace CommonMessages {
-	struct PlayMessage
+	
+	struct WorldMessage
 	{
-		enum:int
-		{
-			PLAY,
-			CREATE,
+		inline static const char* NAME = "WorldMessage";
+		
+		enum :int {
+			LoadWorld,
+			CreateWorld,
+			DestroyWorld
 		};
 		int type;
-		std::string worldName="none";
+		std::string_view worldName;
 	};
 
 }

@@ -44,6 +44,11 @@ void GUICustomRenderer::render(BatchRenderer2D& renderer)
 
 void GUICustomRenderer::renderRectangle(BatchRenderer2D& renderer, float x, float y, float width, float height)
 {
+	x = (int)x;
+	y = (int)y;
+	width = (int)width;
+	height = (int)height;
+	
 	constexpr  float dim = 16;
 	renderer.submitTextureQuad({ x,y,m_z_pos }, { dim,dim }, m_corn_left_down.getUV(), m_corn_left_down.getTexture());
 	incrementZ();

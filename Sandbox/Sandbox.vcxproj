@@ -141,6 +141,7 @@
     <ClInclude Include="src\graphics\BlockTextureAtlas.h" />
     <ClInclude Include="src\graphics\Sprite2D.h" />
     <ClInclude Include="src\gui\GUICustomRenderer.h" />
+    <ClInclude Include="src\gui\window_messeages.h" />
     <ClInclude Include="src\inventory\Inventory.h" />
     <ClInclude Include="src\inventory\Item.h" />
     <ClInclude Include="src\inventory\ItemBlock.h" />

@@ -143,7 +143,8 @@ void ChunkMeshInstance::updateMesh(const World& world, const Chunk& chunk)
 #else
 void ChunkMeshInstanceNew::updateMesh(const World& world, const Chunk& chunk)
 {
-	auto t = TimerStaper("Mesh update");
+	//SCOPE_MEASURE("mesh update");
+
 	float co = 1.0f / BLOCK_TEXTURE_ATLAS_SIZE;
 	float co_corner = 1.0f / BLOCK_CORNER_ATLAS_SIZE;
 	
@@ -187,18 +188,18 @@ void ChunkMeshInstanceNew::updateMesh(const World& world, const Chunk& chunk)
 			++point;
 			//0,0
 			{
-				point->pos = glm::vec2(x, y);
-				//check if t_offset == -1 -> discard
-				point->uv_0 = glm::vec2(t_offset.x, t_offset.y) * co;
-				point->uv_1 = glm::vec2(t_corner_offset.x, t_corner_offset.y) * co_corner;
+				auto pp = point - 3;
+				point->pos = pp->pos;
+				point->uv_0 = pp->uv_0;
+				point->uv_1 = pp->uv_1;
 			}
 			++point;
 			//1,1
 			{
-				point->pos = glm::vec2(x + 1, y + 1);
-				//check if t_offset == -1 -> discard
-				point->uv_0 = glm::vec2(t_offset.x + 1, t_offset.y + 1) * co;
-				point->uv_1 = glm::vec2(t_corner_offset.x + 1, t_corner_offset.y + 1) * co_corner;
+				auto pp = point - 2;
+				point->pos = pp->pos;
+				point->uv_0 = pp->uv_0;
+				point->uv_1 = pp->uv_1;
 			}
 			++point;
 			//0,1
@@ -257,18 +258,18 @@ void ChunkMeshInstanceNew::updateMesh(const World& world, const Chunk& chunk)
 			++point;
 			//0,0
 			{
-				point->pos = glm::vec2(x, y);
-				//check if t_offset == -1 -> discard
-				point->uv_0 = glm::vec2(t_offset.x, t_offset.y) * co;
-				point->uv_1 = glm::vec2(t_corner_offset.x, t_corner_offset.y) * co_corner;
+				auto pp = point - 3;
+				point->pos = pp->pos;
+				point->uv_0 = pp->uv_0;
+				point->uv_1 = pp->uv_1;
 			}
 			++point;
 			//1,1
 			{
-				point->pos = glm::vec2(x + 1, y + 1);
-				//check if t_offset == -1 -> discard
-				point->uv_0 = glm::vec2(t_offset.x + 1, t_offset.y + 1) * co;
-				point->uv_1 = glm::vec2(t_corner_offset.x + 1, t_corner_offset.y + 1) * co_corner;
+				auto pp = point - 2;
+				point->pos = pp->pos;
+				point->uv_0 = pp->uv_0;
+				point->uv_1 = pp->uv_1;
 			}
 			++point;
 			//0,1
@@ -281,10 +282,14 @@ void ChunkMeshInstanceNew::updateMesh(const World& world, const Chunk& chunk)
 			x = oldX;
 		}
 
+		
 	}
 
-	m_vbo->changeData(m_buff, BUFF_SIZE, 0);
-	m_wall_vbo->changeData(m_wall_buff, WALL_BUFF_SIZE, 0);
+	{
+		//SCOPE_MEASURE("changemeshdata to vbo");
+		m_vbo->changeData(m_buff, BUFF_SIZE, 0);
+		m_wall_vbo->changeData(m_wall_buff, WALL_BUFF_SIZE, 0);
+	}
 }
 #endif
 

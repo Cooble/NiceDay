@@ -9,6 +9,7 @@
 #include <filesystem>
 #include "entity/entities.h"
 #include "FileChunkProvider.h"
+#include "memory/stack_allocator.h"
 
 #define WORLD_CHECK_VALID_POS(wx,wy)\
 	if ((wx) < 0 || (wy) < 0||(wx) >= getInfo().chunk_width * WORLD_CHUNK_SIZE || (wy) >= getInfo().chunk_height * WORLD_CHUNK_SIZE){\
@@ -80,13 +81,10 @@ void World::tick()
 		timeAdvance--;
 	}
 
-	//we need a buffer here cause we cant modify array during iteration
-	if (m_entity_array_buff.size() != m_entity_array.size())
-		m_entity_array_buff.resize(m_entity_array.size()); //make sure there is enough space in buff
-	memcpy(m_entity_array_buff.data(), m_entity_array.data(), m_entity_array.size() * sizeof(EntityID));
+	nd::temp_vector<EntityID> entityArrayBuff(m_entity_array.size());
+	memcpy(entityArrayBuff.data(), m_entity_array.data(), m_entity_array.size() * sizeof(EntityID));
 
-
-	for (auto id : m_entity_array_buff)
+	for (auto id : entityArrayBuff)
 	{
 		WorldEntity* entity = m_entity_manager.entity(id);
 		if (entity)
@@ -96,7 +94,6 @@ void World::tick()
 				killEntity(entity->getID());
 		}
 	}
-
 
 	m_tile_entity_array_buff = std::unordered_map<int64_t, EntityID>(m_tile_entity_map); //lets just copy
 
@@ -192,7 +189,7 @@ int World::getChunkInaccessibleIndex(int id) const
 
 void World::loadChunk(int x, int y)
 {
-	std::set<int> s;
+	nd::temp_set<int> s;
 	s.insert(half_int(x, y));
 	loadChunksAndGen(s);
 }
@@ -215,10 +212,12 @@ static defaultable_map<ChunkID, bool, false> CHUNK_MAP;
 //									maskGen which should be generated
 //									maskFreshlyOnlyLoaded should load their entities
 
-void World::loadChunksAndGen(std::set<int>& toLoadChunks)
+void World::loadChunksAndGen(nd::temp_set<int>& toLoadChunks)
 {
 	defaultable_map<int, int, 0> toupdateChunks;
-	std::vector<int> toRemove;
+	toupdateChunks.reserve(50);
+	nd::temp_vector<int> toRemove;
+	toRemove.reserve(50);
 
 	for (auto chunkID : toLoadChunks)
 	{
@@ -601,7 +600,7 @@ JobAssignmentP World::updateBounds2(defaultable_map<int, int, 0>& toUpdateChunks
 }
 
 
-void World::unloadChunks(std::set<int>& chunk_ids)
+void World::unloadChunks(nd::temp_set<int>& chunk_ids)
 {
 	JobAssignmentP assignment = nullptr;
 	std::vector<int> chunksToUnload;

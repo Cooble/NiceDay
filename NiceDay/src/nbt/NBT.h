@@ -110,6 +110,11 @@ public:
 	{
 		ASSERT(false, "INVALID NBT TYPE");
 	}
+	template <>
+	void set(const std::string& s, const std::string_view& value)
+	{
+		set(s, std::string(value));
+	}
 
 private:
 	struct NBTHeader

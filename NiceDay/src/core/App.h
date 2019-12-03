@@ -9,6 +9,10 @@
 
 #define ND_SCHED App::get().getScheduler()
 
+// allocates string on doublebuffered stack
+// this string is valid for 2 ticks
+#define ND_TEMP_STRING(x) App::get().getBufferedAllocator().allocateString((x))
+#define ND_TEMP_EMPLACE(type, ...)  App::get().getBufferedAllocator().emplace<type>(__VA_ARGS__)
 class ImGuiLayer;
 
 class App

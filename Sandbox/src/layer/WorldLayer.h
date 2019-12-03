@@ -16,16 +16,19 @@ private:
 	std::vector<Sprite*> m_sprites;
 	BatchRenderer2D* m_batch_renderer;
 	ParticleRenderer* m_particle_renderer;
-	World* m_world;
+	World* m_world=nullptr;
 	ChunkLoader* m_chunk_loader;
 	//ChunkMeshInstance* m_mesh;
 	WorldRenderManager* m_render_manager;
 	Camera* m_cam;
 
+	bool m_has_world = false;
 	void registerEverything();
 
 public:
 	WorldLayer();
+	void loadResources();
+	void loadWorld(nd::temp_string& worldname,bool regen);
 	EntityPlayer& getPlayer();
 	~WorldLayer();
 

@@ -21,7 +21,7 @@ GUIElement::GUIElement(GETYPE type):
 
 GUIElement::~GUIElement()
 {
-	for (auto child : children)
+	for (auto child : m_children)
 	{
 		delete child;
 	}
@@ -48,10 +48,9 @@ void GUIElement::checkFocus(MouseMoveEvent& e)
 
 void GUIElement::appendChild(GUIElement* element)
 {
-	children.push_back(element);
-	children[children.size() - 1]->m_parent = this;
+	m_children.push_back(element);
+	m_children[m_children.size() - 1]->m_parent = this;
 	element->onParentAttached();
-	element->onParentChanged();
 	onChildChange();
 }
 
@@ -71,24 +70,32 @@ void GUIElement::onChildChange()
 
 void GUIElement::removeChild(int index)
 {
-	ASSERT(index < children.size(), "Invalid child id");
+	ASSERT(index < m_children.size(), "Invalid child id");
 
-	auto child = children[index];
+	auto child = m_children[index];
 	delete child;
-	children.erase(children.begin() + index);
+	m_children.erase(m_children.begin() + index);
 
 	onChildChange();
 }
 
 void GUIElement::onParentAttached()
 {
+	for (auto child : m_children)
+	{
+		child->onParentAttached();
+	}
+	adaptToParent();
+	if (isAlwaysPacked)
+		packDimensions();
 	onDimensionChange();
+		
 }
 
 void GUIElement::onDimensionChange()
 {
-	for (auto child : children)
-		child->onParentChanged();
+	for (auto child : m_children)
+		child->adaptToParent();
 
 	if (isAlwaysPacked)
 		packDimensions();
@@ -100,7 +107,7 @@ void GUIElement::onDimensionChange()
 
 void GUIElement::repositionChildren()
 {
-	for (auto child : children)
+	for (auto child : m_children)
 	{
 		switch (child->m_alignment)
 		{
@@ -150,14 +157,15 @@ void GUIElement::repositionChildren()
 
 bool GUIElement::packDimensions()
 {
-	if (dimInherit == GUIDimensionInherit::WIDTH_HEIGHT)
+	if (dimInherit == GUIDimensionInherit::WIDTH_HEIGHT) 
 		return false;
+	
 	float lineW[3] = {0, 0, 0};
 	float lineH[3] = {0, 0, 0};
 
 
 	float maxW = 0, maxH = 0;
-	for (auto child : children)
+	for (auto child : m_children)
 	{
 		switch (child->m_alignment)
 		{
@@ -232,8 +240,10 @@ bool GUIElement::packDimensions()
 	return false;
 }
 
-void GUIElement::onParentChanged()
+bool GUIElement::adaptToParent()
 {
+	auto oldw = width;
+	auto oldh = height;
 	if (dimInherit != GUIDimensionInherit::INVALID)
 	{
 		switch (dimInherit)
@@ -249,8 +259,14 @@ void GUIElement::onParentChanged()
 			height = getParent()->height - getParent()->heightPadding();
 			break;
 		}
-		onDimensionChange();
 	}
+	return oldw != width || oldh != height;
+}
+
+void GUIElement::onParentChanged()
+{
+	if (adaptToParent())
+		onDimensionChange();
 }
 
 bool GUIElement::contains(float xx, float yy) const
@@ -265,7 +281,7 @@ bool GUIElement::contains(float xx, float yy) const
 
 void GUIElement::update()
 {
-	for (auto child : children)
+	for (auto child : m_children)
 		child->update();
 }
 
@@ -282,7 +298,7 @@ void GUIElement::onEvent(Event& e)
 	case Event::EventType::KeyRelease:
 	case Event::EventType::KeyType:
 		GUIContext::get().pushPos(x, y);
-		for (auto child : children)
+		for (auto child : m_children)
 			child->onEvent(e);
 		GUIContext::get().popPos(x, y);
 		onMyEvent(e);
@@ -314,7 +330,7 @@ void GUIElement::onEventBroadcast(Event& e)
 {
 	onMyEvent(e);
 	GUIContext::get().pushPos(x, y);
-	for (auto child : children)
+	for (auto child : m_children)
 		child->onEventBroadcast(e);
 	GUIContext::get().popPos(x, y);
 }
@@ -355,4 +371,14 @@ void GUIElement::onMyEvent(Event& e)
 	}
 	if (!isNotSpacial() && e.getEventType() != Event::EventType::MouseMove)
 		e.handled = true;
+}
+
+void GUIElement::clearChildren()
+{
+	for (int i = 0; i < m_children.size(); ++i)
+	{
+		delete m_children[i];
+	}
+	m_children.clear();
+	onChildChange();
 }

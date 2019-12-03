@@ -34,6 +34,8 @@
 #include "inventory/Item.h"
 #include "graphics/GContext.h"
 #include "core/AppGlobals.h"
+#include "event/MessageEvent.h"
+#include "CommonMessages.h"
 
 const char* WORLD_FILE_PATH;
 int CHUNKS_LOADED;
@@ -108,6 +110,14 @@ constexpr int particleAtlasSize = 8;
 WorldLayer::WorldLayer()
 	: Layer("WorldLayer")
 {
+
+	loadResources();
+	
+	
+}
+
+void WorldLayer::loadResources()
+{
 	std::string blockAtlasFolder = ND_RESLOC("res/images/blockAtlas/");
 
 	BlockTextureAtlas blockAtlas;
@@ -137,6 +147,20 @@ WorldLayer::WorldLayer()
 	//ChunkMesh::init();
 	ChunkMeshNew::init();
 
+	static SpriteSheetResource res(Texture::create(
+		TextureInfo("res/images/borderBox.png")
+		.filterMode(TextureFilterMode::NEAREST)
+		.format(TextureFormat::RGBA)), 1, 1);
+
+	Stats::bound_sprite = new Sprite(&res);
+	Stats::bound_sprite->setSpriteIndex(0, 0);
+	Stats::bound_sprite->setPosition(glm::vec3(0, 0, 0));
+	Stats::bound_sprite->setSize(glm::vec2(1, 1));
+}
+
+void WorldLayer::loadWorld(nd::temp_string& worldname,bool regen)
+{
+	m_has_world = true;
 
 	m_cam = new Camera();
 	m_cam->setChunkRadius({ 3, 2 });
@@ -145,37 +169,28 @@ WorldLayer::WorldLayer()
 	m_batch_renderer = new BatchRenderer2D();
 	m_particle_renderer = new ParticleRenderer();
 
-	static SpriteSheetResource res(Texture::create(
-		                               TextureInfo("res/images/borderBox.png")
-		                               .filterMode(TextureFilterMode::NEAREST)
-		                               .format(TextureFormat::RGBA)), 1, 1);
-
-	Stats::bound_sprite = new Sprite(&res);
-	Stats::bound_sprite->setSpriteIndex(0, 0);
-	Stats::bound_sprite->setPosition(glm::vec3(0, 0, 0));
-	Stats::bound_sprite->setSize(glm::vec2(1, 1));
-
 	//world===================================================
 	WorldInfo info;
-	std::string worldName = "NiceWorld";
-	std::string newName = AppGlobals::get().nbt.get("set.worldName",std::string());
+	/*std::string worldName = "NiceWorld";
+	std::string newName = AppGlobals::get().nbt.get("set.worldName", std::string());
 	if (newName != "")
-		worldName = newName;
-	strcpy_s(info.name, worldName.c_str());
+		worldName = newName;*/
+	
+	strcpy_s(info.name, worldname.c_str());
 	info.chunk_width = 50;
 	info.chunk_height = 50;
 	info.seed = 0;
 	info.terrain_level = (info.chunk_height - 4) * WORLD_CHUNK_SIZE;
 
-	m_world = new World("worlds/"+std::string(info.name) + ".world", info);
+	m_world = new World("worlds/" + std::string(info.name) + ".world", info);
 
-	bool genW = false;
+	/*bool genW = false;
 	if (AppGlobals::get().nbt.get<bool>("set.newWorld"))
 		genW = true;
-
+		*/
 	bool worldAlreadyLoaded = true;
 
-	if (genW)
+	if (regen)
 	{
 		m_world->genWorld();
 		ND_INFO("New world generated.");
@@ -188,11 +203,12 @@ WorldLayer::WorldLayer()
 		{
 			ND_INFO("World is missing: {}, generating new one", std::string(info.name) + ".world");
 			m_world->genWorld();
+			
 		}
 		else
 		{
 			worldAlreadyLoaded = false;
-			ND_SCHED.callWhenDone([this,job, world,info]()
+			ND_SCHED.callWhenDone([this, job, world, info]()
 				{
 					if (job->m_variable != JobAssignment::JOB_SUCCESS)
 					{
@@ -304,6 +320,8 @@ void WorldLayer::afterPlayerLoaded()
 
 void WorldLayer::onDetach()
 {
+	if (m_world == nullptr)
+		return;
 	m_world->getLightCalculator().stop();
 	if (s_no_save)
 		return;
@@ -579,6 +597,8 @@ void WorldLayer::onUpdate()
 
 void WorldLayer::onRender()
 {
+	if (m_world == nullptr)
+		return;
 	Gcon.enableDepthTest(false);
 	if (!m_is_world_ready)
 		return;
@@ -622,6 +642,8 @@ static bool showChunks = false;
 
 void WorldLayer::onImGuiRender()
 {
+	if (m_world == nullptr)
+		return;
 	onImGuiRenderWorld();
 
 	if (showTelem)
@@ -651,6 +673,7 @@ void WorldLayer::onImGuiRenderTelemetrics()
 
 void WorldLayer::onImGuiRenderWorld()
 {
+	
 	static bool showBase = true;
 
 	if (!ImGui::Begin("WorldInfo", &showBase))
@@ -866,6 +889,18 @@ void WorldLayer::onImGuiRenderChunks()
 
 void WorldLayer::onEvent(Event& e)
 {
+
+	if(e.getEventType()== Event::EventType::Message)
+	{
+		auto m = dynamic_cast<MessageEvent*>(&e);
+		if(strcmp(m->getTitle(),CommonMessages::WorldMessage::NAME)==0)
+		{
+			//todo maybe make each message as a class with inheritance and allocate it on stack
+		}
+
+	}
+	if (!m_has_world)
+		return;
 	if (e.getEventType() == Event::EventType::KeyPress)
 	{
 		auto event = dynamic_cast<KeyPressEvent*>(&e);
