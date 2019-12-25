@@ -14,6 +14,7 @@
 #define ND_TEMP_STRING(x) App::get().getBufferedAllocator().allocateString((x))
 #define ND_TEMP_EMPLACE(type, ...)  App::get().getBufferedAllocator().emplace<type>(__VA_ARGS__)
 class ImGuiLayer;
+class LuaLayer;
 
 class App
 {
@@ -34,6 +35,7 @@ public:
 	inline LayerStack& getLayerStack() { return m_LayerStack; }
 	inline Scheduler& getScheduler() { return m_scheduler; }
 	inline DoubleBuffStackAllocator& getBufferedAllocator() { return m_dbuff_stackalloc; }
+	inline LuaLayer* getLua() { return m_lua_layer; }
 
 	// return target ticks per second (not actual)
 	inline int getTPS() const{ return m_target_tps; }
@@ -61,11 +63,11 @@ protected:
 	int m_tel_render_millis;
 	int m_target_tps=60;
 	bool m_imgui_enable = true;
-
 	Window* m_Window;
 	Input m_Input;
 	LayerStack m_LayerStack;
 	ImGuiLayer* m_ImGuiLayer=nullptr;
+	LuaLayer* m_lua_layer=nullptr;
 	Scheduler m_scheduler;
 	DoubleBuffStackAllocator m_dbuff_stackalloc;
 	bool m_running=false;
@@ -74,6 +76,8 @@ protected:
 
 class ImGuiLayer : public Layer
 {
+	bool m_imgui_consuming = false;
+
 public:
 	ImGuiLayer();
 	~ImGuiLayer() = default;
@@ -83,8 +87,10 @@ public:
 	void end();
 	void onImGuiRender();
 	void onUpdate() override;
+	void onEvent(Event& e) override;
 	void updateTelemetry();
 	void drawTelemetry();
+	inline bool isEventConsuming() { return m_imgui_consuming; }
 
 	void drawGlobals();
 };

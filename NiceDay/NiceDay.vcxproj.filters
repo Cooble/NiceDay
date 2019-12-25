@@ -4,6 +4,9 @@
     <Filter Include="src">
       <UniqueIdentifier>{2DAB880B-99B4-887C-2230-9F7C8E38947C}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\core">
+      <UniqueIdentifier>{C55F2ECF-B12C-89DA-DA45-7782C671BE68}</UniqueIdentifier>
+    </Filter>
     <Filter Include="src\event">
       <UniqueIdentifier>{5E2A22B5-CA94-D62B-13D3-87D17F7CB480}</UniqueIdentifier>
     </Filter>
@@ -16,8 +19,14 @@
     <Filter Include="src\graphics\font">
       <UniqueIdentifier>{73ABAEFA-DFC1-AC90-2839-38B2948E7D18}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\gui">
+      <UniqueIdentifier>{210530A9-8DE4-AE44-96FC-391B025B15A6}</UniqueIdentifier>
+    </Filter>
     <Filter Include="src\layer">
       <UniqueIdentifier>{D9A595B5-4510-4A2C-8E4E-FBD1FAF72781}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\memory">
+      <UniqueIdentifier>{1582E16A-013A-23B8-6A41-FC135618BEA8}</UniqueIdentifier>
     </Filter>
     <Filter Include="src\nbt">
       <UniqueIdentifier>{802030A9-ECFF-AE44-F517-3A1B617615A6}</UniqueIdentifier>
@@ -49,15 +58,57 @@
     <Filter Include="vendor\glm\glm\gtx">
       <UniqueIdentifier>{B3A6A76B-9F8A-68C1-08EB-6214F4ED5243}</UniqueIdentifier>
     </Filter>
+    <Filter Include="vendor\luabridge">
+      <UniqueIdentifier>{D1523BD1-BD4B-5A23-E67D-3FA8D2D5392F}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="vendor\luabridge\detail">
+      <UniqueIdentifier>{73D563CB-DF0C-AC62-E816-108654CDD25B}</UniqueIdentifier>
+    </Filter>
     <Filter Include="vendor\stb_image">
       <UniqueIdentifier>{0DA0BA59-F998-D9AB-22CB-BE300E23B9B7}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\core\App.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\AppGlobals.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\Core.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\Input.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\Log.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\NDUtil.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\Scheduler.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\Stats.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\Window.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\imgui_utils.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\physShapes.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
     <ClInclude Include="src\event\Event.h">
       <Filter>src\event</Filter>
     </ClInclude>
     <ClInclude Include="src\event\KeyEvent.h">
+      <Filter>src\event</Filter>
+    </ClInclude>
+    <ClInclude Include="src\event\MessageEvent.h">
       <Filter>src\event</Filter>
     </ClInclude>
     <ClInclude Include="src\event\MouseEvent.h">
@@ -85,6 +136,12 @@
       <Filter>src\graphics</Filter>
     </ClInclude>
     <ClInclude Include="src\graphics\Effect.h">
+      <Filter>src\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\graphics\FontMaterial.h">
+      <Filter>src\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\graphics\FontObject.h">
       <Filter>src\graphics</Filter>
     </ClInclude>
     <ClInclude Include="src\graphics\GContext.h">
@@ -120,14 +177,47 @@
     <ClInclude Include="src\graphics\font\FontParser.h">
       <Filter>src\graphics\font</Filter>
     </ClInclude>
+    <ClInclude Include="src\graphics\font\TextBuilder.h">
+      <Filter>src\graphics\font</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gui\GUIBasic.h">
+      <Filter>src\gui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gui\GUIContext.h">
+      <Filter>src\gui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gui\GUIElement.h">
+      <Filter>src\gui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gui\GUIRenderer.h">
+      <Filter>src\gui</Filter>
+    </ClInclude>
     <ClInclude Include="src\layer\Layer.h">
       <Filter>src\layer</Filter>
     </ClInclude>
     <ClInclude Include="src\layer\LayerStack.h">
       <Filter>src\layer</Filter>
     </ClInclude>
+    <ClInclude Include="src\layer\LuaExampel.h">
+      <Filter>src\layer</Filter>
+    </ClInclude>
+    <ClInclude Include="src\layer\LuaLayer.h">
+      <Filter>src\layer</Filter>
+    </ClInclude>
+    <ClInclude Include="src\memory\Pool.h">
+      <Filter>src\memory</Filter>
+    </ClInclude>
+    <ClInclude Include="src\memory\StackAllocator.h">
+      <Filter>src\memory</Filter>
+    </ClInclude>
+    <ClInclude Include="src\memory\stack_allocator.h">
+      <Filter>src\memory</Filter>
+    </ClInclude>
     <ClInclude Include="src\nbt\NBT.h">
       <Filter>src\nbt</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ndpch.h">
+      <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="src\platform\OpenGL\GLBuffer.h">
       <Filter>src\platform\OpenGL</Filter>
@@ -139,6 +229,9 @@
       <Filter>src\platform\OpenGL</Filter>
     </ClInclude>
     <ClInclude Include="src\platform\OpenGL\GLRenderer.h">
+      <Filter>src\platform\OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="src\platform\OpenGL\GLShader.h">
       <Filter>src\platform\OpenGL</Filter>
     </ClInclude>
     <ClInclude Include="src\platform\OpenGL\GLTexture.h">
@@ -1248,57 +1341,113 @@
     <ClInclude Include="vendor\stb_image\stb_image_write.h">
       <Filter>vendor\stb_image</Filter>
     </ClInclude>
-    <ClInclude Include="src\graphics\font\TextBuilder.h" />
-    <ClInclude Include="src\graphics\FontObject.h" />
-    <ClInclude Include="src\platform\OpenGL\GLShader.h" />
-    <ClInclude Include="src\graphics\FontMaterial.h" />
-    <ClInclude Include="src\gui\GUIElement.h" />
-    <ClInclude Include="src\gui\GUIRenderer.h" />
-    <ClInclude Include="src\gui\GUIContext.h" />
-    <ClInclude Include="src\gui\GUIBasic.h" />
-    <ClInclude Include="src\core\Window.h">
-      <Filter>src</Filter>
+    <ClInclude Include="vendor\luabridge\LuaBridge\List.h">
+      <Filter>vendor\luabridge</Filter>
     </ClInclude>
-    <ClInclude Include="src\core\App.h">
-      <Filter>src</Filter>
+    <ClInclude Include="vendor\luabridge\LuaBridge\LuaBridge.h">
+      <Filter>vendor\luabridge</Filter>
     </ClInclude>
-    <ClInclude Include="src\core\AppGlobals.h" />
-    <ClInclude Include="src\core\Core.h">
-      <Filter>src</Filter>
+    <ClInclude Include="vendor\luabridge\LuaBridge\Map.h">
+      <Filter>vendor\luabridge</Filter>
     </ClInclude>
-    <ClInclude Include="src\core\imgui_utils.h">
-      <Filter>src</Filter>
+    <ClInclude Include="vendor\luabridge\LuaBridge\RefCountedObject.h">
+      <Filter>vendor\luabridge</Filter>
     </ClInclude>
-    <ClInclude Include="src\core\Input.h">
-      <Filter>src</Filter>
+    <ClInclude Include="vendor\luabridge\LuaBridge\RefCountedPtr.h">
+      <Filter>vendor\luabridge</Filter>
     </ClInclude>
-    <ClInclude Include="src\core\Log.h">
-      <Filter>src</Filter>
+    <ClInclude Include="vendor\luabridge\LuaBridge\UnorderedMap.h">
+      <Filter>vendor\luabridge</Filter>
     </ClInclude>
-    <ClInclude Include="src\core\NDUtil.h">
-      <Filter>src</Filter>
+    <ClInclude Include="vendor\luabridge\LuaBridge\Vector.h">
+      <Filter>vendor\luabridge</Filter>
     </ClInclude>
-    <ClInclude Include="src\core\physShapes.h">
-      <Filter>src</Filter>
+    <ClInclude Include="vendor\luabridge\LuaBridge\detail\CFunctions.h">
+      <Filter>vendor\luabridge\detail</Filter>
     </ClInclude>
-    <ClInclude Include="src\core\Scheduler.h">
-      <Filter>src</Filter>
+    <ClInclude Include="vendor\luabridge\LuaBridge\detail\ClassInfo.h">
+      <Filter>vendor\luabridge\detail</Filter>
     </ClInclude>
-    <ClInclude Include="src\core\Stats.h">
-      <Filter>src</Filter>
+    <ClInclude Include="vendor\luabridge\LuaBridge\detail\Config.h">
+      <Filter>vendor\luabridge\detail</Filter>
     </ClInclude>
-    <ClInclude Include="src\ndpch.h">
-      <Filter>src</Filter>
+    <ClInclude Include="vendor\luabridge\LuaBridge\detail\Constructor.h">
+      <Filter>vendor\luabridge\detail</Filter>
     </ClInclude>
-    <ClInclude Include="src\core\sid.h" />
-    <ClInclude Include="src\memory\Pool.h">
-      <Filter>src</Filter>
+    <ClInclude Include="vendor\luabridge\LuaBridge\detail\dump.h">
+      <Filter>vendor\luabridge\detail</Filter>
     </ClInclude>
-    <ClInclude Include="src\memory\StackAllocator.h" />
-    <ClInclude Include="src\event\MessageEvent.h" />
-    <ClInclude Include="src\memory\stack_allocator.h" />
+    <ClInclude Include="vendor\luabridge\LuaBridge\detail\FuncTraits.h">
+      <Filter>vendor\luabridge\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="vendor\luabridge\LuaBridge\detail\Iterator.h">
+      <Filter>vendor\luabridge\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="vendor\luabridge\LuaBridge\detail\LuaException.h">
+      <Filter>vendor\luabridge\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="vendor\luabridge\LuaBridge\detail\LuaHelpers.h">
+      <Filter>vendor\luabridge\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="vendor\luabridge\LuaBridge\detail\LuaRef.h">
+      <Filter>vendor\luabridge\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="vendor\luabridge\LuaBridge\detail\Namespace.h">
+      <Filter>vendor\luabridge\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="vendor\luabridge\LuaBridge\detail\Security.h">
+      <Filter>vendor\luabridge\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="vendor\luabridge\LuaBridge\detail\Stack.h">
+      <Filter>vendor\luabridge\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="vendor\luabridge\LuaBridge\detail\TypeList.h">
+      <Filter>vendor\luabridge\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="vendor\luabridge\LuaBridge\detail\TypeTraits.h">
+      <Filter>vendor\luabridge\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="vendor\luabridge\LuaBridge\detail\Userdata.h">
+      <Filter>vendor\luabridge\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\sids.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\core\App.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\AppGlobals.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\Input.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\Log.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\Scheduler.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\State.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\Window.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\imgui_utils.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\physShapes.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\event\KeyEvent.cpp">
+      <Filter>src\event</Filter>
+    </ClCompile>
+    <ClCompile Include="src\event\MessageEvent.cpp">
+      <Filter>src\event</Filter>
+    </ClCompile>
     <ClCompile Include="src\graphics\API\Buffer.cpp">
       <Filter>src\graphics\API</Filter>
     </ClCompile>
@@ -1318,6 +1467,12 @@
       <Filter>src\graphics</Filter>
     </ClCompile>
     <ClCompile Include="src\graphics\Effect.cpp">
+      <Filter>src\graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\FontMaterial.cpp">
+      <Filter>src\graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\FontObject.cpp">
       <Filter>src\graphics</Filter>
     </ClCompile>
     <ClCompile Include="src\graphics\GContext.cpp">
@@ -1353,17 +1508,53 @@
     <ClCompile Include="src\graphics\font\FontParser.cpp">
       <Filter>src\graphics\font</Filter>
     </ClCompile>
+    <ClCompile Include="src\graphics\font\TextBuilder.cpp">
+      <Filter>src\graphics\font</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gui\GUIBasic.cpp">
+      <Filter>src\gui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gui\GUIContext.cpp">
+      <Filter>src\gui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gui\GUIElement.cpp">
+      <Filter>src\gui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gui\GUIRenderer.cpp">
+      <Filter>src\gui</Filter>
+    </ClCompile>
     <ClCompile Include="src\layer\Layer.cpp">
       <Filter>src\layer</Filter>
     </ClCompile>
     <ClCompile Include="src\layer\LayerStack.cpp">
       <Filter>src\layer</Filter>
     </ClCompile>
+    <ClCompile Include="src\layer\LuaExampel.cpp">
+      <Filter>src\layer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\layer\LuaExampel_wrap.cpp">
+      <Filter>src\layer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\layer\LuaLayer.cpp">
+      <Filter>src\layer</Filter>
+    </ClCompile>
     <ClCompile Include="src\layer\imgui_build.cpp">
       <Filter>src\layer</Filter>
     </ClCompile>
+    <ClCompile Include="src\memory\Pool.cpp">
+      <Filter>src\memory</Filter>
+    </ClCompile>
+    <ClCompile Include="src\memory\StackAllocator.cpp">
+      <Filter>src\memory</Filter>
+    </ClCompile>
+    <ClCompile Include="src\memory\stack_allocator.cpp">
+      <Filter>src\memory</Filter>
+    </ClCompile>
     <ClCompile Include="src\nbt\NBT.cpp">
       <Filter>src\nbt</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ndpch.cpp">
+      <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\platform\OpenGL\GLBuffer.cpp">
       <Filter>src\platform\OpenGL</Filter>
@@ -1377,6 +1568,9 @@
     <ClCompile Include="src\platform\OpenGL\GLRenderer.cpp">
       <Filter>src\platform\OpenGL</Filter>
     </ClCompile>
+    <ClCompile Include="src\platform\OpenGL\GLShader.cpp">
+      <Filter>src\platform\OpenGL</Filter>
+    </ClCompile>
     <ClCompile Include="src\platform\OpenGL\GLTexture.cpp">
       <Filter>src\platform\OpenGL</Filter>
     </ClCompile>
@@ -1386,51 +1580,8 @@
     <ClCompile Include="vendor\stb_image\stb_image.cpp">
       <Filter>vendor\stb_image</Filter>
     </ClCompile>
-    <ClCompile Include="src\graphics\font\TextBuilder.cpp" />
-    <ClCompile Include="src\graphics\FontObject.cpp" />
-    <ClCompile Include="src\platform\OpenGL\GLShader.cpp" />
-    <ClCompile Include="src\graphics\FontMaterial.cpp" />
-    <ClCompile Include="src\gui\GUIElement.cpp" />
-    <ClCompile Include="src\gui\GUIRenderer.cpp" />
-    <ClCompile Include="src\gui\GUIContext.cpp" />
-    <ClCompile Include="src\gui\GUIBasic.cpp" />
-    <ClCompile Include="src\core\App.cpp">
-      <Filter>src</Filter>
+    <ClCompile Include="src\core\sids.cpp">
+      <Filter>src\core</Filter>
     </ClCompile>
-    <ClCompile Include="src\core\AppGlobals.cpp" />
-    <ClCompile Include="src\core\imgui_utils.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\core\Input.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\core\Log.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\core\physShapes.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\core\Scheduler.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\core\State.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\core\Window.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\ndpch.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\memory\Pool.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\memory\StackAllocator.cpp" />
-    <ClCompile Include="src\event\MessageEvent.cpp" />
-    <ClCompile Include="src\core\sid.cpp" />
-    <ClCompile Include="src\memory\stack_allocator.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="vendor\sid\LICENSE.txt" />
   </ItemGroup>
 </Project>

@@ -10,6 +10,7 @@ constexpr int GUI_BOTTOM = 3;
 
 class GUIElement;
 typedef std::function<void(GUIElement&)> ActionF;
+typedef std::function<void(Event&,GUIElement&)> EventF;
 typedef int GEID;
 
 enum class GETYPE
@@ -31,7 +32,8 @@ enum class GETYPE
 	SplitVertical,
 	View,
 	Blank,
-	Other //doesn!t have custom render (usually aglomeration of elements)
+	ItemContainer,
+	Other, //doesn!t have custom render (usually aglomeration of elements)
 };
 
 typedef std::string GECLASS;
@@ -63,9 +65,9 @@ constexpr float GUIElement_InvalidNumber = -100000;
 class GUIElement
 {
 private:
-	std::vector<GUIElement*> m_children;
 	GUIAlign m_alignment=GUIAlign::INVALID;
 protected:
+	std::vector<GUIElement*> m_children;
 	GUIElement* m_parent = nullptr;
 
 	// is mouse over the element
@@ -75,7 +77,6 @@ protected:
 	
 	//has no dimensions on its own
 	//usually some column,row grid or something which is fully embedded in its parent
-	bool m_is_not_spacial = false;
 	bool m_is_pressed = false;
 
 
@@ -85,7 +86,9 @@ protected:
 public:
 	float renderAngle=0;
 	bool isVisible = true;
+	bool isNotSpacial = false;
 	ActionF onDimChange;
+	EventF onMyEventFunc;
 
 	// always adapts dimensions based on the sizes of children
 	bool isAlwaysPacked = false;
@@ -131,7 +134,7 @@ public:
 			i = paddin;
 	}
 	inline bool hasFocus() const { return m_has_focus; }
-	inline bool isNotSpacial() const { return m_is_not_spacial; }
+	inline bool isNotSpaci() const { return isNotSpacial; }
 	inline bool isPressed() const { return m_is_pressed; }
 	inline void setParent(GUIElement* parent) { this->m_parent = parent; }
 	
@@ -157,6 +160,8 @@ public:
 	inline virtual void appendChild(GUIElement* element);
 
 	inline virtual void removeChild(int index);
+
+	virtual void removeChildWithID(GEID id);
 
 	// called when this instance was given as a child to some parent element
 	// used to update all static positions and stuff

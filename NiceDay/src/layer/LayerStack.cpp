@@ -14,7 +14,7 @@ LayerStack::~LayerStack()
 }
 
 
-void LayerStack::PushLayer(Layer* layer)
+void LayerStack::pushLayer(Layer* layer)
 {
 	m_Layers.emplace(m_Layers.begin() + m_LayerInsertIndex, layer);
 	m_LayerInsertIndex++;
@@ -22,13 +22,13 @@ void LayerStack::PushLayer(Layer* layer)
 
 }
 
-void LayerStack::PushOverlay(Layer* overlay)
+void LayerStack::pushOverlay(Layer* overlay)
 {
 	m_Layers.emplace_back(overlay);
 	overlay->onAttach();
 }
 
-void LayerStack::PopLayer(Layer* layer)
+void LayerStack::popLayer(Layer* layer)
 {
 	auto it = std::find(m_Layers.begin(), m_Layers.end(), layer);
 	if (it != m_Layers.end())
@@ -39,7 +39,7 @@ void LayerStack::PopLayer(Layer* layer)
 	layer->onDetach();
 }
 
-void LayerStack::PopOverlay(Layer* overlay)
+void LayerStack::popOverlay(Layer* overlay)
 {
 	auto it = std::find(m_Layers.begin(), m_Layers.end(), overlay);
 	if (it != m_Layers.end())
@@ -53,33 +53,33 @@ void LayerStack::popPending()
 	for (auto to_pop : m_tasks)
 	{
 		if (to_pop.overlay&&!to_pop.add)
-			PopOverlay(to_pop.l);
+			popOverlay(to_pop.l);
 		else if(!to_pop.overlay &&!to_pop.add)
-			PopLayer(to_pop.l);
+			popLayer(to_pop.l);
 		else if (to_pop.overlay && to_pop.add)
-			PushOverlay(to_pop.l);
+			pushOverlay(to_pop.l);
 		else if (!to_pop.overlay && to_pop.add)
-			PushLayer(to_pop.l);
+			pushLayer(to_pop.l);
 	}
 	m_tasks.clear();
 }
 
-void LayerStack::PopLayerEventually(Layer* layer)
+void LayerStack::popLayerEventually(Layer* layer)
 {
 	m_tasks.push_back({ false,false,layer });
 }
 
-void LayerStack::PopOverlayEventually(Layer* overlay)
+void LayerStack::popOverlayEventually(Layer* overlay)
 {
 	m_tasks.push_back({ true,false,overlay });
 }
 
-void LayerStack::PushLayerEventually(Layer* layer)
+void LayerStack::pushLayerEventually(Layer* layer)
 {
 	m_tasks.push_back({ false,true,layer });
 }
 
-void LayerStack::PushOverlayEventually(Layer* overlay)
+void LayerStack::pushOverlayEventually(Layer* overlay)
 {
 	m_tasks.push_back({ true,true,overlay });
 }

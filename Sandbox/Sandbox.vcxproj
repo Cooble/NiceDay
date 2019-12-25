@@ -79,14 +79,14 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>ND_PLATFORM_WINDOWS;GLFW_INCLUDE_NONE;ND_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>src;..\NiceDay\src;..\NiceDay\vendor;..\NiceDay\vendor\spdlog\include;..\NiceDay\vendor\imgui;..\NiceDay\vendor\glm;..\NiceDay\vendor\glfw\include;..\NiceDay\vendor\glad\include;..\NiceDay\vendor\stb_image;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src;..\NiceDay\src;..\NiceDay\vendor;..\NiceDay\vendor\spdlog\include;..\NiceDay\vendor\imgui;..\NiceDay\vendor\glm;..\NiceDay\vendor\glfw\include;..\NiceDay\vendor\glad\include;..\NiceDay\vendor\stb_image;..\NiceDay\vendor\lua\src;..\NiceDay\vendor\lua\src\lua;..\NiceDay\vendor\luabridge;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
       <MinimalRebuild>false</MinimalRebuild>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <BasicRuntimeChecks>UninitializedLocalUsageCheck</BasicRuntimeChecks>
+      <BasicRuntimeChecks>StackFrameRuntimeCheck</BasicRuntimeChecks>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -98,7 +98,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>ND_PLATFORM_WINDOWS;GLFW_INCLUDE_NONE;ND_RELEASE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>src;..\NiceDay\src;..\NiceDay\vendor;..\NiceDay\vendor\spdlog\include;..\NiceDay\vendor\imgui;..\NiceDay\vendor\glm;..\NiceDay\vendor\glfw\include;..\NiceDay\vendor\glad\include;..\NiceDay\vendor\stb_image;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src;..\NiceDay\src;..\NiceDay\vendor;..\NiceDay\vendor\spdlog\include;..\NiceDay\vendor\imgui;..\NiceDay\vendor\glm;..\NiceDay\vendor\glfw\include;..\NiceDay\vendor\glad\include;..\NiceDay\vendor\stb_image;..\NiceDay\vendor\lua\src;..\NiceDay\vendor\lua\src\lua;..\NiceDay\vendor\luabridge;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -119,7 +119,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>ND_PLATFORM_WINDOWS;GLFW_INCLUDE_NONE;ND_DIST;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>src;..\NiceDay\src;..\NiceDay\vendor;..\NiceDay\vendor\spdlog\include;..\NiceDay\vendor\imgui;..\NiceDay\vendor\glm;..\NiceDay\vendor\glfw\include;..\NiceDay\vendor\glad\include;..\NiceDay\vendor\stb_image;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src;..\NiceDay\src;..\NiceDay\vendor;..\NiceDay\vendor\spdlog\include;..\NiceDay\vendor\imgui;..\NiceDay\vendor\glm;..\NiceDay\vendor\glfw\include;..\NiceDay\vendor\glad\include;..\NiceDay\vendor\stb_image;..\NiceDay\vendor\lua\src;..\NiceDay\vendor\lua\src\lua;..\NiceDay\vendor\luabridge;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -140,35 +140,44 @@
     <ClInclude Include="src\graphics\Bar.h" />
     <ClInclude Include="src\graphics\BlockTextureAtlas.h" />
     <ClInclude Include="src\graphics\Sprite2D.h" />
+    <ClInclude Include="src\gui\GUIEntityChest.h" />
+    <ClInclude Include="src\gui\GuiEntityPlayer.h" />
+    <ClInclude Include="src\gui\HUD.h" />
     <ClInclude Include="src\gui\GUICustomRenderer.h" />
+    <ClInclude Include="src\gui\GUIItemContainer.h" />
+    <ClInclude Include="src\gui\MainWindow.h" />
     <ClInclude Include="src\gui\window_messeages.h" />
     <ClInclude Include="src\inventory\Inventory.h" />
     <ClInclude Include="src\inventory\Item.h" />
     <ClInclude Include="src\inventory\ItemBlock.h" />
+    <ClInclude Include="src\inventory\items.h" />
+    <ClInclude Include="src\inventory\PlayerInventory.h" />
     <ClInclude Include="src\layer\CommonMessages.h" />
     <ClInclude Include="src\layer\GUILayer.h" />
     <ClInclude Include="src\layer\MainLayer.h" />
     <ClInclude Include="src\layer\PriorGenLayer.h" />
     <ClInclude Include="src\layer\WorldLayer.h" />
-    <ClInclude Include="src\gui\MainWindow.h" />
     <ClInclude Include="src\world\BlockAccess.h" />
     <ClInclude Include="src\world\Camera.h" />
     <ClInclude Include="src\world\ChunkLoader.h" />
     <ClInclude Include="src\world\ChunkMesh.h" />
     <ClInclude Include="src\world\ChunkMeshNew.h" />
     <ClInclude Include="src\world\ChunkPack.h" />
+    <ClInclude Include="src\world\entity\EntityAllocator.h" />
+    <ClInclude Include="src\world\entity\EntityPlayer.h" />
     <ClInclude Include="src\world\FileChunkProvider.h" />
     <ClInclude Include="src\world\I2DLocalable.h" />
     <ClInclude Include="src\world\IChunkProvider.h" />
     <ClInclude Include="src\world\ITickable.h" />
+    <ClInclude Include="src\world\IWorld.h" />
     <ClInclude Include="src\world\LightCalculator.h" />
     <ClInclude Include="src\world\ThreadedChunkProvider.h" />
     <ClInclude Include="src\world\ThreadedWorldGen.h" />
     <ClInclude Include="src\world\World.h" />
     <ClInclude Include="src\world\WorldIO.h" />
     <ClInclude Include="src\world\WorldRenderManager.h" />
-    <ClInclude Include="src\world\WorldsProvider.h" />
     <ClInclude Include="src\world\WorldTime.h" />
+    <ClInclude Include="src\world\WorldsProvider.h" />
     <ClInclude Include="src\world\biome\Biome.h" />
     <ClInclude Include="src\world\biome\BiomeForest.h" />
     <ClInclude Include="src\world\biome\BiomeRegistry.h" />
@@ -201,28 +210,38 @@
     <ClCompile Include="src\graphics\Bar.cpp" />
     <ClCompile Include="src\graphics\BlockTextureAtlas.cpp" />
     <ClCompile Include="src\graphics\Sprite2D.cpp" />
+    <ClCompile Include="src\gui\GUIEntityChest.cpp" />
+    <ClCompile Include="src\gui\GuiEntityPlayer.cpp" />
+    <ClCompile Include="src\gui\HUD.cpp" />
     <ClCompile Include="src\gui\GUICustomRenderer.cpp" />
+    <ClCompile Include="src\gui\GUIItemContainer.cpp" />
+    <ClCompile Include="src\gui\MainWindow.cpp" />
     <ClCompile Include="src\inventory\Inventory.cpp" />
     <ClCompile Include="src\inventory\Item.cpp" />
     <ClCompile Include="src\inventory\ItemBlock.cpp" />
+    <ClCompile Include="src\inventory\items.cpp" />
+    <ClCompile Include="src\inventory\PlayerInventory.cpp" />
     <ClCompile Include="src\layer\GUILayer.cpp" />
     <ClCompile Include="src\layer\MainLayer.cpp" />
     <ClCompile Include="src\layer\PriorGenLayer.cpp" />
     <ClCompile Include="src\layer\WorldLayer.cpp" />
-    <ClCompile Include="src\gui\MainWindow.cpp" />
     <ClCompile Include="src\world\BlockAccess.cpp" />
     <ClCompile Include="src\world\Camera.cpp" />
     <ClCompile Include="src\world\ChunkLoader.cpp" />
     <ClCompile Include="src\world\ChunkMesh.cpp" />
     <ClCompile Include="src\world\ChunkMeshNew.cpp" />
     <ClCompile Include="src\world\ChunkPack.cpp" />
+    <ClCompile Include="src\world\entity\EntityAllocator.cpp" />
+    <ClCompile Include="src\world\entity\EntityPlayer.cpp" />
     <ClCompile Include="src\world\FileChunkProvider.cpp" />
+    <ClCompile Include="src\world\IWorld.cpp" />
     <ClCompile Include="src\world\LightCalculator.cpp" />
     <ClCompile Include="src\world\ThreadedChunkProvider.cpp" />
     <ClCompile Include="src\world\ThreadedWorldGen.cpp" />
     <ClCompile Include="src\world\World.cpp" />
     <ClCompile Include="src\world\WorldIO.cpp" />
     <ClCompile Include="src\world\WorldRenderManager.cpp" />
+    <ClCompile Include="src\world\WorldsProvider.cpp" />
     <ClCompile Include="src\world\biome\Biome.cpp" />
     <ClCompile Include="src\world\biome\BiomeForest.cpp" />
     <ClCompile Include="src\world\biome\BiomeRegistry.cpp" />
@@ -246,7 +265,6 @@
     <ClCompile Include="src\world\particle\ParticleManager.cpp" />
     <ClCompile Include="src\world\particle\ParticleRegistry.cpp" />
     <ClCompile Include="src\world\particle\particles.cpp" />
-    <ClCompile Include="src\world\WorldsProvider.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\NiceDay\NiceDay.vcxproj">

@@ -101,8 +101,8 @@ WorldRenderManager::~WorldRenderManager()
 	delete m_block_fbo;
 	delete m_wall_fbo;
 
-	delete m_light_program;
-	delete m_light_simple_program;
+	//delete m_light_program;
+	//delete m_light_simple_program;
 
 	delete m_light_simple_texture;
 	delete m_light_sky_simple_texture;
@@ -136,9 +136,12 @@ void WorldRenderManager::onScreenResize()
 	int screenHeight = App::get().getWindow()->getHeight();
 	float chunkwidth = ((float)screenWidth / (float)BLOCK_PIXEL_SIZE) / (float)WORLD_CHUNK_SIZE;
 	float chunkheight = ((float)screenHeight / (float)BLOCK_PIXEL_SIZE) / (float)WORLD_CHUNK_SIZE;
-	m_chunk_width = ceil(chunkwidth) + 2;
-	m_chunk_height = ceil(chunkheight) + 2;
+	m_chunk_width = ceil(chunkwidth) + 3;
+	m_chunk_height = ceil(chunkheight) +3;
 
+	//todo fix bug with light borders
+	/*m_light_chunk_width = m_chunk_width + 2;
+	m_light_chunk_height = m_chunk_width + 2;*/
 	m_light_calculator.setDimensions(m_chunk_width, m_chunk_height);
 
 	m_chunks.reserve(getChunksSize());
@@ -231,7 +234,6 @@ void WorldRenderManager::onScreenResize()
 	m_bg_fbo->replaceTexture(Texture::create(info));
 
 	last_cx = -1000;
-	//onUpdate();
 }
 
 float minim(float f0, float f1)
@@ -362,8 +364,8 @@ void WorldRenderManager::refreshChunkList()
 
 void WorldRenderManager::onUpdate()
 {
-	int cx = floor(m_camera->getPosition().x / WORLD_CHUNK_SIZE) - floor(m_chunk_width / 2.0f);
-	int cy = floor(m_camera->getPosition().y / WORLD_CHUNK_SIZE) - floor(m_chunk_height / 2.0f);
+	int cx = m_camera->getPosition().x / WORLD_CHUNK_SIZE - m_chunk_width / 2.0f;
+	int cy = m_camera->getPosition().y / WORLD_CHUNK_SIZE - m_chunk_height / 2.0f;
 
 	if (cx != last_cx || cy != last_cy || m_world->hasChunkChanged())
 	{
@@ -550,7 +552,6 @@ void WorldRenderManager::render()
 				                                  mesh->getPos().y - m_camera->getPosition().y, 0.0f));
 			worldMatrix = glm::scale(worldMatrix, glm::vec3(0.5f, 0.5f, 1));
 			dynamic_cast<GLShader*>(&chunkProgram)->setUniformMat4("u_transform", getProjMatrix() * worldMatrix);
-
 			mesh->getWallVAO().bind();
 			GLCall(glDrawArrays(GL_TRIANGLES, 0, WORLD_CHUNK_AREA * 4 * 6));
 		}

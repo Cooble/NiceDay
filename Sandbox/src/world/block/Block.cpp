@@ -5,9 +5,10 @@
 #include "block_datas.h"
 #include "graphics/BlockTextureAtlas.h"
 #include "world/entity/EntityRegistry.h"
+#include "world/entity/EntityAllocator.h"
 
 
-Block::Block(int id)
+Block::Block(BlockID id)
 	: m_id(id),
 	  m_texture_pos(0),
 	  m_corner_translate_array(nullptr),
@@ -22,7 +23,7 @@ Block::Block(int id)
 {
 }
 
-Phys::Vecti Block::getTileEntityCoords(int x, int y, const BlockStruct& b)
+Phys::Vecti Block::getTileEntityCoords(int x, int y, const BlockStruct& b) const
 {
 	return Phys::Vecti(x, y);
 }
@@ -72,7 +73,7 @@ bool Block::isInGroup(BlockAccess& w, int x, int y, int group) const
 	return false;
 }
 
-bool Block::isInGroup(int blockID, int group) const
+bool Block::isInGroup(BlockID blockID, int group) const
 {
 	auto& bl = BlockRegistry::get().getBlock(blockID);
 	return bl.isInConnectGroup(group) || bl.getID() == m_id;
@@ -96,21 +97,36 @@ bool Block::onNeighbourBlockChange(BlockAccess& world, int x, int y) const
 void Block::onBlockPlaced(World& w, WorldEntity* e, int x, int y, BlockStruct& b) const
 {
 	if (hasTileEntity()) {
-		auto entityBuff = malloc(EntityRegistry::get().getBucket(m_tile_entity).byte_size);
-		EntityRegistry::get().createInstance(m_tile_entity, entityBuff);
-
-		((WorldEntity*)entityBuff)->getPosition() = Phys::Vect(x, y);
-		w.spawnEntity((WorldEntity*)entityBuff);
+		auto entity = EntityAllocator::createEntity(m_tile_entity);
+		entity->getPosition() = { x, y };
+		w.spawnEntity(entity);
 	}
 }
 
 void Block::onBlockDestroyed(World& w, WorldEntity* e, int x, int y, BlockStruct& b) const
 {
 	if (hasTileEntity()) {
-		
-		WorldEntity* ee = w.getLoadedTileEntity(x, y);
+
+		auto corrds = getTileEntityCoords(x, y, b);
+		WorldEntity* ee = w.getLoadedTileEntity(corrds.x,corrds.y);
 		if (ee)
 			ee->markDead();
+	}
+}
+
+void Block::onBlockClicked(World& w, WorldEntity* e, int x, int y, BlockStruct& b) const
+{
+	if (hasTileEntity())
+	{
+		auto pos = getTileEntityCoords(x, y, b);
+		auto entity = dynamic_cast<TileEntity*>(w.getLoadedTileEntity(pos.x, pos.y));
+		if (entity == nullptr)
+		{
+			entity = (TileEntity*)EntityAllocator::createEntity(m_tile_entity);
+			entity->getPosition() = { pos.x,pos.y };
+			w.spawnEntity(entity);
+		}
+		entity->onClicked(w, e);
 	}
 }
 
@@ -121,7 +137,7 @@ MultiBlock::MultiBlock(int id)
 {
 }
 
-Phys::Vecti MultiBlock::getTileEntityCoords(int x, int y, const BlockStruct& b)
+Phys::Vecti MultiBlock::getTileEntityCoords(int x, int y, const BlockStruct& b)const
 {
 	quarter_int offset = b.block_metadata;
 	return { x - offset.x, y - offset.y };

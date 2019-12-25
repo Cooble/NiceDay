@@ -19,7 +19,8 @@ public:
 	~Pool();
 
 public:
-	T* allocate();
+	template < typename... Args>
+	T* allocate(Args&&... args);
 	T* allocateNoConstructor();
 	void deallocate(T* t);
 	void deallocateNoDestructor(T* t);
@@ -53,16 +54,17 @@ Pool<T>::~Pool()
 }
 
 template <typename T>
-T* Pool<T>::allocate()
+template <typename ... Args>
+T* Pool<T>::allocate(Args&&... args)
 {
-	if(!m_free_list.empty())
+	if (!m_free_list.empty())
 	{
 		auto out = m_free_list.front();
-//#ifdef ND_DEBUG
+		//#ifdef ND_DEBUG
 		ASSERT(std::find(m_allocated_list.begin(), m_allocated_list.end(), out) == m_allocated_list.end(), "Allocation of allocated thing wtf");
 		m_allocated_list.push_back(out);
-//#endif
-		new(out) T();
+		//#endif
+		new(out) T(std::forward<Args>(args)...);
 		m_free_list.pop();
 		return out;
 	}

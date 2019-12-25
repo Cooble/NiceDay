@@ -77,13 +77,14 @@
       <PrecompiledHeaderFile>ndpch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;ND_PLATFORM_WINDOWS;GLFW_INCLUDE_NONE;ND_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>src;vendor\spdlog\include;vendor\glfw\include;vendor\glad\include;vendor\imgui;vendor\glm;vendor\stb_image;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src;vendor\spdlog\include;vendor\glfw\include;vendor\glad\include;vendor\imgui;vendor\glm;vendor\stb_image;vendor\lua\src;vendor\lua\src\lua;vendor\luabridge;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
       <MinimalRebuild>false</MinimalRebuild>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <BasicRuntimeChecks>StackFrameRuntimeCheck</BasicRuntimeChecks>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -99,7 +100,7 @@
       <PrecompiledHeaderFile>ndpch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;ND_PLATFORM_WINDOWS;GLFW_INCLUDE_NONE;ND_RELEASE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>src;vendor\spdlog\include;vendor\glfw\include;vendor\glad\include;vendor\imgui;vendor\glm;vendor\stb_image;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src;vendor\spdlog\include;vendor\glfw\include;vendor\glad\include;vendor\imgui;vendor\glm;vendor\stb_image;vendor\lua\src;vendor\lua\src\lua;vendor\luabridge;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -124,7 +125,7 @@
       <PrecompiledHeaderFile>ndpch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;ND_PLATFORM_WINDOWS;GLFW_INCLUDE_NONE;ND_DIST;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>src;vendor\spdlog\include;vendor\glfw\include;vendor\glad\include;vendor\imgui;vendor\glm;vendor\stb_image;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src;vendor\spdlog\include;vendor\glfw\include;vendor\glad\include;vendor\imgui;vendor\glm;vendor\stb_image;vendor\lua\src;vendor\lua\src\lua;vendor\luabridge;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -147,27 +148,18 @@
     <ClInclude Include="src\core\App.h" />
     <ClInclude Include="src\core\AppGlobals.h" />
     <ClInclude Include="src\core\Core.h" />
-    <ClInclude Include="src\core\sid.h" />
-    <ClInclude Include="src\event\MessageEvent.h" />
-    <ClInclude Include="src\graphics\FontMaterial.h" />
-    <ClInclude Include="src\graphics\FontObject.h" />
-    <ClInclude Include="src\graphics\font\TextBuilder.h" />
-    <ClInclude Include="src\gui\GUIContext.h" />
-    <ClInclude Include="src\gui\GUIElement.h" />
-    <ClInclude Include="src\gui\GUIRenderer.h" />
-    <ClInclude Include="src\gui\GUIBasic.h" />
     <ClInclude Include="src\core\Input.h" />
     <ClInclude Include="src\core\Log.h" />
     <ClInclude Include="src\core\NDUtil.h" />
-    <ClInclude Include="src\memory\StackAllocator.h" />
-    <ClInclude Include="src\memory\stack_allocator.h" />
-    <ClInclude Include="src\platform\OpenGL\GLShader.h" />
-    <ClInclude Include="src\memory\Pool.h" />
     <ClInclude Include="src\core\Scheduler.h" />
     <ClInclude Include="src\core\Stats.h" />
     <ClInclude Include="src\core\Window.h" />
+    <ClInclude Include="src\core\imgui_utils.h" />
+    <ClInclude Include="src\core\physShapes.h" />
+    <ClInclude Include="src\core\sids.h" />
     <ClInclude Include="src\event\Event.h" />
     <ClInclude Include="src\event\KeyEvent.h" />
+    <ClInclude Include="src\event\MessageEvent.h" />
     <ClInclude Include="src\event\MouseEvent.h" />
     <ClInclude Include="src\event\WindowEvent.h" />
     <ClInclude Include="src\graphics\API\Buffer.h" />
@@ -177,6 +169,8 @@
     <ClInclude Include="src\graphics\API\VertexArray.h" />
     <ClInclude Include="src\graphics\BatchRenderer2D.h" />
     <ClInclude Include="src\graphics\Effect.h" />
+    <ClInclude Include="src\graphics\FontMaterial.h" />
+    <ClInclude Include="src\graphics\FontObject.h" />
     <ClInclude Include="src\graphics\GContext.h" />
     <ClInclude Include="src\graphics\Group.h" />
     <ClInclude Include="src\graphics\IBatchRenderable2D.h" />
@@ -188,16 +182,25 @@
     <ClInclude Include="src\graphics\TextureAtlas.h" />
     <ClInclude Include="src\graphics\TextureManager.h" />
     <ClInclude Include="src\graphics\font\FontParser.h" />
-    <ClInclude Include="src\core\imgui_utils.h" />
+    <ClInclude Include="src\graphics\font\TextBuilder.h" />
+    <ClInclude Include="src\gui\GUIBasic.h" />
+    <ClInclude Include="src\gui\GUIContext.h" />
+    <ClInclude Include="src\gui\GUIElement.h" />
+    <ClInclude Include="src\gui\GUIRenderer.h" />
     <ClInclude Include="src\layer\Layer.h" />
     <ClInclude Include="src\layer\LayerStack.h" />
+    <ClInclude Include="src\layer\LuaExampel.h" />
+    <ClInclude Include="src\layer\LuaLayer.h" />
+    <ClInclude Include="src\memory\Pool.h" />
+    <ClInclude Include="src\memory\StackAllocator.h" />
+    <ClInclude Include="src\memory\stack_allocator.h" />
     <ClInclude Include="src\nbt\NBT.h" />
     <ClInclude Include="src\ndpch.h" />
-    <ClInclude Include="src\core\physShapes.h" />
     <ClInclude Include="src\platform\OpenGL\GLBuffer.h" />
     <ClInclude Include="src\platform\OpenGL\GLContext.h" />
     <ClInclude Include="src\platform\OpenGL\GLFrameBuffer.h" />
     <ClInclude Include="src\platform\OpenGL\GLRenderer.h" />
+    <ClInclude Include="src\platform\OpenGL\GLShader.h" />
     <ClInclude Include="src\platform\OpenGL\GLTexture.h" />
     <ClInclude Include="src\platform\OpenGL\GLVertexArray.h" />
     <ClInclude Include="vendor\glm\glm\common.hpp" />
@@ -564,6 +567,29 @@
     <ClInclude Include="vendor\glm\glm\vec3.hpp" />
     <ClInclude Include="vendor\glm\glm\vec4.hpp" />
     <ClInclude Include="vendor\glm\glm\vector_relational.hpp" />
+    <ClInclude Include="vendor\luabridge\LuaBridge\List.h" />
+    <ClInclude Include="vendor\luabridge\LuaBridge\LuaBridge.h" />
+    <ClInclude Include="vendor\luabridge\LuaBridge\Map.h" />
+    <ClInclude Include="vendor\luabridge\LuaBridge\RefCountedObject.h" />
+    <ClInclude Include="vendor\luabridge\LuaBridge\RefCountedPtr.h" />
+    <ClInclude Include="vendor\luabridge\LuaBridge\UnorderedMap.h" />
+    <ClInclude Include="vendor\luabridge\LuaBridge\Vector.h" />
+    <ClInclude Include="vendor\luabridge\LuaBridge\detail\CFunctions.h" />
+    <ClInclude Include="vendor\luabridge\LuaBridge\detail\ClassInfo.h" />
+    <ClInclude Include="vendor\luabridge\LuaBridge\detail\Config.h" />
+    <ClInclude Include="vendor\luabridge\LuaBridge\detail\Constructor.h" />
+    <ClInclude Include="vendor\luabridge\LuaBridge\detail\FuncTraits.h" />
+    <ClInclude Include="vendor\luabridge\LuaBridge\detail\Iterator.h" />
+    <ClInclude Include="vendor\luabridge\LuaBridge\detail\LuaException.h" />
+    <ClInclude Include="vendor\luabridge\LuaBridge\detail\LuaHelpers.h" />
+    <ClInclude Include="vendor\luabridge\LuaBridge\detail\LuaRef.h" />
+    <ClInclude Include="vendor\luabridge\LuaBridge\detail\Namespace.h" />
+    <ClInclude Include="vendor\luabridge\LuaBridge\detail\Security.h" />
+    <ClInclude Include="vendor\luabridge\LuaBridge\detail\Stack.h" />
+    <ClInclude Include="vendor\luabridge\LuaBridge\detail\TypeList.h" />
+    <ClInclude Include="vendor\luabridge\LuaBridge\detail\TypeTraits.h" />
+    <ClInclude Include="vendor\luabridge\LuaBridge\detail\Userdata.h" />
+    <ClInclude Include="vendor\luabridge\LuaBridge\detail\dump.h" />
     <ClInclude Include="vendor\stb_image\stb_image.h" />
     <ClInclude Include="vendor\stb_image\stb_image_resize.h" />
     <ClInclude Include="vendor\stb_image\stb_image_write.h" />
@@ -571,24 +597,16 @@
   <ItemGroup>
     <ClCompile Include="src\core\App.cpp" />
     <ClCompile Include="src\core\AppGlobals.cpp" />
-    <ClCompile Include="src\core\sid.cpp" />
-    <ClCompile Include="src\event\MessageEvent.cpp" />
-    <ClCompile Include="src\graphics\FontMaterial.cpp" />
-    <ClCompile Include="src\graphics\FontObject.cpp" />
-    <ClCompile Include="src\graphics\font\TextBuilder.cpp" />
-    <ClCompile Include="src\gui\GUIContext.cpp" />
-    <ClCompile Include="src\gui\GUIElement.cpp" />
-    <ClCompile Include="src\gui\GUIRenderer.cpp" />
-    <ClCompile Include="src\gui\GUIBasic.cpp" />
     <ClCompile Include="src\core\Input.cpp" />
     <ClCompile Include="src\core\Log.cpp" />
-    <ClCompile Include="src\memory\stack_allocator.cpp" />
-    <ClCompile Include="src\memory\StackAllocator.cpp" />
-    <ClCompile Include="src\platform\OpenGL\GLShader.cpp" />
-    <ClCompile Include="src\memory\Pool.cpp" />
     <ClCompile Include="src\core\Scheduler.cpp" />
     <ClCompile Include="src\core\State.cpp" />
     <ClCompile Include="src\core\Window.cpp" />
+    <ClCompile Include="src\core\imgui_utils.cpp" />
+    <ClCompile Include="src\core\physShapes.cpp" />
+    <ClCompile Include="src\core\sids.cpp" />
+    <ClCompile Include="src\event\KeyEvent.cpp" />
+    <ClCompile Include="src\event\MessageEvent.cpp" />
     <ClCompile Include="src\graphics\API\Buffer.cpp" />
     <ClCompile Include="src\graphics\API\FrameBuffer.cpp" />
     <ClCompile Include="src\graphics\API\Shader.cpp" />
@@ -596,6 +614,8 @@
     <ClCompile Include="src\graphics\API\VertexArray.cpp" />
     <ClCompile Include="src\graphics\BatchRenderer2D.cpp" />
     <ClCompile Include="src\graphics\Effect.cpp" />
+    <ClCompile Include="src\graphics\FontMaterial.cpp" />
+    <ClCompile Include="src\graphics\FontObject.cpp" />
     <ClCompile Include="src\graphics\GContext.cpp" />
     <ClCompile Include="src\graphics\Group.cpp" />
     <ClCompile Include="src\graphics\IBatchRenderable2D.cpp" />
@@ -607,19 +627,29 @@
     <ClCompile Include="src\graphics\TextureAtlas.cpp" />
     <ClCompile Include="src\graphics\TextureManager.cpp" />
     <ClCompile Include="src\graphics\font\FontParser.cpp" />
-    <ClCompile Include="src\core\imgui_utils.cpp" />
+    <ClCompile Include="src\graphics\font\TextBuilder.cpp" />
+    <ClCompile Include="src\gui\GUIBasic.cpp" />
+    <ClCompile Include="src\gui\GUIContext.cpp" />
+    <ClCompile Include="src\gui\GUIElement.cpp" />
+    <ClCompile Include="src\gui\GUIRenderer.cpp" />
     <ClCompile Include="src\layer\Layer.cpp" />
     <ClCompile Include="src\layer\LayerStack.cpp" />
+    <ClCompile Include="src\layer\LuaExampel.cpp" />
+    <ClCompile Include="src\layer\LuaExampel_wrap.cpp" />
+    <ClCompile Include="src\layer\LuaLayer.cpp" />
     <ClCompile Include="src\layer\imgui_build.cpp" />
+    <ClCompile Include="src\memory\Pool.cpp" />
+    <ClCompile Include="src\memory\StackAllocator.cpp" />
+    <ClCompile Include="src\memory\stack_allocator.cpp" />
     <ClCompile Include="src\nbt\NBT.cpp" />
     <ClCompile Include="src\ndpch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="src\core\physShapes.cpp" />
     <ClCompile Include="src\platform\OpenGL\GLBuffer.cpp" />
     <ClCompile Include="src\platform\OpenGL\GLContext.cpp" />
     <ClCompile Include="src\platform\OpenGL\GLFrameBuffer.cpp" />
     <ClCompile Include="src\platform\OpenGL\GLRenderer.cpp" />
+    <ClCompile Include="src\platform\OpenGL\GLShader.cpp" />
     <ClCompile Include="src\platform\OpenGL\GLTexture.cpp" />
     <ClCompile Include="src\platform\OpenGL\GLVertexArray.cpp" />
     <ClCompile Include="vendor\stb_image\stb_image.cpp" />
@@ -634,9 +664,9 @@
     <ProjectReference Include="vendor\imgui\imgui.vcxproj">
       <Project>{0098A80F-6CAC-D0C0-352E-7420A101CDF1}</Project>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="vendor\sid\LICENSE.txt" />
+    <ProjectReference Include="vendor\lua\lua.vcxproj">
+      <Project>{C78D880B-3397-887C-BC12-9F7C281B947C}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

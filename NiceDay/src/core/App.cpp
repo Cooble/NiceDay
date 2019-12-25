@@ -11,6 +11,7 @@
 #include "GLFW/glfw3.h"
 #include "imgui_utils.h"
 #include "core/AppGlobals.h"
+#include "layer/LuaLayer.h"
 
 #define BIND_EVENT_FN(x) std::bind(&App::x, &App::get(), std::placeholders::_1)
 
@@ -33,10 +34,12 @@ void App::init(int width, int height, const std::string& title)
 	GContext::init(Renderer::getAPI());
 	Effect::init();
 	m_Window->setEventCallback(eventCallback);
+	m_lua_layer = new LuaLayer();
+	m_LayerStack.pushLayer(m_lua_layer);
 	m_imgui_enable = true;
-	if (m_imgui_enable) {
+	if (m_imgui_enable) {	
 		m_ImGuiLayer = new ImGuiLayer();
-		m_LayerStack.PushOverlay(m_ImGuiLayer);
+		m_LayerStack.pushOverlay(m_ImGuiLayer);
 	}
 }
 
@@ -239,6 +242,9 @@ void ImGuiLayer::end()
 		ImGui::RenderPlatformWindowsDefault();
 		glfwMakeContextCurrent(backup_current_context);
 	}*/
+	m_imgui_consuming = ImGui::IsAnyItemActive()||ImGui::IsMouseHoveringAnyWindow();
+	AppGlobals::get().nbt.set("imgui consumi", m_imgui_consuming);
+
 }
 
 static int maxValResetDelay = 60 * 2;
@@ -266,6 +272,17 @@ void ImGuiLayer::onUpdate()
 	
 	updateTelemetry();
 	
+	
+}
+
+void ImGuiLayer::onEvent(Event& e)
+{
+	if (m_imgui_consuming && (
+		e.getEventType() == Event::EventType::MousePress
+		|| e.getEventType() == Event::EventType::KeyPress
+		|| e.getEventType() == Event::EventType::KeyType
+		)) 
+		e.handled = true;
 	
 }
 
@@ -329,6 +346,11 @@ void ImGuiLayer::drawGlobals()
 
 			for (auto& val : AppGlobals::get().nbt.m_ints)
 				ImGui::Value(val.first.c_str(), *(float*)&val.second);
+			ImGui::TreePop();
+		}
+		if (ImGui::TreeNode("Bools")) {
+			for (auto& val : AppGlobals::get().nbt.m_ints)
+				ImGui::Value(val.first.c_str(), val.second==1?"true":"false");
 			ImGui::TreePop();
 		}
 		if (ImGui::TreeNode("Strings")) {

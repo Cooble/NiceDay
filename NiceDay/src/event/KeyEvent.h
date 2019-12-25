@@ -16,12 +16,18 @@ public:
 	inline int getKey() const { return m_key; }
 	inline int getMods() const { return m_mods; }
 	inline int isRepeating() const { return m_repeat; }
+	
+	bool isAltPressed()const;
+	bool isShiftPressed()const;
+	bool isControlPressed()const;
+	
 	EVENT_TYPE_BUILD(KeyPress)
 	EVENT_CATEGORY_BUILD(Key)
 	EVENT_COPY(KeyPressEvent)
 
 
 };
+
 class KeyReleaseEvent :public Event
 {
 private:

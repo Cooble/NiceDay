@@ -62,12 +62,16 @@ class Sorter
 public:
 	static void sort(Icon** array, size_t length)
 	{
+		if (length == 1)
+			return;
 		quickSort(array, 0, length - 1);
 	}
 
 	template <typename T>
 	static void invert(T* array, size_t length)
 	{
+		if (length == 1)
+			return;
 		for (int i = 0; i < length / 2; ++i)
 		{
 			auto& first = array[i];
@@ -233,6 +237,7 @@ inline static std::string convertToShrunkFilePath(const std::string& folder, con
 
 void TextureAtlas::createAtlas(const std::string& folder, int segmentCount, int segmentSize)
 {
+	m_segmentCount = segmentCount;
 	ND_TRACE("[TextureAtlas] Creating...");
 
 
@@ -340,7 +345,7 @@ void TextureAtlas::createAtlas(const std::string& folder, int segmentCount, int 
 	for (auto& currentPNGPath : allPNGPaths) //get those which dont have txt file but only png
 	{
 		if (endsWith(currentPNGPath, "atlas.png"))
-			continue;;
+			continue;
 		if (!subImagesPath.contains(currentPNGPath))
 		{
 			//ND_INFO("Missing txt file {}", currentPNGPath);
@@ -348,13 +353,18 @@ void TextureAtlas::createAtlas(const std::string& folder, int segmentCount, int 
 			int height = 0;
 			int BPP = 0;
 
-
 			void* currentImage = stbi_load(currentPNGPath.c_str(), &width, &height, &BPP, 4);
 			ASSERT(currentImage, "invalid image");
 			stbi_image_free(currentImage);
 
-
-			Icon icon;
+			//SANITY DEPLETED!
+			//
+			//interesting note: if the icon is left just like: Icon icon;
+			//there is a corruption on the stack
+			//if its declared like this: Icon icon={};
+			//its fine
+			//Only god knows the reason....
+			Icon icon={};
 			icon.x0 = 0;
 			icon.y0 = 0;
 			icon.setWidth(width / segmentSize);
@@ -367,13 +377,12 @@ void TextureAtlas::createAtlas(const std::string& folder, int segmentCount, int 
 		}
 	}
 
-
 	
 	Icon** ordered_icons = new Icon*[subImages.size()];
 
 	int index = 0;
 	for (auto& i : subImages)
-		ordered_icons[index++] = &i.second;
+		ordered_icons[index++] = &(i.second);
 
 
 	Sorter::sort(ordered_icons, subImages.size());

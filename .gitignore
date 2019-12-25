@@ -3,6 +3,7 @@
 bin/
 bin-int/
 ignore/
+vendor/swig/
 
 # Files
 *.user

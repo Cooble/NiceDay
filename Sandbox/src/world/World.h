@@ -15,8 +15,7 @@
 
 class IChunkProvider;
 
-#define CHUNK_NOT_EXIST -1
-#define CHUNK_BUFFER_LENGTH 100 //5*4
+
 
 
 constexpr int DYNAMIC_ID_ENTITY_MANAGER = std::numeric_limits<int>::max() - 0;
@@ -123,7 +122,7 @@ struct WorldInfo
 	int chunk_width, chunk_height;
 	int terrain_level;
 	long long time = 0;
-	char name[100];
+	char name[100]{};
 	EntityID player_id;
 	ChunkID playerChunk;
 };
@@ -385,7 +384,8 @@ public:
 	inline auto& getNBTSaver() { return m_nbt_saver; }
 	inline EntityManager& getEntityManager() { return m_entity_manager; }
 	inline ParticleManager** particleManager() { return &m_particle_manager; }
-	void spawnParticle(ParticleID id, Phys::Vect pos, Phys::Vect speed, Phys::Vect acc, int life, float rotation = 0);
+	
+	void spawnParticle(ParticleID id, const glm::vec2& pos, const glm::vec2& speed, const glm::vec2& acc, int life, float rotation = 0);
 
 
 	inline WorldEntity* getLoadedEntity(EntityID id)
@@ -400,7 +400,7 @@ public:
 			return nullptr;
 		return m_entity_manager.entity(f->second);
 	}
-
+	nd::temp_vector<WorldEntity*> getEntitiesInRadius(const glm::vec2& pos,float radius);
 	inline const auto& getLoadedEntities() { return m_entity_array; }
 	inline const auto& getLoadedTileEntities() { return m_tile_entity_map; }
 

@@ -41,7 +41,7 @@ void ChunkPack::setBlock(int x, int y, BlockStruct& newBlock)
 
 void ChunkPack::setBlockWithNotify(int x, int y, BlockStruct& newBlock)
 {
-	ASSERT(false, "setblockwith notify doesn't work for chunkpack");
+	//ASSERT(false, "setblockwith notify doesn't work for chunkpack");
 }
 
 void ChunkPack::setWall(int x, int y, int wall_id)

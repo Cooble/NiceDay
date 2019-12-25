@@ -13,7 +13,7 @@ void WorldEntity::save(NBT& src)
 void WorldEntity::load(NBT& src)
 {
 	m_id = src.get<EntityID>("entityID");
-	m_pos = src.get<Phys::Vect>("entityPos");
+	m_pos = src.get<glm::vec2>("entityPos");
 }
 //TileEntity====================================================
 
@@ -35,6 +35,15 @@ void TileEntity::onSpawned(World& w)
 {
 	m_last_update_ticks = w.getWorldTime();
 	m_age = 0;
+}
+
+void TileEntity::onClicked(World& w, WorldEntity* entity)
+{
+}
+
+BlockStruct& TileEntity::getBlockStruct(World& w)
+{
+	return *w.getBlockM(m_pos.x, m_pos.y);
 }
 
 void TileEntity::save(NBT& src)

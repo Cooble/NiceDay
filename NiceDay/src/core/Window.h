@@ -34,7 +34,8 @@ public:
 	void close();
 	void swapBuffers();
 	void pollEvents();
-	inline void setEventCallback(const EventCallbackFn& func) { m_data.eventCallback = func; };
+	inline void setEventCallback(const EventCallbackFn& func) { m_data.eventCallback = func; }
+	inline glm::vec2 getDimensions() const { return glm::vec2(getWidth(), getHeight()); }
 	inline bool shouldClose();
 
 

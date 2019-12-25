@@ -56,10 +56,10 @@ bool Input::isMousePressed(int button)
 	return state==GLFW_PRESS;
 }
 
-std::pair<float, float> Input::getMouseLocation()
+glm::vec2 Input::getMouseLocation()
 {
 	GLFWwindow* w = App::get().getWindow()->getWindow();
 	double x, y;
 	glfwGetCursorPos(w, &x, &y);
-	return std::make_pair<>((float)x,(float)y);
+	return {x,y};
 }

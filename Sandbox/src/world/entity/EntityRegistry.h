@@ -43,7 +43,6 @@ public:
 
 	const std::string& entityTypeToString(EntityType type) const;
 	
-	WorldEntity* loadInstance(NBT& nbt) const;
 
 	static inline EntityRegistry& get()
 	{

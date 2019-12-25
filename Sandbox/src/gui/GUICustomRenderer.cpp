@@ -3,10 +3,13 @@
 #include "core/AppGlobals.h"
 #include "graphics/GContext.h"
 #include "core/App.h"
+#include "GUIItemContainer.h"
 
 GUICustomRenderer::GUICustomRenderer(glm::vec2 windowSize)
 :GUIRenderer(windowSize)
 {
+	m_small_font = FontMatLib::getMaterial("res/fonts/andrew.fnt");
+	
 	static SpriteSheetResource* res = new SpriteSheetResource(
 		Texture::create(TextureInfo("res/images/gui_atlas.png").filterMode(TextureFilterMode::NEAREST)),
 		8, 8);
@@ -32,6 +35,13 @@ GUICustomRenderer::GUICustomRenderer(glm::vec2 windowSize)
 		m_right.setSpriteIndex(1, 0);
 		m_down.setSpriteIndex(1, 0, false, true, true);
 	}
+}
+
+void GUICustomRenderer::setItemAtlas(int atlasSize, Texture* t)
+{
+	m_item_atlas_size = atlasSize;
+	m_item_atlas_bit = 1.f / m_item_atlas_size;
+	m_item_texture = t;
 }
 
 void GUICustomRenderer::render(BatchRenderer2D& renderer)
@@ -69,9 +79,58 @@ void GUICustomRenderer::renderRectangle(BatchRenderer2D& renderer, float x, floa
 	renderer.submitColorQuad({ x + dim,y + dim,m_z_pos }, { width - 2 * dim,height - 2 * dim }, guiCRColor);
 }
 
+void GUICustomRenderer::renderElement(BatchRenderer2D& renderer, GUIElement& e)
+{
+	if(e.type==GETYPE::ItemContainer)
+	{
+		renderItemContainer(renderer, static_cast<GUIItemContainer&>(e));
+	}else
+		GUIRenderer::renderElement(renderer, e);
+}
+
 void GUICustomRenderer::renderWindow(BatchRenderer2D& renderer, GUIWindow& e)
 {
 	renderRectangle(renderer, m_stackPos.x, m_stackPos.y, e.width, e.height);
+}
+
+void GUICustomRenderer::renderItemContainer(BatchRenderer2D& renderer, GUIItemContainer& e)
+{
+	float scale = e.slotScale;
+
+	//background for slot
+	if (e.isSlotRendered) {
+		renderRectangle(renderer, m_stackPos.x-scale, m_stackPos.y- scale, e.width+ scale*2, e.height + scale*2);
+		incrementZ();
+	}
+
+	//item
+	auto stack = e.getItemStack();
+	if (stack == nullptr)
+		return;
+	auto& item = stack->getItem();
+
+	half_int txtOffset = item.getTextureOffset(*stack);
+	
+	renderer.submitTextureQuad(
+		{ m_stackPos.x + e.padding[GUI_LEFT]- scale, m_stackPos.y + e.padding[GUI_RIGHT]- scale ,m_z_pos },
+		{ e.width - e.widthPadding()+ scale*2,e.height - e.heightPadding()+ scale*2 },
+		UVQuad::build({txtOffset.x* m_item_atlas_bit,txtOffset.y* m_item_atlas_bit },{ m_item_atlas_bit ,m_item_atlas_bit }),m_item_texture);
+	incrementZ();
+
+	if (stack->size() <= 1)
+		return;
+	//number of items
+	static TextMesh mesh(5);
+	std::string number = std::to_string(stack->size());
+	TextBuilder::buildMesh(number, 100000, *m_small_font->font, mesh, TextBuilder::ALIGN_RIGHT);
+
+	renderer.push(glm::translate(glm::mat4(1.0), {
+									 m_stackPos.x +  scale + e.width - 5,
+									 m_stackPos.y -  scale -10,
+									 m_z_pos
+		}));
+	renderer.submitText(mesh, m_small_font);
+	renderer.pop();
 }
 
 void GUICustomRenderer::renderBlank(BatchRenderer2D& renderer, GUIBlank& e)

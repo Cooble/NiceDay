@@ -36,6 +36,14 @@
 #include "core/AppGlobals.h"
 #include "event/MessageEvent.h"
 #include "CommonMessages.h"
+#include "layer/LuaLayer.h"
+#include <lua.hpp>
+#include <lua.hpp>
+#include <LuaBridge/LuaBridge.h>
+#include "inventory/items.h"
+#include "world/entity/EntityPlayer.h"
+#include "world/entity/EntityAllocator.h"
+#include "inventory/ItemBlock.h"
 
 const char* WORLD_FILE_PATH;
 int CHUNKS_LOADED;
@@ -79,6 +87,11 @@ void WorldLayer::registerEverything()
 	ND_REGISTER_BLOCK(new BlockTreeSapling());
 	ND_REGISTER_BLOCK(new BlockFlower());
 	ND_REGISTER_BLOCK(new BlockGrassPlant());
+	ND_REGISTER_BLOCK(new BlockSnow());
+	ND_REGISTER_BLOCK(new BlockSnowBrick());
+	ND_REGISTER_BLOCK(new BlockIce());
+	ND_REGISTER_BLOCK(new BlockPumpkin());
+	ND_REGISTER_BLOCK(new BlockChest());
 
 	//walls
 	ND_REGISTER_WALL(new WallAir());
@@ -87,15 +100,22 @@ void WorldLayer::registerEverything()
 	ND_REGISTER_WALL(new WallGlass());
 
 	//items
+	ND_REGISTER_ITEM(new ItemPickaxe());
+	ND_REGISTER_ITEM(new ItemBlock(SID("stone"), BlockRegistry::get().getBlockID("stone"),"stone"));
+
+	//items
 	//ND_REGISTER_ITEM();
 
 	//entities
-	ND_REGISTER_ENTITY(ENTITY_TYPE_PLAYER, EntityPlayer);
-	ND_REGISTER_ENTITY(ENTITY_TYPE_TNT, EntityTNT);
-	ND_REGISTER_ENTITY(ENTITY_TYPE_ZOMBIE, EntityZombie);
+	ND_REGISTER_ENTITY(ENTITY_TYPE_PLAYER,		EntityPlayer);
+	ND_REGISTER_ENTITY(ENTITY_TYPE_TNT,			EntityTNT);
+	ND_REGISTER_ENTITY(ENTITY_TYPE_ZOMBIE,		EntityZombie);
 	ND_REGISTER_ENTITY(ENTITY_TYPE_ROUND_BULLET, EntityRoundBullet);
 	ND_REGISTER_ENTITY(ENTITY_TYPE_TILE_SAPLING, TileEntitySapling);
-	ND_REGISTER_ENTITY(ENTITY_TYPE_TILE_TORCH, TileEntityTorch);
+	ND_REGISTER_ENTITY(ENTITY_TYPE_TILE_TORCH,	TileEntityTorch);
+	ND_REGISTER_ENTITY(ENTITY_TYPE_SNOWMAN,		EntitySnowman);
+	ND_REGISTER_ENTITY(ENTITY_TYPE_TILE_CHEST,	TileEntityChest);
+	ND_REGISTER_ENTITY(ENTITY_TYPE_ITEM,		EntityItem);
 
 	//biomes
 	ND_REGISTER_BIOME(new BiomeForest());
@@ -112,8 +132,6 @@ WorldLayer::WorldLayer()
 {
 
 	loadResources();
-	
-	
 }
 
 void WorldLayer::loadResources()
@@ -128,10 +146,15 @@ void WorldLayer::loadResources()
 	TextureAtlas particleAtlas;
 	particleAtlas.createAtlas(particleAtlasFolder, particleAtlasSize, 8);
 
+	std::string itemAtlasFolder = ND_RESLOC("res/images/itemAtlas/");
+
+	m_item_atlas.createAtlas(itemAtlasFolder, 8, 32);
+	
 	registerEverything();
 
 	ParticleRegistry::get().initTextures(particleAtlas);
 	BlockRegistry::get().initTextures(blockAtlas);
+	ItemRegistry::get().initTextures(m_item_atlas);
 
 	{
 		//call all constructors of entities to load static data on main thread
@@ -144,7 +167,6 @@ void WorldLayer::loadResources()
 		free(entityBuff);
 	}
 
-	//ChunkMesh::init();
 	ChunkMeshNew::init();
 
 	static SpriteSheetResource res(Texture::create(
@@ -156,6 +178,8 @@ void WorldLayer::loadResources()
 	Stats::bound_sprite->setSpriteIndex(0, 0);
 	Stats::bound_sprite->setPosition(glm::vec3(0, 0, 0));
 	Stats::bound_sprite->setSize(glm::vec2(1, 1));
+
+	
 }
 
 void WorldLayer::loadWorld(nd::temp_string& worldname,bool regen)
@@ -163,7 +187,7 @@ void WorldLayer::loadWorld(nd::temp_string& worldname,bool regen)
 	m_has_world = true;
 
 	m_cam = new Camera();
-	m_cam->setChunkRadius({ 3, 2 });
+	m_cam->setChunkRadius({ 6,6});
 
 
 	m_batch_renderer = new BatchRenderer2D();
@@ -171,10 +195,6 @@ void WorldLayer::loadWorld(nd::temp_string& worldname,bool regen)
 
 	//world===================================================
 	WorldInfo info;
-	/*std::string worldName = "NiceWorld";
-	std::string newName = AppGlobals::get().nbt.get("set.worldName", std::string());
-	if (newName != "")
-		worldName = newName;*/
 	
 	strcpy_s(info.name, worldname.c_str());
 	info.chunk_width = 50;
@@ -184,16 +204,12 @@ void WorldLayer::loadWorld(nd::temp_string& worldname,bool regen)
 
 	m_world = new World("worlds/" + std::string(info.name) + ".world", info);
 
-	/*bool genW = false;
-	if (AppGlobals::get().nbt.get<bool>("set.newWorld"))
-		genW = true;
-		*/
 	bool worldAlreadyLoaded = true;
 
 	if (regen)
 	{
 		m_world->genWorld();
-		ND_INFO("New world generated.");
+		ND_INFO("Generated world: {}", m_world->getFilePath());
 	}
 	else
 	{
@@ -201,7 +217,7 @@ void WorldLayer::loadWorld(nd::temp_string& worldname,bool regen)
 		auto job = m_world->loadWorld();
 		if (job == nullptr)
 		{
-			ND_INFO("World is missing: {}, generating new one", std::string(info.name) + ".world");
+			ND_INFO("World is missing, generating new one: {}", m_world->getFilePath());
 			m_world->genWorld();
 			
 		}
@@ -212,11 +228,11 @@ void WorldLayer::loadWorld(nd::temp_string& worldname,bool regen)
 				{
 					if (job->m_variable != JobAssignment::JOB_SUCCESS)
 					{
-						ND_INFO("World is corrupted: {}, generating new one", std::string(info.name) + ".world");
+						ND_INFO("World is corrupted: {}.world, generating new one", std::string(info.name));
 						world->genWorld();
 					}
 					else
-						ND_INFO("World loaded: {}", std::string(info.name) + ".world");
+						ND_INFO("World loaded: {}.world", world->getFilePath());
 					onWorldLoaded();
 				}, job);
 		}
@@ -234,15 +250,31 @@ EntityPlayer& WorldLayer::getPlayer()
 
 WorldLayer::~WorldLayer()
 {
-	delete m_chunk_loader;
+	//this does ondetach
+	/*delete m_chunk_loader;
 	delete m_world;
 	delete m_batch_renderer;
 	delete m_particle_renderer;
-	delete m_render_manager;
+	delete m_render_manager;*/
+}
+
+void WorldLayer::pause(bool pause)
+{
+	m_paused = pause;
+}
+
+bool WorldLayer::isPaused() const
+{
+	return m_paused;
 }
 
 void WorldLayer::onAttach()
 {
+	m_paused = false;
+
+	//prepare lua world interface
+	LuaLayer& lua = *App::get().getLua();
+	auto L = lua.getLuaState();
 }
 
 //called after world was gen or loaded
@@ -293,8 +325,7 @@ void WorldLayer::onWorldLoaded()
 	}
 	else
 	{
-		auto buff = malloc(EntityRegistry::get().getBucket(ENTITY_TYPE_PLAYER).byte_size);
-		EntityRegistry::get().createInstance(ENTITY_TYPE_PLAYER, buff);
+		auto buff = (EntityItem*)EntityAllocator::createEntity(ENTITY_TYPE_PLAYER);
 
 		playerID = m_world->spawnEntity((WorldEntity*)buff);
 		getPlayer().getPosition() = {
@@ -304,6 +335,68 @@ void WorldLayer::onWorldLoaded()
 	}
 }
 
+static World* s_lua_world_ref=nullptr;
+static World& luaGetWorldRef()
+{
+	ASSERT(s_lua_world_ref, "World is nullptr");
+	return *s_lua_world_ref;
+}
+static WorldEntity* s_lua_player_ref = nullptr;
+static WorldEntity& luaGetPlayerRef()
+{
+	ASSERT(s_lua_player_ref, "Player is nullptr");
+	return *s_lua_player_ref;
+}
+
+void WorldLayer::loadLuaWorldLibs()
+{
+	auto L = App::get().getLua()->getLuaState();
+
+	
+	luabridge::getGlobalNamespace(L)
+	.beginNamespace("Particle")
+		.addVariable("torch_fire",		&ParticleList::torch_fire, false)
+		.addVariable("bulletShatter",	&ParticleList::bulletShatter, false)
+		.addVariable("dot",				&ParticleList::dot, false)
+		.addVariable("line",			&ParticleList::line, false)
+		.addVariable("torch_smoke",		&ParticleList::torch_smoke, false)
+	.endNamespace();
+
+	//world wrapper
+	luabridge::getGlobalNamespace(L)
+		.beginClass<World>("worldClass")
+		.addFunction("getName",&World::getName)
+		.addFunction("spawnParticle", &World::spawnParticle)
+		.endClass();
+
+
+	s_lua_player_ref = &getPlayer();
+	//player wrapper
+	luabridge::getGlobalNamespace(L)
+		.beginClass<WorldEntity>("playerClass")
+		.addFunction("getPosition", (glm::vec2& (WorldEntity::*)()) &WorldEntity::getPosition)
+		.endClass();
+		
+
+
+	
+	s_lua_world_ref = m_world;
+	luabridge::getGlobalNamespace(L)
+		.addFunction("World", &luaGetWorldRef)
+		.addFunction("Player", &luaGetPlayerRef);
+	
+	
+	App::get().getLua()->runScriptInConsole(L, "world = World()");
+	App::get().getLua()->runScriptInConsole(L, "player = Player()");
+	App::get().getLua()->runScriptInConsole(L,
+		"function playerPos() "
+		"	local po = player:getPosition() "
+		"	return VEC2(po.x,po.y)"
+		"end");
+	
+	ND_TRACE("Loaded world lua bindings");
+}
+
 //called after chunk with player was loaded
 void WorldLayer::afterPlayerLoaded()
 {
@@ -311,11 +404,14 @@ void WorldLayer::afterPlayerLoaded()
 	c.run();
 
 	//add camera
-	m_cam->setPosition(getPlayer().getPosition().asGLM());
+	m_cam->setPosition(getPlayer().getPosition());
 	c.registerLight(dynamic_cast<LightSource*>(m_cam));
 
 	m_chunk_loader->registerEntity(dynamic_cast<IChunkLoaderEntity*>(m_cam));
 	m_is_world_ready = true;
+
+	loadLuaWorldLibs();
+
 }
 
 void WorldLayer::onDetach()
@@ -341,19 +437,37 @@ void WorldLayer::onDetach()
 	else
 		ND_INFO("World saved");
 	ND_SCHED.deallocateJob(job);
+
+	ND_SCHED.update();//this is really nasty and bad and disgusting
+	ND_SCHED.update();//this is really nasty and bad and disgusting
+	ND_INFO("Waiting for save 2 seconds");
+	std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+	delete m_chunk_loader;
+	delete m_world;
+	delete m_batch_renderer;
+	delete m_particle_renderer;
+	delete m_render_manager;
+	m_world = nullptr;
+	m_is_world_ready = false;
+	m_paused = false;
 }
 
 static int fpsCount;
 
+//mouse was pressed and is held rightnow
+static bool isDragging = false;
+
 void WorldLayer::onUpdate()
 {
+	if (m_paused)
+		return;
 	if (!m_is_world_ready)
 		return;
 
 	auto& play = getPlayer();
 
 	m_world->onUpdate();
-	m_cam->setPosition(play.getPosition().asGLM());
+	m_cam->setPosition(play.getPosition());
 	m_chunk_loader->onUpdate();
 
 	m_cam->m_light_intensity = Stats::player_light_intensity;
@@ -369,8 +483,8 @@ void WorldLayer::onUpdate()
 		lightCalcDelay = 1;
 	}
 	auto pair = App::get().getInput().getMouseLocation();
-	CURSOR_X = pair.first - App::get().getWindow()->getWidth() / 2;
-	CURSOR_Y = -pair.second + App::get().getWindow()->getHeight() / 2;
+	CURSOR_X = pair.x - App::get().getWindow()->getWidth() / 2;
+	CURSOR_Y = -pair.y + App::get().getWindow()->getHeight() / 2;
 
 	CURSOR_X = CURSOR_X / BLOCK_PIXEL_SIZE + m_cam->getPosition().x;
 	CURSOR_Y = CURSOR_Y / BLOCK_PIXEL_SIZE + m_cam->getPosition().y;
@@ -387,142 +501,139 @@ void WorldLayer::onUpdate()
 	bool tntenable = true;
 	constexpr int maxDeltaBum = 2;
 	static int deltaBum = 0;
-	if (App::get().getInput().isKeyPressed(GLFW_KEY_T))
+	if (!ImGui::IsMouseHoveringAnyWindow() && !ImGui::IsAnyItemActive())
 	{
-		if (tntenable)
+		if (App::get().getInput().isKeyPressed(GLFW_KEY_T))
 		{
-			if (deltaBum-- == 0)
+			if (tntenable)
 			{
-				deltaBum = maxDeltaBum;
-				auto t = Phys::asVect(m_cam->getPosition()).copy();
-				t.plus({0, 3});
-				Phys::Vect throwVect = Phys::Vect(CURSOR_X, CURSOR_Y) - t;
-				throwVect.normalize();
-				throwVect *= 10.f;
-				throwVect += getPlayer().getVelocity();
-				auto tnt = (EntityTNT*)malloc(sizeof(EntityTNT));
-				EntityRegistry::get().createInstance(ENTITY_TYPE_TNT, tnt);
-				tnt->getPosition() = m_cam->getPosition();
-				tnt->getPosition().y += 3;
-				tnt->getVelocity() = throwVect.asGLM();
-				m_world->spawnEntity(tnt);
-				//tnt->getAcceleration() = glm::vec2(0,-9.8)
-			}
-		}
-	}
-	if (App::get().getInput().isKeyFreshlyPressed(GLFW_KEY_C))
-	{
-		Stats::fly_enable = !Stats::fly_enable;
-		ND_INFO("Fly mode: {}", Stats::fly_enable);
-	}
-	if (App::get().getInput().isKeyFreshlyPressed(GLFW_KEY_E))
-	{
-		auto t = Phys::asVect(m_cam->getPosition()).copy();
-
-		auto entityBuff = malloc(EntityRegistry::get().getBucket(ENTITY_PALLETE_SELECTED).byte_size);
-		EntityRegistry::get().createInstance(ENTITY_PALLETE_SELECTED, entityBuff);
-
-		((WorldEntity*)entityBuff)->getPosition() = m_cam->getPosition();
-		((WorldEntity*)entityBuff)->getPosition().y += 10;
-		m_world->spawnEntity((WorldEntity*)entityBuff);
-	}
-
-	if (App::get().getInput().isKeyPressed(GLFW_KEY_B))
-	{
-		constexpr int BULLET_CADENCE_DELAY = 8;
-		static int counter = 0;
-		if (counter++ == BULLET_CADENCE_DELAY)
-		{
-			counter = 0;
-			const int BULLET_COUNT = 16;
-			for (int i = 0; i < BULLET_COUNT; ++i)
-			{
-				auto buff = malloc(EntityRegistry::get().getBucket(ENTITY_TYPE_ROUND_BULLET).byte_size);
-				EntityRegistry::get().createInstance(ENTITY_TYPE_ROUND_BULLET, buff);
-				auto bullet = (EntityRoundBullet*)buff;
-				bullet->getPosition() = m_cam->getPosition() + Phys::Vect(0, 10.f).asGLM();
-				bullet->fire(3.14159f * 2 / BULLET_COUNT * i, 50.f / 60);
-				m_world->spawnEntity(bullet);
-			}
-		}
-	}
-	
-	//if (!ImGui::IsMouseHoveringAnyWindow())
-		if (App::get().getInput().isMousePressed(GLFW_MOUSE_BUTTON_1))
-		{
-			if (Stats::gun_enable)
-			{
-				constexpr int BULLET_CADENCE_DELAY = 3;
-				static int counter = 0;
-				if (counter++ == BULLET_CADENCE_DELAY)
+				if (deltaBum-- == 0)
 				{
-					counter = 0;
-					auto buff = malloc(EntityRegistry::get().getBucket(ENTITY_TYPE_ROUND_BULLET).byte_size);
-					EntityRegistry::get().createInstance(ENTITY_TYPE_ROUND_BULLET, buff);
-					auto bullet = (EntityRoundBullet*)buff;
-					bullet->getPosition() = m_cam->getPosition() + Phys::Vect(0, 4.f).asGLM();
-					bullet->fire(Phys::Vect(CURSOR_X, CURSOR_Y), 50.f / 60);
+					deltaBum = maxDeltaBum;
+					auto t = Phys::asVect(m_cam->getPosition()).copy();
+					t.plus({ 0, 3 });
+					Phys::Vect throwVect = Phys::Vect(CURSOR_X, CURSOR_Y) - t;
+					throwVect.normalize();
+					throwVect *= 10.f;
+					//throwVect += getPlayer().getVelocity();
+
+					auto tnt = (EntityTNT*)EntityAllocator::createEntity(ENTITY_TYPE_TNT);
+					tnt->getPosition() = m_cam->getPosition();
+					tnt->getPosition().y += 3;
+					tnt->getVelocity() = throwVect.asGLM();
+					m_world->spawnEntity(tnt);
+					//tnt->getAcceleration() = glm::vec2(0,-9.8)
+				}
+			}
+		}
+		if (App::get().getInput().isKeyFreshlyPressed(GLFW_KEY_C))
+		{
+			Stats::fly_enable = !Stats::fly_enable;
+			ND_INFO("Fly mode: {}", Stats::fly_enable);
+		}
+		if (App::get().getInput().isKeyFreshlyPressed(GLFW_KEY_E))
+		{
+
+			auto entityBuff = malloc(EntityRegistry::get().getBucket(ENTITY_PALLETE_SELECTED).byte_size);
+			EntityRegistry::get().createInstance(ENTITY_PALLETE_SELECTED, entityBuff);
+
+			((WorldEntity*)entityBuff)->getPosition() = m_cam->getPosition();
+			((WorldEntity*)entityBuff)->getPosition().y += 10;
+			m_world->spawnEntity((WorldEntity*)entityBuff);
+		}
+
+		if (App::get().getInput().isKeyPressed(GLFW_KEY_B))
+		{
+			constexpr int BULLET_CADENCE_DELAY = 8;
+			static int counter = 0;
+			if (counter++ == BULLET_CADENCE_DELAY)
+			{
+				counter = 0;
+				const int BULLET_COUNT = 16;
+				for (int i = 0; i < BULLET_COUNT; ++i)
+				{
+					auto bullet = (EntityRoundBullet*)EntityAllocator::createEntity(ENTITY_TYPE_ROUND_BULLET);
+					bullet->getPosition() = m_cam->getPosition() + Phys::Vect(0, 10.f).asGLM();
+					bullet->fire(3.14159f * 2 / BULLET_COUNT * i, 50.f / 60);
 					m_world->spawnEntity(bullet);
 				}
 			}
-			else if (BLOCK_OR_WALL_SELECTED)
+		}
+		if (isDragging)
 			{
-				auto& str = *m_world->getBlockOrAir(CURSOR_X, CURSOR_Y);
-				if (str.block_id != BLOCK_PALLETE_SELECTED && BlockRegistry::get()
-				                                              .getBlock(BLOCK_PALLETE_SELECTED).canBePlaced(
-					                                              *m_world, CURSOR_X, CURSOR_Y))
-					m_world->setBlockWithNotify(CURSOR_X, CURSOR_Y, BLOCK_PALLETE_SELECTED);
-			}
-
-			else
-			{
-				if (m_world->getBlock(CURSOR_X, CURSOR_Y)->isWallOccupied())
+				if (Stats::gun_enable)
 				{
-					if (m_world->getBlock(CURSOR_X, CURSOR_Y)->wallID() != BLOCK_PALLETE_SELECTED)
+					constexpr int BULLET_CADENCE_DELAY = 3;
+					static int counter = 0;
+					if (counter++ == BULLET_CADENCE_DELAY)
+					{
+						counter = 0;
+						auto bullet = (EntityRoundBullet*)EntityAllocator::createEntity(ENTITY_TYPE_ROUND_BULLET);
+						bullet->getPosition() = m_cam->getPosition() + Phys::Vect(0, 1.f).asGLM();
+						bullet->fire({ CURSOR_X, CURSOR_Y }, 50.f / 60);
+						bullet->setOwner(getPlayer().getID());
+						m_world->spawnEntity(bullet);
+					}
+				}
+				else if (BLOCK_OR_WALL_SELECTED)
+				{
+					auto& str = *m_world->getBlockOrAir(CURSOR_X, CURSOR_Y);
+					if (str.block_id != BLOCK_PALLETE_SELECTED && BlockRegistry::get()
+						.getBlock(BLOCK_PALLETE_SELECTED).canBePlaced(
+							*m_world, CURSOR_X, CURSOR_Y))
+						m_world->setBlockWithNotify(CURSOR_X, CURSOR_Y, BLOCK_PALLETE_SELECTED);
+				}
+
+				else
+				{
+					if (m_world->getBlock(CURSOR_X, CURSOR_Y)->isWallOccupied())
+					{
+						if (m_world->getBlock(CURSOR_X, CURSOR_Y)->wallID() != BLOCK_PALLETE_SELECTED)
+							m_world->setWall(CURSOR_X, CURSOR_Y, BLOCK_PALLETE_SELECTED);
+					}
+					else
 						m_world->setWall(CURSOR_X, CURSOR_Y, BLOCK_PALLETE_SELECTED);
 				}
-				else
-					m_world->setWall(CURSOR_X, CURSOR_Y, BLOCK_PALLETE_SELECTED);
 			}
-		}
 
-		
+	}
 	//camera movement===================================================================
 	glm::vec2 accel = glm::vec2(0, 0);
 	accel.y = -9.0f / 60;
-	glm::vec2& velocity = play.getVelocity().asGLM();
+	glm::vec2& velocity = play.getVelocity();
 	float acc = 0.3f;
 	float moveThroughBlockSpeed = 6;
 
-	if (Stats::move_through_blocks_enable)
-	{
-		velocity = glm::vec2(0, 0);
-		if (App::get().getInput().isKeyPressed(GLFW_KEY_RIGHT))
-			velocity.x = moveThroughBlockSpeed;
-		if (App::get().getInput().isKeyPressed(GLFW_KEY_LEFT))
-			velocity.x = -moveThroughBlockSpeed;
-
-
-		if (App::get().getInput().isKeyPressed(GLFW_KEY_UP))
-			velocity.y = moveThroughBlockSpeed;
-		if (App::get().getInput().isKeyPressed(GLFW_KEY_DOWN))
-			velocity.y = -moveThroughBlockSpeed;
-	}
-
-	else
-	{
-		if (App::get().getInput().isKeyPressed(GLFW_KEY_RIGHT))
-			accel.x = acc;
-		if (App::get().getInput().isKeyPressed(GLFW_KEY_LEFT))
-			accel.x = -acc;
-		if (App::get().getInput().isKeyPressed(GLFW_KEY_UP))
+	if (!ImGui::IsAnyItemActive()) {
+		if (Stats::move_through_blocks_enable)
 		{
-			if (istsunderBlock || Stats::fly_enable)
-				velocity.y = 10;
-		}
-		getPlayer().getAcceleration() = accel;
-	}
+			velocity = glm::vec2(0, 0);
+			if (App::get().getInput().isKeyPressed(GLFW_KEY_RIGHT))
+				velocity.x = moveThroughBlockSpeed;
+			if (App::get().getInput().isKeyPressed(GLFW_KEY_LEFT))
+				velocity.x = -moveThroughBlockSpeed;
 
+
+			if (App::get().getInput().isKeyPressed(GLFW_KEY_UP))
+				velocity.y = moveThroughBlockSpeed;
+			if (App::get().getInput().isKeyPressed(GLFW_KEY_DOWN))
+				velocity.y = -moveThroughBlockSpeed;
+		}
+
+		else
+		{
+			if (App::get().getInput().isKeyPressed(GLFW_KEY_RIGHT))
+				accel.x = acc;
+			if (App::get().getInput().isKeyPressed(GLFW_KEY_LEFT))
+				accel.x = -acc;
+			if (App::get().getInput().isKeyPressed(GLFW_KEY_UP))
+			{
+				if (istsunderBlock || Stats::fly_enable)
+					velocity.y = 10;
+			}
+			getPlayer().getAcceleration() = accel;
+		}
+	}
 	//std::cout << "Acceleration: " << Phys::asVect(accel) << "\n";
 
 	// Particle Sh't
@@ -582,9 +693,8 @@ void WorldLayer::onUpdate()
 					x -= 2 * WORLD_CHUNK_SIZE;
 
 
-					auto buff = malloc(EntityRegistry::get().getBucket(ENTITY_TYPE_ROUND_BULLET).byte_size);
-					EntityRegistry::get().createInstance(ENTITY_TYPE_ROUND_BULLET, buff);
-					auto bullet = (EntityRoundBullet*)buff;
+					auto bullet = (EntityRoundBullet*)EntityAllocator::createEntity(ENTITY_TYPE_ROUND_BULLET);
+
 					bullet->getPosition() = m_cam->getPosition() + Phys::Vect(x, 2 * WORLD_CHUNK_SIZE).asGLM();
 					bullet->fire(2 * 3.14159f * 3.0f / 4 + (((std::rand() % 10) - 5) / 5.f * 0.3f),
 					             ((std::rand() % 20) + 40.f) / 60);
@@ -640,9 +750,10 @@ void WorldLayer::onRender()
 static bool showTelem = false;
 static bool showChunks = false;
 
+
 void WorldLayer::onImGuiRender()
 {
-	if (m_world == nullptr)
+	if (m_world == nullptr/*||isPaused()*/)
 		return;
 	onImGuiRenderWorld();
 
@@ -673,7 +784,9 @@ void WorldLayer::onImGuiRenderTelemetrics()
 
 void WorldLayer::onImGuiRenderWorld()
 {
-	
+
+	if(m_world==nullptr)
+		return;
 	static bool showBase = true;
 
 	if (!ImGui::Begin("WorldInfo", &showBase))
@@ -695,8 +808,8 @@ void WorldLayer::onImGuiRenderWorld()
 	ImGui::Checkbox(Stats::light_enable ? "Lighting Enabled" : "Lighting Disabled", &Stats::light_enable);
 	if (l != Stats::light_enable)
 	{
-		if (!l) m_world->getLightCalculator().run();
-		else m_world->getLightCalculator().stop();
+		//if (!l) m_world->getLightCalculator().run();
+		//else m_world->getLightCalculator().stop();
 	}
 
 	ImGui::Checkbox(Stats::move_through_blocks_enable ? "Move through Blocks Enabled" : "Move through Blocks Disabled",
@@ -713,7 +826,7 @@ void WorldLayer::onImGuiRenderWorld()
 	ImGui::SliderFloat("slider float", &Stats::edge_scale, 0.0f, 1.0f, "ratio = %.2f");
 
 
-	ImGui::Text("World filepath: %s", WORLD_FILE_PATH);
+	ImGui::Text("World filepath: %s", m_world->getFilePath());
 	ImGui::Text("WorldTime: (%d) %d:%d", m_world->getWorldTime().m_ticks, (int)m_world->getWorldTime().hour(),
 	            (int)m_world->getWorldTime().minute());
 	ImGui::SliderFloat("Time speed", &m_world->m_time_speed, 0.f, 20.0f, "ratio = %.2f");
@@ -803,8 +916,8 @@ void WorldLayer::onImGuiRenderWorld()
 		{
 			char buf[32];
 			sprintf(buf, "%s", blocks[n].name.c_str());
-			if (ImGui::Selectable(buf, ENTITY_PALLETE_SELECTED == n))
-				ENTITY_PALLETE_SELECTED = n;
+			if (ImGui::Selectable(buf, ENTITY_PALLETE_SELECTED == blocks[n].entity_type))
+				ENTITY_PALLETE_SELECTED = blocks[n].entity_type;
 		}
 		ImGui::TreePop();
 	}
@@ -829,7 +942,6 @@ void WorldLayer::onImGuiRenderWorld()
 	//static bool op = false;
 	//ImGui::ShowDemoWindow(&op);
 }
-
 
 static std::string toString(World::ChunkState s)
 {
@@ -889,6 +1001,8 @@ void WorldLayer::onImGuiRenderChunks()
 
 void WorldLayer::onEvent(Event& e)
 {
+	if (isPaused())
+		return;
 
 	if(e.getEventType()== Event::EventType::Message)
 	{
@@ -897,7 +1011,6 @@ void WorldLayer::onEvent(Event& e)
 		{
 			//todo maybe make each message as a class with inheritance and allocate it on stack
 		}
-
 	}
 	if (!m_has_world)
 		return;
@@ -905,7 +1018,7 @@ void WorldLayer::onEvent(Event& e)
 	{
 		auto event = dynamic_cast<KeyPressEvent*>(&e);
 
-		if (event->getKey() == GLFW_KEY_ESCAPE)
+		/*if (event->getKey() == GLFW_KEY_ESCAPE)
 		{
 			if (App::get().getInput().isKeyPressed(GLFW_KEY_DELETE))
 			{
@@ -917,7 +1030,7 @@ void WorldLayer::onEvent(Event& e)
 			App::get().fireEvent(e);
 			event->handled = true;
 
-		}
+		}*/
 	}
 
 	if (e.getEventType() == Event::EventType::WindowResize)
@@ -926,9 +1039,19 @@ void WorldLayer::onEvent(Event& e)
 		m_render_manager->onScreenResize();
 	}
 	//if (!ImGui::IsMouseHoveringAnyWindow())
-		if (e.getEventType() == Event::EventType::MousePress)
+	
+	if (e.getEventType() == Event::EventType::MouseRelease)
+		isDragging = false;
+	
+	if (e.getEventType() == Event::EventType::MousePress)
 		{
 			auto event = dynamic_cast<MousePressEvent*>(&e);
+
+			if (event->getButton() == GLFW_MOUSE_BUTTON_1) {
+				isDragging = true;
+				event->handled = true;
+			}
+			
 			if (event->getButton() == GLFW_MOUSE_BUTTON_2)
 			{
 				if (App::get().getInput().isKeyPressed(GLFW_KEY_LEFT_CONTROL))
@@ -951,4 +1074,6 @@ void WorldLayer::onEvent(Event& e)
 				event->handled = true;
 			}
 		}
+
 }
+

@@ -5,6 +5,9 @@
 #include "world/Camera.h"
 #include "graphics/BlockTextureAtlas.h"
 #include "world/entity/EntityRegistry.h"
+#include "world/particle/particles.h"
+#include "world/entity/entities.h"
+#include "world/entity/EntityAllocator.h"
 
 //AIR=======================================
 BlockAir::BlockAir()
@@ -29,7 +32,31 @@ BlockStone::BlockStone()
 	: Block(BLOCK_STONE)
 {
 	m_has_big_texture = true;
-	m_texture_pos = {3, 0};
+	m_corner_translate_array = BLOCK_CORNERS_DIRT;
+	m_block_connect_group = BIT(BLOCK_GROUP_DIRT_BIT);
+}
+
+
+BlockSnow::BlockSnow()
+	: Block(BLOCK_SNOW)
+{
+	m_has_big_texture = true;
+	m_corner_translate_array = BLOCK_CORNERS_DIRT;
+	m_block_connect_group = BIT(BLOCK_GROUP_DIRT_BIT);
+}
+
+BlockSnowBrick::BlockSnowBrick()
+	: Block(BLOCK_SNOW_BRICK)
+{
+	m_has_big_texture = true;
+	m_corner_translate_array = BLOCK_CORNERS_GLASS;
+	m_block_connect_group = BIT(BLOCK_GROUP_DIRT_BIT);
+}
+
+BlockIce::BlockIce()
+	: Block(BLOCK_ICE)
+{
+	m_has_big_texture = true;
 	m_corner_translate_array = BLOCK_CORNERS_DIRT;
 	m_block_connect_group = BIT(BLOCK_GROUP_DIRT_BIT);
 }
@@ -40,7 +67,6 @@ BlockDirt::BlockDirt()
 	: Block(BLOCK_DIRT)
 {
 	m_has_big_texture = true;
-	m_texture_pos = {2, 0};
 	m_corner_translate_array = BLOCK_CORNERS_DIRT;
 	m_block_connect_group = BIT(BLOCK_GROUP_DIRT_BIT);
 }
@@ -51,7 +77,6 @@ BlockGold::BlockGold()
 	: Block(BLOCK_GOLD)
 {
 	m_has_big_texture = true;
-	m_texture_pos = {1, 0};
 	m_corner_translate_array = BLOCK_CORNERS_DIRT;
 	m_block_connect_group = BIT(BLOCK_GROUP_ORE_BIT);
 }
@@ -61,7 +86,6 @@ BlockAdamantite::BlockAdamantite()
 	: Block(BLOCK_ADAMANTITE)
 {
 	m_has_big_texture = true;
-	m_texture_pos = {2, 1};
 	m_corner_translate_array = BLOCK_CORNERS_DIRT;
 	m_block_connect_group = BIT(BLOCK_GROUP_ORE_BIT) | BIT(BLOCK_GROUP_DIRT_BIT);
 }
@@ -135,10 +159,10 @@ int BlockPlatform::getTextureOffset(int x, int y, const BlockStruct& s) const
 BlockGrass::BlockGrass()
 	: Block(BLOCK_GRASS)
 {
-	m_texture_pos = {0, 0};
 	m_block_connect_group = BIT(BLOCK_GROUP_DIRT_BIT);
 	m_corner_translate_array = BLOCK_CORNERS_DIRT;
 }
+
 
 int BlockGrass::getTextureOffset(int x, int y, const BlockStruct& s) const
 {
@@ -215,14 +239,14 @@ BlockTorch::BlockTorch()
 void BlockTorch::onBlockClicked(World& w, WorldEntity* e, int x, int y, BlockStruct& b) const
 {
 	auto tileE = w.getLoadedTileEntity(x, y);
-	if(tileE)
+	if (tileE)
 		w.killTileEntity(tileE->getID());
-	else {
-		auto entityBuff = malloc(EntityRegistry::get().getBucket(ENTITY_TYPE_TILE_TORCH).byte_size);
-		EntityRegistry::get().createInstance(ENTITY_TYPE_TILE_TORCH, entityBuff);
-
-		((WorldEntity*)entityBuff)->getPosition() = Phys::Vect(x, y);
-		w.spawnEntity((WorldEntity*)entityBuff);
+	else
+	{
+		
+		auto entityBuff = (TileEntityTorch*)EntityAllocator::createEntity(ENTITY_TYPE_TILE_TORCH);
+		entityBuff->getPosition() = {x, y};
+		w.spawnEntity(entityBuff);
 	}
 }
 
@@ -386,6 +410,104 @@ BlockPainting::BlockPainting()
 	setNoCollisionBox();
 }
 
+BlockPumpkin::BlockPumpkin()
+	: MultiBlock(BLOCK_PUMPKIN)
+{
+	m_opacity = OPACITY_AIR;
+	m_width = 2;
+	m_height = 2;
+	setNoCollisionBox();
+}
+
+bool BlockPumpkin::canBePlaced(World& w, int x, int y) const
+{
+	for (int xx = 0; xx < m_width; ++xx)
+	{
+		for (int yy = 0; yy < m_height; ++yy)
+		{
+			auto& str = *w.getBlockM(x + xx, y + yy);
+			if (!str.isAir())
+				return false;
+		}
+	}
+	for (int xx = 0; xx < m_width; ++xx)
+	{
+		auto& str = *w.getBlockM(x + xx, y - 1);
+		if (str.isAir())
+			return false;
+	}
+	return true;
+}
+
+void BlockPumpkin::onBlockPlaced(World& w, WorldEntity* e, int x, int y, BlockStruct& b) const
+{
+	MultiBlock::onBlockPlaced(w, e, x, y, b);
+
+	for (int xx = 0; xx < m_width; ++xx)
+	{
+		for (int yy = -3; yy < 0; ++yy)
+		{
+			auto& str = *w.getBlockM(x + xx, y + yy);
+			if (str.block_id != BLOCK_SNOW) //need wall and not blocks
+				return;
+		}
+	}
+
+
+	for (int xx = 0; xx < m_width; ++xx)
+		for (int yy = -3; yy < m_height; ++yy)
+		{
+			w.setBlockWithNotify(x + xx, y + yy, 0);
+			w.spawnParticle(ParticleList::dot, glm::vec2(x + xx + 0.5f, y + yy + 0.5f), glm::vec2(0), glm::vec2(0), 60,
+			                -1);
+		}
+	//we have snowman!
+	auto man = EntityAllocator::createEntity(ENTITY_TYPE_SNOWMAN);
+	man->getPosition() = {x + m_width / 2, y};
+	w.spawnEntity(man);
+}
+
+BlockChest::BlockChest()
+	: MultiBlock(BLOCK_CHEST)
+{
+	m_tile_entity = ENTITY_TYPE_TILE_CHEST;
+	m_opacity = OPACITY_AIR;
+	m_width = 2;
+	m_height = 2;
+	setNoCollisionBox();
+}
+
+void BlockChest::onTextureLoaded(const BlockTextureAtlas& atlas)
+{
+	
+	m_open_texture = atlas.getTexture("block/" + toString()+"_opened");
+	m_close_texture = atlas.getTexture("block/" + toString()+"_closed");
+}
+
+
+int BlockChest::getTextureOffset(int x, int y, const BlockStruct& b) const
+{
+	quarter_int d = b.block_metadata;
+
+	return (d.z==0?m_close_texture:m_open_texture) + half_int(d.x, d.y);
+}
+
+void BlockChest::openChest(World& w,int x,int y, bool open) const
+{
+	
+	auto basePos = getTileEntityCoords(x, y, *w.getBlock(x, y));
+	for (int x = 0; x < m_width; ++x)
+		for (int y = 0; y < m_height; ++y)
+			((quarter_int*)&w.getBlockM(basePos.x+x,basePos.y+y)->block_metadata)->z = open ? 1 : 0;
+	w.getChunkM(Chunk::getChunkIDFromWorldPos(x, y))->markDirty(true);
+}
+
+bool BlockChest::isOpened(BlockStruct& b)const 
+{
+	return ((quarter_int*)&b.block_metadata)->z == 1;
+}
+
+
 bool BlockPainting::canBePlaced(World& w, int x, int y) const
 {
 	for (int xx = 0; xx < m_width; ++xx)
@@ -537,8 +659,18 @@ void BlockPlant::onBlockPlaced(World& w, WorldEntity* e, int x, int y, BlockStru
 	b.block_metadata = std::rand() % m_max_metadata;
 }
 
+bool BlockPlant::onNeighbourBlockChange(BlockAccess& world, int x, int y) const
+{
+	if (world.getBlockM(x, y - 1)->block_id != BLOCK_GRASS)
+	{
+		world.setBlockWithNotify(x, y, 0);
+		return true;
+	}
+	return false;
+}
+
 BlockFlower::BlockFlower()
-	:BlockPlant(BLOCK_FLOWER)
+	: BlockPlant(BLOCK_FLOWER)
 {
 	m_max_metadata = 8;
 }

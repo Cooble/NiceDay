@@ -68,7 +68,11 @@ void GUIRenderer::renderElement(BatchRenderer2D& renderer, GUIElement& e)
 		renderImage(renderer, static_cast<GUIImage&>(e));
 		break;
 	case GETYPE::Window:
-		renderWindow(renderer, static_cast<GUIWindow&>(e));
+	{
+		auto t = static_cast<GUIWindow&>(e);
+		if (t.isEnabled)
+			renderWindow(renderer, t);
+	}
 		break;
 	case GETYPE::Text:
 		renderText(renderer, static_cast<GUIText&>(e));

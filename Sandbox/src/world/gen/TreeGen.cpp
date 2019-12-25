@@ -52,8 +52,15 @@ bool TreeGen::buildTree(World& w, int x, int y,bool useTrueRandom)
 	//check if enough space for roots
 	for (int xx = -1; xx < 3; ++xx)
 	{
-		if (!w.isAir(xx + x, y) && xx != 0)
+		auto blokID = w.getBlock(xx + x, y)->block_id;
+		bool isSuitable = 
+			blokID == BLOCK_AIR || 
+			blokID == BLOCK_GRASS|| 
+			blokID == BLOCK_FLOWER || 
+			blokID == BLOCK_TREE_SAPLING;
+		if (!isSuitable)
 			return false;
+	
 	}
 	bool shouldBreak = false;
 	//check for at least some space for trunk

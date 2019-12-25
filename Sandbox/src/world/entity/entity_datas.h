@@ -8,6 +8,9 @@ constexpr EntityType ENTITY_TYPE_ROUND_BULLET = 3;
 constexpr EntityType ENTITY_TYPE_TILE_ENTITY = 4;
 constexpr EntityType ENTITY_TYPE_TILE_SAPLING = 5;
 constexpr EntityType ENTITY_TYPE_TILE_TORCH = 6;
+constexpr EntityType ENTITY_TYPE_SNOWMAN = 7;
+constexpr EntityType ENTITY_TYPE_TILE_CHEST = 8;
+constexpr EntityType ENTITY_TYPE_ITEM = 9;
 
 
 

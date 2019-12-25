@@ -15,7 +15,7 @@ public:
 	bool isKeyFreshlyPressed(int button);
 	bool isKeyFreshlyReleased(int button);
 	bool isMousePressed(int button);
-	std::pair<float,float> getMouseLocation();
+	glm::vec2 getMouseLocation();
 
 };
 

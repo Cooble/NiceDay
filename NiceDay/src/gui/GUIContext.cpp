@@ -6,8 +6,9 @@ void GUIContext::onUpdate()
 {
 	currentStackPos = { 0,0 };
 	for (int i = m_windows.size() - 1; i >= 0; --i)
-		m_windows[i]->update();
-	closePendingWins();
+		if(m_windows[i]->isEnabled)
+			m_windows[i]->update();
+	destroyPendingWins();
 }
 
 void GUIContext::onEvent(Event& e)
@@ -17,6 +18,8 @@ void GUIContext::onEvent(Event& e)
 		auto m = static_cast<WindowResizeEvent&>(e);
 		for (auto window : m_windows)
 		{
+			if(!window->isEnabled)
+				continue;
 			if(window->dimInherit==GUIDimensionInherit::WIDTH_HEIGHT)
 			{
 				window->height = m.getHeight();
@@ -34,12 +37,15 @@ void GUIContext::onEvent(Event& e)
 		case Event::EventType::MouseDrag:
 		case Event::EventType::MouseRelease:
 		case Event::EventType::MouseScroll:
+		case Event::EventType::KeyType:
 			for (int i = m_windows.size() - 1; i >= 0; --i)
 			{
+				if (!m_windows[i]->isEnabled)
+					continue;
 				m_windows[i]->onEvent(e);
-				auto& m = dynamic_cast<MouseEvent&>(e);
-				if (m_windows[i]->contains(m.getX(), m.getY()))
-					e.handled = true;
+				//auto& m = dynamic_cast<MouseEvent&>(e);
+				//if (m_windows[i]->contains(m.getX(), m.getY()))
+				//	e.handled = true;
 			}
 			break;
 		default:
@@ -63,16 +69,19 @@ void GUIContext::onEvent(Event& e)
 		int focusIndex = -1;
 		for (int i = m_windows.size() - 1; i >= 0; --i)
 		{
+			if (!m_windows[i]->isEnabled)
+				continue;
 			switch (e.getEventType())
 			{
 			case Event::EventType::MouseMove:
 			case Event::EventType::MouseDrag:
 			case Event::EventType::MouseRelease:
 			case Event::EventType::MouseScroll:
+			case Event::EventType::KeyType:
 				m_windows[i]->onEvent(e);
-				auto& m = dynamic_cast<MouseEvent&>(e);
-				if (m_windows[i]->contains(m.getX(), m.getY()))
-					e.handled = true;
+				//auto& m = dynamic_cast<MouseEvent&>(e);
+				//if (m_windows[i]->contains(m.getX(), m.getY()))
+				//	e.handled = true;
 				continue;
 			}
 
@@ -96,7 +105,8 @@ void GUIContext::onEvent(Event& e)
 			m_windows.erase(m_windows.begin() + focusIndex);
 			m_windows.push_back(win);
 			for (int i = 0; i < m_windows.size() - 1; ++i) //anotate all other windows -> they had lost focus
-				m_windows[i]->onMyEvent(MouseFocusLost(-10000, -10000));
+				if (m_windows[i]->isEnabled)
+					m_windows[i]->onMyEvent(MouseFocusLost(-10000, -10000));
 		}
 
 		if (!m_event_buffer.empty())
@@ -105,6 +115,8 @@ void GUIContext::onEvent(Event& e)
 			{
 				for (auto window : m_windows)
 				{
+					if (!window->isEnabled)
+						continue;
 					window->onEventBroadcast(*event);
 				}
 				delete event;
@@ -113,11 +125,11 @@ void GUIContext::onEvent(Event& e)
 		}
 	}
 
-	closePendingWins();
+	destroyPendingWins();
 }
 
 void GUIContext::submitBroadcastEvent(Event& e)
 {
 	m_event_buffer.push_back(e.allocateCopy());
-	closePendingWins();
+	destroyPendingWins();
 }

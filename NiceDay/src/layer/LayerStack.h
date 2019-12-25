@@ -7,16 +7,16 @@ public:
 	LayerStack();
 	~LayerStack();
 
-	void PushLayer(Layer* layer);
-	void PushOverlay(Layer* overlay);
-	void PopLayer(Layer* layer);
-	void PopOverlay(Layer* overlay);
+	void pushLayer(Layer* layer);
+	void pushOverlay(Layer* overlay);
+	void popLayer(Layer* layer);
+	void popOverlay(Layer* overlay);
 
 	void popPending();
-	void PopLayerEventually(Layer* layer);
-	void PopOverlayEventually(Layer* overlay);
-	void PushLayerEventually(Layer* layer);
-	void PushOverlayEventually(Layer* overlay);
+	void popLayerEventually(Layer* layer);
+	void popOverlayEventually(Layer* overlay);
+	void pushLayerEventually(Layer* layer);
+	void pushOverlayEventually(Layer* overlay);
 
 	std::vector<Layer*>::iterator begin() { return m_Layers.begin(); }
 	std::vector<Layer*>::iterator end() { return m_Layers.end(); }

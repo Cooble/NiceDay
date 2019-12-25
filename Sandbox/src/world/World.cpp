@@ -10,6 +10,10 @@
 #include "entity/entities.h"
 #include "FileChunkProvider.h"
 #include "memory/stack_allocator.h"
+#include "entity/EntityAllocator.h"
+
+#define CHUNK_NOT_EXIST -1
+constexpr int CHUNK_BUFFER_LENGTH = 400; //5*4
 
 #define WORLD_CHECK_VALID_POS(wx,wy)\
 	if ((wx) < 0 || (wy) < 0||(wx) >= getInfo().chunk_width * WORLD_CHUNK_SIZE || (wy) >= getInfo().chunk_height * WORLD_CHUNK_SIZE){\
@@ -52,7 +56,6 @@ World::~World()
 {
 	delete m_chunk_provider;
 }
-
 static bool taskActive = false;
 static std::queue<std::set<int>> loadQueue;
 
@@ -131,7 +134,7 @@ glm::vec4 World::getSkyLight()
 {
 	auto hour = getWorldTime().hour();
 
-	//hour = 12;
+	hour = 12;
 	float f = 0;
 	if (hour >= startRiseHour && hour < endRiseHour)
 	{
@@ -661,12 +664,35 @@ void World::unloadChunks(nd::temp_set<int>& chunk_ids)
 				unloadEntityNoDestruction(pointer, temp);
 				m_entity_array.erase(m_entity_array.begin() + entityIdx);
 				if (temp) //save if not temporary
-					free(pointer);
+					EntityAllocator::deallocate(pointer);
 				else
 					entities.push_back(pointer);
 			}
 		}
-		arrayOfEntityArraySizes[chunkIdx] = entities.size();
+
+		for(auto it = m_tile_entity_map.begin(); it != m_tile_entity_map.end();) {
+			auto& pair = *it;
+			auto pos = (Phys::Vecti*) & pair.first;
+			EntityID id = pair.second;
+			auto pointer = m_entity_manager.entity(id);
+			ASSERT(pointer, "world array contains unloaded entities");
+
+			if (chunkId == half_int(pos->x / WORLD_CHUNK_SIZE,
+				pos->y / WORLD_CHUNK_SIZE))
+			{
+				bool temp = pointer->hasFlag(EFLAG_TEMPORARY);
+				unloadEntityNoDestruction(pointer, temp);
+				it = m_tile_entity_map.erase(it);
+				if (temp) //save if not temporary
+					EntityAllocator::deallocate(pointer);
+				else
+					entities.push_back(pointer);
+			}else
+			{
+				++it;
+			}
+		}
+		arrayOfEntityArraySizes[chunkIdx] = (int)entities.size();
 		arrayOfEntityArrayPointers[chunkIdx] = nullptr;
 		if (!entities.empty())
 		{
@@ -691,7 +717,7 @@ void World::unloadChunks(nd::temp_set<int>& chunk_ids)
 
 			//free entitypointers
 			for (int entityIdx = 0; entityIdx < arrayOfEntityArraySizes[chunkIdx]; ++entityIdx)
-				free(arrayOfEntityArrayPointers[chunkIdx][entityIdx]);
+				EntityAllocator::deallocate(arrayOfEntityArrayPointers[chunkIdx][entityIdx]);
 			if (arrayOfEntityArraySizes[chunkIdx])
 				delete[] arrayOfEntityArrayPointers[chunkIdx];
 
@@ -1018,7 +1044,7 @@ void World::unloadEntity(EntityID id, bool isKilled)
 	auto pointer = m_entity_manager.entity(id);
 	ASSERT(pointer, "cannot unload entity which does not have pointer");
 	unloadEntityNoDestruction(pointer, isKilled);
-	free(pointer);
+	EntityAllocator::deallocate(pointer);
 	for (int i = 0; i < m_entity_array.size(); ++i)
 	{
 		if (m_entity_array[i] == id)
@@ -1043,7 +1069,7 @@ void World::unloadTileEntity(EntityID id, bool isKilled)
 	auto pointer = m_entity_manager.entity(id);
 	ASSERT(pointer, "cannot unload entity which does not have pointer");
 	unloadEntityNoDestruction(pointer, isKilled);
-	free(pointer);
+	EntityAllocator::deallocate(pointer);
 	for (auto& pair : m_tile_entity_map)
 	{
 		if (pair.second == id)
@@ -1083,7 +1109,6 @@ void World::loadEntity(WorldEntity* pEntity)
 
 	if (dynamic_cast<TileEntity*>(pEntity))
 	{
-		ND_INFO("spawned tile entity");
 		m_tile_entity_map[Phys::Vecti(pEntity->getPosition().x, pEntity->getPosition().y).toInt64()] = pEntity->getID();
 	}
 	else
@@ -1147,7 +1172,26 @@ void World::genWorld()
 
 //=========================PARTICLES=====================
 
-void World::spawnParticle(ParticleID id, Phys::Vect pos, Phys::Vect speed, Phys::Vect acc, int life, float rotation)
+void World::spawnParticle(ParticleID id, const glm::vec2& pos, const glm::vec2& speed, const glm::vec2& acc, int life, float rotation)
 {
 	m_particle_manager->createParticle(id, pos, speed, acc, life, rotation);
 }
+
+nd::temp_vector<WorldEntity*> World::getEntitiesInRadius(const glm::vec2& pos, float radius)
+{
+	nd::temp_vector<WorldEntity*> out;
+	out.reserve(10);
+	for (auto entity : m_entity_array)
+	{
+		auto t = m_entity_manager.entity(entity);
+		if (t == nullptr) {
+			ERROR("Invalid entity id in m_entity_array");
+		}
+		if(glm::distance2(t->getPosition(),pos)<(radius*radius))
+		{
+			out.push_back(t);
+		}
+	}
+	return out;
+}
+

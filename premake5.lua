@@ -22,6 +22,7 @@ group "Dependencies"
     include "NiceDay/vendor/glfw"
     include "NiceDay/vendor/glad"
     include "NiceDay/vendor/imgui"
+    include "NiceDay/vendor/lua"
 group ""
 
 project "NiceDay"
@@ -43,12 +44,14 @@ project "NiceDay"
 		"%{prj.name}/src/**.cpp",
 		"%{prj.name}/vendor/glm/glm/**.hpp",
 		"%{prj.name}/vendor/glm/glm/**.inl",
+		"%{prj.name}/vendor/luabridge/**",
 		"%{prj.name}/vendor/stb_image/**.h",
 		"%{prj.name}/vendor/stb_image/**.cpp",
 	}
     defines
 	{
-		"_CRT_SECURE_NO_WARNINGS"
+		"_CRT_SECURE_NO_WARNINGS",
+       -- "LUA_BINARIES"
 	}
    
 
@@ -60,16 +63,22 @@ project "NiceDay"
 		"%{prj.name}/vendor/glad/include",
 		"%{prj.name}/vendor/imgui",
 		"%{prj.name}/vendor/glm",
-		"%{prj.name}/vendor/stb_image"
+		"%{prj.name}/vendor/stb_image",
+        "%{prj.name}/vendor/lua/src",
+        "%{prj.name}/vendor/lua/src/lua",
+        "%{prj.name}/vendor/luabridge",
+        
+
+	
 	}
     links 
 	{ 
 		"glfw",
 		"glad",
 		"imgui",
-		"opengl32.lib"
+		"opengl32.lib",
+        "lua",
 	}
-    
 
 	filter "system:windows"
 		systemversion "latest"
@@ -79,13 +88,6 @@ project "NiceDay"
 			"ND_PLATFORM_WINDOWS",
 			"GLFW_INCLUDE_NONE"
 		}
-
-
-		--[[postbuildcommands
-		{
-			("{COPY} %{cfg.buildtarget.relpath} \"../bin/" .. outputdir .. "/Sandbox/\"")
-		}
-        ]]
 
 	filter "configurations:Debug"
 		defines "ND_DEBUG"
@@ -103,6 +105,8 @@ project "NiceDay"
 		defines "ND_DIST"
 		runtime "Release"
 		optimize "On"
+
+
 
 project "SandboxTest"
 	location "SandboxTest"
@@ -131,7 +135,10 @@ project "SandboxTest"
 		"NiceDay/vendor/glm",
         "NiceDay/vendor/glfw/include",
 		"NiceDay/vendor/glad/include",
-		"NiceDay/vendor/stb_image"
+		"NiceDay/vendor/stb_image",
+		"NiceDay/vendor/lua/src",
+        "NiceDay/vendor/lua/src/lua",
+        "NiceDay/vendor/luabridge",
 	}
     links 
 	{ 
@@ -147,13 +154,6 @@ project "SandboxTest"
 			"ND_PLATFORM_WINDOWS",
             "GLFW_INCLUDE_NONE"
 		}
-
-
-		--[[postbuildcommands
-		{
-			("{COPY} %{cfg.buildtarget.relpath} \"../bin/" .. outputdir .. "/Sandbox/\"")
-		}
-        ]]
 
 	filter "configurations:Debug"
 		defines "ND_DEBUG"
@@ -172,6 +172,7 @@ project "SandboxTest"
 		defines "ND_DIST"
 		runtime "Release"
 		optimize "On"
+
 project "Sandbox"
 	location "Sandbox"
 	kind "ConsoleApp"
@@ -199,7 +200,10 @@ project "Sandbox"
 		"NiceDay/vendor/glm",
         "NiceDay/vendor/glfw/include",
 		"NiceDay/vendor/glad/include",
-		"NiceDay/vendor/stb_image"
+		"NiceDay/vendor/stb_image",
+        "NiceDay/vendor/lua/src",
+        "NiceDay/vendor/lua/src/lua",
+        "NiceDay/vendor/luabridge",
 	}
     links 
 	{ 
@@ -215,13 +219,6 @@ project "Sandbox"
 			"ND_PLATFORM_WINDOWS",
             "GLFW_INCLUDE_NONE"
 		}
-
-
-		--[[postbuildcommands
-		{
-			("{COPY} %{cfg.buildtarget.relpath} \"../bin/" .. outputdir .. "/Sandbox/\"")
-		}
-        ]]
 
 	filter "configurations:Debug"
 		defines "ND_DEBUG"
@@ -240,4 +237,3 @@ project "Sandbox"
 		defines "ND_DIST"
 		runtime "Release"
 		optimize "On"
-                         

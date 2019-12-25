@@ -38,7 +38,7 @@ void ParticleManager::update()
 		particle.pos += particle.velocity;
 		if(particle.rotation<0)
 		{
-			particle.rotation = Phys::toRad(-360+particle.velocity.angleDegrees());
+			particle.rotation = Phys::toRad(-360+Phys::Vect(particle.velocity).angleDegrees());
 		}else
 			particle.rotation += particle.rotationSpeed;
 		++particle.frame_age;
@@ -58,7 +58,7 @@ ParticleManager::Particle& ParticleManager::createParticle()
 }
 
 
-void ParticleManager::createParticle(ParticleID id, Phys::Vect pos, Phys::Vect speed, Phys::Vect acc, int life,float rotation)
+void ParticleManager::createParticle(ParticleID id, const glm::vec2& pos, const glm::vec2& speed, const glm::vec2& acc, int life,float rotation)
 {
 
 	Particle& p = createParticle();

@@ -3,6 +3,7 @@
 #include "graphics/API/Texture.h"
 
 class OpenSimplexNoise;
+
 class PriorGen
 {
 public:
@@ -33,8 +34,6 @@ public:
 	double m_orescale=6.849;
 
 	double m_ore_octave_magnitudes[5] = { 1.897,0,0,0,4.566 };
-
-
 
 public:
 	struct Pix

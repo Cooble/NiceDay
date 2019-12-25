@@ -47,6 +47,8 @@ constexpr int BLOCK_STATE_LINE_END_LEFT = (BLOCK_STATE_LINE_HORIZONTAL | BLOCK_S
 constexpr int BLOCK_STATE_LINE_END_DOWN = (BLOCK_STATE_LINE_VERTICAL | BLOCK_STATE_LINE_DOWN);
 constexpr int BLOCK_STATE_LINE_END_RIGHT = (BLOCK_STATE_LINE_HORIZONTAL | BLOCK_STATE_LINE_RIGHT);
 
+typedef int BlockID;
+
 struct BlockStruct {
 
 	short block_id;
@@ -133,7 +135,7 @@ protected:
 
 	int m_block_connect_group;
 	bool isInGroup(BlockAccess& w, int x, int y, int group) const;
-	bool isInGroup(int blockID, int group) const;
+	bool isInGroup(BlockID blockID, int group) const;
 	inline void setNoCollisionBox()
 	{
 		m_collision_box = nullptr;
@@ -141,7 +143,7 @@ protected:
 	}
 
 public:
-	Block(int id);
+	Block(BlockID id);
 	Block(const Block& c) = delete;
 	void operator=(Block const&) = delete;
 	virtual ~Block()= default;
@@ -153,7 +155,7 @@ public:
 	}
 	inline uint8_t getOpacity()const {return m_opacity;}
 	inline bool hasTileEntity()const { return m_tile_entity != ENTITY_TYPE_NONE; }
-	virtual Phys::Vecti getTileEntityCoords(int x, int y, const BlockStruct& b);
+	virtual Phys::Vecti getTileEntityCoords(int x, int y, const BlockStruct& b) const;
 	inline EntityType getTileEntity() const { return m_tile_entity; }
 
 	virtual const Phys::Polygon& getCollisionBox(int x, int y, const BlockStruct& b) const;
@@ -175,7 +177,7 @@ public:
 	virtual void onBlockDestroyed(World& w, WorldEntity* e, int x, int y, BlockStruct& b) const;
 
 
-	virtual void onBlockClicked(World& w, WorldEntity* e,int x,int y,BlockStruct& b) const {}
+	virtual void onBlockClicked(World& w, WorldEntity* e, int x, int y, BlockStruct& b) const;
 
 	virtual bool canBePlaced(World& w, int x, int y) const
 	{
@@ -212,7 +214,7 @@ public:
 	inline int getWidth()const { return m_width; }
 	inline int getHeight()const { return m_height; }
 
-	Phys::Vecti getTileEntityCoords(int x, int y, const BlockStruct& b) override;
+	Phys::Vecti getTileEntityCoords(int x, int y, const BlockStruct& b)const override;
 
 	//what dimensions need to be placed
 	virtual Phys::Rectanglei getBuildDimensions() const { return m_build_dimensions; }
@@ -228,8 +230,6 @@ public:
 	void onBlockDestroyed(World& w, WorldEntity* e, int x, int y, BlockStruct& b) const override;
 
 	bool canBePlaced(World& w, int x, int y) const override;
-
-
 
 };
 

@@ -76,16 +76,32 @@ public:
 		currentStackPos.x -= x;
 		currentStackPos.y -= y;
 	}
-	inline void closeWindows()
+
+	/***
+	 * Removes all windows from context
+	 * calls destructors
+	 */
+	inline void destroyWindows()
 	{
-		for (int i = 0; i < m_windows.size(); ++i)
-		{
-			auto win = m_windows[i];
+		for (auto win : m_windows)
 			delete win;
-		}
 		m_windows.clear();
 	}
-	inline void closeWindow(GEID winid)
+
+	/***
+	 * Removes all windows from context
+	 * Doesn't call destructors
+	 */
+	inline void closeWindows()
+	{
+		m_windows.clear();
+	}
+
+	/***
+	 * Removes window from context
+	 * calls destructors
+	 */
+	inline void destroyWindow(GEID winid)
 	{
 		for (int i = 0; i < m_windows.size(); ++i)
 		{
@@ -94,14 +110,33 @@ public:
 			{
 				m_windows.erase(m_windows.begin() + i);
 				delete win;
+				return;
 			}
 		}
 	}
-	inline void closeWindowEventually(GEID win) { m_toclose_wins.push_back(win); }
-	inline void closePendingWins()
+
+	/***
+	 * Removes window from context
+	 * Doesn't call destructors
+	 */
+	inline void closeWindow(GEID winid)
+	{
+		for (int i = 0; i < m_windows.size(); ++i)
+		{
+			auto win = m_windows[i];
+			if (win->id == winid)
+			{
+				m_windows.erase(m_windows.begin() + i);
+				return;
+			}
+		}
+	}
+
+	inline void destroyWindowEventually(GEID win) { m_toclose_wins.push_back(win); }
+	inline void destroyPendingWins()
 	{
 		for (auto toclose_win : m_toclose_wins)
-			closeWindow(toclose_win);
+			destroyWindow(toclose_win);
 		m_toclose_wins.clear();
 	}
 	inline void openWindow(GUIWindow* win)

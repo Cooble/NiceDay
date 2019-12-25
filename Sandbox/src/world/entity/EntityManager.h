@@ -9,6 +9,7 @@ class WorldEntity;
 typedef uint32_t EntityID;
 typedef uint32_t EntityType;
 
+//todo in code the usage is misused with entityID when it should be entity type instead
 constexpr EntityID ENTITY_ID_INVALID=std::numeric_limits<EntityID>::max();
 
 class EntityManager

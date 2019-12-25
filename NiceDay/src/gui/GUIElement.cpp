@@ -79,6 +79,19 @@ void GUIElement::removeChild(int index)
 	onChildChange();
 }
 
+void GUIElement::removeChildWithID(GEID id)
+{
+	for (int i = 0; i < m_children.size(); ++i)
+	{
+		if(m_children[i]->id==id)
+		{
+			delete m_children[i];
+			m_children.erase(m_children.begin() + i);
+		}
+	}
+	onChildChange();
+}
+
 void GUIElement::onParentAttached()
 {
 	for (auto child : m_children)
@@ -271,7 +284,7 @@ void GUIElement::onParentChanged()
 
 bool GUIElement::contains(float xx, float yy) const
 {
-	if (isNotSpacial()) //lives inside whole parent
+	if (isNotSpaci()) //lives inside whole parent
 		return true;
 	auto& stack = GUIContext::get().getStackPos();
 	xx -= stack.x;
@@ -311,14 +324,13 @@ void GUIElement::onEvent(Event& e)
 		auto& mouseEvent = dynamic_cast<MouseEvent&>(e);
 		GUIContext::get().pushPos(x, y);
 		for (auto child : getChildren())
-		{
 			if (child->contains(mouseEvent.getX(), mouseEvent.getY()))
 			{
 				child->onEvent(e);
 				if (e.handled)
 					break;
 			}
-		}
+		
 		GUIContext::get().popPos(x, y);
 
 		if (!e.handled)
@@ -337,6 +349,8 @@ void GUIElement::onEventBroadcast(Event& e)
 
 void GUIElement::onMyEvent(Event& e)
 {
+	if (onMyEventFunc)
+		onMyEventFunc(e, *this);
 	switch (e.getEventType())
 	{
 	case Event::EventType::MouseMove:
@@ -369,7 +383,7 @@ void GUIElement::onMyEvent(Event& e)
 		}
 		break;
 	}
-	if (!isNotSpacial() && e.getEventType() != Event::EventType::MouseMove)
+	if (!isNotSpaci() && e.getEventType() != Event::EventType::MouseMove&&e.getEventType()==Event::EventType::MousePress)
 		e.handled = true;
 }
 

@@ -25,6 +25,50 @@ public:
 	BlockStone();
 	UUID_STRING("stone")
 };
+class BlockPumpkin : public MultiBlock
+{
+public:
+	BlockPumpkin();
+
+	bool canBePlaced(World& w, int x, int y) const override;
+	void onBlockPlaced(World& w, WorldEntity* e, int x, int y, BlockStruct& b) const override;
+	
+	UUID_STRING("pumpkin")
+		
+};
+class BlockChest : public MultiBlock
+{
+	half_int m_open_texture;
+	half_int m_close_texture;
+public:
+	BlockChest();
+
+	void onTextureLoaded(const BlockTextureAtlas& atlas) override;
+	int getTextureOffset(int x, int y, const BlockStruct& b) const override;
+	void openChest(World& w, int x,int y,bool open)const;
+	bool isOpened(BlockStruct& b)const;
+
+	UUID_STRING("chest")
+
+};
+class BlockSnow : public Block
+{
+public:
+	BlockSnow();
+	UUID_STRING("snow")
+};
+class BlockSnowBrick : public Block
+{
+public:
+	BlockSnowBrick();
+	UUID_STRING("snow_brick")
+};
+class BlockIce : public Block
+{
+public:
+	BlockIce();
+	UUID_STRING("ice")
+};
 
 class BlockDirt : public Block
 {
@@ -179,7 +223,7 @@ protected:
 public:
 	BlockPlant(int id);
 	int getTextureOffset(int x, int y, const BlockStruct& b) const override;
-	inline bool onNeighbourBlockChange(BlockAccess& world, int x, int y) const override { return false; }
+	bool onNeighbourBlockChange(BlockAccess& world, int x, int y) const override;
 	inline int getCornerOffset(int x, int y, const BlockStruct& b) const override { return BLOCK_STATE_FULL; }
 	bool canBePlaced(World& w, int x, int y) const override;
 	void onBlockPlaced(World& w, WorldEntity* e, int x, int y, BlockStruct& b) const override;

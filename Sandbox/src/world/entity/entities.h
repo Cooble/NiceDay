@@ -8,6 +8,7 @@
 #include "graphics/IBatchRenderable2D.h"
 #include "graphics/Sprite.h"
 #include "graphics/Bar.h"
+#include "inventory/Inventory.h"
 
 class TileEntitySapling :public TileEntity
 {
@@ -36,7 +37,27 @@ public:
 	TO_ENTITY_STRING(TileEntityTorch)
 	ND_FACTORY_METH_ENTITY_BUILD(TileEntityTorch)
 };
+class TileEntityChest :public TileEntity
+{
+private:
+	BasicInventory m_inventory;
+	EntityID m_opener=ENTITY_ID_INVALID;
+	bool m_shouldClose = false;
+public:
+	TileEntityChest();
 
+	void onClicked(World& w, WorldEntity* entity) override;
+	void update(World& w) override;
+	inline Inventory& getInventory() { return m_inventory; }
+	EntityType getEntityType() const override;
+	
+	void save(NBT& src) override;
+	void load(NBT& src) override;
+
+	TO_ENTITY_STRING(TileEntityChest)
+	void onGUIEntityClosed();
+	ND_FACTORY_METH_ENTITY_BUILD(TileEntityChest)
+};
 class PhysEntity : public WorldEntity
 {
 public:
@@ -52,9 +73,9 @@ private:
 	bool m_is_on_floor;
 	Blockage m_blockage;
 protected:
-	Phys::Vect m_velocity;
-	Phys::Vect m_max_velocity;
-	Phys::Vect m_acceleration;
+	glm::vec2 m_velocity;
+	glm::vec2 m_max_velocity;
+	glm::vec2 m_acceleration;
 	Phys::Polygon m_bound;
 	bool m_can_walk=true;
 
@@ -65,20 +86,56 @@ public:
 
 	//calculates velocity and position based on acceleration and world colliding blocks
 	void computePhysics(World& w);
-	inline bool moveOrCollide(World& w, float dt);
+	bool moveOrCollide(World& w, float dt);
+	//regards this as dimensionless structure, checks for collisions only blocks
+	bool moveOrCollideOnlyBlocksNoBounds(World& w);
 	inline void computeVelocity(World& w);
-	inline void computeWindResistance(World& w);
+	inline void computeWindResistance(World& w,float windResistance=0.01f);
 
 	void save(NBT& src) override;
 	void load(NBT& src) override;
 
 public:
-	inline Phys::Vect& getAcceleration() { return m_acceleration; }
-	inline Phys::Vect& getVelocity() { return m_velocity; }
+	inline glm::vec2& getAcceleration() { return m_acceleration; }
+	inline glm::vec2& getVelocity() { return m_velocity; }
 	inline const Phys::Polygon& getCollisionBox() const { return m_bound; }
 	inline bool isOnFloor() const { return m_is_on_floor; }
 	inline Blockage getBlockageState() const { return m_blockage; }
 };
+
+
+class EntityItem:public PhysEntity, public IBatchRenderable2D
+{
+protected:
+	int m_live_ticks;
+	int m_max_live_ticks;
+	int m_speed_mode_ticks_remaining=0;
+protected:
+	UVQuad m_sprite;
+	float m_angle;
+	ItemStack* m_item_stack;
+	EntityID m_target=ENTITY_ID_INVALID;
+	EntityID m_ignore_target=ENTITY_ID_INVALID;
+	long long lastTime = 0;
+public:
+	EntityItem();
+	void setItemStack(ItemStack* stack);
+	/***
+	 * will ignore this entity for a short while after throwing it
+	 * used to forbid the item to come back to the thrower
+	 */
+	inline void setThrowerEntity(EntityID id) { m_ignore_target = id; }
+	void update(World & w) override;
+	void render(BatchRenderer2D & renderer) override;
+	EntityType getEntityType() const override;
+	void save(NBT& src) override;
+	void load(NBT& src) override;
+	void onSpawned(World& w) override;
+
+	TO_ENTITY_STRING(EntityItem)
+	ND_FACTORY_METH_ENTITY_BUILD(EntityItem)
+};
+
 
 constexpr float MAX_BULLET_ENTITY_DISTANCE_SQ = 25 * 25;
 
@@ -95,12 +152,15 @@ protected:
 	//BulletTemplate* m_template;
 	Sprite m_sprite;
 	float m_angle;
+	EntityID m_owner_id=ENTITY_ID_INVALID;
+	int m_ticks_to_ignore_owner=15;
 
 public:
 	Bullet();
 	virtual ~Bullet() = default;
 	void fire(float angle, float velocity);
-	void fire(const Phys::Vect target, float velocity);
+	void fire(const glm::vec2& target, float velocity);
+	void setOwner(EntityID getId);
 
 
 	// return true if there was collision
@@ -112,6 +172,12 @@ public:
 	virtual bool onEntityHit(World& w, WorldEntity* entity);
 	void render(BatchRenderer2D& renderer) override;
 };
+
+inline void Bullet::setOwner(EntityID id)
+{
+	m_owner_id = id;
+	m_ticks_to_ignore_owner = 15;
+}
 
 class EntityRoundBullet : public Bullet,public LightSource
 {
@@ -172,31 +238,6 @@ inline void Creature::onHit(World& w,WorldEntity* e, float damage)
 		markDead();
 }
 
-class EntityPlayer : public Creature
-{
-private:
-	std::string m_name = "Karel";
-	float m_pose = 0;
-	float m_last_pose = 0;
-	int m_animation_var = 0;
-
-
-public:
-	EntityPlayer();
-	virtual ~EntityPlayer() = default;
-
-	void update(World& w) override;
-	EntityType getEntityType() const override;
-
-	void onHit(World& w, WorldEntity* e, float damage) override;
-
-	TO_ENTITY_STRING(EntityPlayer)
-	ND_FACTORY_METH_ENTITY_BUILD(EntityPlayer)
-
-	void save(NBT& src) override;
-	void load(NBT& src) override;
-};
-
 class EntityTNT : public Creature
 {
 private:
@@ -208,6 +249,7 @@ public:
 	EntityTNT();
 
 	void update(World& w) override;
+	void boom(World& w);
 	EntityType getEntityType() const override;
 
 	TO_ENTITY_STRING(EntityTNT)
@@ -234,6 +276,28 @@ public:
 
 	TO_ENTITY_STRING(EntityZombie)
 	ND_FACTORY_METH_ENTITY_BUILD(EntityZombie)
+
+	void save(NBT& src) override;
+	void load(NBT& src) override;
+};
+
+class EntitySnowman : public Creature
+{
+private:
+	PathTracer m_tracer;
+	bool m_found_player = false;
+	float m_pose = 0;
+	float m_last_pose = 0;
+	int m_animation_var = 0;
+
+public:
+	EntitySnowman();
+
+	void update(World& w) override;
+	EntityType getEntityType() const override;
+
+	TO_ENTITY_STRING(EntitySnowman)
+	ND_FACTORY_METH_ENTITY_BUILD(EntitySnowman)
 
 	void save(NBT& src) override;
 	void load(NBT& src) override;

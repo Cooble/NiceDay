@@ -10,7 +10,7 @@
 GUIText::GUIText(FontMaterial* mat) : GUIElement(GETYPE::Text),fontMaterial(mat)
 {
 	isAlwaysPacked = true;
-	m_is_not_spacial = true;
+	isNotSpacial = true;
 }
 
 bool GUIText::packDimensions()
@@ -232,7 +232,7 @@ GUIImage::GUIImage()
 	:
 	GUIElement(GETYPE::Image)
 {
-	m_is_not_spacial = true;
+	isNotSpacial = true;
 }
 
 bool GUIImage::packDimensions()
@@ -354,12 +354,10 @@ void GUIWindow::onMyEvent(Event& e)
 
 GUIColumn::GUIColumn(GUIAlign childAlignment) : GUIElement(GETYPE::Column)
 {
-	m_is_not_spacial = true;
+	isNotSpacial = true;
 	child_alignment = childAlignment;
 	space = 5;
 	isVisible = false;
-	
-	
 }
 
 void GUIColumn::repositionChildren()
@@ -427,7 +425,7 @@ GUIRow::GUIRow(GUIAlign childAlignment) :
 	GUIElement(GETYPE::Row)
 {
 	isVisible = false;
-	m_is_not_spacial = true;
+	isNotSpacial = true;
 	child_alignment = childAlignment;
 	space = 5;
 }
@@ -479,7 +477,7 @@ GUIGrid::GUIGrid() :
 	GUIElement(GETYPE::Grid)
 {
 	isVisible = false;
-	m_is_not_spacial = true;
+	isNotSpacial = true;
 	space = 5;
 }
 
@@ -642,7 +640,7 @@ void GUIVSlider::onMyEvent(Event& e)
 			on_changed(*this);
 	}
 
-	if (e.getEventType() == Event::EventType::MouseScroll && m_has_focus)
+	if (e.getEventType() == Event::EventType::MouseScroll && (m_has_focus|| m_scroll_focus))
 	{
 		auto& m = static_cast<MouseScrollEvent&>(e);
 
@@ -671,7 +669,7 @@ void GUIVSlider::setValue(float v)
 GUIBlank::GUIBlank(): GUIElement(GETYPE::Blank)
 {
 	isVisible = false;
-	m_is_not_spacial = true;
+	isNotSpacial = true;
 	isAlwaysPacked = true;
 }
 
@@ -699,7 +697,7 @@ GUIHorizontalSplit::GUIHorizontalSplit(bool isUpMain) : GUIElement(GETYPE::Split
 	m_is_up_main = isUpMain;
 	dimInherit = GUIDimensionInherit::WIDTH_HEIGHT;
 	isVisible = false;
-	m_is_not_spacial = true;
+	isNotSpacial = true;
 	space = 5;
 	setAlignment(GUIAlign::CENTER);
 }
@@ -787,7 +785,7 @@ GUIVerticalSplit::GUIVerticalSplit(bool isLeftMain) : GUIElement(GETYPE::SplitVe
 	m_is_left_main = isLeftMain;
 	dimInherit = GUIDimensionInherit::WIDTH_HEIGHT;
 	isVisible = false;
-	m_is_not_spacial = true;
+	isNotSpacial = true;
 	space = 5;
 	setAlignment(GUIAlign::CENTER);
 }
@@ -879,6 +877,7 @@ void GUIView::removeChild(int index)
 GUIVerticalSplit* createGUISliderView(bool sliderOnLeft)
 {
 	auto split = new GUIVerticalSplit(sliderOnLeft);
+	
 	auto slider = new GUIVSlider();
 	auto view = new GUIView();
 	auto inside = view->getInside();
@@ -911,6 +910,16 @@ GUIVerticalSplit* createGUISliderView(bool sliderOnLeft)
 			(1 - slider->getValue()) * (view->getInside()->height - (view->height - view->heightPadding()));
 	};
 	slider->setValue(1);
+
+	//ensure that scrolling in view will also trigger slider
+	view->onMyEventFunc = [slider](Event& e,GUIElement& v)
+	{
+		if(e.getEventType()==Event::EventType::MouseFocusGain)
+		{
+			slider->setHasScrollFocus(true);
+		}else if (e.getEventType() == Event::EventType::MouseFocusLost)
+			slider->setHasScrollFocus(false);
+	};
 
 	return split;
 }

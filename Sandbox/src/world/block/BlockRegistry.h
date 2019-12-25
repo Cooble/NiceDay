@@ -39,7 +39,7 @@ public:
 	//takes ownership
 	void registerWall(Wall* wall);
 
-	const Block& getBlock(int block_id);
+	const Block& getBlock(BlockID block_id);
 
 	const Wall& getWall(int wall_id);
 
@@ -48,7 +48,7 @@ public:
 	const Wall& getWall(const std::string& wall_id) const;
 
 
-	inline int getBlockID(const std::string& block_id) const { return getBlock(block_id).getID(); }
+	inline BlockID getBlockID(const std::string& block_id) const { return getBlock(block_id).getID(); }
 	inline int getWallID(const std::string& wall_id) const { return getWall(wall_id).getID(); }
 };
 

@@ -79,6 +79,8 @@ private:
 	std::unordered_map<int, int> m_offset_map;//chunkID,offsetInBuffer
 
 	ChunkPos lightOffset;
+	int m_light_chunk_width;
+	int m_light_chunk_height;
 	int getChunkIndex(int cx, int cy);
 	glm::vec4 getSkyColor(float y);
 	void renderBiomeBackgroundToFBO();

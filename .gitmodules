@@ -10,3 +10,9 @@
 [submodule "NiceDay/vendor/imgui"]
 	path = NiceDay/vendor/imgui
 	url = https://github.com/Cooble/imgui.git
+[submodule "NiceDay/vendor/luabind"]
+	path = NiceDay/vendor/luabind
+	url = https://github.com/Cooble/luabind.git
+[submodule "NiceDay/vendor/luabind-deboostified"]
+	path = NiceDay/vendor/luabind-deboostified
+	url = https://github.com/Cooble/luabind-deboostified.git

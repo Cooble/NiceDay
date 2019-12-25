@@ -1,6 +1,7 @@
 ﻿#include "ndpch.h"
 #include "FileChunkProvider.h"
 #include "entity/EntityRegistry.h"
+#include "entity/EntityAllocator.h"
 
 FileChunkProvider::FileChunkProvider(const std::string& file_path)
 	: m_file_path(file_path),
@@ -97,19 +98,18 @@ void FileChunkProvider::proccessAssignments(std::vector<WorldIOAssignment>& assi
 					*assignment.entitySizePointer = number;
 					if (number)
 					{
-						int index = 0;
 						auto entities = new WorldEntity*[number];
 						for (int i = 0; i < number; ++i)
 						{
-							if (!t.exists<NBT>("ent_" + std::to_string(i)))
+							auto name = "ent_" + std::to_string(i);
+							if (!t.exists<NBT>(name))
 							{
 								ND_WARN("World chunk corruption detected,cannot load, entity is missing");
 								//	throw "World chunk corruption detected,cannot load, entity is missing";
 								entities[i] = nullptr;
 								continue;
 							}
-							entities[i] = EntityRegistry::get()
-								.loadInstance(t.get<NBT>("ent_" + std::to_string(i)));
+							entities[i] = EntityAllocator::loadInstance(t.get<NBT>(name));
 						}
 						*assignment.entitiesPointer = entities; //set array pointer to foreign(boss) variable
 					}

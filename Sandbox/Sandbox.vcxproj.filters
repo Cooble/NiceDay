@@ -7,6 +7,12 @@
     <Filter Include="graphics">
       <UniqueIdentifier>{36EF08BC-22BC-63C7-4BD5-516F37019955}</UniqueIdentifier>
     </Filter>
+    <Filter Include="gui">
+      <UniqueIdentifier>{8A78880B-F681-887C-7FFD-9E7CEB05947C}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="inventory">
+      <UniqueIdentifier>{F36F69AC-5FDA-1D23-A818-CFC814C2FB77}</UniqueIdentifier>
+    </Filter>
     <Filter Include="layer">
       <UniqueIdentifier>{8297D80F-EEAB-00C1-B72D-A4202301FDF1}</UniqueIdentifier>
     </Filter>
@@ -41,6 +47,30 @@
     </ClInclude>
     <ClInclude Include="src\graphics\Sprite2D.h">
       <Filter>graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gui\GUICustomRenderer.h">
+      <Filter>gui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gui\MainWindow.h">
+      <Filter>gui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gui\window_messeages.h">
+      <Filter>gui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\inventory\Inventory.h">
+      <Filter>inventory</Filter>
+    </ClInclude>
+    <ClInclude Include="src\inventory\Item.h">
+      <Filter>inventory</Filter>
+    </ClInclude>
+    <ClInclude Include="src\inventory\ItemBlock.h">
+      <Filter>inventory</Filter>
+    </ClInclude>
+    <ClInclude Include="src\layer\CommonMessages.h">
+      <Filter>layer</Filter>
+    </ClInclude>
+    <ClInclude Include="src\layer\GUILayer.h">
+      <Filter>layer</Filter>
     </ClInclude>
     <ClInclude Include="src\layer\MainLayer.h">
       <Filter>layer</Filter>
@@ -81,6 +111,9 @@
     <ClInclude Include="src\world\ITickable.h">
       <Filter>world</Filter>
     </ClInclude>
+    <ClInclude Include="src\world\IWorld.h">
+      <Filter>world</Filter>
+    </ClInclude>
     <ClInclude Include="src\world\LightCalculator.h">
       <Filter>world</Filter>
     </ClInclude>
@@ -100,6 +133,9 @@
       <Filter>world</Filter>
     </ClInclude>
     <ClInclude Include="src\world\WorldTime.h">
+      <Filter>world</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world\WorldsProvider.h">
       <Filter>world</Filter>
     </ClInclude>
     <ClInclude Include="src\world\biome\Biome.h">
@@ -177,15 +213,26 @@
     <ClInclude Include="src\world\particle\particles.h">
       <Filter>world\particle</Filter>
     </ClInclude>
-    <ClInclude Include="src\inventory\Item.h" />
-    <ClInclude Include="src\inventory\ItemBlock.h" />
-    <ClInclude Include="src\inventory\Inventory.h" />
-    <ClInclude Include="src\layer\GUILayer.h" />
-    <ClInclude Include="src\gui\MainWindow.h" />
-    <ClInclude Include="src\layer\CommonMessages.h" />
-    <ClInclude Include="src\gui\GUICustomRenderer.h" />
-    <ClInclude Include="src\world\WorldsProvider.h" />
-    <ClInclude Include="src\gui\window_messeages.h" />
+    <ClInclude Include="src\gui\GUIItemContainer.h">
+      <Filter>gui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\inventory\items.h">
+      <Filter>inventory</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world\entity\EntityPlayer.h">
+      <Filter>world\entity</Filter>
+    </ClInclude>
+    <ClInclude Include="src\inventory\PlayerInventory.h">
+      <Filter>inventory</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gui\HUD.h">
+      <Filter>gui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gui\GuiEntityPlayer.h">
+      <Filter>gui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gui\GUIEntityChest.h" />
+    <ClInclude Include="src\world\entity\EntityAllocator.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\core\EntryPoint.cpp">
@@ -202,6 +249,24 @@
     </ClCompile>
     <ClCompile Include="src\graphics\Sprite2D.cpp">
       <Filter>graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gui\GUICustomRenderer.cpp">
+      <Filter>gui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gui\MainWindow.cpp">
+      <Filter>gui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\inventory\Inventory.cpp">
+      <Filter>inventory</Filter>
+    </ClCompile>
+    <ClCompile Include="src\inventory\Item.cpp">
+      <Filter>inventory</Filter>
+    </ClCompile>
+    <ClCompile Include="src\inventory\ItemBlock.cpp">
+      <Filter>inventory</Filter>
+    </ClCompile>
+    <ClCompile Include="src\layer\GUILayer.cpp">
+      <Filter>layer</Filter>
     </ClCompile>
     <ClCompile Include="src\layer\MainLayer.cpp">
       <Filter>layer</Filter>
@@ -233,6 +298,9 @@
     <ClCompile Include="src\world\FileChunkProvider.cpp">
       <Filter>world</Filter>
     </ClCompile>
+    <ClCompile Include="src\world\IWorld.cpp">
+      <Filter>world</Filter>
+    </ClCompile>
     <ClCompile Include="src\world\LightCalculator.cpp">
       <Filter>world</Filter>
     </ClCompile>
@@ -249,6 +317,9 @@
       <Filter>world</Filter>
     </ClCompile>
     <ClCompile Include="src\world\WorldRenderManager.cpp">
+      <Filter>world</Filter>
+    </ClCompile>
+    <ClCompile Include="src\world\WorldsProvider.cpp">
       <Filter>world</Filter>
     </ClCompile>
     <ClCompile Include="src\world\biome\Biome.cpp">
@@ -320,12 +391,25 @@
     <ClCompile Include="src\world\particle\particles.cpp">
       <Filter>world\particle</Filter>
     </ClCompile>
-    <ClCompile Include="src\inventory\Item.cpp" />
-    <ClCompile Include="src\inventory\ItemBlock.cpp" />
-    <ClCompile Include="src\inventory\Inventory.cpp" />
-    <ClCompile Include="src\layer\GUILayer.cpp" />
-    <ClCompile Include="src\gui\MainWindow.cpp" />
-    <ClCompile Include="src\gui\GUICustomRenderer.cpp" />
-    <ClCompile Include="src\world\WorldsProvider.cpp" />
+    <ClCompile Include="src\gui\GUIItemContainer.cpp">
+      <Filter>gui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\world\entity\EntityPlayer.cpp">
+      <Filter>world\entity</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gui\HUD.cpp">
+      <Filter>gui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\inventory\items.cpp">
+      <Filter>inventory</Filter>
+    </ClCompile>
+    <ClCompile Include="src\inventory\PlayerInventory.cpp">
+      <Filter>inventory</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gui\GuiEntityPlayer.cpp">
+      <Filter>gui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gui\GUIEntityChest.cpp" />
+    <ClCompile Include="src\world\entity\EntityAllocator.cpp" />
   </ItemGroup>
 </Project>

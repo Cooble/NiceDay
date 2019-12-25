@@ -71,6 +71,7 @@ private:
 public:
 	bool isMoveable = true;
 	bool isResizable = true;
+	bool isEnabled = true;
 	GUIWindow();
 	void onMyEvent(Event& e) override;
 };
@@ -205,8 +206,9 @@ class GUIVSlider :public GUIElement
 	float value = 0;
 	glm::vec2 m_draggedCursor;
 	float m_oldVal;
-
+	bool m_scroll_focus;
 public:
+	inline void setHasScrollFocus(bool focus) { m_scroll_focus = focus; }
 	float sliderRatio=0.1f;
 	float sliderHeight = 50;
 	int dividor = 0;

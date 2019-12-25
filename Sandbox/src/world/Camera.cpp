@@ -3,7 +3,7 @@
 
 
 Camera::Camera()
-	:m_position({ 0,0 }),m_chunk_radius(15)
+	:m_position({ 0,0 }),m_chunk_radius(1,1)
 {
 	
 }

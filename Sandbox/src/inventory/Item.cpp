@@ -7,39 +7,67 @@ ItemStack::ItemStack(ItemID item, int size)
 }
 
 ItemStack::ItemStack(const ItemStack& s)
-	: m_item(s.m_item), m_size(s.m_size), m_nbt(s.m_nbt)
+	: m_item(s.m_item), m_size(s.m_size), m_nbt(nullptr)
 {
 	if (s.m_nbt)
-		m_nbt = new NBT(*s.m_nbt);
+		m_nbt = NBT::create(*s.m_nbt);
 }
 
 ItemStack::~ItemStack()
 {
 	if (m_nbt)
-		delete m_nbt;
+		m_nbt->destroy();
+}
+
+bool ItemStack::equals(const ItemStack* stack) const
+{
+	if (stack == nullptr)
+		return false;
+	return *this == *stack;
+}
+
+void ItemStack::serialize(NBT& nbt)
+{
+	nbt.set("size", m_size);
+	nbt.set("meta", m_metadata);
+	nbt.set("item", m_item);
+	if(m_nbt)
+		nbt.set("nbt", *m_nbt);
+}
+
+bool ItemStack::isFullStack() const
+{
+	return m_size >= getItem().getMaxStackSize();
+}
+
+ItemStack* ItemStack::deserialize(const NBT& nbt)
+{
+	auto out = ItemStack::create(nbt.get<ItemID>("item"), nbt.get<int>("size"));
+
+	if (nbt.exists<NBT>("nbt"))
+		out->m_nbt = nbt.get<NBT>("nbt").copy();
+	return out;
 }
 
 bool operator==(const ItemStack& a, const ItemStack& b)
 {
-	if(a.getItemID()==b.getItemID()&&a.getSize()==b.getSize())
-	{
-		//if (a.getNBT() == nullptr && b.getNBT() == nullptr)
-			return true;
-		//if (a.getNBT() != nullptr && b.getNBT() != nullptr)
-		//	return a.getNBT() == b.getNBT();
-		//return false;
-	}
-	return false;
+	
+	return a.getItemID() == b.getItemID() && a.getMetadata() == b.getMetadata();
 }
 
-Item::Item(ItemID id, const std::string& name)
-:m_maxStackSize(999),m_id(id),m_name(name),m_has_nbt(false),m_is_block(false)
+Item::Item(ItemID id, const std::string& textName)
+:m_id(id),m_maxStackSize(999),m_text_name(textName),m_has_nbt(false),m_is_block(false)
 {
 }
 
 void Item::onTextureLoaded(const TextureAtlas& atlas)
 {
 	m_texture_pos = atlas.getTexture("item/" + toString());
+}
+
+int Item::getTextureOffset(const ItemStack& b) const
+{
+	return m_texture_pos;
 }
 
 int Item::getBlockID() const
@@ -50,31 +78,46 @@ int Item::getBlockID() const
 ItemRegistry::~ItemRegistry()
 {
 	for (auto item : m_items)
-		delete item;
+		delete item.second;
 }
 
 void ItemRegistry::initTextures(const TextureAtlas& atlas)
 {
 	for (auto item : m_items)
-		item->onTextureLoaded(atlas);
+		item.second->onTextureLoaded(atlas);
 }
 
 
 void ItemRegistry::registerItem(Item* item)
 {
-	if (m_items.size() <= item->getID())
-		m_items.resize(item->getID() + 1);
 	m_items[item->getID()] = item;
-	m_itemIDs[item->toString()] = item->getID();
-}
-
-const Item& ItemRegistry::getItem(const std::string& id) const
-{
-	return *m_items[m_itemIDs.at(id)];
 }
 
 const Item& ItemRegistry::getItem(ItemID id) const
 {
-	ASSERT(m_items.size() > id&& id >= 0, "Invalid item id");
-	return *m_items[id];
+	ASSERT(m_items.find(id) != m_items.end(), "Invalid item id");
+	return *m_items.at(id);
+}
+
+Pool<ItemStack>& ItemStack::s_stack_pool()
+{
+	static Pool<ItemStack> pool(1000);
+	return pool;
+}
+
+ItemStack* ItemStack::create(ItemID id, int count)
+{
+	return s_stack_pool().allocate(id, count);
+}
+
+ItemStack* ItemStack::create(const ItemStack* itemstack)
+{
+	return s_stack_pool().allocate(*itemstack);
+}
+
+
+
+void ItemStack::destroy(ItemStack* stack)
+{
+	s_stack_pool().deallocate(stack);
 }

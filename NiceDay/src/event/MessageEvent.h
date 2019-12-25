@@ -1,6 +1,6 @@
 ﻿#pragma once
 #include "Event.h"
-#include "core/sid.h"
+#include "core/sids.h"
 
 static void cpyString(const char* src,char* dest)
 {

@@ -8,7 +8,8 @@ enum WindowMess:int{
 	MenuExit,
 	MenuSettings,
 	MenuGenerateWorld,
-	MenuBack
+	MenuBack,
+	WorldQuit
 };
 namespace WindowMessageData
 {

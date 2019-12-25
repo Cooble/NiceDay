@@ -26,6 +26,12 @@ constexpr int BLOCK_TREE_SAPLING =	13;
 constexpr int BLOCK_FLOWER =		14;
 constexpr int BLOCK_GRASS_PLANT =	15;
 
+constexpr int BLOCK_SNOW =			16;
+constexpr int BLOCK_SNOW_BRICK =	17;
+constexpr int BLOCK_ICE =			18;
+constexpr int BLOCK_PUMPKIN =		19;
+constexpr int BLOCK_CHEST =			20;
+
 //=======================WALL IDs=======================
 
 constexpr int WALL_AIR =			0;

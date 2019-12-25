@@ -346,3 +346,91 @@ void PlayWindow::setWorlds(const std::vector<WorldInfoData>& worlds)
 	m_world_slider->setValue(1);
 	//todo fuck you  
 }
+
+PauseWindow::PauseWindow(const MessageConsumer& c)
+:m_messenger(c){
+	
+	width = App::get().getWindow()->getWidth();
+	height = App::get().getWindow()->getHeight();
+	setCenterPosition(App::get().getWindow()->getWidth(), App::get().getWindow()->getHeight());
+
+	isVisible = false;
+	isMoveable = false;
+	isResizable = false;
+
+	setAlignment(GUIAlign::CENTER);
+	dimInherit = GUIDimensionInherit::WIDTH_HEIGHT;
+
+	auto material = FontMatLib::getMaterial("res/fonts/andrew_big.fnt");
+	auto materialSmall = FontMatLib::getMaterial("res/fonts/andrew.fnt");
+
+	auto mainCol = new GUIColumn();
+	mainCol->isAlwaysPacked = true;
+	mainCol->dimInherit = GUIDimensionInherit::WIDTH;
+	mainCol->setAlignment(GUIAlign::CENTER);
+	
+	
+
+	auto centerBox = new GUIBlank();
+	centerBox->setPadding(10);
+	centerBox->isAlwaysPacked = false;
+	centerBox->dim = { 500,230 };
+	centerBox->isVisible = true;
+	centerBox->setAlignment(GUIAlign::CENTER);
+
+
+	
+	//Column
+	auto col = new GUIColumn();
+	col->dimInherit = GUIDimensionInherit::WIDTH_HEIGHT;
+	col->space = 15;
+	col->setAlignment(GUIAlign::CENTER);
+	centerBox->appendChild(col);
+
+	auto spacer = new GUIBlank();
+	spacer->isAlwaysPacked = false;
+	spacer->height = 50;
+	col->appendChild(spacer);
+	
+	//createbtn
+	auto createNewBtn = new GUITextButton("Continue", materialSmall);
+	createNewBtn->setAlignment(GUIAlign::CENTER);
+	createNewBtn->isAlwaysPacked = true;
+	createNewBtn->setPadding(5);
+	createNewBtn->onPressed = [this](GUIElement& e)
+	{
+		m_messenger(MessageEvent(WindowMess::MenuBack));
+	};
+	col->appendChild(createNewBtn);
+
+	//goToMainScreenBtn
+	auto goToMainScreenBtn = new GUITextButton("Save and go to menu", materialSmall);
+	goToMainScreenBtn->setAlignment(GUIAlign::CENTER);
+	goToMainScreenBtn->isAlwaysPacked = true;
+	goToMainScreenBtn->setPadding(5);
+	goToMainScreenBtn->onPressed = [this](GUIElement& e)
+	{
+		m_messenger(MessageEvent(WindowMess::WorldQuit));
+	};
+	col->appendChild(goToMainScreenBtn);
+
+	
+	//Title
+	auto title = new GUIText(material);
+	title->setText("We are paused");
+	title->setAlignment(GUIAlign::CENTER);
+
+	auto blankTitle = new GUIBlank();
+	blankTitle->setPadding(10);
+	blankTitle->isAlwaysPacked = true;
+	blankTitle->isVisible = true;
+
+	blankTitle->appendChild(title);
+	blankTitle->y = centerBox->height - blankTitle->height / 2;
+	blankTitle->x = centerBox->width / 2 - blankTitle->width / 2;
+	centerBox->appendChild(blankTitle);
+	
+	mainCol->appendChild(centerBox);
+	appendChild(mainCol);
+
+}

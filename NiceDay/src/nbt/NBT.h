@@ -1,6 +1,7 @@
 #pragma once
 #include "core/physShapes.h"
 #include "ndpch.h"
+#include "memory/Pool.h"
 struct NBT;
 
 class NBTSaveable //todo those methods should be inlined
@@ -30,7 +31,18 @@ class NBTSaveable //todo those methods should be inlined
 		return *((typeName*)&listName[ss]); \
 	}\
 	template <>\
-	bool exists<typeName>(const std::string& s)\
+		const typeName& get<>(const std::string& s) const\
+	{\
+		auto ss = s+m_prefix;\
+		auto it = listName.find(ss); \
+		if (it != listName.end())\
+			return *((typeName*)&it->second); \
+		ASSERT(false,"doesnt exist");\
+		static typeName ttt;\
+		return ttt; \
+	}\
+	template <>\
+	bool exists<typeName>(const std::string& s) const\
 	{\
 		auto ss = s+m_prefix;\
 		auto it = listName.find(ss); \
@@ -79,6 +91,16 @@ public:
 
 struct NBT
 {
+private:
+	static Pool<NBT>& s_stack_pool();
+public:
+	static NBT* create();
+	static NBT* create(const NBT& nbt);
+	static void destroy(NBT* stack);
+
+	NBT* copy() const;
+	void destroy();
+	
 	std::unordered_map<std::string, std::string> m_strings;
 	std::unordered_map<std::string, int32_t> m_ints;
 	std::unordered_map<std::string, int64_t> m_longs;
@@ -98,9 +120,14 @@ public:
 	{
 		ASSERT(false, "INVALID NBT TYPE");
 	}
+	template <typename T>
+	const T& get(const std::string& s) const
+	{
+		ASSERT(false, "INVALID NBT TYPE");
+	}
 
 	template <typename T>
-	bool exists(const std::string& s)
+	bool exists(const std::string& s) const
 	{
 		ASSERT(false, "INVALID NBT TYPE");
 	}
@@ -138,6 +165,7 @@ public:
 		m_nbts.clear();
 		resetPrefix();
 	}
+
 
 	void serialize(IStream* strea)
 	{

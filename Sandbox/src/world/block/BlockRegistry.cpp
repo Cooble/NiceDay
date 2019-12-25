@@ -31,7 +31,7 @@ void BlockRegistry::registerWall(Wall* wall)
 
 }
 
-const Block& BlockRegistry::getBlock(int block_id)
+const Block& BlockRegistry::getBlock(BlockID block_id)
 {
 	ASSERT(m_blocks.size() > block_id&&block_id>=0, "Invalid block id");
 	return *m_blocks[block_id];

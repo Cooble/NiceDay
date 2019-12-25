@@ -8,6 +8,11 @@
 #include "core/AppGlobals.h"
 #include "CommonMessages.h"
 #include "gui/window_messeages.h"
+#include "event/KeyEvent.h"
+#include "GLFW/glfw3.h"
+#include "gui/GUIEntityPlayer.h"
+#include "world/entity/EntityPlayer.h"
+#include "world/entity/EntityAllocator.h"
 
 GUILayer::GUILayer()
 {
@@ -24,6 +29,15 @@ GUILayer::~GUILayer()
 	GUIContext::destroy(m_gui_context);
 }
 
+void GUILayer::setWorldLayer(WorldLayer* l)
+{
+	m_world = l;
+	m_gui_renderer.setItemAtlas(m_world->getItemAtlas().getSize(),
+	                            Texture::create(
+		                            TextureInfo("res/images/itemAtlas/atlas.png").
+		                            filterMode(TextureFilterMode::NEAREST)));
+}
+
 void GUILayer::updateWorldList()
 {
 	WorldsProvider::get().rescanWorlds();
@@ -36,16 +50,26 @@ void GUILayer::proccessWindowEvent(const MessageEvent& e)
 	switch (e.getID())
 	{
 	case WindowMess::MenuPlay:
-		GUIContext::get().closeWindows();
-		m_main_window = nullptr;
-		m_play_window = new PlayWindow(m_bound_func);
-		updateWorldList();
-		GUIContext::get().openWindow(m_play_window);
+		{
+			GUIContext::get().destroyWindow(m_main_window->id);
+			m_main_window = nullptr;
+			m_play_window = new PlayWindow(m_bound_func);
+			updateWorldList();
+			GUIContext::get().openWindow(m_play_window);
+		}
 		break;
 	case WindowMess::MenuPlayWorld:
-		GUIContext::get().closeWindows();
-		m_world->loadWorld(worldData->worldName, false);
-		m_background_enable = false;
+		{
+			GUIContext::get().destroyWindow(m_play_window->id);
+			m_play_window = nullptr;
+
+			m_game_screen = GameScreen::World;
+			m_world->loadWorld(worldData->worldName, false);
+
+			m_hud = new HUD();
+			GUIContext::get().openWindow(m_hud);
+			m_background_enable = false;
+		}
 		break;
 	case WindowMess::MenuGenerateWorld:
 		{
@@ -60,9 +84,15 @@ void GUILayer::proccessWindowEvent(const MessageEvent& e)
 			}
 			if (duplicate)
 				break;
-			GUIContext::get().closeWindows();
+
+			GUIContext::get().destroyWindow(m_play_window->id);
+			m_play_window = nullptr;
+
+			m_game_screen = GameScreen::World;
 			m_background_enable = false;
 			m_world->loadWorld(worldData->worldName, true);
+			m_hud = new HUD();
+			GUIContext::get().openWindow(m_hud);
 		}
 		break;
 	case WindowMess::MenuDeleteWorld:
@@ -73,11 +103,38 @@ void GUILayer::proccessWindowEvent(const MessageEvent& e)
 		App::get().fireEvent(WindowCloseEvent());
 		break;
 	case WindowMess::MenuBack:
-		GUIContext::get().closeWindows();
-		m_play_window = nullptr;
-		m_main_window = new MainWindow(m_bound_func);
-		GUIContext::get().openWindow(m_main_window);
+		{
+			if (m_game_screen == GameScreen::GUI)
+			{
+				GUIContext::get().destroyWindow(m_play_window->id);
+				m_play_window = nullptr;
+				m_main_window = new MainWindow(m_bound_func);
+				GUIContext::get().openWindow(m_main_window);
+			}
+			else if (m_game_screen == GameScreen::Pause)
+			{
+				m_game_screen = GameScreen::World;
+				m_world->pause(false);
+				GUIContext::get().closeWindow(m_pause_window->id);
+			}
+		}
 		break;
+	case WindowMess::WorldQuit:
+		{
+			ND_INFO("World unloading:::");
+			m_world->onDetach();
+			m_world->onAttach();
+			ND_INFO("World unloading:::done");
+
+			GUIContext::get().destroyWindow(m_hud->id);
+			GUIContext::get().closeWindow(m_pause_window->id);
+
+			m_play_window = nullptr;
+			m_main_window = new MainWindow(m_bound_func);
+			m_background_enable = true;
+			GUIContext::get().openWindow(m_main_window);
+			break;
+		}
 	}
 }
 
@@ -88,14 +145,16 @@ void GUILayer::consumeWindowEvent(const MessageEvent& e)
 
 void GUILayer::onAttach()
 {
+	m_game_screen = GameScreen::GUI;
 	GUIContext::setContext(m_gui_context);
 	m_main_window = new MainWindow(m_bound_func);
+	m_pause_window = new PauseWindow(m_bound_func);
 	GUIContext::get().getWindows().push_back(m_main_window);
-	
 }
 
 void GUILayer::onDetach()
 {
+	GUIContext::get().destroyWindows();
 }
 
 
@@ -131,6 +190,63 @@ void GUILayer::onRender()
 
 void GUILayer::onEvent(Event& e)
 {
+	if (e.getEventType() == Event::EventType::KeyPress)
+	{
+		auto m = static_cast<KeyPressEvent&>(e);
+		if (m.getKey() == GLFW_KEY_ESCAPE)
+		{
+			e.handled = true;
+
+			if (m_game_screen == GameScreen::World)
+			{
+				m_game_screen = GameScreen::Pause;
+				m_world->pause(true);
+				GUIContext::get().openWindow(m_pause_window);
+			}
+			else if (m_game_screen == GameScreen::Pause)
+			{
+				m_game_screen = GameScreen::World;
+				m_world->pause(false);
+				GUIContext::get().closeWindow(m_pause_window->id);
+			}
+		}
+		if (m.getKey() == GLFW_KEY_I && m_game_screen == GameScreen::World)
+		{
+			e.handled = true;
+
+			if (!m_hud->isRegistered("player"))
+				m_hud->registerGUIEntity(new GUIEntityPlayer(&m_world->getPlayer()));
+			else m_hud->unregisterGUIEntity("player");
+		}
+		//throw item away
+		if (m.getKey() == GLFW_KEY_Q && m_game_screen == GameScreen::World)
+		{
+			if (m_hud->isRegistered("player"))
+			{
+				auto& item = m_world->getPlayer().getInventory().itemInHand();
+				if(item)
+				{
+					
+					auto man = (EntityItem*)EntityAllocator::createEntity(ENTITY_TYPE_ITEM);
+					man->getPosition() = m_world->getPlayer().getPosition()+glm::vec2(0,1.7f);
+
+					//get cursor vector
+					auto loc = App::get().getInput().getMouseLocation();
+					auto dims = App::get().getWindow()->getDimensions();
+					loc.x = loc.x - dims.x / 2;
+					loc.y = -loc.y + dims.y / 2;;
+					loc = glm::normalize(loc);
+					
+					man->getVelocity() = loc * 0.4f;
+					man->setItemStack(item);
+					man->setThrowerEntity(m_world->getPlayer().getID());
+					m_world->getWorld()->spawnEntity(man);
+				}
+				item = nullptr;
+			}
+			e.handled = true;
+		}
+	}
 	if (e.getEventType() == Event::EventType::Message)
 	{
 		return;

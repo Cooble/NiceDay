@@ -10,9 +10,9 @@ class ParticleManager
 private:
 	struct Particle
 	{
-		Phys::Vect acceleration;
-		Phys::Vect velocity;
-		Phys::Vect pos;
+		glm::vec2 acceleration;
+		glm::vec2 velocity;
+		glm::vec2 pos;
 		float rotation;
 		float rotationSpeed;
 		int life;
@@ -43,6 +43,6 @@ public:
 
 
 	// rotation if negative will be determined from actual speed of particle
-	void createParticle(ParticleID id, Phys::Vect pos, Phys::Vect speed, Phys::Vect acc, int life,float rotation=0);
+	void createParticle(ParticleID id, const glm::vec2& pos, const glm::vec2& speed, const glm::vec2& acc, int life,float rotation=0);
 	void render(ParticleRenderer& renderer);
 };

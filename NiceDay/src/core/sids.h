@@ -68,7 +68,6 @@ public:
 
 	uint64_t operator()()const {return m_data;}
 
-
 };
 
 static std::ostream& operator<<(std::ostream& out, StringId sid)
@@ -103,21 +102,21 @@ public:
 	static void insertString(uint64_t key, const std::string& s);
 	static const std::string* getString(uint64_t key);
 
-	static StringId sid(const std::string& s);
-	static uint64_t sid_val(const std::string& s);
+	static StringId sids(const std::string& s);
+	static uint64_t sid(const std::string& s);
 
-	static StringId sid(const char* s);
-	static uint64_t sid_val(const char* s);
+	static StringId sids(const char* s);
+	static uint64_t sid(const char* s);
 };
 
 
 
 #if DEBUG_ID_LOOKUP_ENABLE==1
 	#define SID(str) (StringIdLookup::sid((str)))
-	#define SID_VAL(str) (StringIdLookup::sid_val((str)))
+	#define SIDS(str) (StringIdLookup::sids((str)))
 #else
-	#define SID(str) (StringId(str))
-	#define SID_VAL(str) (StringIdHash(str))
+	#define SID(str) (StringIdHash(str))
+	#define SIDS(str) (StringId(str))
 #endif
 
 

@@ -39,6 +39,12 @@ public:
 	PlayWindow(const MessageConsumer& c);
 
 	void setWorlds(const std::vector<WorldInfoData>& m_worlds);
-	
+};
+
+class PauseWindow :public GUIWindow
+{
+	MessageConsumer m_messenger;
+public:
+	PauseWindow(const MessageConsumer& c);
 
 };
