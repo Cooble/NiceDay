@@ -6,6 +6,8 @@
 #include "graphics/BlockTextureAtlas.h"
 #include "world/entity/EntityRegistry.h"
 #include "world/entity/EntityAllocator.h"
+#include "inventory/Item.h"
+#include "inventory/ItemBlock.h"
 
 
 Block::Block(BlockID id)
@@ -128,6 +130,22 @@ void Block::onBlockClicked(World& w, WorldEntity* e, int x, int y, BlockStruct& 
 		}
 		entity->onClicked(w, e);
 	}
+}
+
+const ItemBlock& Block::getItemFromBlock() const
+{
+	return dynamic_cast<const ItemBlock&>(ItemRegistry::get().getItem(SID(toString())));
+	
+}
+
+ItemStack* Block::createItemStackFromBlock(const BlockStruct& b) const 
+{
+	if (!hasItemVersion())
+		return nullptr;
+	auto out = ItemStack::create(SID(toString()), 1);
+	if (m_max_metadata != 0)
+		out->setMetadata(b.block_metadata);
+	return out;
 }
 
 

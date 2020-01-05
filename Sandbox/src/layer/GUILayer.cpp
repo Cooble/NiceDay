@@ -13,6 +13,8 @@
 #include "gui/GUIEntityPlayer.h"
 #include "world/entity/EntityPlayer.h"
 #include "world/entity/EntityAllocator.h"
+#include "event/SandboxControls.h"
+#include "gui/GUIEntityPlayer.h"
 
 GUILayer::GUILayer()
 {
@@ -106,8 +108,12 @@ void GUILayer::proccessWindowEvent(const MessageEvent& e)
 		{
 			if (m_game_screen == GameScreen::GUI)
 			{
-				GUIContext::get().destroyWindow(m_play_window->id);
+				if (m_play_window)
+					GUIContext::get().destroyWindow(m_play_window->id);
+				if (m_controls_window)
+					GUIContext::get().destroyWindow(m_controls_window->id);
 				m_play_window = nullptr;
+				m_controls_window = nullptr;
 				m_main_window = new MainWindow(m_bound_func);
 				GUIContext::get().openWindow(m_main_window);
 			}
@@ -116,6 +122,24 @@ void GUILayer::proccessWindowEvent(const MessageEvent& e)
 				m_game_screen = GameScreen::World;
 				m_world->pause(false);
 				GUIContext::get().closeWindow(m_pause_window->id);
+			}
+		}
+		break;
+
+	case WindowMess::MenuSettings:
+		{
+			if (m_game_screen == GameScreen::GUI)
+			{
+				GUIContext::get().destroyWindow(m_main_window->id);
+				m_main_window = nullptr;
+				m_controls_window = new ControlsWindow(m_bound_func);
+				GUIContext::get().openWindow(m_controls_window);
+			}
+			else if (m_game_screen == GameScreen::Pause)
+			{
+				/*m_game_screen = GameScreen::World;
+				m_world->pause(false);
+				GUIContext::get().closeWindow(m_pause_window->id);*/
 			}
 		}
 		break;
@@ -132,9 +156,10 @@ void GUILayer::proccessWindowEvent(const MessageEvent& e)
 			m_play_window = nullptr;
 			m_main_window = new MainWindow(m_bound_func);
 			m_background_enable = true;
+			m_game_screen = GameScreen::GUI;
 			GUIContext::get().openWindow(m_main_window);
-			break;
 		}
+		break;
 	}
 }
 
@@ -210,37 +235,28 @@ void GUILayer::onEvent(Event& e)
 				GUIContext::get().closeWindow(m_pause_window->id);
 			}
 		}
-		if (m.getKey() == GLFW_KEY_I && m_game_screen == GameScreen::World)
+		if (m.getKey() == Controls::OPEN_INVENTORY && m_game_screen == GameScreen::World)
 		{
 			e.handled = true;
 
-			if (!m_hud->isRegistered("player"))
-				m_hud->registerGUIEntity(new GUIEntityPlayer(&m_world->getPlayer()));
-			else m_hud->unregisterGUIEntity("player");
+			if (!m_hud->isRegistered("player")) {
+				m_gui_player = new GUIEntityPlayer(&m_world->getPlayer());
+				m_hud->registerGUIEntity(m_gui_player);
+			}
+			else
+			{
+				m_gui_player->openInventory(!m_gui_player->isOpenedInventory());
+			}
 		}
 		//throw item away
-		if (m.getKey() == GLFW_KEY_Q && m_game_screen == GameScreen::World)
+		if (m.getKey() == Controls::DROP_ITEM && m_game_screen == GameScreen::World)
 		{
 			if (m_hud->isRegistered("player"))
 			{
 				auto& item = m_world->getPlayer().getInventory().itemInHand();
-				if(item)
+				if (item)
 				{
-					
-					auto man = (EntityItem*)EntityAllocator::createEntity(ENTITY_TYPE_ITEM);
-					man->getPosition() = m_world->getPlayer().getPosition()+glm::vec2(0,1.7f);
-
-					//get cursor vector
-					auto loc = App::get().getInput().getMouseLocation();
-					auto dims = App::get().getWindow()->getDimensions();
-					loc.x = loc.x - dims.x / 2;
-					loc.y = -loc.y + dims.y / 2;;
-					loc = glm::normalize(loc);
-					
-					man->getVelocity() = loc * 0.4f;
-					man->setItemStack(item);
-					man->setThrowerEntity(m_world->getPlayer().getID());
-					m_world->getWorld()->spawnEntity(man);
+					m_world->getPlayer().throwItem(*m_world->getWorld(), item);
 				}
 				item = nullptr;
 			}
@@ -257,6 +273,7 @@ void GUILayer::onEvent(Event& e)
 		auto m = static_cast<WindowResizeEvent&>(e);
 		m_gui_renderer.setScreenDimensions(m.getWidth(), m.getHeight());
 	}
+
 	bool flipped = e.isInCategory(Event::EventCategory::Mouse);
 	if (flipped)
 		static_cast<MouseMoveEvent&>(e).flipY(App::get().getWindow()->getHeight());

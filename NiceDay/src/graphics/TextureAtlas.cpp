@@ -1,48 +1,15 @@
 ﻿#include "ndpch.h"
 #include "TextureAtlas.h"
+#include "Imager2D.h"
 
 #include "stb_image.h"
 #include "stb_image_write.h"
 #include <filesystem>
 
 //should print everything
-#define VERBOSE_TEXTURE_ATLAS_B 1
+#define VERBOSE_TEXTURE_ATLAS_B 0
 
-class Imager2D
-{
-	struct Pixel
-	{
-		uint8_t r, g, b, a;
-	};
 
-	inline static bool s_flipY = false;
-public:
-	static void flipY(bool flip) { s_flipY = flip; }
-
-	static void copySubImage(
-		void* src, void* dst,
-		int srcW, int srcH, int dstW, int dstH,
-		int cutX, int cutY, int cutW, int cutH,
-		int pasteX, int pasteY
-	)
-	{
-		if (s_flipY)
-		{
-			pasteY = dstH - pasteY - cutH;
-			cutY = srcH - cutY - cutH;
-		}
-		auto src_buff = (Pixel*)src;
-		auto dst_buff = (Pixel*)dst;
-
-		Pixel* srcPixel = src_buff + (cutY * srcW + cutX);
-		Pixel* dstPixel = dst_buff + (pasteY * dstW + pasteX);
-
-		for (int y = 0; y < cutH; ++y)
-		{
-			memcpy(dstPixel + (y * dstW), srcPixel + (y * srcW), cutW * sizeof(Pixel));
-		}
-	}
-};
 
 struct Icon : Phys::Rectanglei
 {
@@ -434,4 +401,19 @@ void TextureAtlas::createAtlas(const std::string& folder, int segmentCount, int 
 
 	stbi_write_png((folder + "atlas.png").c_str(), size, size, STBI_rgb_alpha, atlas, size * 4);
 	ND_TRACE("[TextureAtlas] Done: {}", folder + "atlas.png");
+}
+
+half_int TextureAtlas::getTexture(const std::string& fileName, const std::string& subName) const
+{
+	std::string subNameC = subName;
+	std::transform(subNameC.begin(), subNameC.end(), subNameC.begin(),
+	               [](unsigned char c) { return std::tolower(c); });
+
+	auto& i = m_subtextures.find(fileName + subNameC);
+	if (i == m_subtextures.end())
+	{
+		ND_ERROR("Trying to retrieve not loaded texture: {}", (fileName + +":\t\t"+ subNameC));
+		return 0;
+	}
+	return i->second;
 }

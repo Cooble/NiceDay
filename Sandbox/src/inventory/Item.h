@@ -13,6 +13,8 @@ class TextureAtlas;
 class ItemStack;
 typedef uint64_t ItemID;
 
+class Block;
+class BlockStruct;
 class Item
 {
 protected:
@@ -36,16 +38,44 @@ public:
 	inline ItemID getID() const { return m_id; }
 	inline const std::string& toString() const { return m_text_name; }
 	inline bool isBlock() const { return m_is_block; }
+	inline bool hasNBT() const { return m_has_nbt; }
 	virtual int getBlockID() const;
+
+	// how fast the blok can be dig out
+	// 0 means cannot be dig out
+	virtual float getEfficiencyOnBlock(const Block& blok, ItemStack* stack) const { return 0; }
 
 	//=============================EVENTS=============================
 
-	//called when entity chooses this item to be held in hand
-	inline virtual void onEquipped(World& world, WorldEntity& entity,ItemStack& stack){}
-	//called when entity wants to use this item
-	inline virtual void onUse(World& world, WorldEntity& entity, ItemStack& stack){}
-	//called when item thrown away
-	inline virtual void onDisposed(World& world, WorldEntity& entity, ItemStack& stack){}
+	// called when entity chooses this item to be held in hand
+	virtual void onEquipped(World& world, ItemStack& stack, WorldEntity& owner) const;
+
+	// called when entity switches from this item to be held in hand
+	virtual void onUnequipped(World& world, ItemStack& stack, WorldEntity& owner) const;
+	
+	// called when entity wants to use this item
+	virtual bool onRightClick(World& world, ItemStack& stack, WorldEntity& owner, int x, int y) const { return false; }
+
+	// called when player uses item on block
+	// return true if event was consumed
+	virtual bool onRightClickOnBlock(World& world, ItemStack& stack, WorldEntity& owner, int x, int y, BlockStruct& block) const { return onRightClick(world, stack, owner,x,y); }
+
+	// called when player uses item on entity
+	virtual bool onRightClickOnEntity(World& world, ItemStack& stack, WorldEntity& owner, int x,int y, WorldEntity& target) const { return onRightClick(world, stack, owner, x, y); }
+	
+	// called before the item is thrown away
+	virtual void onDisposed(World& world, ItemStack& stack, WorldEntity& owner) const {}
+
+	// return true if entity was damaged
+	virtual bool hitEntity(World& w, ItemStack* stack, WorldEntity& owner, WorldEntity& target)const { return false; }
+
+	// called each tick the item is used to dig some block
+	virtual void onBlockBeingDigged(World& world, ItemStack& stack, WorldEntity& owner, int x, int y) const {}
+	
+	// Called each tick when item is held in hand = active slot
+	virtual void onItemHeldInHand(World& w, WorldEntity& owner, ItemStack& stack) const {}
+
+	virtual std::string getTitle(ItemStack* stack)const;
 };
 
 
@@ -84,7 +114,7 @@ public:
 	static void destroy(ItemStack* stack);
 private:
 	ItemID m_item;
-	uint64_t m_metadata;
+	uint64_t m_metadata=0;
 	int m_size;
 	NBT* m_nbt;
 public:

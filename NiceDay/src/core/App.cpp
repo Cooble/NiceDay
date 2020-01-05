@@ -12,6 +12,7 @@
 #include "imgui_utils.h"
 #include "core/AppGlobals.h"
 #include "layer/LuaLayer.h"
+#include "event/ControlMap.h"
 
 #define BIND_EVENT_FN(x) std::bind(&App::x, &App::get(), std::placeholders::_1)
 
@@ -22,6 +23,7 @@ App::App(int width, int height, const std::string& title)
 	:m_scheduler(200),
 	m_dbuff_stackalloc(1000000)//1MB
 {
+	m_thread_id = std::this_thread::get_id();
 	ASSERT(s_Instance == nullptr, "Instance of game already exists!")
 	s_Instance = this;
 	init(width,height,title);
@@ -29,6 +31,7 @@ App::App(int width, int height, const std::string& title)
 static void eventCallback(Event& e);
 void App::init(int width, int height, const std::string& title)
 {
+	ControlMap::init();
 	Log::init();
 	m_Window = new Window(width, height, title);
 	GContext::init(Renderer::getAPI());
@@ -82,6 +85,7 @@ uint64_t nowTime()
 
 void App::start()
 {
+	
 	ND_TRACE("Game started");
 	
 	using namespace std::chrono;

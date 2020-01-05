@@ -10,7 +10,7 @@
 
 class MessageEvent;
 class WorldLayer;
-
+class GUIEntityPlayer;
 class GUILayer : public Layer
 {
 private:
@@ -34,11 +34,13 @@ private:
 	MainWindow* m_main_window=nullptr;
 	//world is paused
 	PauseWindow* m_pause_window=nullptr;
+	ControlsWindow* m_controls_window = nullptr;
+	
 	//all ingame gui: inventory, health bar ...
 	HUD* m_hud;
 	
 	WorldLayer* m_world;
-	
+	GUIEntityPlayer* m_gui_player;
 
 public:
 	GUILayer();

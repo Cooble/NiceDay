@@ -47,9 +47,11 @@ public:
 	inline int getTickMillis() const { return m_tel_tick_millis; }
 	inline int getRenderMillis() const { return m_tel_render_millis; }
 	inline int getUpdatesPerFrame() { return m_tel_updates_per_frame; }
+	inline std::thread::id getMainThreadID() { return m_thread_id; }
 
 private:
 	static App* s_Instance;
+	std::thread::id m_thread_id;
 	void init(int width,int height,const std::string& title);
 	void update();
 	void render();

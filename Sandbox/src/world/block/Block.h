@@ -3,6 +3,7 @@
 #include "core/physShapes.h"
 #include "world/entity/EntityManager.h"
 #include "world/entity/entity_datas.h"
+#include "inventory/Item.h"
 class BlockAccess;
 class BlockTextureAtlas;
 //STATES=========================================================
@@ -104,12 +105,28 @@ class WorldEntity;
 
 constexpr uint8_t OPACITY_AIR = 1;
 constexpr uint8_t OPACITY_SOLID = 3;
+class ItemBlock;
 class Block
 {
 private:
 	const int m_id;
 
 protected:
+
+	int m_hardness = 1;
+	int m_tier_requried = 0;
+	bool m_has_item_version=true;
+	bool m_has_metatextures_in_row=true;
+
+	/**
+	 * when one block has for example more flower species this number tells us how many
+	 * used by itemblock
+	 */
+	int m_max_metadata=0;
+
+
+
+	
 	//offset in block texture atlas
 	half_int m_texture_pos;
 	//array[BLOCK_STATE]=TEXTURE_OFFSET
@@ -147,8 +164,10 @@ public:
 	Block(const Block& c) = delete;
 	void operator=(Block const&) = delete;
 	virtual ~Block()= default;
+	inline int getHardness() const { return m_hardness; }
 	inline int getID() const { return m_id; };
 	inline int getConnectGroup() const { return m_block_connect_group; }
+	inline int getMaxMetadata() const { return m_max_metadata; }
 	inline uint8_t getLightSrcVal() const
 	{
 		return m_light_src;
@@ -184,6 +203,15 @@ public:
 		return true;
 	}
 
+	virtual const ItemBlock& getItemFromBlock() const;
+
+	virtual ItemStack* createItemStackFromBlock(const BlockStruct& b) const;
+
+	/**
+	 * exists item which can be put on the ground to become the block
+	 */
+	inline bool hasItemVersion() const { return m_has_item_version; }
+	inline bool hasMetaTexturesInRow() const { return m_has_metatextures_in_row; }
 
 	inline virtual std::string toString() const { return "UNDEFINED_BLOCK"; }
 

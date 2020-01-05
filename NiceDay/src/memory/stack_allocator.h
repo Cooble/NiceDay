@@ -2,6 +2,8 @@
 #include "ndpch.h"
 
 void* allocateMeeh(size_t n);
+void* allocateMeehStandard(size_t n);
+void deallocateMeehStandard(void* p);
 
 namespace NDUtil
 {
@@ -22,8 +24,9 @@ namespace NDUtil
 
 		pointer allocate(size_type n, const void* hint = 0)
 		{
-			return (pointer)allocateMeeh(n * sizeof(T));
+			
 			//fprintf(stderr, "Alloc %d bytes.\n", n * sizeof(T));
+			return (pointer)allocateMeehStandard(n * sizeof(T));
 
 		//return std::allocator<T>::allocate(n, hint);
 		}
@@ -32,6 +35,7 @@ namespace NDUtil
 		{
 			//fprintf(stderr, "Dealloc %d bytes (%p).\n", n * sizeof(T), p);
 			//return std::allocator<T>::deallocate(p, n);
+			deallocateMeehStandard(p);
 		}
 
 		nd_stack_allocator() noexcept : std::allocator<T>()
@@ -122,4 +126,22 @@ namespace nd {
 	}
 
 
+}
+
+inline bool operator==(const nd::temp_string& s1,const std::string& s2)
+{
+	return s1.length() == s2.length() &&
+		std::equal(s1.begin(), s1.end(), s2.begin());
+}
+inline bool operator==(const std::string& s1, const nd::temp_string& s2)
+{
+	return operator==(s2,s1);
+}
+inline nd::temp_string operator+(const nd::temp_string& s1, const std::string& s2)
+{
+	return s1 + nd::temp_string(s2);
+}
+inline nd::temp_string operator+(const std::string& s1, const nd::temp_string& s2)
+{
+	return nd::temp_string(s1)+s2;
 }

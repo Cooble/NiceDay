@@ -45,6 +45,7 @@ const Wall& BlockRegistry::getWall(int wall_id)
 
 const Block& BlockRegistry::getBlock(const std::string& block_id) const
 {
+	ASSERT(m_blockIDs.find(block_id)!=m_blockIDs.end(), "Invalid block id");
 	return *m_blocks[m_blockIDs.at(block_id)];
 }
 

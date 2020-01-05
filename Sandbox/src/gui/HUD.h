@@ -31,7 +31,12 @@ class HUD:public GUIWindow
 	std::vector<GUIEntityBundle> m_entities;
 	PlayerInventory* m_player=nullptr;
 	GUIItemContainer* m_hand;
+	GUIItemTitle* m_title;
+	
 	static HUD* s_hud;
+
+	int m_focused_slot;
+	std::string m_focused_owner;
 public:
 	static HUD* get() { return s_hud; }
 	HUD();
@@ -41,9 +46,12 @@ public:
 	void registerGUIEntity(GUIEntity* e);
 	bool isRegistered(const std::string& id);
 	void unregisterGUIEntity(const std::string& id);
+	GUIEntity* getEntity(const std::string& id);
+	Inventory* getInventory(const std::string& id);
 	void update() override;
 	void onMyEvent(Event& e) override;
 	void appendChild(GUIElement* element,const std::string& ownerID);
 	void appendChild(GUIElement* element) override;
 	void consumeContainerEvent(const std::string& id, int slot, Event& e);
+	inline const auto& getEntities() { return m_entities; }
 };

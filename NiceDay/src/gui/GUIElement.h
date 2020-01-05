@@ -84,6 +84,10 @@ protected:
 	void checkFocus(MouseMoveEvent& e);
 
 public:
+	/**
+	 * if not -> no render and no render of children
+	 */
+	bool isEnabled = true;
 	float renderAngle=0;
 	bool isVisible = true;
 	bool isNotSpacial = false;
@@ -210,4 +214,9 @@ public:
 	//called when no child has consumed it
 	inline virtual void onMyEvent(Event& e);
 	void clearChildren();
+
+	bool hasChild(GEID id);
+	//removes child but doesnt call destructor
+	GUIElement* takeChild(GEID id);
+
 };

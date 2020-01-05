@@ -60,6 +60,12 @@ struct TextureInfo
 		height = h;
 		return *this;
 	}
+	inline TextureInfo& size(int d)
+	{
+		width = d;
+		height = d;
+		return *this;
+	}
 
 	inline TextureInfo& format(TextureFormat form)
 	{

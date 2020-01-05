@@ -21,3 +21,16 @@ public:
 	void setContainer(Inventory* c, int slot);
 	const ItemStack* getItemStack() const;
 };
+class GUIText;
+class GUIItemTitle:public GUIElement
+{
+private:
+	GUIText* m_title;
+	GUIText* m_meta;
+	
+public:
+	GUIItemTitle();
+
+	void setTitle(const std::string& s);
+	void setMeta(const std::string& s);
+};

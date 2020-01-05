@@ -233,6 +233,10 @@
     </ClInclude>
     <ClInclude Include="src\gui\GUIEntityChest.h" />
     <ClInclude Include="src\world\entity\EntityAllocator.h" />
+    <ClInclude Include="src\world\block\BlockBreaker.h" />
+    <ClInclude Include="src\inventory\ItemTool.h" />
+    <ClInclude Include="src\graphics\BlockTextureCreator.h" />
+    <ClInclude Include="src\event\SandboxControls.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\core\EntryPoint.cpp">
@@ -411,5 +415,9 @@
     </ClCompile>
     <ClCompile Include="src\gui\GUIEntityChest.cpp" />
     <ClCompile Include="src\world\entity\EntityAllocator.cpp" />
+    <ClCompile Include="src\world\block\BlockBreaker.cpp" />
+    <ClCompile Include="src\inventory\ItemTool.cpp" />
+    <ClCompile Include="src\graphics\BlockTextureCreator.cpp" />
+    <ClCompile Include="src\event\SanboxControls.cpp" />
   </ItemGroup>
 </Project>

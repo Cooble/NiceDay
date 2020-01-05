@@ -17,6 +17,7 @@ BlockAir::BlockAir()
 	m_block_connect_group = BIT(BLOCK_GROUP_AIR_BIT);
 	m_opacity = OPACITY_AIR;
 	m_texture_pos = -1;
+	m_has_item_version = false;
 }
 
 int BlockAir::getTextureOffset(int x, int y, const BlockStruct&) const { return -1; }
@@ -635,7 +636,7 @@ void BlockTree::onBlockDestroyed(World& w, WorldEntity* e, int x, int y, BlockSt
 
 BlockPlant::BlockPlant(int id)
 	: Block(id)
-	  , m_max_metadata(1)
+	  
 {
 	setNoCollisionBox();
 	m_opacity = OPACITY_AIR;
@@ -673,6 +674,7 @@ BlockFlower::BlockFlower()
 	: BlockPlant(BLOCK_FLOWER)
 {
 	m_max_metadata = 8;
+	m_has_metatextures_in_row = true;
 }
 
 BlockGrassPlant::BlockGrassPlant()
@@ -680,4 +682,5 @@ BlockGrassPlant::BlockGrassPlant()
 
 {
 	m_max_metadata = 4;
+	m_has_metatextures_in_row = true;
 }

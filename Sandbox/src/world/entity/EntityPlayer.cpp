@@ -5,6 +5,7 @@
 
 
 EntityPlayer::EntityPlayer()
+	:m_inventory(this)
 {
 	m_is_item_consumer = true;
 	m_velocity = vec2(0.0f);
@@ -24,10 +25,85 @@ EntityPlayer::EntityPlayer()
 	m_inventory.putAtRandomIndex(ItemStack::create(SID("pickaxe")));
 	m_inventory.putAtRandomIndex(ItemStack::create(SID("stone"),7));
 	m_inventory.putAtRandomIndex(ItemStack::create(SID("stone"),5));
+	m_inventory.putAtRandomIndex(ItemStack::create(SID("shotgun")));
 }
+
+void EntityPlayer::render(BatchRenderer2D& renderer)
+{
+	constexpr float ITEM_ATLAS_SIZE_BIT = 1.f/16;
+	
+	renderer.push(glm::translate(glm::mat4(1.0f), glm::vec3(m_pos.x, m_pos.y, 0)));
+	renderer.submit(m_animation);
+
+	//item
+	auto stack = getInventory().itemInHand();
+	if (stack&&m_is_swinging) {
+		auto& item = stack->getItem();
+
+		half_int txtOffset = item.getTextureOffset(*stack);
+
+		auto m = glm::translate(glm::mat4(1.f), { 0, 1, 0 });
+		m = glm::rotate(m, Phys::toRad(m_item_angle), { 0, 0, 1 });
+		m = glm::translate(m, { 0, 0.3f, 0 });
+		renderer.push(m);
+
+		static auto textureAtlas = Texture::create(
+			TextureInfo("res/images/itemAtlas/atlas.png").
+			filterMode(TextureFilterMode::NEAREST));
+		renderer.submitTextureQuad(
+			{ 0,0,0 },
+			{ 2,2 },
+			UVQuad::build({ txtOffset.x * ITEM_ATLAS_SIZE_BIT,txtOffset.y * ITEM_ATLAS_SIZE_BIT }, { ITEM_ATLAS_SIZE_BIT ,ITEM_ATLAS_SIZE_BIT }), textureAtlas);
+		renderer.pop();
+	}
+
+	m_health_bar.setValue(m_health / m_max_health);
+	m_health_bar.setEnabled(m_health < m_max_health);
+	m_health_bar.render(renderer);
+
+	renderer.pop();
+	
+	
+
+	
+}
+
+void EntityPlayer::setItemSwinging(bool swing)
+{
+	if(!swing&&m_is_swinging&&!m_is_last_swing)
+	{
+		m_is_last_swing = true;
+		m_item_angle = (int)m_item_angle % 360;
+	}
+	if (!m_is_swinging && swing) {
+		m_item_angle = 0;
+		m_is_swinging = true;
+	}
+
+}
+
+void EntityPlayer::setFacingDir(bool left)
+{
+	m_is_facing_left = left;
+	m_animation.setHorizontalFlip(left);
+	m_animation_var = 1;
+
+}
+
 
 void EntityPlayer::update(World& w)
 {
+
+	constexpr float swingSpeed = 10;
+	if (m_is_swinging)
+		m_item_angle += m_is_facing_left?swingSpeed:-swingSpeed;
+	if(m_is_last_swing)
+		if(m_item_angle>=360||m_item_angle<=-360)
+		{
+			m_is_swinging = false;
+			m_is_last_swing = false;
+		}
+	
 	auto lastPos = m_pos;
 	if (!Stats::move_through_blocks_enable)
 		PhysEntity::computePhysics(w);
@@ -39,12 +115,14 @@ void EntityPlayer::update(World& w)
 
 	if (this->m_pos.x > lastPos.x)
 	{
+		m_is_facing_left = false;
 		m_animation.setHorizontalFlip(false);
 		m_animation_var = 1;
 	}
 	else if (this->m_pos.x < lastPos.x)
 	{
 		m_animation.setHorizontalFlip(true);
+		m_is_facing_left = true;
 		m_animation_var = 1;
 	}
 	else
@@ -70,6 +148,12 @@ void EntityPlayer::update(World& w)
 		m_pose = m_last_pose;
 		m_animation.nextFrame();
 	}
+
+
+	//call item update each tick as long as its held in hand
+	ItemStack* item = m_inventory.itemInHand();
+	if (item)
+		item->getItem().onItemHeldInHand(w, *this, *item);
 }
 
 

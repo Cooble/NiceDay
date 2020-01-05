@@ -137,8 +137,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="src\core\Sandbox.h" />
+    <ClInclude Include="src\event\SandboxControls.h" />
     <ClInclude Include="src\graphics\Bar.h" />
     <ClInclude Include="src\graphics\BlockTextureAtlas.h" />
+    <ClInclude Include="src\graphics\BlockTextureCreator.h" />
     <ClInclude Include="src\graphics\Sprite2D.h" />
     <ClInclude Include="src\gui\GUIEntityChest.h" />
     <ClInclude Include="src\gui\GuiEntityPlayer.h" />
@@ -151,6 +153,7 @@
     <ClInclude Include="src\inventory\Item.h" />
     <ClInclude Include="src\inventory\ItemBlock.h" />
     <ClInclude Include="src\inventory\items.h" />
+    <ClInclude Include="src\inventory\ItemTool.h" />
     <ClInclude Include="src\inventory\PlayerInventory.h" />
     <ClInclude Include="src\layer\CommonMessages.h" />
     <ClInclude Include="src\layer\GUILayer.h" />
@@ -158,6 +161,7 @@
     <ClInclude Include="src\layer\PriorGenLayer.h" />
     <ClInclude Include="src\layer\WorldLayer.h" />
     <ClInclude Include="src\world\BlockAccess.h" />
+    <ClInclude Include="src\world\block\BlockBreaker.h" />
     <ClInclude Include="src\world\Camera.h" />
     <ClInclude Include="src\world\ChunkLoader.h" />
     <ClInclude Include="src\world\ChunkMesh.h" />
@@ -207,8 +211,10 @@
   <ItemGroup>
     <ClCompile Include="src\core\EntryPoint.cpp" />
     <ClCompile Include="src\core\Sandbox.cpp" />
+    <ClCompile Include="src\event\SanboxControls.cpp" />
     <ClCompile Include="src\graphics\Bar.cpp" />
     <ClCompile Include="src\graphics\BlockTextureAtlas.cpp" />
+    <ClCompile Include="src\graphics\BlockTextureCreator.cpp" />
     <ClCompile Include="src\graphics\Sprite2D.cpp" />
     <ClCompile Include="src\gui\GUIEntityChest.cpp" />
     <ClCompile Include="src\gui\GuiEntityPlayer.cpp" />
@@ -220,12 +226,14 @@
     <ClCompile Include="src\inventory\Item.cpp" />
     <ClCompile Include="src\inventory\ItemBlock.cpp" />
     <ClCompile Include="src\inventory\items.cpp" />
+    <ClCompile Include="src\inventory\ItemTool.cpp" />
     <ClCompile Include="src\inventory\PlayerInventory.cpp" />
     <ClCompile Include="src\layer\GUILayer.cpp" />
     <ClCompile Include="src\layer\MainLayer.cpp" />
     <ClCompile Include="src\layer\PriorGenLayer.cpp" />
     <ClCompile Include="src\layer\WorldLayer.cpp" />
     <ClCompile Include="src\world\BlockAccess.cpp" />
+    <ClCompile Include="src\world\block\BlockBreaker.cpp" />
     <ClCompile Include="src\world\Camera.cpp" />
     <ClCompile Include="src\world\ChunkLoader.cpp" />
     <ClCompile Include="src\world\ChunkMesh.cpp" />

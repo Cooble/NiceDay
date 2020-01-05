@@ -1,12 +1,16 @@
 #pragma once
 #include "core/physShapes.h"
 #include "world/particle/ParticleRegistry.h"
+#include "world/block/Block.h"
 
 class ParticleRenderer;
 class Texture;
 
+constexpr int particleBlockDivision = 4;
+
 class ParticleManager
 {
+
 private:
 	struct Particle
 	{
@@ -17,12 +21,13 @@ private:
 		float rotationSpeed;
 		int life;
 		ParticleID id;
-		half_int texture_index;
-		half_int texture_size;
-		uint8_t frame_count;
-		uint8_t current_frame;
-		uint8_t next_frame;
-		uint8_t frame_age;
+		half_int textureIndex;
+		half_int textureSize;
+		uint8_t isblock;
+		uint8_t frameCount;
+		uint8_t currentFrame;
+		uint8_t nextFrame;
+		uint8_t frameAge;
 		// ticks per frame
 		uint8_t  tpf;
 
@@ -31,9 +36,11 @@ private:
 	int m_list_size;
 	int m_particleCount=0;
 	Texture* m_atlas;
+	Texture* m_block_atlas;
 	int m_atlas_segment_count;
+	int m_block_atlas_segment_count;
 public:
-	ParticleManager(int maxParticles,Texture* atlas,int atlasSegmentCount);
+	ParticleManager(int maxParticles,Texture* atlas,int atlasSegmentCount,Texture* blockAtlas,int blockAtlasSegmentCount);
 	ParticleManager();
 	~ParticleManager();
 
@@ -44,5 +51,6 @@ public:
 
 	// rotation if negative will be determined from actual speed of particle
 	void createParticle(ParticleID id, const glm::vec2& pos, const glm::vec2& speed, const glm::vec2& acc, int life,float rotation=0);
+	void createBlockParticle(half_int textureOffset, int xPos,int yPos, const glm::vec2& pos, const glm::vec2& speed, const glm::vec2& acc, int life,float rotation=0);
 	void render(ParticleRenderer& renderer);
 };

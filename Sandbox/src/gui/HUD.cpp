@@ -5,6 +5,8 @@
 #include "event/Event.h"
 #include "GLFW/glfw3.h"
 #include "GUIEntityPlayer.h"
+#include "world/entity/WorldEntity.h"
+#include "world/entity/EntityPlayer.h"
 
 
 HUD* HUD::s_hud = nullptr;
@@ -19,7 +21,10 @@ HUD::HUD()
 	m_hand->dim = { 64,64 };
 	m_hand->isSlotRendered = false;
 	GUIWindow::appendChild(m_hand);
-
+	m_title = new GUIItemTitle();
+	m_title->isEnabled = false;
+	GUIWindow::appendChild(m_title);
+	
 	width = App::get().getWindow()->getWidth();
 	height = App::get().getWindow()->getHeight();
 	setCenterPosition(App::get().getWindow()->getWidth(), App::get().getWindow()->getHeight());
@@ -31,6 +36,7 @@ HUD::HUD()
 	setAlignment(GUIAlign::CENTER);
 	dimInherit = GUIDimensionInherit::WIDTH_HEIGHT;
 
+	
 	//auto material = FontMatLib::getMaterial("res/fonts/andrew_big.fnt");
 	//auto materialSmall = FontMatLib::getMaterial("res/fonts/andrew.fnt");
 }
@@ -43,6 +49,12 @@ HUD::~HUD()
 
 void HUD::registerGUIEntity(GUIEntity* e)
 {
+	auto pl = dynamic_cast<GUIEntityPlayer*>(getEntity("player"));
+	if (pl)
+	{
+		if (!pl->isOpenedInventory())
+			pl->openInventory(true);//if the inventory is not opened (player has only actionslots ready we open it first
+	}
 	//if we have duplicate, we remove it first
 	for (auto& entity : m_entities)
 		if(entity.entity->getID()==e->getID())
@@ -87,6 +99,26 @@ void HUD::unregisterGUIEntity(const std::string& id)
 		}
 }
 
+GUIEntity* HUD::getEntity(const std::string& id)
+{
+	for (auto& entitie : m_entities)
+		if (entitie.entity->getID() == id)
+		{
+			return entitie.entity;
+		}
+	return nullptr;
+}
+
+Inventory* HUD::getInventory(const std::string& id)
+{
+	for (auto& entitie : m_entities)
+		if (entitie.entity->getInventory() !=nullptr&&entitie.entity->getInventory()->getID()==id)
+		{
+			return entitie.entity->getInventory();
+		}
+	return nullptr;
+}
+
 void HUD::appendChild(GUIElement* element)
 {
 	ASSERT(false, "You need to use method appendChild(element,ownerID) !");
@@ -104,10 +136,11 @@ void HUD::update()
 void HUD::onMyEvent(Event& e)
 {
 	//move with item in hand
-	if(e.getEventType()==Event::EventType::MouseMove)
+	if (e.getEventType() == Event::EventType::MouseMove)
 	{
 		auto m = static_cast<MouseMoveEvent&>(e);
-		m_hand->pos = m.getPos()-(m_hand->dim/2.f);
+		m_hand->pos = m.getPos() - (m_hand->dim / 2.f) - glm::vec2(-m_hand->dim.x / 4, m_hand->dim.x / 4);
+		m_title->pos = m.getPos() - glm::vec2(0,m_title->height/4);
 	}
 }
 
@@ -128,15 +161,46 @@ void HUD::appendChild(GUIElement* element, const std::string& ownerID)
 
 	//put hand on the top
 	m_children[m_children.size() - 1] = m_hand;
-	m_children[m_children.size() - 2] = element;
+	m_children[m_children.size() - 2] = m_title;
+	m_children[m_children.size() - 3] = element;
 }
 
 void HUD::consumeContainerEvent(const std::string& id, int slot, Event& e)
 {
 	if (m_player == nullptr)
 		return;
+	if(e.getEventType()==Event::EventType::MouseFocusGain)
+	{
+		auto item = getInventory(id)->getItemStack(slot);
+		if (item != nullptr) {
+			m_title->isEnabled = true;
+			m_title->setTitle(Font::colorize(Font::BLACK,Font::DARK_AQUA) + item->getItem().toString());
+			m_title->setMeta(Font::colorize(Font::WHITE, Font::DARK_PURPLE) + std::to_string(item->getMetadata()));
+		}
+		
+		m_focused_slot = slot;
+		m_focused_owner = id;
+		return;
+	}
+	else if(e.getEventType() == Event::EventType::MouseFocusLost)
+	{
+		if (m_focused_slot == slot && m_focused_owner == id) {
+			m_title->isEnabled = false;
+
+			m_focused_slot = -1;
+			m_focused_owner = "";
+		}
+		return;
+	}
 	if (e.getEventType() != Event::EventType::MousePress)
 		return;
+
+	auto playerInv = dynamic_cast<GUIEntityPlayer*>(getEntity("player"));
+	if (playerInv)
+	{
+		if (!playerInv->isOpenedInventory())
+			return;
+	}
 	Inventory* c = nullptr;
 	for (auto& ee : m_entities)
 	{
@@ -154,8 +218,9 @@ void HUD::consumeContainerEvent(const std::string& id, int slot, Event& e)
 	}
 	auto even = static_cast<MousePressEvent&>(e);
 	bool left = even.getButton() == GLFW_MOUSE_BUTTON_LEFT;
-	auto& inHand = m_player->itemInHand();
-
+	
+	auto inHand = m_player->handSlot();
+	
 	//we have nothing in hand
 	if(inHand==nullptr)
 	{
@@ -174,10 +239,14 @@ void HUD::consumeContainerEvent(const std::string& id, int slot, Event& e)
 		{
 			inHand = c->takeFromIndex(slot,1);
 		}
+		if (inHand && c->putAtIndex(inHand, InventorySlot::HAND) != nullptr)
+			ND_ERROR("This shouldnot happen because the slot is free");
 	}
 	//we have something in hand
 	else
 	{
+		inHand = c->takeFromIndex(InventorySlot::HAND);
+		
 		//put everything in the slot
 		if(left)
 		{
@@ -201,7 +270,7 @@ void HUD::consumeContainerEvent(const std::string& id, int slot, Event& e)
 				inHand = c->putAtIndex(inHand, slot,1);
 			}
 		}
+		if (inHand && c->putAtIndex(inHand, InventorySlot::HAND) != nullptr)
+			ND_ERROR("This shouldnot happen because the slot is free");
 	}
-	
-	
 }

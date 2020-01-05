@@ -48,3 +48,10 @@ public:
 	PauseWindow(const MessageConsumer& c);
 
 };
+class ControlsWindow :public GUIWindow
+{
+	MessageConsumer m_messenger;
+public:
+	ControlsWindow(const MessageConsumer& c);
+
+};

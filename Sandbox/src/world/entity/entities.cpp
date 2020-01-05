@@ -16,6 +16,8 @@
 #include "gui/HUD.h"
 #include "gui/GUIEntityChest.h"
 #include "graphics/TextureAtlas.h"
+#include "EntityAllocator.h"
+#include "EntityPlayer.h"
 
 using namespace glm;
 
@@ -132,11 +134,22 @@ void PhysEntity::computePhysics(World& w)
 	m_acceleration.x = lastXAcc;
 
 	computeWindResistance(w);
-	float lengthCab = Phys::asVect(m_velocity).lengthCab();
+	/*float lengthCab = Phys::asVect(m_velocity).lengthCab();
 
 	if (lengthCab > maxDistancePerStep)
 	{
 		int dividor = ceil(lengthCab / maxDistancePerStep);
+		for (int i = 0; i < dividor; ++i)
+		{
+			if (moveOrCollide(w, 1.0f / dividor))
+				break;
+		}
+	}*/
+	float lengthCab = Phys::asVect(m_velocity).length();
+
+	if (lengthCab > maxDistancePerStep)
+	{
+		float dividor = ceil(lengthCab / maxDistancePerStep);
 		for (int i = 0; i < dividor; ++i)
 		{
 			if (moveOrCollide(w, 1.0f / dividor))
@@ -158,7 +171,7 @@ bool PhysEntity::moveOrCollide(World& w, float dt)
 
 
 	//collision detection============================
-	auto possibleEntityPos = m_pos + m_velocity * dt;
+	auto possibleEntityPos = m_pos + (m_velocity * dt);
 
 	//check if we can procceed in x, y direction
 	if (findBlockIntersection(w, possibleEntityPos, m_bound))
@@ -392,7 +405,7 @@ void Bullet::update(World& w)
 		return;
 	}
 	PhysEntity::computeVelocity(w);
-	auto lengthCab = Phys::asVect(m_velocity).lengthCab();
+	auto lengthCab = Phys::asVect(m_velocity).length();
 	if (lengthCab > maxDistancePerStep)
 	{
 		int dividor = ceil(lengthCab / maxDistancePerStep);
@@ -430,7 +443,7 @@ void Bullet::render(BatchRenderer2D& renderer)
 constexpr float entityItemGravityLower = -0.6f/60;
 
 static Texture* s_atlas_texture;
-constexpr float atlasBit = 1.f / 8;
+constexpr float atlasBit = 1.f / 16;
 static void loadItemAtlas()
 {
 	static bool loaded = false;
@@ -485,13 +498,17 @@ void EntityItem::update(World& w)
 	if (m_target == ENTITY_ID_INVALID)
 	{
 		m_acceleration = { 0,entityItemGravityLower };
-		auto& entities = w.getEntitiesInRadius(m_pos, maxDistance);
-		for (auto entity : entities)
-			if (entity->getID()!=m_ignore_target && entity->isItemConsumer() && entity->wantsItem(m_item_stack))
-			{
-				m_target = entity->getID();
-				goto FROWARD;
-			}
+		m_ticks_to_new_search--;
+		if (m_ticks_to_new_search == 0) {
+			m_ticks_to_new_search = 15;
+			auto& entities = w.getEntitiesInRadius(m_pos, maxDistance);
+			for (auto entity : entities)
+				if (entity->getID() != m_ignore_target && entity->isItemConsumer() && entity->wantsItem(m_item_stack))
+				{
+					m_target = entity->getID();
+					goto FROWARD;
+				}
+		}
 	}
 	else 
 	{
@@ -523,8 +540,11 @@ void EntityItem::update(World& w)
 					m_target = ENTITY_ID_INVALID;
 				}
 			}
-			auto force = pos-m_pos;
-			m_acceleration = glm::normalize(force)* accelerationTowardsOwner;
+			auto force = glm::normalize(pos-m_pos);
+			m_acceleration = force* accelerationTowardsOwner;
+			//todo penalize wrong direction
+			auto error = m_velocity - force;
+			m_velocity -= error / 30.f;
 		}
 	}
 	
@@ -676,6 +696,30 @@ Creature::Creature()
 {
 	m_flags |= EFLAG_COLLIDER;
 	m_health_bar = Bar::buildDefault(glm::vec2(-1, -0.25f));
+}
+
+void Creature::throwItem(World& w,ItemStack* stack)
+{
+	stack->getItem().onDisposed(w, *stack, *this);
+	auto man = (EntityItem*)EntityAllocator::createEntity(ENTITY_TYPE_ITEM);
+	man->getPosition() = getPosition() + glm::vec2(0, 1.7f);
+
+	//get cursor vector
+	if (dynamic_cast<EntityPlayer*>(this)) {
+		auto loc = App::get().getInput().getMouseLocation();
+		auto dims = App::get().getWindow()->getDimensions();
+		loc.x = loc.x - dims.x / 2;
+		loc.y = -loc.y + dims.y / 2;;
+		loc = glm::normalize(loc);
+		man->getVelocity() = loc * 0.4f;
+	}else
+	{
+		man->getVelocity() = glm::normalize(this->getVelocity()) * 0.1f;
+	}
+
+	man->setItemStack(stack);
+	man->setThrowerEntity(getID());
+	w.spawnEntity(man);
 }
 
 //Creature======================================================
@@ -892,7 +936,7 @@ EntityTNT::EntityTNT()
 	m_timeToBoom = 60 * 2;
 	m_blinkTime = 0;
 	m_velocity = vec2(0);
-	m_acceleration = {0.f, -9.8f / 60};
+	m_acceleration = {0.f, -1.f / 60};
 	m_max_velocity = vec2(50.0f / 60);
 
 	static SpriteSheetResource res(Texture::create(
@@ -939,8 +983,10 @@ void EntityTNT::boom(World& w)
 			if (Phys::Vect(i, j).lengthCab() < 6)
 			{
 				if (auto point = w.getBlock(m_pos.x + i, m_pos.y + j))
-					if (point && !point->isAir())
+					if (point && !point->isAir()) {
+						w.spawnBlockBreakParticles(m_pos.x + i, m_pos.y + j);
 						w.setBlockWithNotify(m_pos.x + i, m_pos.y + j, 0);
+					}
 			}
 		}
 	}

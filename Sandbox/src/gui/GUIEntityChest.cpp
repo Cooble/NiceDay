@@ -6,6 +6,7 @@ GUISlots::GUISlots(Inventory* inv, HUD& hud, int fromIndex, int toIndex, int row
 {
 	isAlwaysPacked = true;
 	isVisible = false;
+	
 
 	auto column = new GUIColumn(GUIAlign::LEFT);
 	column->isAlwaysPacked = true;
@@ -21,7 +22,6 @@ GUISlots::GUISlots(Inventory* inv, HUD& hud, int fromIndex, int toIndex, int row
 			row->isAlwaysPacked = true;
 		}
 		auto c = new GUIItemContainer();
-		c->dim = { 64,64 };
 		c->setContainer(inv, i);
 		c->onContainerEventConsumer = hud.getContainerConsumer();
 		row->appendChild(c);

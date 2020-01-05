@@ -136,7 +136,7 @@ void BasicInventory::save(NBT& src)
 		{
 			NBT out;
 			m_items[i]->serialize(out);
-			src.set("slot_" + std::to_string(i), out);
+			src.set("slot_" + nd::to_string(i), out);
 		}
 	}
 }
@@ -149,7 +149,7 @@ void BasicInventory::load(NBT& src)
 
 	for (int i = 0; i < m_items.size(); ++i)
 	{
-		std::string name = "slot_" + std::to_string(i);
+		auto name = "slot_" + nd::to_string(i);
 		if (src.exists<NBT>(name))
 			m_items[i] = ItemStack::deserialize(src.get<NBT>(name));
 	}

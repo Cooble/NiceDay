@@ -26,21 +26,21 @@ void createRandomNBT(NBT& nbt, int deep)
 		switch (std::rand() % 5)
 		{
 		case 0:
-			nbt.set<int8_t>(getName(), (char)((std::rand() % 127)+1));
+			nbt.set<int8_t>(nd::temp_string(getName()), (char)((std::rand() % 127)+1));
 			break;
 		case 1:
-			nbt.set<uint32_t>(getName(), std::rand() % std::numeric_limits<uint32_t>::max());
+			nbt.set<uint32_t>(nd::temp_string(getName()), std::rand() % std::numeric_limits<uint32_t>::max());
 			break;
 		case 2:
-			nbt.set<uint64_t>(getName(), std::rand() % std::numeric_limits<uint64_t>::max());
+			nbt.set<uint64_t>(nd::temp_string(getName()), std::rand() % std::numeric_limits<uint64_t>::max());
 			break;
 		case 3:
-			nbt.set<std::string>(getName(), getRandomStringName());
+			nbt.set<std::string>(nd::temp_string(getName()), getRandomStringName());
 			break;
 		case 4:
 			
 			if (deep++ < 3) {
-				createRandomNBT(nbt.get<NBT>(getName()),deep);
+				createRandomNBT(nbt.get<NBT>(nd::temp_string(getName())),deep);
 			}
 			break;
 		}

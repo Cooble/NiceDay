@@ -117,6 +117,7 @@ protected:
 	EntityID m_target=ENTITY_ID_INVALID;
 	EntityID m_ignore_target=ENTITY_ID_INVALID;
 	long long lastTime = 0;
+	int m_ticks_to_new_search=10;
 public:
 	EntityItem();
 	void setItemStack(ItemStack* stack);
@@ -211,6 +212,8 @@ protected:
 	Bar m_health_bar;
 	float m_max_health=1;
 	float m_health=1;
+	//always normalized
+	glm::vec2 m_facing_direction;
 
 	inline void setMaxHealth(float maxHealth)
 	{
@@ -227,6 +230,9 @@ public:
 
 	virtual void onHit(World& w,WorldEntity *e, float damage);
 
+	virtual void throwItem(World& w,ItemStack* stack);
+	inline void setFacingDirection(const glm::vec2& facing) { m_facing_direction = facing; }
+	inline const glm::vec2& getFacingDirection() const { return m_facing_direction; }
 	void save(NBT& src) override;
 	void load(NBT& src) override;
 };

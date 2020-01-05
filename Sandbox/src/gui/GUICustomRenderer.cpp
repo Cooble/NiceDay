@@ -84,7 +84,8 @@ void GUICustomRenderer::renderElement(BatchRenderer2D& renderer, GUIElement& e)
 	if(e.type==GETYPE::ItemContainer)
 	{
 		renderItemContainer(renderer, static_cast<GUIItemContainer&>(e));
-	}else
+	}
+	else
 		GUIRenderer::renderElement(renderer, e);
 }
 
@@ -199,7 +200,7 @@ void GUICustomRenderer::renderTextBox(BatchRenderer2D& renderer, GUITextBox& e)
 		e.prop = prop;
 		//change cursor pos
 		e.cursorMesh.setChar(0,
-			prop.positions.x, prop.positions.y, prop.positions.z, prop.positions.w,
+			prop.positions.x, prop.positions.y, prop.positions.z, prop.positions.w,0xffffff00,0x00000000,
 			e.font->font->getChar(e.cursorChar));
 		e.cursorMesh.currentCharCount = 1;
 	}

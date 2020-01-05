@@ -396,3 +396,27 @@ void GUIElement::clearChildren()
 	m_children.clear();
 	onChildChange();
 }
+
+bool GUIElement::hasChild(GEID id)
+{
+	for (auto child : m_children)
+	{
+		if (child->id == id)
+			return true;
+	}
+	return false;
+}
+
+GUIElement* GUIElement::takeChild(GEID id)
+{
+	for (int i =0;i<m_children.size();i++)
+	{
+		auto child = m_children[i];
+		if (child->id == id)
+		{
+			m_children.erase(m_children.begin() + i);
+			onChildChange();
+			return child;
+		}
+	}
+}

@@ -44,9 +44,9 @@ void GUIRenderer::renderElements(BatchRenderer2D& renderer, GUIElement& e)
 {
 	m_stackPos += e.pos;
 
-	if (e.isVisible)
+	if (e.isVisible&&e.isEnabled)
 		renderElement(renderer, e);
-	if (e.type != GETYPE::View) //view will render children on its own
+	if (e.type != GETYPE::View&&e.isEnabled) //view will render children on its own
 		for (auto& element : e.getChildren())
 			renderElements(renderer, *element);
 	m_stackPos -= e.pos;
@@ -261,7 +261,7 @@ void GUIRenderer::renderTextBox(BatchRenderer2D& renderer, GUITextBox& e)
 		e.prop = prop;
 		//change cursor pos
 		e.cursorMesh.setChar(0,
-		                     prop.positions.x, prop.positions.y, prop.positions.z, prop.positions.w,
+		                     prop.positions.x, prop.positions.y, prop.positions.z, prop.positions.w,0xffffff00,0x000000,
 		                     e.font->font->getChar(e.cursorChar));
 		e.cursorMesh.currentCharCount = 1;
 	}

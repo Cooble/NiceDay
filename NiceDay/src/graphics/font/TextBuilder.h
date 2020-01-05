@@ -20,6 +20,8 @@ public:
 			struct { float u,v; };
 			glm::vec2 uv;
 		};
+		uint32_t color;
+		uint32_t borderColor;
 	};
 	struct CharM
 	{
@@ -45,9 +47,9 @@ public:
 	inline CharM* getSrc() { return src; }
 	inline const CharM* getSrc() const { return src; }
 	inline void clear() { memset(src, 0, sizeof(CharM) * charCount); }
-	void setChar(int index, float x, float y, float x1, float y1, const Character& ch);
+	void setChar(int index, float x, float y, float x1, float y1,uint32_t color,uint32_t borderColor, const Character& ch);
 
-	void setChar(int index, float x, float y, float x1, float y1,float u,float v,float u1,float v1, const Character& ch);
+	void setChar(int index, float x, float y, float x1, float y1,float u,float v,float u1,float v1 , uint32_t color, uint32_t borderColor, const Character& ch);
 	
 	inline int getVertexCount() const
 	{

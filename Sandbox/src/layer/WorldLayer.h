@@ -8,6 +8,7 @@
 #include "world/entity/entities.h"
 #include "graphics/ParticleRenderer.h"
 #include "graphics/TextureAtlas.h"
+#include "graphics/BlockTextureAtlas.h"
 
 
 class BatchRenderer2D;
@@ -21,6 +22,7 @@ private:
 	World* m_world=nullptr;
 	ChunkLoader* m_chunk_loader;
 	TextureAtlas m_item_atlas;
+	BlockTextureAtlas m_block_atlas;
 	//ChunkMeshInstance* m_mesh;
 	WorldRenderManager* m_render_manager;
 	Camera* m_cam;
@@ -44,14 +46,18 @@ public:
 	void onWorldLoaded();
 	void loadLuaWorldLibs();
 	void afterPlayerLoaded();
-	virtual void onDetach() override;
-	virtual void onUpdate() override;
-	virtual void onRender() override;
-	virtual void onImGuiRender() override;
+	void onDetach() override;
+	void onUpdate() override;
+	void onCreativeUpdate();
+	void onSurvivalUpdate();
+	void onRender() override;
+	void onImGuiRender() override;
 	void onImGuiRenderTelemetrics();
 	void onImGuiRenderWorld();
 	void onImGuiRenderChunks();
 	virtual void onEvent(Event& e) override;
+	virtual void onCreativeEvent(Event& e);
+	virtual void onSurvivalEvent(Event& e);
 	
 
 };

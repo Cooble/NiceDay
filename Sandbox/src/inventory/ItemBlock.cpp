@@ -2,10 +2,12 @@
 #include "graphics/TextureAtlas.h"
 #include "world/block/BlockRegistry.h"
 
-ItemBlock::ItemBlock(ItemID id, BlockID blockID, const std::string& name) :
+ItemBlock::ItemBlock(ItemID id, BlockID blockID, const std::string& name,bool shiftTextureWithMeta) :
 Item(id, name),
-m_block_id(0)
+m_block_id(blockID),
+m_shift_with_meta(shiftTextureWithMeta)
 {
+	m_is_block = true;
 }
 
 void ItemBlock::onTextureLoaded(const TextureAtlas& atlas)
@@ -13,9 +15,14 @@ void ItemBlock::onTextureLoaded(const TextureAtlas& atlas)
 	m_texture_pos = atlas.getTexture("item_block/" + toString());
 }
 
-bool ItemBlock::canBePlaced(World& w, WorldEntity& player, int x, int y)
+int ItemBlock::getTextureOffset(const ItemStack& b) const
 {
-	return BlockRegistry::get().getBlock(m_block_id).canBePlaced(w, x, y);
+	return m_texture_pos + (m_shift_with_meta?half_int(b.getMetadata(), 0):0);
+}
+
+int ItemBlock::getBlockMetadata(ItemStack* stack) const
+{
+	return stack->getMetadata();
 }
 
 int ItemBlock::getBlockID() const

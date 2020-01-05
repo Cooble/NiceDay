@@ -323,6 +323,11 @@ struct quarter_int
 		return i;
 	}
 };
+inline half_int operator*(const half_int& f0, const int& f1)
+{
+	return half_int(f0.x * f1, f0.y * f1);
+}
+
 
 inline bool operator!=(const half_int& f0, const half_int& f1)
 {
@@ -514,12 +519,27 @@ class JobAssignment
 public:
 	static const int64_t JOB_SUCCESS = 0;
 	static const int64_t JOB_FAILURE = std::numeric_limits<int64_t>::max();
-	int64_t m_main = 0;
-	int64_t m_worker = 0;
+	std::atomic<int64_t> m_main;
+	std::atomic<int64_t> m_worker;
 public:
-	int64_t m_variable = 0;
+	std::atomic <int64_t> m_variable;
 
 public:
+	JobAssignment() { m_main.store(0); m_worker.store(0); m_variable.store(0); }
+	JobAssignment(const JobAssignment& a)
+	{
+		m_main.store(a.m_main);
+		m_worker.store(a.m_worker);
+		m_variable.store(a.m_variable);
+	}
+	JobAssignment& operator=(const JobAssignment& a)
+	{
+		m_main.store(a.m_main);
+		m_worker.store(a.m_worker);
+		m_variable.store(a.m_variable);
+		return *this;
+	}
+
 	inline void assign() { ++m_main; }
 
 	inline void markDone()

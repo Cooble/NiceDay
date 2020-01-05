@@ -156,10 +156,17 @@ public:
 	public:
 		ChunkHeader() = default;
 
-		ChunkHeader(ChunkID id) : m_chunkId(id), m_state(UNLOADED)
+		ChunkHeader(ChunkID id) : m_chunkId(id)
 		{
 		}
-
+		ChunkHeader(const ChunkHeader& h) :
+		m_chunkId(h.m_chunkId),
+		m_job(h.m_job),
+		m_is_accessible(h.m_is_accessible),
+		m_state(h.m_state)
+		{
+		}
+		
 		inline ChunkID getChunkID() const { return m_chunkId; }
 		inline JobAssignmentP getJob() { return &m_job; }
 		inline const JobAssignment& getJobConst() const { return m_job; }
@@ -386,6 +393,7 @@ public:
 	inline ParticleManager** particleManager() { return &m_particle_manager; }
 	
 	void spawnParticle(ParticleID id, const glm::vec2& pos, const glm::vec2& speed, const glm::vec2& acc, int life, float rotation = 0);
+	void spawnBlockBreakParticles(int x, int y);
 
 
 	inline WorldEntity* getLoadedEntity(EntityID id)
@@ -401,6 +409,7 @@ public:
 		return m_entity_manager.entity(f->second);
 	}
 	nd::temp_vector<WorldEntity*> getEntitiesInRadius(const glm::vec2& pos,float radius);
+	nd::temp_vector<WorldEntity*> getEntitiesAtLocation(const glm::vec2& pos);
 	inline const auto& getLoadedEntities() { return m_entity_array; }
 	inline const auto& getLoadedTileEntities() { return m_tile_entity_map; }
 

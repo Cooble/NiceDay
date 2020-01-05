@@ -3,6 +3,7 @@
 #include "layer/WorldLayer.h"
 #include "graphics/Sprite2D.h"
 #include "layer/GUILayer.h"
+#include "event/SandboxControls.h"
 
 #ifdef ND_DEBUG
 static std::string s_title = "Niceday - Debug";
@@ -15,6 +16,7 @@ App(1280,720, s_title)
 {
 	//m_imgui_enable = false;
 	Sprite2D::init();
+	Controls::init();
 	m_LayerStack.pushLayer(new MainLayer());
 
 	m_guiLayer = new GUILayer();

@@ -1413,6 +1413,8 @@
     <ClInclude Include="src\core\sids.h">
       <Filter>src\core</Filter>
     </ClInclude>
+    <ClInclude Include="src\graphics\Imager2D.h" />
+    <ClInclude Include="src\event\ControlMap.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\core\App.cpp">
@@ -1583,5 +1585,7 @@
     <ClCompile Include="src\core\sids.cpp">
       <Filter>src\core</Filter>
     </ClCompile>
+    <ClCompile Include="src\graphics\Imager2D.cpp" />
+    <ClCompile Include="src\event\ControlMap.cpp" />
   </ItemGroup>
 </Project>

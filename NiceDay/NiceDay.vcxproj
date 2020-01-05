@@ -157,6 +157,7 @@
     <ClInclude Include="src\core\imgui_utils.h" />
     <ClInclude Include="src\core\physShapes.h" />
     <ClInclude Include="src\core\sids.h" />
+    <ClInclude Include="src\event\ControlMap.h" />
     <ClInclude Include="src\event\Event.h" />
     <ClInclude Include="src\event\KeyEvent.h" />
     <ClInclude Include="src\event\MessageEvent.h" />
@@ -174,6 +175,7 @@
     <ClInclude Include="src\graphics\GContext.h" />
     <ClInclude Include="src\graphics\Group.h" />
     <ClInclude Include="src\graphics\IBatchRenderable2D.h" />
+    <ClInclude Include="src\graphics\Imager2D.h" />
     <ClInclude Include="src\graphics\ParticleRenderer.h" />
     <ClInclude Include="src\graphics\Renderable2D.h" />
     <ClInclude Include="src\graphics\Renderer.h" />
@@ -605,6 +607,7 @@
     <ClCompile Include="src\core\imgui_utils.cpp" />
     <ClCompile Include="src\core\physShapes.cpp" />
     <ClCompile Include="src\core\sids.cpp" />
+    <ClCompile Include="src\event\ControlMap.cpp" />
     <ClCompile Include="src\event\KeyEvent.cpp" />
     <ClCompile Include="src\event\MessageEvent.cpp" />
     <ClCompile Include="src\graphics\API\Buffer.cpp" />
@@ -619,6 +622,7 @@
     <ClCompile Include="src\graphics\GContext.cpp" />
     <ClCompile Include="src\graphics\Group.cpp" />
     <ClCompile Include="src\graphics\IBatchRenderable2D.cpp" />
+    <ClCompile Include="src\graphics\Imager2D.cpp" />
     <ClCompile Include="src\graphics\ParticleRenderer.cpp" />
     <ClCompile Include="src\graphics\Renderable2D.cpp" />
     <ClCompile Include="src\graphics\Renderer.cpp" />

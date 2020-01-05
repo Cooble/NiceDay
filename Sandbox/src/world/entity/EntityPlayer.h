@@ -9,13 +9,27 @@ private:
 	float m_pose = 0;
 	float m_last_pose = 0;
 	int m_animation_var = 0;
+	bool m_has_creative;
 	PlayerInventory m_inventory;
 
+	//in hand item
+	float m_item_angle= 0;
+	bool m_is_swinging = false;
+	bool m_is_last_swing = false;
+	bool m_is_facing_left;
+	
+	
+	
 
 public:
 	EntityPlayer();
 	virtual ~EntityPlayer() = default;
 
+	void render(BatchRenderer2D& renderer) override;
+	void setItemSwinging(bool swing);
+	void setFacingDir(bool left);
+	void setCreative(bool cre){m_has_creative = cre;}
+	inline bool hasCreative() const { return m_has_creative; }
 	void update(World& w) override;
 	EntityType getEntityType() const override;
 	bool wantsItem(const ItemStack* stack) const override;

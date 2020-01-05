@@ -27,6 +27,8 @@ struct TextVertexData
 {
 	glm::vec3 position;
 	glm::vec2 uv;
+	uint32_t color;
+	uint32_t borderColor;
 };
 class BatchRenderer2D
 {

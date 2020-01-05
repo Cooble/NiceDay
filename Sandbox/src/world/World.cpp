@@ -56,6 +56,7 @@ World::~World()
 {
 	delete m_chunk_provider;
 }
+
 static bool taskActive = false;
 static std::queue<std::set<int>> loadQueue;
 
@@ -134,7 +135,7 @@ glm::vec4 World::getSkyLight()
 {
 	auto hour = getWorldTime().hour();
 
-	hour = 12;
+	//hour = 12;
 	float f = 0;
 	if (hour >= startRiseHour && hour < endRiseHour)
 	{
@@ -670,15 +671,16 @@ void World::unloadChunks(nd::temp_set<int>& chunk_ids)
 			}
 		}
 
-		for(auto it = m_tile_entity_map.begin(); it != m_tile_entity_map.end();) {
+		for (auto it = m_tile_entity_map.begin(); it != m_tile_entity_map.end();)
+		{
 			auto& pair = *it;
-			auto pos = (Phys::Vecti*) & pair.first;
+			auto pos = (Phys::Vecti*)&pair.first;
 			EntityID id = pair.second;
 			auto pointer = m_entity_manager.entity(id);
 			ASSERT(pointer, "world array contains unloaded entities");
 
 			if (chunkId == half_int(pos->x / WORLD_CHUNK_SIZE,
-				pos->y / WORLD_CHUNK_SIZE))
+			                        pos->y / WORLD_CHUNK_SIZE))
 			{
 				bool temp = pointer->hasFlag(EFLAG_TEMPORARY);
 				unloadEntityNoDestruction(pointer, temp);
@@ -687,7 +689,8 @@ void World::unloadChunks(nd::temp_set<int>& chunk_ids)
 					EntityAllocator::deallocate(pointer);
 				else
 					entities.push_back(pointer);
-			}else
+			}
+			else
 			{
 				++it;
 			}
@@ -1172,9 +1175,31 @@ void World::genWorld()
 
 //=========================PARTICLES=====================
 
-void World::spawnParticle(ParticleID id, const glm::vec2& pos, const glm::vec2& speed, const glm::vec2& acc, int life, float rotation)
+void World::spawnParticle(ParticleID id, const glm::vec2& pos, const glm::vec2& speed, const glm::vec2& acc, int life,
+                          float rotation)
 {
 	m_particle_manager->createParticle(id, pos, speed, acc, life, rotation);
+}
+
+void World::spawnBlockBreakParticles(int x, int y)
+{
+	auto blok = getBlock(x, y);
+	if (blok == nullptr||blok->isAir())
+		return;
+	auto offset = BlockRegistry::get().getBlock(blok->block_id).getTextureOffset(x, y, *blok);
+
+	
+
+	glm::vec2 middle(0.5f,0);
+	for (int xx = 0; xx < particleBlockDivision; ++xx)
+		for (int yy = 0; yy < particleBlockDivision; ++yy) {
+			float xxx = xx / (float)particleBlockDivision;
+			float yyy = yy / (float)particleBlockDivision;
+			float mutt = 0.5;
+			auto velocity = (glm::vec2(xxx, yyy) - middle)*0.3f* mutt;
+			velocity += glm::vec2(std::rand() % 2048 / 2048.f-0.5f, std::rand() % 2048 / 2048.f-0.5f) * 0.15f* mutt;
+			m_particle_manager->createBlockParticle(offset, xx, yy, { x + xxx,y +yyy}, velocity, { -velocity.x/35* mutt,-0.011f* mutt }, 30, 0);
+		}
 }
 
 nd::temp_vector<WorldEntity*> World::getEntitiesInRadius(const glm::vec2& pos, float radius)
@@ -1184,10 +1209,11 @@ nd::temp_vector<WorldEntity*> World::getEntitiesInRadius(const glm::vec2& pos, f
 	for (auto entity : m_entity_array)
 	{
 		auto t = m_entity_manager.entity(entity);
-		if (t == nullptr) {
+		if (t == nullptr)
+		{
 			ERROR("Invalid entity id in m_entity_array");
 		}
-		if(glm::distance2(t->getPosition(),pos)<(radius*radius))
+		if (glm::distance2(t->getPosition(), pos) < (radius * radius))
 		{
 			out.push_back(t);
 		}
@@ -1195,3 +1221,22 @@ nd::temp_vector<WorldEntity*> World::getEntitiesInRadius(const glm::vec2& pos, f
 	return out;
 }
 
+nd::temp_vector<WorldEntity*> World::getEntitiesAtLocation(const glm::vec2& pos)
+{
+	nd::temp_vector<WorldEntity*> out;
+	out.reserve(5);
+	for (auto entity : m_entity_array)
+	{
+		auto t = m_entity_manager.entity(entity);
+		ASSERT(t, "Invalid entity id in m_entity_array");
+		
+		constexpr float maxDistance = 10;//from pos
+		if (glm::distance2(t->getPosition(), pos) < (maxDistance * maxDistance))
+		{
+			auto eee = dynamic_cast<PhysEntity*>(t);
+			if(eee && contains(eee->getCollisionBox(), pos - eee->getPosition()))
+				out.push_back(t);
+		}
+	}
+	return out;
+}

@@ -1,9 +1,13 @@
 ﻿#include "Item.h"
 #include "graphics/TextureAtlas.h"
+#include "graphics/font/FontParser.h"
+#include "memory/stack_allocator.h"
 
 ItemStack::ItemStack(ItemID item, int size)
 	: m_item(item), m_size(size), m_nbt(nullptr)
 {
+	if (getItem().hasNBT())
+		m_nbt = NBT::create();
 }
 
 ItemStack::ItemStack(const ItemStack& s)
@@ -43,7 +47,7 @@ bool ItemStack::isFullStack() const
 ItemStack* ItemStack::deserialize(const NBT& nbt)
 {
 	auto out = ItemStack::create(nbt.get<ItemID>("item"), nbt.get<int>("size"));
-
+	out->setMetadata(nbt.get<uint64_t>("meta"));
 	if (nbt.exists<NBT>("nbt"))
 		out->m_nbt = nbt.get<NBT>("nbt").copy();
 	return out;
@@ -73,6 +77,21 @@ int Item::getTextureOffset(const ItemStack& b) const
 int Item::getBlockID() const
 {
 	return -1;
+}
+
+void Item::onEquipped(World& world, ItemStack& stack, WorldEntity& owner) const
+{
+	//ND_INFO("Equipped {}", stack.getItem().toString());
+}
+
+void Item::onUnequipped(World& world, ItemStack& stack, WorldEntity& owner) const
+{
+	//ND_INFO("Unequipped {}", stack.getItem().toString());
+}
+
+std::string Item::getTitle(ItemStack* stack)const
+{
+	return Font::colorize(Font::DARK_GREY, Font::AQUA)+toString();
 }
 
 ItemRegistry::~ItemRegistry()

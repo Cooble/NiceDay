@@ -10,7 +10,7 @@
 
 #define MAX_TEXTURES 16
 
-#define MAX_QUADS 1000
+#define MAX_QUADS 5000
 #define MAX_VERTICES (MAX_QUADS * 4)
 #define MAX_INDICES (MAX_QUADS * 6)
 
@@ -88,6 +88,8 @@ void BatchRenderer2D::prepareText()
 	VertexBufferLayout l;
 	l.push<float>(3);			//POS
 	l.push<float>(2);			//UV
+	l.push<unsigned int>(1);	//COLOR
+	l.push<unsigned int>(1);	//BORDERCOLOR
 
 	m_text_vbo = VertexBuffer::create(nullptr, MAX_VERTICES * sizeof(TextVertexData), BufferUsage::STREAM_DRAW);
 	m_text_vbo->setLayout(l);
@@ -191,8 +193,8 @@ void BatchRenderer2D::flushText()
 		if(fontMat.second.empty())
 			continue;
 		fontMat.first->texture->bind(0);
-		dynamic_cast<GLShader*>(m_text_shader)->setUniformVec4f("u_textColor", fontMat.first->color);
-		dynamic_cast<GLShader*>(m_text_shader)->setUniformVec4f("u_borderColor", fontMat.first->border_color);
+		//dynamic_cast<GLShader*>(m_text_shader)->setUniformVec4f("u_textColor", fontMat.first->color);
+		//dynamic_cast<GLShader*>(m_text_shader)->setUniformVec4f("u_borderColor", fontMat.first->border_color);
 
 		if(fontMat.second.size()> BUF_S)
 		{
@@ -381,6 +383,17 @@ void BatchRenderer2D::submitText(const TextMesh& mesh, const FontMaterial* mater
 		(m_text_vertex_data + 1)->uv = v01.uv;
 		(m_text_vertex_data + 2)->uv = v02.uv;
 		(m_text_vertex_data + 3)->uv = v03.uv;
+
+		(m_text_vertex_data + 0)->color = v00.color;
+		(m_text_vertex_data + 1)->color = v00.color;
+		(m_text_vertex_data + 2)->color = v00.color;
+		(m_text_vertex_data + 3)->color = v00.color;
+
+		(m_text_vertex_data + 0)->borderColor = v00.borderColor;
+		(m_text_vertex_data + 1)->borderColor = v00.borderColor;
+		(m_text_vertex_data + 2)->borderColor = v00.borderColor;
+		(m_text_vertex_data + 3)->borderColor = v00.borderColor;
+
 
 		m_text_vertex_data += 4;
 		m_text_indices_count += 6;

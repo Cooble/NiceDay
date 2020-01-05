@@ -1,13 +1,19 @@
 ﻿#include "GUIItemContainer.h"
+#include "gui/GUIBasic.h"
+
+constexpr int GUI_ITEM_CONTAINER_SIZE = 60;
+constexpr int GUI_ITEM_ITEM_SIZE = 32;
 
 GUIItemContainer::GUIItemContainer()
 	:GUIElement(GETYPE::ItemContainer)
 {
-	setPadding(16);
+	dim = { GUI_ITEM_CONTAINER_SIZE ,GUI_ITEM_CONTAINER_SIZE };
+	setPadding((GUI_ITEM_CONTAINER_SIZE- GUI_ITEM_ITEM_SIZE)/2);
 }
 
 void GUIItemContainer::onMyEvent(Event& e)
 {
+	GUIElement::onMyEvent(e);
 	if (e.getEventType() == Event::EventType::MouseMove)
 		return;
 	if (m_container && onContainerEventConsumer)
@@ -28,4 +34,39 @@ const ItemStack* GUIItemContainer::getItemStack() const
 	if (m_container == nullptr)
 		return nullptr;
 	return m_container->getItemStack(m_slotIndex);
+}
+
+GUIItemTitle::GUIItemTitle():GUIElement(GETYPE::Other)
+{
+	setPadding(10);
+	isAlwaysPacked = false;
+	dim = { 100,50 };
+	isVisible = true;
+	isNotSpacial = true;
+
+	auto mat = FontMatLib::getMaterial("res/fonts/andrew.fnt");
+	auto row = new GUIColumn();
+	row->space = -10;
+	row->isAlwaysPacked = true;
+	
+	m_title = new GUIText(mat);
+	m_title->setText("Name");
+	row->appendChild(m_title);
+
+	m_meta = new GUIText(mat);
+	m_meta->setText("Metadata");
+	row->appendChild(m_meta);
+
+	row->setAlignment(GUIAlign::LEFT_UP);
+	appendChild(row);
+}
+
+void GUIItemTitle::setTitle(const std::string& s)
+{
+	m_title->setText(s);
+}
+
+void GUIItemTitle::setMeta(const std::string& s)
+{
+	m_meta->setText(">"+s);
 }
