@@ -72,7 +72,7 @@ void ParticleManager::createParticle(ParticleID id, const glm::vec2& pos, const 
 
 	auto& p = createParticle();
 	auto& templ = ParticleRegistry::get().getTemplate(id);
-	p.isblock = false;
+	p.isBlock = false;
 	p.id = id;
 	p.pos = pos;
 	p.velocity = speed;
@@ -87,6 +87,7 @@ void ParticleManager::createParticle(ParticleID id, const glm::vec2& pos, const 
 	p.rotation = rotation;
 	p.rotationSpeed = templ.rotationSpeed;
 	p.frameAge = 0;
+	p.isLighted = true;
 
 }
 
@@ -95,7 +96,7 @@ void ParticleManager::createBlockParticle(half_int textureOffset, int xPos, int 
 {
 	auto& p = createParticle();
 	auto& templ = ParticleRegistry::get().getTemplate(ParticleList::block);
-	p.isblock = true;
+	p.isBlock = true;
 	p.id = ParticleList::block;
 	p.pos = pos;
 	p.velocity = speed;
@@ -110,6 +111,7 @@ void ParticleManager::createBlockParticle(half_int textureOffset, int xPos, int 
 	p.rotation = rotation;
 	p.rotationSpeed = templ.rotationSpeed;
 	p.frameAge = 0;
+	p.isLighted = false;
 
 }
 
@@ -126,7 +128,7 @@ void ParticleManager::render(ParticleRenderer& renderer)
 		auto& particle = m_list[i];
 		UVQuad quad0;
 
-		auto piece = particle.isblock ? piece2 : piece1;
+		auto piece = particle.isBlock ? piece2 : piece1;
 		quad0.setPosition(glm::vec2((particle.textureIndex.x + (int)particle.currentFrame*particle.textureSize.x), particle.textureIndex.y)*piece);
 		quad0.setSize(glm::vec2(particle.textureSize.x, particle.textureSize.y)*piece);
 
@@ -138,11 +140,11 @@ void ParticleManager::render(ParticleRenderer& renderer)
 		auto m = glm::translate(glm::mat4(1.f), glm::vec3(particle.pos.x, particle.pos.y, 0.1f));
 		m = glm::rotate(m, particle.rotation, glm::vec3(0.f, 0.f, 1.f));
 		renderer.push(m);
-		if (!particle.isblock) {
-			renderer.submit(glm::vec3(-particle.textureSize.x / 2.f, -particle.textureSize.y / 2.f, 0.0f),
+		if (!particle.isBlock) {
+			renderer.submit(glm::vec3(-particle.textureSize.x / 2.f, -particle.textureSize.y / 2.f, particle.isLighted?0.5f:-0.5f),
 				glm::vec2(particle.textureSize.x, particle.textureSize.y),
 				quad0, quad1,
-				particle.isblock ? m_block_atlas : m_atlas, ((float)particle.frameAge) / particle.tpf);
+				particle.isBlock ? m_block_atlas : m_atlas, ((float)particle.frameAge) / particle.tpf);
 
 		}else
 		{
@@ -151,10 +153,10 @@ void ParticleManager::render(ParticleRenderer& renderer)
 			quad1.setPosition(glm::vec2(0) * piece);
 			quad1.setSize(glm::vec2(particle.textureSize.x, particle.textureSize.y) * piece);
 			
-			renderer.submit(glm::vec3(-blockPiece/2, -blockPiece/2, 0.0f),
+			renderer.submit(glm::vec3(-blockPiece/2, -blockPiece/2, particle.isLighted ? 0.5f : -0.5f),
 				glm::vec2(blockPiece, blockPiece),
 				quad0, quad1,
-				particle.isblock ? m_block_atlas : m_atlas, ((float)particle.frameAge) / particle.tpf);
+				particle.isBlock ? m_block_atlas : m_atlas, ((float)particle.frameAge) / particle.tpf);
 		}
 		renderer.pop();
 	}

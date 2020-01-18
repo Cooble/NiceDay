@@ -5,6 +5,7 @@
 //#ifdef ND_DEBUG
 #define ASSERT(cond,...) if(!(cond))\
 	{ND_ERROR("Assertion Failed: {0}",__VA_ARGS__);\
+	ND_ERROR(__VA_ARGS__);\
 	__debugbreak();}
 //#else
 //#define ASSERT(cond,message) 
@@ -65,6 +66,7 @@ public:
 };
 inline std::string ResourceMan::getResourceLoc(const std::string& resPath)
 {
+
 	if (resPath._Starts_with("res") || resPath._Starts_with("/res"))
 	{
 		auto currentDir = std::filesystem::current_path();
@@ -85,6 +87,5 @@ inline std::string ResourceMan::getResourceLoc(const std::string& resPath)
 	return resPath;
 }*/
 
-#define SCOPE_MEASURE(name)\
-	TimerStaper timer##__LINE__(name);
+
 

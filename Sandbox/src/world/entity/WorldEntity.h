@@ -72,7 +72,7 @@ public:
 
 };
 
-class BlockStruct;
+struct BlockStruct;
 class TileEntity :public WorldEntity
 {
 protected:

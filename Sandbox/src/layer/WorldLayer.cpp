@@ -29,7 +29,7 @@
 #include "graphics/TextureAtlas.h"
 #include "world/particle/ParticleRegistry.h"
 #include "world/particle/particles.h"
-#include "world/ChunkMeshNew.h"
+#include "world/ChunkMesh.h"
 #include "core/imgui_utils.h"
 #include "inventory/Item.h"
 #include "graphics/GContext.h"
@@ -74,6 +74,7 @@ static bool s_no_save = false;
 static void nd_register_itemblocks()
 {
 	nd::temp_string out = "[Registered ItemBlocks]: ";
+	out.reserve(200);
 	for (auto& block : BlockRegistry::get().getBlocks())
 	{
 		bool missing = true;
@@ -82,7 +83,7 @@ static void nd_register_itemblocks()
 
 		for (auto& item : ItemRegistry::get().getItems())
 		{
-			if (item.second->getBlockID() == block->getID())
+			if (item.second->getID() == SID(block->getItemIDFromBlock()))
 			{
 				missing = false;
 				break;
@@ -100,6 +101,20 @@ static void nd_register_itemblocks()
 }
 
 void WorldLayer::registerEverything()
+{
+}
+
+void WorldLayer::registerItems()
+{
+	//items
+	ND_REGISTER_ITEM(new ItemPickaxe());
+	ND_REGISTER_ITEM(new ItemShotgun());
+	ND_REGISTER_ITEM(
+		&(new ItemBlock(SID("door"), BlockRegistry::get().getBlockID("door_close"), "door"))->setNoBlockTexture(true));
+	nd_register_itemblocks();
+}
+
+void WorldLayer::registerBlocks()
 {
 	//blocks
 	ND_REGISTER_BLOCK(new BlockAir());
@@ -124,21 +139,16 @@ void WorldLayer::registerEverything()
 	ND_REGISTER_BLOCK(new BlockPumpkin());
 	ND_REGISTER_BLOCK(new BlockChest());
 
+
 	//walls
 	ND_REGISTER_WALL(new WallAir());
 	ND_REGISTER_WALL(new WallDirt());
 	ND_REGISTER_WALL(new WallStone());
 	ND_REGISTER_WALL(new WallGlass());
+}
 
-	//items
-	ND_REGISTER_ITEM(new ItemPickaxe());
-	ND_REGISTER_ITEM(new ItemShotgun());
-	ND_REGISTER_ITEM(new ItemBlock(SID("stone"), BlockRegistry::get().getBlockID("stone"),"stone"));
-	nd_register_itemblocks();
-
-	//items
-	//ND_REGISTER_ITEM();
-
+void WorldLayer::registerEntities()
+{
 	//entities
 	ND_REGISTER_ENTITY(ENTITY_TYPE_PLAYER, EntityPlayer);
 	ND_REGISTER_ENTITY(ENTITY_TYPE_TNT, EntityTNT);
@@ -149,12 +159,18 @@ void WorldLayer::registerEverything()
 	ND_REGISTER_ENTITY(ENTITY_TYPE_SNOWMAN, EntitySnowman);
 	ND_REGISTER_ENTITY(ENTITY_TYPE_TILE_CHEST, TileEntityChest);
 	ND_REGISTER_ENTITY(ENTITY_TYPE_ITEM, EntityItem);
+}
 
+void WorldLayer::registerBiomes()
+{
 	//biomes
 	ND_REGISTER_BIOME(new BiomeForest());
 	ND_REGISTER_BIOME(new BiomeUnderground());
 	ND_REGISTER_BIOME(new BiomeDirt());
+}
 
+void WorldLayer::registerParticles()
+{
 	ParticleList::initDefaultParticles(ParticleRegistry::get());
 }
 
@@ -169,24 +185,25 @@ WorldLayer::WorldLayer()
 
 void WorldLayer::loadResources()
 {
+	ND_PROFILE_METHOD();
+	//blocks
 	std::string blockAtlasFolder = ND_RESLOC("res/images/blockAtlas/");
 	m_block_atlas.createAtlas(blockAtlasFolder, 32, 8);
-
-	std::string particleAtlasFolder = ND_RESLOC("res/images/particleAtlas/");
-	TextureAtlas particleAtlas;
-	particleAtlas.createAtlas(particleAtlasFolder, particleAtlasSize, 8);
-
-
-	std::string itemAtlasFolder = ND_RESLOC("res/images/itemAtlas/");
-
-	m_item_atlas.createAtlas(itemAtlasFolder, ITEM_ATLAS_SIZE, 32);
-
-	registerEverything();
-
-	ParticleRegistry::get().initTextures(particleAtlas);
+	ChunkMesh::init();
+	registerBlocks();
 	BlockRegistry::get().initTextures(m_block_atlas);
 
+	//items
+	BlockTextureCreator t;
+	t.createTextures();
+	std::string itemAtlasFolder = ND_RESLOC("res/images/itemAtlas/");
+	m_item_atlas.createAtlas(itemAtlasFolder, ITEM_ATLAS_SIZE, 32);
+	registerItems();
 
+	ItemRegistry::get().initTextures(m_item_atlas);
+
+	//entities
+	registerEntities();
 	{
 		//call all constructors of entities to load static data on main thread
 		size_t max = 0;
@@ -198,12 +215,16 @@ void WorldLayer::loadResources()
 		free(entityBuff);
 	}
 
-	ChunkMeshNew::init();
+	//particles
+	std::string particleAtlasFolder = ND_RESLOC("res/images/particleAtlas/");
+	TextureAtlas particleAtlas;
+	particleAtlas.createAtlas(particleAtlasFolder, particleAtlasSize, 8);
+	registerParticles();
+	ParticleRegistry::get().initTextures(particleAtlas);
 
-	BlockTextureCreator t;
-	t.createTextures();
+	//biomes
+	registerBiomes();
 
-	ItemRegistry::get().initTextures(m_item_atlas);
 
 	static SpriteSheetResource res(Texture::create(
 		                               TextureInfo("res/images/borderBox.png")
@@ -739,6 +760,11 @@ void WorldLayer::onSurvivalUpdate()
 			if (efficiency == 0)
 				return;
 			auto t = blok.createItemStackFromBlock(*structInWorld);
+			if (t == nullptr)
+			{
+				ASSERT(false, "Cannot spawn item from block");
+				return;
+			}
 			auto itemEntity = (EntityItem*)EntityAllocator::createEntity(ENTITY_TYPE_ITEM);
 			itemEntity->setItemStack(t);
 			itemEntity->getPosition() = glm::vec2((int)CURSOR_X + 0.5f, (int)CURSOR_Y + 0.5f);
@@ -771,17 +797,24 @@ void WorldLayer::onSurvivalUpdate()
 
 void WorldLayer::onRender()
 {
+	ND_PROFILE_METHOD();
 	if (m_world == nullptr)
 		return;
 	Gcon.enableDepthTest(false);
 	if (!m_is_world_ready)
 		return;
-	//auto t = TimerStaper("WorldLayer::onRender");
 
 
-	m_render_manager->onUpdate();
+	
+	{
+		ND_PROFILE_SCOPE("rendeerupdate");
+		m_render_manager->update();
+	}
+
+
 	//world
-	m_render_manager->render();
+	m_render_manager->render(*m_batch_renderer);
+	
 
 	//entities
 	auto worldMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(-m_cam->getPosition().x, -m_cam->getPosition().y, 0));
@@ -800,12 +833,18 @@ void WorldLayer::onRender()
 	m_batch_renderer->pop();
 	m_batch_renderer->flush();
 	{
+		ND_PROFILE_SCOPE("particle render");
 		//particles
+		//Gcon.enableDepthTest(true);
 		m_particle_renderer->begin();
+		//m_particle_renderer->submit({ -1,-1,0 }, { 2,2 }, UVQuad::elementary(), UVQuad::elementary(), m_render_manager->getLightTextureSmooth(),0);
+		
 		m_particle_renderer->push(m_render_manager->getProjMatrix() * worldMatrix);
 		(*m_world->particleManager())->render(*m_particle_renderer);
 		m_particle_renderer->pop();
 		m_particle_renderer->flush();
+		
+		//Gcon.enableDepthTest(false);
 	}
 }
 

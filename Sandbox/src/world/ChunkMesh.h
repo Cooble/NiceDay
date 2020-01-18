@@ -1,5 +1,5 @@
 #pragma once
-/*#include "ndpch.h"
+#include "ndpch.h"
 #include "world/World.h"
 #include "graphics/API/Buffer.h"
 #include "graphics/API/Shader.h"
@@ -18,25 +18,14 @@ constexpr unsigned int BLOCK_ATLAS_PIXEL_WIDTH = BLOCK_TEXTURE_ATLAS_SIZE * 8;//
 constexpr unsigned int EDGE_COLOR_TRANSFORMATION_FACTOR = 4;//how much should i divide texture pos to get to the border color
 
 
+
 class Renderer;
 
 class ChunkMesh
 {
-	struct PosVertexData
-	{
-		float x, y;
-	};
-	struct OffsetVertexData
-	{
-		unsigned int offset;
-	};
 
 private:
-	static VertexBufferLayout s_pos_layout;
-	static VertexBufferLayout s_offset_buffer_layout;
-	
-	static VertexBuffer* s_position_vbo;
-	static VertexBuffer* s_wall_position_vbo;
+	static VertexBufferLayout s_layout;
 	
 	static Shader* s_program;
 	
@@ -44,45 +33,88 @@ private:
 	static Texture* s_texture_corners;
 
 public:
+
+	struct PosVertexData
+	{
+		glm::vec2 pos;
+		glm::vec2 uv_0;
+		glm::vec2 uv_1;
+	};
+	
 	static void init();
-	static inline const VertexBufferLayout& getPosLayout() { return s_pos_layout; }
-	static inline const VertexBufferLayout& getOffsetLayout() { return s_offset_buffer_layout; }
+	static inline const VertexBufferLayout& getLayout() { return s_layout; }
 	static inline Shader* getProgram() { return s_program; }
-	static inline VertexBuffer* getVBO() { return s_position_vbo; }
-	static inline VertexBuffer* getWallVBO() { return s_wall_position_vbo; }
 	static inline Texture* getAtlas() { return s_texture; }
 	static inline Texture* getCornerAtlas() { return s_texture_corners; }
-
-
-
 };
+class ChunkMeshInstance;
 
+constexpr int BUFF_LIGHT_SIZE = WORLD_CHUNK_AREA;
+constexpr int BUFF_BLOCK_SIZE = WORLD_CHUNK_AREA * 6 * (sizeof(ChunkMesh::PosVertexData));
+constexpr int BUFF_WALL_SIZE = WORLD_CHUNK_AREA * 4 * 6 * (sizeof(ChunkMesh::PosVertexData));
+
+class ChunkMeshes;
 class ChunkMeshInstance
 {
 private:
+	ChunkMeshes& m_meshes;
 	uint8_t* m_light_cache;
-
-	VertexArray* m_vao;
-	VertexArray* m_wall_vao;
-	VertexBuffer* m_vbo;
-	VertexBuffer* m_wall_vbo;
-	char* m_buff;
-	char* m_wall_buff;
+	uint8_t* m_block_buff;
+	uint8_t* m_wall_buff;
 	glm::vec2 m_pos;
+	int m_mesh_index;
 
 public:
-	bool m_enabled;
-	ChunkMeshInstance();
+	bool enabled;
+	ChunkMeshInstance(ChunkMeshes& meshes,int meshIndex);
 
+	void updatePointers();
+	
 	void updateMesh(const World& world, const Chunk& chunk);
 
 	inline glm::vec2& getPos() { return m_pos; }
-	inline VertexArray& getVAO() { return *m_vao; }
-	inline VertexArray& getWallVAO() { return *m_wall_vao; }
-	inline uint8_t* getLightCache() { return m_light_cache; }
+	inline int getIndex()const { return m_mesh_index; }
 
-	~ChunkMeshInstance();
+	inline uint8_t* getLightCache() { return m_light_cache; }
+};
+
+
+/***
+ * Manages all chunkmeshes using only one big buffer and vbo that contains blocks walls and light cache
+ */
+class ChunkMeshes
+{
+private:
+	std::vector<ChunkMeshInstance*> m_instances;
+	int m_chunk_count;
+
+	uint8_t* m_light_cache;
+
+	VertexArray* m_vao;
+	VertexBuffer* m_vbo;
+
+	uint8_t* m_block_buff;
+	uint8_t* m_wall_buff;
+
+
+public:
+	ChunkMeshes(int defaultChunkCount);
+	~ChunkMeshes();
+	void reserve(int chunkCount);
+	void resize(int chunkCount);
+	ChunkMeshInstance* getFreeChunk();
+
+	inline VertexArray& getVAO() { return *m_vao; }
+
+	inline uint8_t* getLightBuffer(int index) { return m_light_cache + (index * BUFF_LIGHT_SIZE); }
+	inline uint8_t* getBlockBuffer(int index) { return m_block_buff + (index * BUFF_BLOCK_SIZE); }
+	inline uint8_t* getWallBuffer(int index) { return m_wall_buff + (index * BUFF_WALL_SIZE); }
+
+	inline int getVertexOffsetToBlockBuffer(int index) { return WORLD_CHUNK_AREA * 6 * index; }
+	inline int getVertexOffsetToWallBuffer(int index) { return 6*WORLD_CHUNK_AREA*m_chunk_count+ 4 * WORLD_CHUNK_AREA * 6 * index; }
+
+	//uploads data from buffer to vbo
+	void updateVBO(int index);
+	auto& getChunks() { return m_instances; }
 
 };
-*/
-

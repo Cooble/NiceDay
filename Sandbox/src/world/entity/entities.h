@@ -190,7 +190,7 @@ public:
 	virtual ~EntityRoundBullet() = default;
 
 	EntityType getEntityType() const override;
-	std::pair<int, int> getLightPosition() const override { return std::make_pair(m_pos.x, m_pos.y); }
+	std::pair<int, int> getLightPosition() const override { return std::make_pair((int)m_pos.x, (int)m_pos.y); }
 	uint8_t getIntensity() const override { return 10; }
 	bool onEntityHit(World& w, WorldEntity* entity) override;
 	bool onBlockHit(World& w, int blockX, int blockY) override;

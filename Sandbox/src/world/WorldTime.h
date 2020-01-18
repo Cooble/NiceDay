@@ -4,25 +4,29 @@ enum class Day : int
 {
 	MON = 0, TUE, WED, THR, FRI, SAT, SUN
 };
-constexpr long TICKS_PER_MINUTE = 1;//every two seconds we have one game minute
+constexpr long TICKS_PER_MINUTE = 60;
 struct WorldTime
 {
 	long long m_ticks;
 	WorldTime(long long ticks) :m_ticks(ticks) {}
 
+	//total hours
 	inline float hours() const
 	{
 		return minutes() / 60;
 	}
+	//total minutes
 	inline float minutes() const
 	{
 		return (float)m_ticks / TICKS_PER_MINUTE;
 	}
 
+	//0-23 hours
 	inline float hour() const
 	{
 		return (float)(m_ticks % (TICKS_PER_MINUTE * 60 * 24)) / TICKS_PER_MINUTE / 60;
 	}
+	//0-59 mins
 	inline float minute() const
 	{
 		return (float)(m_ticks % (TICKS_PER_MINUTE * 60)) / TICKS_PER_MINUTE;

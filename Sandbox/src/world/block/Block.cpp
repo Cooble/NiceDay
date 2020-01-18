@@ -134,15 +134,20 @@ void Block::onBlockClicked(World& w, WorldEntity* e, int x, int y, BlockStruct& 
 
 const ItemBlock& Block::getItemFromBlock() const
 {
-	return dynamic_cast<const ItemBlock&>(ItemRegistry::get().getItem(SID(toString())));
+	return dynamic_cast<const ItemBlock&>(ItemRegistry::get().getItem(SID(getItemIDFromBlock())));
 	
+}
+
+std::string Block::getItemIDFromBlock() const
+{
+	return toString();
 }
 
 ItemStack* Block::createItemStackFromBlock(const BlockStruct& b) const 
 {
 	if (!hasItemVersion())
 		return nullptr;
-	auto out = ItemStack::create(SID(toString()), 1);
+	auto out = ItemStack::create(SID(getItemIDFromBlock()), 1);
 	if (m_max_metadata != 0)
 		out->setMetadata(b.block_metadata);
 	return out;

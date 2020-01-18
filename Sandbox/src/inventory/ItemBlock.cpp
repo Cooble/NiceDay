@@ -12,7 +12,7 @@ m_shift_with_meta(shiftTextureWithMeta)
 
 void ItemBlock::onTextureLoaded(const TextureAtlas& atlas)
 {
-	m_texture_pos = atlas.getTexture("item_block/" + toString());
+	m_texture_pos = atlas.getTexture((m_no_block_texture?"item/":"item_block/") + toString());
 }
 
 int ItemBlock::getTextureOffset(const ItemStack& b) const

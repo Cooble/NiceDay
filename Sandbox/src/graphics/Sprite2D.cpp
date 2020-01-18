@@ -27,6 +27,7 @@ void Sprite2D::init()
 	s_program = ShaderLib::loadOrGetShader("res/shaders/Sprite2D.shader");
 	s_program->bind();
 	dynamic_cast<GLShader*>(s_program)->setUniform1i("u_texture", 0);
+	dynamic_cast<GLShader*>(s_program)->setUniform1f("u_alpha", 1);
 	s_program->unbind();
 }
 

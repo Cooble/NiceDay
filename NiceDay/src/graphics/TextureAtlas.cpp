@@ -204,6 +204,10 @@ inline static std::string convertToShrunkFilePath(const std::string& folder, con
 
 void TextureAtlas::createAtlas(const std::string& folder, int segmentCount, int segmentSize)
 {
+	stbi_flip_vertically_on_write(false);
+	stbi_set_flip_vertically_on_load(false);
+
+	
 	m_segmentCount = segmentCount;
 	ND_TRACE("[TextureAtlas] Creating...");
 
@@ -398,7 +402,7 @@ void TextureAtlas::createAtlas(const std::string& folder, int segmentCount, int 
 
 		stbi_image_free(currentImage);
 	}
-
+	
 	stbi_write_png((folder + "atlas.png").c_str(), size, size, STBI_rgb_alpha, atlas, size * 4);
 	ND_TRACE("[TextureAtlas] Done: {}", folder + "atlas.png");
 }

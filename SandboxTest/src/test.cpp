@@ -27,6 +27,7 @@ private:
 	char textInput[1024];
 	Sprite m_sprite;
 	FontMaterial* fontMat;
+	BatchRenderer2D* renderer2d;
 	
 public:
 	TestLayer() = default;
@@ -34,6 +35,7 @@ public:
 	inline void onAttach() override
 	{
 
+		renderer2d = new BatchRenderer2D();
 		static SpriteSheetResource res(Texture::create(
 			TextureInfo("res/images/player.png")
 			.filterMode(TextureFilterMode::NEAREST)
@@ -66,12 +68,12 @@ public:
 	}
 	void onDetach() override
 	{
-		//delete renderer2d;
+		delete renderer2d;
 	}
 	void onRender() override
 	{
 		
-		/*Gcon.enableBlend();
+		Gcon.enableBlend();
 		Gcon.setBlendEquation(BlendEquation::FUNC_ADD);
 		Gcon.setBlendFunc(Blend::SRC_ALPHA, Blend::ONE_MINUS_SRC_ALPHA);
 		
@@ -81,7 +83,7 @@ public:
 		renderer2d->push(glm::scale(glm::mat4(1.f), glm::vec3(1.f / App::get().getWindow()->getWidth(), 1.f / App::get().getWindow()->getHeight(), 1)));
 		renderer2d->submitText(*textMesh, fontMat);
 		renderer2d->pop();
-		renderer2d->flush();*/
+		renderer2d->flush();
 	}
 	void onUpdate() override
 	{
@@ -128,17 +130,21 @@ class TestApp:public App
 public:
 	TestApp()
 	{
-		m_LayerStack.pushLayer(new GUITestLayer());
-		//m_LayerStack.PushLayer(new TestLayer());
+		m_imgui_enable = false;
+		//m_LayerStack.pushLayer(new GUITestLayer());
+		//m_LayerStack.pushLayer(new TestLayer());
 	}
 	
 };
 #ifdef ND_TEST
-int main()
+int mainp()
 {
-	TestApp t;
+	Log::init();
+	/*TestApp t;
 
-	t.start();
+	t.start();*/
+	
+	
 	ND_INFO("EXxit test");
 	ND_WAIT_FOR_INPUT;
 	return 0;

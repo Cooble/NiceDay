@@ -79,7 +79,7 @@ public:
 
 	void begin();
 	void submit(const Renderable2D& ren);
-	void submitTextureQuad(const glm::vec3& pos, const glm::vec2& size, const UVQuad& uv,const Texture* t);
+	void submitTextureQuad(const glm::vec3& pos, const glm::vec2& size, const UVQuad& uv,const Texture* t,float alpha=1);
 	void submitColorQuad(const glm::vec3& pos, const glm::vec2& size, const glm::vec4& color);
 	void submitText(const TextMesh& mesh,const FontMaterial* material);
 	void flush();

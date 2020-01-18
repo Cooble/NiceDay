@@ -136,6 +136,8 @@ class BlockDoor : public MultiBlock
 public:
 	BlockDoor(int id);
 	void onBlockClicked(World& w, WorldEntity* e, int x, int y, BlockStruct& curBlok) const override;
+	std::string getItemIDFromBlock() const override;
+
 };
 
 class BlockDoorOpen : public BlockDoor

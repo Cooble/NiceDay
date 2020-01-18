@@ -419,4 +419,5 @@ GUIElement* GUIElement::takeChild(GEID id)
 			return child;
 		}
 	}
+	return nullptr;
 }

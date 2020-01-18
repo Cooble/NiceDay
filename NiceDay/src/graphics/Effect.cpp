@@ -11,7 +11,7 @@ void Effect::renderDefault()
 	GLCall(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
 }
 
-void Effect::renderToScreen(Texture* t)
+void Effect::renderToCurrentFBO(Texture* t)
 {
 	s_shader->bind();
 	t->bind(0);
@@ -66,7 +66,7 @@ SingleTextureEffect::~SingleTextureEffect()
 }
 
 AlphaMaskEffect::AlphaMaskEffect(const TextureInfo& targetTexture)
-	:SingleTextureEffect(targetTexture.copy().format(TextureFormat::RED))
+	:SingleTextureEffect(targetTexture.copy().format(TextureFormat::RGB))
 {
 }
 
@@ -78,6 +78,7 @@ void AlphaMaskEffect::render(const Texture* t, bool toFBO)
 	if (toFBO) {
 		m_fbo->bind();
 		Gcon.clear(COLOR_BUFFER_BIT);
+		Gcon.disableBlend();
 		Gcon.setViewport(m_output_texture->getWidth(), m_output_texture->getHeight());
 		Effect::renderDefault();
 		m_fbo->unbind();

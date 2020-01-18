@@ -29,3 +29,7 @@
 #include "core/Core.h"
 #include "core/NDUtil.h"
 #include "nbt/NBT.h"
+
+//profiling
+#include "core/Scoper.h"
+

@@ -11,9 +11,15 @@
 static void blankFun(Event& e) {}
 static bool is_glfw_initialized = false;
 
+//forces driver to use nvidia and not integrated
+extern "C" {
+	_declspec(dllexport) DWORD NvOptimusEnablement = 1;
+}
+
 Window::Window(int width, int height, const std::string& title,bool fullscreen) :
 	m_window(nullptr)
 {
+	
 	m_data.width = width;
 	m_data.height = height;
 	m_data.title = title;
@@ -26,7 +32,7 @@ Window::Window(int width, int height, const std::string& title,bool fullscreen) 
 
 	
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 	// glfw window creation
@@ -38,8 +44,8 @@ Window::Window(int width, int height, const std::string& title,bool fullscreen) 
 		glfwTerminate();
 		return;
 	}
-	glfwSwapInterval(1); // Enable vsync
 	glfwMakeContextCurrent(m_window);
+	glfwSwapInterval(0);//vsync off
 	// glad: load all OpenGL function pointers
 		// ---------------------------------------
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))

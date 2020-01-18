@@ -142,6 +142,7 @@
   <ItemGroup>
     <ClCompile Include="src\GUIExampleWindow.cpp" />
     <ClCompile Include="src\GUITestLayer.cpp" />
+    <ClCompile Include="src\simple.cpp" />
     <ClCompile Include="src\test.cpp" />
   </ItemGroup>
   <ItemGroup>

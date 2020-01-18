@@ -4,7 +4,7 @@
 #include "memory/Pool.h"
 struct NBT;
 
-class NBTSaveable //todo those methods should be inlined
+class NBTSaveable 
 {
 	virtual void save(NBT& src) = 0;
 	virtual void load(NBT& src) = 0;
@@ -311,7 +311,7 @@ public:
 #include "memory/stack_allocator.h"
 struct NBT;
 
-class NBTSaveable //todo those methods should be inlined
+class NBTSaveable
 {
 	virtual void save(NBT& src) = 0;
 	virtual void load(NBT& src) = 0;

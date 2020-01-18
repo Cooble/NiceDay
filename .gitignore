@@ -4,6 +4,7 @@ bin/
 bin-int/
 ignore/
 vendor/swig/
+profiles/
 
 # Files
 *.user

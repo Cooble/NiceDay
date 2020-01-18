@@ -8,14 +8,10 @@
 #include "platform/OpenGL/GLShader.h"
 #include "core/Core.h"
 
-#define MAX_TEXTURES 16
-
-#define MAX_QUADS 5000
-#define MAX_VERTICES (MAX_QUADS * 4)
-#define MAX_INDICES (MAX_QUADS * 6)
-
-
-
+constexpr int MAX_TEXTURES = 16;
+constexpr int MAX_QUADS = 5000;
+constexpr int MAX_VERTICES = MAX_QUADS * 4;
+constexpr int MAX_INDICES = MAX_QUADS * 6;
 
 BatchRenderer2D::BatchRenderer2D()
 {
@@ -25,6 +21,7 @@ BatchRenderer2D::BatchRenderer2D()
 	prepareQuad();
 	prepareText();
 }
+
 void BatchRenderer2D::prepareQuad()
 {
 #if !USE_MAP_BUF
@@ -270,28 +267,33 @@ void BatchRenderer2D::submit(const Renderable2D& renderable)
 		
 }
 
-void BatchRenderer2D::submitTextureQuad(const glm::vec3& pos,const glm::vec2& size,const UVQuad& uv,const Texture* t)
+void BatchRenderer2D::submitTextureQuad(const glm::vec3& pos,const glm::vec2& size,const UVQuad& uv,const Texture* t,float alpha)
 {
 	int textureSlot = bindTexture(t);
-
+	auto colo = ((int)(alpha * 255) << 24);
+	
 	m_vertex_data->position = (m_back) * pos;
 	m_vertex_data->uv = uv.uv[0];
 	m_vertex_data->textureSlot = textureSlot;
+	m_vertex_data->color = colo;
 	++m_vertex_data;
 
 	m_vertex_data->position = (m_back) * (pos + vec3(size.x, 0, 0));
 	m_vertex_data->uv = uv.uv[1];
 	m_vertex_data->textureSlot = textureSlot;
+	m_vertex_data->color = colo;
 	++m_vertex_data;
 
 	m_vertex_data->position = (m_back) * (pos + vec3(size.x, size.y, 0));
 	m_vertex_data->uv = uv.uv[2];
 	m_vertex_data->textureSlot = textureSlot;
+	m_vertex_data->color = colo;
 	++m_vertex_data;
 
 	m_vertex_data->position = (m_back) * (pos + vec3(0, size.y, 0));
 	m_vertex_data->uv = uv.uv[3];
 	m_vertex_data->textureSlot = textureSlot;
+	m_vertex_data->color = colo;
 	++m_vertex_data;
 
 	m_indices_count += 6;

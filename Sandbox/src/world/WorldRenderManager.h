@@ -1,11 +1,13 @@
 ﻿#pragma once
 #include "ndpch.h"
-#include "ChunkMeshNew.h"
+#include "ChunkMesh.h"
 #include "world/Camera.h"
 #include "LightCalculator.h"
 #include "graphics/TestQuad.h"
 #include "graphics/Effect.h"
 
+
+class BatchRenderer2D;
 
 struct BiomeDistances
 {
@@ -42,6 +44,9 @@ private:
 	FrameBufferTexturePair* m_bg_fbo;
 	FrameBufferTexturePair* m_bg_layer_fbo;
 
+	//background
+	FrameBufferTexturePair* m_bg_sky_fbo;
+
 
 
 	//light stuff
@@ -51,6 +56,7 @@ private:
 	FrameBufferTexturePair* m_light_smooth_fbo;
 	FrameBufferTexturePair* m_block_fbo;
 	FrameBufferTexturePair* m_wall_fbo;
+	FrameBufferTexturePair* m_sky_fbo;
 
 	//FrameBuffer* m_light_FBO;
 	
@@ -69,7 +75,7 @@ private:
 	//converts from camera space to screen space (-1,-1,1,1)
 	glm::mat4 m_proj_matrix;
 
-	std::vector<ChunkMeshInstanceNew*> m_chunks;
+	ChunkMeshes m_chunks;
 
 	World* m_world;
 	Camera* m_camera;
@@ -83,7 +89,7 @@ private:
 	int m_light_chunk_height;
 	int getChunkIndex(int cx, int cy);
 	glm::vec4 getSkyColor(float y);
-	void renderBiomeBackgroundToFBO();
+	void renderBiomeBackgroundToFBO(BatchRenderer2D& batchRenderer);
 public:
 	
 	WorldRenderManager(Camera* cam,World* world);
@@ -91,13 +97,17 @@ public:
 	void onScreenResize();
 	// when new chunk is loaded or unloaded call this
 	void refreshChunkList();
-	void onUpdate();
-	void render();
+	//todo make this on different thread
+	void update();
+	void render(BatchRenderer2D& batchRenderer);
 	void renderLightMap();
 	void applyLightMap(Texture* lightmap);
 	inline int getChunksSize() const { return m_chunk_width * m_chunk_height; }
 	inline std::unordered_map<int, int>& getMap() { return m_offset_map; }
 	inline const glm::mat4& getProjMatrix() { return m_proj_matrix; }
+
+	inline Texture* getLightTextureSmooth() { return m_light_smooth_fbo->getTexture(); }
+	inline Texture* getLightTextureHard() { return m_light_fbo->getTexture(); }
 };
 
 

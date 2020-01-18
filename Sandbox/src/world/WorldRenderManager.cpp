@@ -3,7 +3,8 @@
 #include "core/App.h"
 #include "core/Stats.h"
 #include "graphics/Renderer.h"
-#include "world/ChunkMeshNew.h"
+#include "graphics/BatchRenderer2D.h"
+#include "world/ChunkMesh.h"
 
 
 #include "platform/OpenGL/GLRenderer.h"
@@ -11,7 +12,8 @@
 #include <algorithm>
 #include "graphics/GContext.h"
 #include "graphics/Sprite2D.h"
-
+#include "graphics/Renderable2D.h"
+#include "GLFW/glfw3.h"
 
 
 WorldRenderManager::WorldRenderManager(Camera* cam, World* world)
@@ -19,9 +21,11 @@ WorldRenderManager::WorldRenderManager(Camera* cam, World* world)
 	  m_light_fbo(nullptr),
 	  m_bg_fbo(nullptr),
 	  m_bg_layer_fbo(nullptr),
+	  m_bg_sky_fbo(nullptr),
 	  m_light_smooth_fbo(nullptr),
 	  m_block_fbo(nullptr),
 	  m_wall_fbo(nullptr),
+	  m_sky_fbo(nullptr),
 	  m_block_mask_texture(nullptr),
 	  m_light_simple_texture(nullptr),
 	  m_light_sky_simple_texture(nullptr),
@@ -31,7 +35,8 @@ WorldRenderManager::WorldRenderManager(Camera* cam, World* world)
 	  m_block_mask(nullptr),
 	  m_fbo_pair(nullptr),
 	  m_world(world),
-	  m_camera(cam)
+	  m_camera(cam),
+	  m_chunks(0)
 {
 	//test quad
 
@@ -43,11 +48,13 @@ WorldRenderManager::WorldRenderManager(Camera* cam, World* world)
 	//setup bg
 	m_bg_layer_fbo = new FrameBufferTexturePair();
 	m_bg_fbo = new FrameBufferTexturePair();
+	m_bg_sky_fbo = new FrameBufferTexturePair();
 	//setup main light texture
 	m_light_fbo = new FrameBufferTexturePair();
 	m_light_smooth_fbo = new FrameBufferTexturePair();
 	m_block_fbo = new FrameBufferTexturePair();
 	m_wall_fbo = new FrameBufferTexturePair();
+	m_sky_fbo = new FrameBufferTexturePair();
 	m_light_program = ShaderLib::loadOrGetShader("res/shaders/Light.shader");
 	m_light_program->bind();
 	dynamic_cast<GLShader*>(m_light_program)->setUniform1i("u_texture", 0);
@@ -90,16 +97,15 @@ WorldRenderManager::WorldRenderManager(Camera* cam, World* world)
 
 WorldRenderManager::~WorldRenderManager()
 {
-	for (auto m : m_chunks)
-		delete m;
-
 	delete m_bg_layer_fbo;
 	delete m_bg_fbo;
+	delete m_bg_sky_fbo;
 
 	delete m_light_fbo;
 	delete m_light_smooth_fbo;
 	delete m_block_fbo;
 	delete m_wall_fbo;
+	delete m_sky_fbo;
 
 	//delete m_light_program;
 	//delete m_light_simple_program;
@@ -144,15 +150,13 @@ void WorldRenderManager::onScreenResize()
 	m_light_chunk_height = m_chunk_width + 2;*/
 	m_light_calculator.setDimensions(m_chunk_width, m_chunk_height);
 
-	m_chunks.reserve(getChunksSize());
-
 	m_offset_map.clear();
 
-	for (auto m : m_chunks)
-		m->m_enabled = false;
-
-	while (m_chunks.size() < getChunksSize())
-		m_chunks.push_back(new ChunkMeshInstanceNew());
+	m_chunks.reserve(getChunksSize());
+	for (auto chunk : m_chunks.getChunks())
+	{
+		chunk->enabled = false;
+	}
 
 	//made default light texture with 1 channel
 	if (m_light_simple_texture)
@@ -225,13 +229,15 @@ void WorldRenderManager::onScreenResize()
 		m_block_mask->replaceTexture(info);
 	m_block_fbo->replaceTexture(Texture::create(info));
 	m_wall_fbo->replaceTexture(Texture::create(info));
+	m_sky_fbo->replaceTexture(Texture::create(info));
 
 	//bg
 	info = TextureInfo();
-	info.size(screenWidth / 2, screenHeight / 2).filterMode(TextureFilterMode::NEAREST).format(TextureFormat::RGBA);
+	info.size(screenWidth, screenHeight).filterMode(TextureFilterMode::NEAREST).format(TextureFormat::RGBA);
 
 	m_bg_layer_fbo->replaceTexture(Texture::create(info));
 	m_bg_fbo->replaceTexture(Texture::create(info));
+	m_bg_sky_fbo->replaceTexture(Texture::create(info));
 
 	last_cx = -1000;
 }
@@ -297,11 +303,9 @@ void WorldRenderManager::refreshChunkList()
 	std::set<int> toLoadList;
 
 	for (auto& iterator : m_offset_map)
-	{
 		toRemoveList.insert(iterator.first); //get all loaded chunks
-	}
+
 	for (int x = 0; x < m_chunk_width; x++)
-	{
 		for (int y = 0; y < m_chunk_height; y++)
 		{
 			auto targetX = last_cx + x;
@@ -323,15 +327,14 @@ void WorldRenderManager::refreshChunkList()
 				toLoadList.insert(mid);
 			else if (cc->isDirty())
 			{
-				m_chunks.at(m_offset_map[mid])->updateMesh(*m_world, *cc);
+				m_chunks.getChunks().at(m_offset_map[mid])->updateMesh(*m_world, *cc);
 				cc->markDirty(false);
 			}
 			toRemoveList.erase(mid);
-		}
 	}
 	for (int removed : toRemoveList)
 	{
-		m_chunks.at(m_offset_map[removed])->m_enabled = false;
+		m_chunks.getChunks().at(m_offset_map[removed])->enabled = false;
 		m_offset_map.erase(removed);
 	}
 	int lastFreeChunk = 0;
@@ -339,30 +342,22 @@ void WorldRenderManager::refreshChunkList()
 	{
 		half_int loaded = loade;
 		bool foundFreeChunk = false;
-		for (int i = lastFreeChunk; i < m_chunks.size(); i++)
-		{
-			auto& c = *m_chunks[i];
-			if (!c.m_enabled)
-			{
-				lastFreeChunk = i + 1;
-				c.m_enabled = true;
-				c.getPos().x = loaded.x * WORLD_CHUNK_SIZE;
-				c.getPos().y = loaded.y * WORLD_CHUNK_SIZE;
+		auto& c = *m_chunks.getFreeChunk();
+		c.getPos().x = loaded.x * WORLD_CHUNK_SIZE;
+		c.getPos().y = loaded.y * WORLD_CHUNK_SIZE;
 
-				auto chunk = m_world->getChunkM(loaded);
-				chunk->markDirty(false);
-				c.updateMesh(*m_world, *chunk);
+		auto chunk = m_world->getChunkM(loaded);
+		chunk->markDirty(false);
+		c.updateMesh(*m_world, *chunk);
 
-				m_offset_map[loaded] = i;
-				foundFreeChunk = true;
-				break;
-			}
-		}
+		m_offset_map[loaded] = c.getIndex();
+		foundFreeChunk = true;
+		
 		ASSERT(foundFreeChunk, "This shouldnt happen"); //chunks meshes should have static number 
 	}
 }
 
-void WorldRenderManager::onUpdate()
+void WorldRenderManager::update()
 {
 	int cx = m_camera->getPosition().x / WORLD_CHUNK_SIZE - m_chunk_width / 2.0f;
 	int cy = m_camera->getPosition().y / WORLD_CHUNK_SIZE - m_chunk_height / 2.0f;
@@ -374,7 +369,6 @@ void WorldRenderManager::onUpdate()
 		refreshChunkList();
 	}
 
-	//std::vector<int> chunksToErase;
 	for (auto& iterator : m_offset_map)
 	{
 		half_int id = iterator.first;
@@ -382,21 +376,14 @@ void WorldRenderManager::onUpdate()
 		if (c) {
 			if (c->isDirty())
 			{
-				m_chunks[iterator.second]->updateMesh(*m_world, *c);
+				m_chunks.getChunks()[iterator.second]->updateMesh(*m_world, *c);
 				c->markDirty(false);
 			}
 		}
 		else
 			ND_WARN("Worldrendermanager cannot find chunk");
-		//else
-		//	chunksToErase.push_back(id);
 	}
-	//for (int id : chunksToErase)
-	//	m_offset_map.erase(m_offset_map.find(id));
 
-
-	//if (Stats::light_enable)
-	//	computeLight();moved to render "thread"
 }
 
 int WorldRenderManager::getChunkIndex(int cx, int cy)
@@ -415,7 +402,7 @@ glm::vec4 WorldRenderManager::getSkyColor(float y)
 	auto upColor = glm::vec4(0, 0, 0, 1);
 	auto downColor = glm::vec4(0.1, 0.8f, 1, 1);
 	auto blACK = glm::vec4(0, 0, 0, 1);
-	downColor = glm::mix(blACK, downColor, m_world->getSkyLight().a);
+	downColor = glm::mix(blACK, downColor, m_world->getSkyLight().a-0.15f);
 
 	y -= m_world->getInfo().terrain_level;
 	y /= m_world->getInfo().chunk_height * WORLD_CHUNK_SIZE - m_world->getInfo().terrain_level;
@@ -424,8 +411,9 @@ glm::vec4 WorldRenderManager::getSkyColor(float y)
 	return glm::mix(downColor, upColor, y + 0.2f);
 }
 
-void WorldRenderManager::renderBiomeBackgroundToFBO()
+void WorldRenderManager::renderBiomeBackgroundToFBO(BatchRenderer2D& batchRenderer)
 {
+	ND_PROFILE_METHOD();
 	using namespace glm;
 
 	vec2 screenDim = vec2(App::get().getWindow()->getWidth(), App::get().getWindow()->getHeight());
@@ -437,6 +425,7 @@ void WorldRenderManager::renderBiomeBackgroundToFBO()
 	//Stats::biome_distances = distances;
 
 	m_bg_fbo->bind();
+	glEnable(GL_BLEND);
 	glClearColor(0, 0, 0, 0);
 	glClear(GL_COLOR_BUFFER_BIT);
 
@@ -449,102 +438,140 @@ void WorldRenderManager::renderBiomeBackgroundToFBO()
 		Biome& b = BiomeRegistry::get().getBiome(biome);
 		b.update(m_world, m_camera);
 		Sprite2D** sprites = b.getBGSprites();
-		sprites[0]->getProgram().bind();
-		sprites[0]->getVAO().bind();
 
-
-		glEnable(GL_BLEND);
-		glBlendEquation(GL_FUNC_ADD);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 		m_bg_layer_fbo->bind();
-		glClearColor(0, 0, 0, 0);
 		glClear(GL_COLOR_BUFFER_BIT);
-
+		batchRenderer.begin();
 		for (int i = 0; i < b.getBGSpritesSize(); i++)
 		{
 			Sprite2D& sprite = *sprites[i];
-			dynamic_cast<GLShader*>(&sprite.getProgram())->setUniformMat4("u_model_transform", sprite.getModelMatrix());
-			dynamic_cast<GLShader*>(&sprite.getProgram())->setUniformMat4("u_uv_transform", sprite.getUVMatrix());
-
-			sprite.getTexture().bind(0);
-			GLCall(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
+			
+			glm::vec4 uv0 = sprite.getUVMatrix() * glm::vec4(0, 0, 0, 1);
+			glm::vec4 uv1 = sprite.getUVMatrix() * glm::vec4(1, 0, 0, 1);
+			glm::vec4 uv2 = sprite.getUVMatrix() * glm::vec4(1, 1, 0, 1);
+			glm::vec4 uv3 = sprite.getUVMatrix() * glm::vec4(0, 1, 0, 1);
+			UVQuad uv = UVQuad(
+				glm::vec2(uv0.x, uv0.y),
+				glm::vec2(uv1.x, uv1.y),
+				glm::vec2(uv2.x, uv2.y),
+				glm::vec2(uv3.x, uv3.y)
+			);
+			
+			batchRenderer.push(sprite.getModelMatrix());
+			batchRenderer.submitTextureQuad({ 0,0,0 }, { 1,1 }, uv, &sprite.getTexture(), sprite.getAlpha());
+			batchRenderer.pop();
+			
 		}
-		glEnable(GL_BLEND);
-		glBlendEquation(GL_FUNC_ADD);
+		batchRenderer.flush();
+		
 		glBlendFunc(GL_CONSTANT_ALPHA, GL_ONE);
 		glBlendColor(0, 0, 0, intensity);
 
 		m_bg_fbo->bind();
-
-		Sprite2D::getProgramStatic().bind();
-		Sprite2D::getVAOStatic().bind();
-		auto m = glm::translate(glm::mat4(1.0f), glm::vec3(-1, -1, 0));
-		m = glm::scale(m, glm::vec3(2, 2, 0));
-		dynamic_cast<GLShader*>(&Sprite2D::getProgramStatic())->setUniformMat4("u_model_transform", m);
-		dynamic_cast<GLShader*>(&Sprite2D::getProgramStatic())->setUniformMat4("u_uv_transform", glm::mat4(1.0f));
-		m_bg_layer_fbo->getTexture()->bind(0);
-		GLCall(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
+		Effect::renderToCurrentFBO(m_bg_layer_fbo->getTexture());
 	}
 
 	m_bg_fbo->unbind();
-	glDisable(GL_BLEND);
+
+
+	//sky
+	m_bg_sky_fbo->bind();
+	glClear(GL_COLOR_BUFFER_BIT);
+	for (int i = 0; i < 4; ++i)
+	{
+		int biome = distances.biomes[i];
+		if (biome == -1)
+			break;
+		float intensity = distances.intensities[i];
+		Biome& b = BiomeRegistry::get().getBiome(biome);
+		Sprite2D** sprites = b.getSkyBGSprites();
+
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+		m_bg_layer_fbo->bind();
+		glClear(GL_COLOR_BUFFER_BIT);
+		batchRenderer.begin();
+		for (int i = 0; i < b.getSkyBGSpritesSize(); i++)
+		{
+			Sprite2D& sprite = *sprites[i];
+
+			glm::vec4 uv0 = sprite.getUVMatrix() * glm::vec4(0, 0, 0, 1);
+			glm::vec4 uv1 = sprite.getUVMatrix() * glm::vec4(1, 0, 0, 1);
+			glm::vec4 uv2 = sprite.getUVMatrix() * glm::vec4(1, 1, 0, 1);
+			glm::vec4 uv3 = sprite.getUVMatrix() * glm::vec4(0, 1, 0, 1);
+			UVQuad uv = UVQuad(
+				glm::vec2(uv0.x, uv0.y),
+				glm::vec2(uv1.x, uv1.y),
+				glm::vec2(uv2.x, uv2.y),
+				glm::vec2(uv3.x, uv3.y)
+			);
+
+			batchRenderer.push(sprite.getModelMatrix());
+			batchRenderer.submitTextureQuad({ 0,0,0 }, { 1,1 }, uv, &sprite.getTexture(), sprite.getAlpha());
+			batchRenderer.pop();
+		}
+		batchRenderer.flush();
+
+		glBlendFunc(GL_CONSTANT_ALPHA, GL_ONE);
+		glBlendColor(0, 0, 0, intensity);
+
+		m_bg_sky_fbo->bind();
+		Effect::renderToCurrentFBO(m_bg_layer_fbo->getTexture());
+	}
+	m_bg_sky_fbo->unbind();
 }
 
-void WorldRenderManager::render()
+void WorldRenderManager::render(BatchRenderer2D& batchRenderer)
 {
+	ND_PROFILE_METHOD();
+
+	//currently takes about max 1.5ms to render
+	
 	//light
 	if (Stats::light_enable)
 		renderLightMap();
+	
 
 	//chunk render
-	auto& chunkProgram = *ChunkMeshNew::getProgram();
+	auto& chunkProgram = *ChunkMesh::getProgram();
 
 	//bg
-	renderBiomeBackgroundToFBO();
+	renderBiomeBackgroundToFBO(batchRenderer);
 
 	Gcon.setClearColor(0, 0, 0, 0);
 
+	//walls
 	m_wall_fbo->bind();
 	{
-		Gcon.disableBlend();
-		Gcon.clear(COLOR_BUFFER_BIT);
-
-		//sky render
-		float CURSOR_Y = App::get().getWindow()->getHeight() / BLOCK_PIXEL_SIZE + m_camera->getPosition().y;
-		float CURSOR_YY = -(float)App::get().getWindow()->getHeight() / BLOCK_PIXEL_SIZE + m_camera->getPosition().y;
-		m_sky_program->bind();
-		auto upColor = getSkyColor(CURSOR_Y);
-		auto downColor = getSkyColor(CURSOR_YY);
-		dynamic_cast<GLShader*>(m_sky_program)->setUniform4f("u_up_color", upColor.r, upColor.g, upColor.b, upColor.a);
-		dynamic_cast<GLShader*>(m_sky_program)->setUniform4f("u_down_color", downColor.r, downColor.g, downColor.b, downColor.a);
-		m_full_screen_quad_VAO->bind();
-		GLCall(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
-
+		ND_PROFILE_SCOPE("walls render");
+		Gcon.setClearColor(0, 0, 0, 0);
+		glClear(GL_COLOR_BUFFER_BIT);
 		//background
 		Gcon.enableBlend();
-		Gcon.setBlendFuncSeparate(Blend::SRC_ALPHA, Blend::ONE_MINUS_SRC_ALPHA, Blend::ZERO, Blend::ONE);
-
-
+	//	Gcon.setBlendFuncSeparate(Blend::SRC_ALPHA, Blend::ONE_MINUS_SRC_ALPHA, Blend::ZERO, Blend::ONE);
+		Gcon.setBlendFunc(Blend::SRC_ALPHA, Blend::ONE_MINUS_SRC_ALPHA);
+		
 		Sprite2D::getProgramStatic().bind();
 		Sprite2D::getVAOStatic().bind();
 		auto m = glm::translate(glm::mat4(1.0f), glm::vec3(-1, -1, 0));
 		m = glm::scale(m, glm::vec3(2, 2, 0));
 		dynamic_cast<GLShader*>(&Sprite2D::getProgramStatic())->setUniformMat4("u_model_transform", m);
 		dynamic_cast<GLShader*>(&Sprite2D::getProgramStatic())->setUniformMat4("u_uv_transform", glm::mat4(1.0f));
+		dynamic_cast<GLShader*>(&Sprite2D::getProgramStatic())->setUniform1f("u_alpha", 1);
 		m_bg_fbo->getTexture()->bind(0);
 		GLCall(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
 
 		//walls
 		chunkProgram.bind();
-		//chunkProgram.setUniform1i("u_texture_atlas_width", WALL_TEXTURE_ATLAS_SIZE);
-		//chunkProgram.setUniform1i("u_corner_atlas_width", WALL_CORNER_ATLAS_SIZE);
-		ChunkMeshNew::getAtlas()->bind(0);
-		ChunkMeshNew::getCornerAtlas()->bind(1);
+		ChunkMesh::getAtlas()->bind(0);
+		ChunkMesh::getCornerAtlas()->bind(1);
+		m_chunks.getVAO().bind();
 
-		for (auto mesh : m_chunks)
+		for (auto mesh : m_chunks.getChunks())
 		{
-			if (!(mesh->m_enabled))
+			if (!(mesh->enabled))
 				continue;
 
 			auto worldMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(
@@ -552,16 +579,15 @@ void WorldRenderManager::render()
 				                                  mesh->getPos().y - m_camera->getPosition().y, 0.0f));
 			worldMatrix = glm::scale(worldMatrix, glm::vec3(0.5f, 0.5f, 1));
 			dynamic_cast<GLShader*>(&chunkProgram)->setUniformMat4("u_transform", getProjMatrix() * worldMatrix);
-			mesh->getWallVAO().bind();
-			GLCall(glDrawArrays(GL_TRIANGLES, 0, WORLD_CHUNK_AREA * 4 * 6));
+			GLCall(glDrawArrays(GL_TRIANGLES, m_chunks.getVertexOffsetToWallBuffer(mesh->getIndex()), WORLD_CHUNK_AREA * 4 * 6));
 		}
 		m_wall_fbo->unbind();
 
+	
 		if (Stats::light_enable)
 		{
 			m_edge->render(m_light_fbo->getTexture(), Stats::edge_scale);
 			m_blur->render(m_edge->getTexture());
-			Gcon.enableBlend();
 			m_wall_fbo->bind();
 			applyLightMap(m_blur->getTexture());
 		}
@@ -571,38 +597,60 @@ void WorldRenderManager::render()
 	//blocks
 	m_block_fbo->bind();
 	{
+		ND_PROFILE_SCOPE("blocks render");
 		Gcon.clear(COLOR_BUFFER_BIT);
 		Gcon.enableBlend();
 		Gcon.setBlendFunc(Blend::SRC_ALPHA, Blend::ONE_MINUS_SRC_ALPHA);
 		chunkProgram.bind();
-		ChunkMeshNew::getAtlas()->bind(0);
-		ChunkMeshNew::getCornerAtlas()->bind(1);
-		//chunkProgram.setUniform1i("u_texture_atlas_width", BLOCK_TEXTURE_ATLAS_SIZE);
-		//chunkProgram.setUniform1i("u_corner_atlas_width", BLOCK_CORNER_ATLAS_SIZE);
-		for (auto mesh : m_chunks)
+		ChunkMesh::getAtlas()->bind(0);
+		ChunkMesh::getCornerAtlas()->bind(1);
+		m_chunks.getVAO().bind();
+		for (auto mesh : m_chunks.getChunks())
 		{
-			if (!(mesh->m_enabled))
+			if (!(mesh->enabled))
 				continue;
 
 			auto world_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(
 				                                   mesh->getPos().x - m_camera->getPosition().x,
 				                                   mesh->getPos().y - m_camera->getPosition().y, 0.0f));
 			dynamic_cast<GLShader*>(&chunkProgram)->setUniformMat4("u_transform", getProjMatrix() * world_matrix);
-
-			mesh->getVAO().bind();
-			GLCall(glDrawArrays(GL_TRIANGLES, 0, WORLD_CHUNK_AREA*6));
+			GLCall(glDrawArrays(GL_TRIANGLES, m_chunks.getVertexOffsetToBlockBuffer(mesh->getIndex()), WORLD_CHUNK_AREA*6));
 		}
 		if (Stats::light_enable)
 			applyLightMap(m_light_fbo->getTexture());
 	}
+	
 	m_block_fbo->unbind();
+	
+	Gcon.setClearColor(0, 1, 0, 1);
+	Gcon.clear(COLOR_BUFFER_BIT);
+	Gcon.enableBlend();
+//	Gcon.setBlendFuncSeparate(Blend::SRC_ALPHA, Blend::ONE_MINUS_SRC_ALPHA, Blend::ZERO, Blend::ONE);
+//	static AlphaMaskEffect mask(TextureInfo().size(1280, 720));
+//	mask.render(m_bg_sky_fbo->getTexture());
+//	Effect::renderToScreen(mask.getTexture());
 
+	//sky render
+	Gcon.setClearColor(0, 0, 0, 0);
+	Gcon.disableBlend();
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	float CURSOR_Y = App::get().getWindow()->getHeight() / BLOCK_PIXEL_SIZE + m_camera->getPosition().y;
+	float CURSOR_YY = -(float)App::get().getWindow()->getHeight() / BLOCK_PIXEL_SIZE + m_camera->getPosition().y;
+	m_sky_program->bind();
+	auto upColor = getSkyColor(CURSOR_Y);
+	auto downColor = getSkyColor(CURSOR_YY);
+	dynamic_cast<GLShader*>(m_sky_program)->setUniform4f("u_up_color", upColor.r, upColor.g, upColor.b, upColor.a);
+	dynamic_cast<GLShader*>(m_sky_program)->setUniform4f("u_down_color", downColor.r, downColor.g, downColor.b, downColor.a);
+	m_full_screen_quad_VAO->bind();
+	GLCall(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
 
 	Gcon.enableBlend();
-	Gcon.setBlendFuncSeparate(Blend::SRC_ALPHA, Blend::ONE_MINUS_SRC_ALPHA, Blend::ZERO, Blend::ONE);
-
-	Effect::renderToScreen(m_wall_fbo->getTexture());
-	Effect::renderToScreen(m_block_fbo->getTexture());
+	glDisable(GL_DEPTH_TEST);
+	Gcon.setBlendFunc(Blend::SRC_ALPHA, Blend::ONE_MINUS_SRC_ALPHA);
+	
+	Effect::renderToCurrentFBO(m_bg_sky_fbo->getTexture());
+	Effect::renderToCurrentFBO(m_wall_fbo->getTexture());
+	Effect::renderToCurrentFBO(m_block_fbo->getTexture());
 }
 
 void WorldRenderManager::renderLightMap()
@@ -655,7 +703,9 @@ void WorldRenderManager::applyLightMap(Texture* lightmap)
 
 	glViewport(0, 0, App::get().getWindow()->getWidth(), App::get().getWindow()->getHeight());
 	glEnable(GL_BLEND);
-	glBlendFuncSeparate(GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA,GL_ZERO,GL_ONE);
+	glBlendEquation(GL_FUNC_ADD);
+	glBlendFuncSeparate(GL_ZERO, GL_SRC_ALPHA,GL_ZERO,GL_ONE);
+	//	glBlendFuncSeparate(GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA,GL_ZERO,GL_ONE);
 	GLCall(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
 	glDisable(GL_BLEND);
 }

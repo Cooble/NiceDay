@@ -38,9 +38,14 @@ in vec4 v_color;
 flat in int v_textureSlot;
 
 void main() {
+	
 	if (v_textureSlot > 10000) {
 		color = v_color;
-	}else
+	}
+	else
+	{
 		color = texture2D(u_textures[v_textureSlot], v_uv);
+		color.a *= v_color.a;
+	}
 }
 

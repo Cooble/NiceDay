@@ -48,7 +48,7 @@ public:
 	static void renderDefault();
 
 	// draws texture on whole screen
-	static void renderToScreen(Texture* t);
+	static void renderToCurrentFBO(Texture* t);
 };
 
 class FrameBufferTexturePair

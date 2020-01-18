@@ -133,11 +133,11 @@ void testUnorderedMap()
 #ifndef ND_TEST
 int main()
 {
+	ND_PROFILE_BEGIN_SESSION("start", "start.json");
 	Log::init();
 	
-	//testUnorderedMap();
-	
 	Sandbox game;
+	ND_PROFILE_END_SESSION();
 	game.start();
 
 	std::cin.get();

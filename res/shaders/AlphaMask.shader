@@ -24,5 +24,5 @@ uniform sampler2D u_attachment;
 
 void main()
 {
-	color = texture2D(u_attachment, f_uv).aaaa;
+	color = vec4(texture2D(u_attachment, f_uv).aaa,1);
 }

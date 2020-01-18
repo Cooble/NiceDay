@@ -30,6 +30,11 @@ private:
 	bool m_paused;
 	bool m_has_world = false;
 	void registerEverything();
+	void registerItems();
+	void registerBlocks();
+	void registerEntities();
+	void registerBiomes();
+	void registerParticles();
 
 public:
 	WorldLayer();

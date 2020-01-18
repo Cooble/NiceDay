@@ -23,7 +23,8 @@ private:
 		ParticleID id;
 		half_int textureIndex;
 		half_int textureSize;
-		uint8_t isblock;
+		uint8_t isBlock;
+		uint8_t isLighted;
 		uint8_t frameCount;
 		uint8_t currentFrame;
 		uint8_t nextFrame;

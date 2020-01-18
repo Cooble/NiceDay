@@ -13,6 +13,7 @@
 #include "core/AppGlobals.h"
 #include "layer/LuaLayer.h"
 #include "event/ControlMap.h"
+#include "event/KeyEvent.h"
 
 #define BIND_EVENT_FN(x) std::bind(&App::x, &App::get(), std::placeholders::_1)
 
@@ -137,11 +138,14 @@ void App::start()
 			lastFPSMillis = nowTime();
 		}
 	}
+
+	ND_PROFILE_BEGIN_SESSION("end", "end.json");
 	for (Layer* l : m_LayerStack)
 		l->onDetach();
 
 	m_Window->close();
 	ND_TRACE("Game quitted");
+	ND_PROFILE_END_SESSION();
 }
 
 void App::update()
@@ -157,11 +161,15 @@ void App::update()
 
 void App::render()
 {
+	ND_PROFILE_METHOD();
+	
+	//ND_PROFILE_CALL(m_Window->swapBuffers());
 	m_Window->swapBuffers();
 	for (Layer* l : m_LayerStack)
 		l->onRender();
 	
 	if (m_imgui_enable) {
+		ND_PROFILE_SCOPE("imgui app render");
 		m_ImGuiLayer->begin();
 		for (Layer* l : m_LayerStack)
 			l->onImGuiRender();
@@ -254,7 +262,7 @@ void ImGuiLayer::end()
 static int maxValResetDelay = 60 * 2;
 static bool openTelemetrics = false;
 static bool showTelemetrics = false;
-
+static int recordingScopeTicks = 0;
 void ImGuiLayer::onImGuiRender()
 {
 	//static bool show = true;
@@ -273,7 +281,14 @@ T max(T a, T b)
 
 void ImGuiLayer::onUpdate()
 {
-	
+	if(recordingScopeTicks)
+	{
+		recordingScopeTicks--;
+		if (recordingScopeTicks == 0) {
+			ND_PROFILE_END_SESSION();
+			ND_INFO("SCOPING done");
+		}
+	}
 	updateTelemetry();
 	
 	
@@ -287,6 +302,18 @@ void ImGuiLayer::onEvent(Event& e)
 		|| e.getEventType() == Event::EventType::KeyType
 		)) 
 		e.handled = true;
+	else if(e.getEventType() == Event::EventType::KeyPress)
+	{
+		auto& m = dynamic_cast<KeyPressEvent&>(e);
+		if(m.getKey()==GLFW_KEY_P&&recordingScopeTicks==0)
+		{
+			recordingScopeTicks = 60;
+			ND_PROFILE_BEGIN_SESSION("test","test.json");
+			ND_INFO("SCOPING 1sec");
+			
+		}
+	}
+	
 	
 }
 

@@ -314,6 +314,7 @@ BlockDoor::BlockDoor(int id)
 	m_opacity = OPACITY_AIR;
 	m_collision_box = &BLOCK_BOUNDS_DOOR;
 	m_collision_box_size = 1;
+	m_has_item_version = true;
 }
 
 void BlockDoor::onBlockClicked(World& w, WorldEntity* e, int x, int y, BlockStruct& curBlok) const
@@ -358,6 +359,11 @@ void BlockDoor::onBlockClicked(World& w, WorldEntity* e, int x, int y, BlockStru
 		                                                                *w.getBlockM(mainBlockX, mainBlockY));
 		w.setBlockWithNotify(mainBlockX + (z ? 1 : 0), mainBlockY, bnew);
 	}
+}
+
+std::string BlockDoor::getItemIDFromBlock() const
+{
+	return "door";
 }
 
 BlockDoorOpen::BlockDoorOpen()

@@ -25,7 +25,8 @@ static void shaderTypeToString(unsigned int t)
 static GLShader::ShaderProgramSources parseShader(const std::string& file_path)
 {
 	s_current_file = file_path.c_str();
-	ASSERT(std::filesystem::exists(s_current_file), "Invalid shader path");
+	
+	ASSERT(std::filesystem::exists(s_current_file), "Invalid shader path {}",s_current_file);
 	std::ifstream stream(file_path);
 
 	enum class ShaderType

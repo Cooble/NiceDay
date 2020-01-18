@@ -1415,6 +1415,7 @@
     </ClInclude>
     <ClInclude Include="src\graphics\Imager2D.h" />
     <ClInclude Include="src\event\ControlMap.h" />
+    <ClInclude Include="src\core\Scoper.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\core\App.cpp">
@@ -1587,5 +1588,6 @@
     </ClCompile>
     <ClCompile Include="src\graphics\Imager2D.cpp" />
     <ClCompile Include="src\event\ControlMap.cpp" />
+    <ClCompile Include="src\core\Scoper.cpp" />
   </ItemGroup>
 </Project>

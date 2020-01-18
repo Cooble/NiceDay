@@ -38,7 +38,7 @@ void PriorGenLayer::onUpdate()
 
 void PriorGenLayer::onRender()
 {
-	Effect::renderToScreen(m_tex);
+	Effect::renderToCurrentFBO(m_tex);
 }
 
 

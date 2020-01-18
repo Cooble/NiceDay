@@ -152,6 +152,7 @@
     <ClInclude Include="src\core\Log.h" />
     <ClInclude Include="src\core\NDUtil.h" />
     <ClInclude Include="src\core\Scheduler.h" />
+    <ClInclude Include="src\core\Scoper.h" />
     <ClInclude Include="src\core\Stats.h" />
     <ClInclude Include="src\core\Window.h" />
     <ClInclude Include="src\core\imgui_utils.h" />
@@ -602,6 +603,7 @@
     <ClCompile Include="src\core\Input.cpp" />
     <ClCompile Include="src\core\Log.cpp" />
     <ClCompile Include="src\core\Scheduler.cpp" />
+    <ClCompile Include="src\core\Scoper.cpp" />
     <ClCompile Include="src\core\State.cpp" />
     <ClCompile Include="src\core\Window.cpp" />
     <ClCompile Include="src\core\imgui_utils.cpp" />

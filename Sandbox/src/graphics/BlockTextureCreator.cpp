@@ -3,7 +3,7 @@
 #include "graphics/API/Texture.h"
 #include "graphics/Effect.h"
 #include "graphics/GContext.h"
-#include "world/ChunkMeshNew.h"
+#include "world/ChunkMesh.h"
 #include "platform/OpenGL/GLRenderer.h"
 
 #include "stb_image.h"
@@ -13,11 +13,14 @@
 static int itemBlockSize = 32;
 void BlockTextureCreator::createTextures()
 {
+	stbi_flip_vertically_on_write(true);
+	stbi_flip_vertically_on_write(true);
+
 	ND_TRACE("[BlockTextureCreator]: making textures...");
 	m_fbo.replaceTexture(Texture::create(TextureInfo().size(itemBlockSize)));
 
-	m_vbo = VertexBuffer::create(nullptr, sizeof(ChunkMeshNew::PosVertexData)*6, BufferUsage::DYNAMIC_DRAW);
-	m_vbo->setLayout(ChunkMeshNew::getLayout());
+	m_vbo = VertexBuffer::create(nullptr, sizeof(ChunkMesh::PosVertexData)*6, BufferUsage::DYNAMIC_DRAW);
+	m_vbo->setLayout(ChunkMesh::getLayout());
 	m_vao = VertexArray::create();
 	m_vao->addBuffer(*m_vbo);
 
@@ -35,7 +38,7 @@ void BlockTextureCreator::createTextures()
 }
 
 
-static void drawQuad(ChunkMeshNew::PosVertexData* point,float x,float y, half_int t_offset,half_int t_corner_offset,float co,float co_corner)
+static void drawQuad(ChunkMesh::PosVertexData* point,float x,float y, half_int t_offset,half_int t_corner_offset,float co,float co_corner)
 {
 	//0,0
 	{
@@ -93,6 +96,25 @@ void BlockTextureCreator::createTexture(const Block& block)
 	float co = 1.0f / BLOCK_TEXTURE_ATLAS_SIZE;
 	float co_corner = 1.0f / BLOCK_CORNER_ATLAS_SIZE;
 
+	auto possibleLoc = std::string(ND_RESLOC("res/images/itemAtlas/item/" + block.getItemIDFromBlock() + ".png"));
+	auto destLoc = std::string(ND_RESLOC("res/images/itemAtlas/item_block/" + block.getItemIDFromBlock() + ".png"));
+	//overriding default block image generation
+	if (std::filesystem::is_regular_file(possibleLoc)) {
+		if (std::filesystem::exists(destLoc))
+			std::filesystem::remove(destLoc);
+		std::filesystem::copy(possibleLoc, destLoc.c_str());
+		/*
+		int width = 0;
+		int height = 0;
+		int BPP = 0;
+		void* currentImage = stbi_load(possibleLoc.c_str(), &width, &height, &BPP, 4);
+		ASSERT(currentImage, "invalid image");
+		stbi_write_png(std::string(ND_RESLOC("res/images/itemAtlas/item_block/" + block.toString() + ".png")).c_str(), 
+			width, height, STBI_rgb_alpha, currentImage, itemBlockSize * 4 * width);
+		stbi_image_free(currentImage);*/
+		return;
+	}
+		
 	if(block.getMaxMetadata()==0)
 	{
 		BlockStruct templ = {};
@@ -104,7 +126,7 @@ void BlockTextureCreator::createTexture(const Block& block)
 		half_int t_corner_offset = block.getCornerOffset(0, 0, templ);
 
 		m_vbo->bind();
-		auto point = (ChunkMeshNew::PosVertexData*)m_vbo->mapPointer();
+		auto point = (ChunkMesh::PosVertexData*)m_vbo->mapPointer();
 
 		float x = -0.5f;
 		float y = -0.5f;
@@ -115,10 +137,10 @@ void BlockTextureCreator::createTexture(const Block& block)
 		Gcon.setClearColor(0, 0, 0, 0);
 		Gcon.clear(BufferBit::COLOR_BUFFER_BIT);
 		m_vao->bind();
-		ChunkMeshNew::getProgram()->bind();
-		dynamic_cast<GLShader*>(ChunkMeshNew::getProgram())->setUniformMat4("u_transform", glm::mat4(1.f));
-		ChunkMeshNew::getAtlas()->bind(0);
-		ChunkMeshNew::getCornerAtlas()->bind(1);
+		ChunkMesh::getProgram()->bind();
+		dynamic_cast<GLShader*>(ChunkMesh::getProgram())->setUniformMat4("u_transform", glm::mat4(1.f));
+		ChunkMesh::getAtlas()->bind(0);
+		ChunkMesh::getCornerAtlas()->bind(1);
 
 		GLCall(glDrawArrays(GL_TRIANGLES, 0, 6));
 		m_fbo.unbind();
@@ -128,8 +150,7 @@ void BlockTextureCreator::createTexture(const Block& block)
 
 		GLCall(glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, deformArray));
 
-		stbi_flip_vertically_on_write(true);
-		stbi_write_png(std::string(ND_RESLOC("res/images/itemAtlas/item_block/" + block.toString() + ".png")).c_str(), itemBlockSize, itemBlockSize, STBI_rgb_alpha, deformArray, itemBlockSize * 4);
+		stbi_write_png(std::string(ND_RESLOC("res/images/itemAtlas/item_block/" + block.getItemIDFromBlock() + ".png")).c_str(), itemBlockSize, itemBlockSize, STBI_rgb_alpha, deformArray, itemBlockSize * 4);
 
 		delete[] deformArray;
 	}
@@ -141,11 +162,11 @@ void BlockTextureCreator::createTexture(const Block& block)
 		Gcon.setClearColor(0, 0, 0, 0);
 		Gcon.clear(BufferBit::COLOR_BUFFER_BIT);
 		m_vao->bind();
-		ChunkMeshNew::getProgram()->bind();
+		ChunkMesh::getProgram()->bind();
 		auto m = glm::scale(glm::mat4(1.f), {1.f/maxMetaSize,1,1});
-		dynamic_cast<GLShader*>(ChunkMeshNew::getProgram())->setUniformMat4("u_transform", m);
-		ChunkMeshNew::getAtlas()->bind(0);
-		ChunkMeshNew::getCornerAtlas()->bind(1);
+		dynamic_cast<GLShader*>(ChunkMesh::getProgram())->setUniformMat4("u_transform", m);
+		ChunkMesh::getAtlas()->bind(0);
+		ChunkMesh::getCornerAtlas()->bind(1);
 		
 		for (int currentMeta = 0; currentMeta < maxMetaSize; ++currentMeta)
 		{
@@ -158,7 +179,7 @@ void BlockTextureCreator::createTexture(const Block& block)
 			half_int t_corner_offset = block.getCornerOffset(0, 0, templ);
 
 			m_vbo->bind();
-			auto point = (ChunkMeshNew::PosVertexData*)m_vbo->mapPointer();
+			auto point = (ChunkMesh::PosVertexData*)m_vbo->mapPointer();
 
 			
 			float x = -maxMetaSize+0.5f + currentMeta*2;
@@ -174,8 +195,7 @@ void BlockTextureCreator::createTexture(const Block& block)
 
 		GLCall(glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, deformArray));
 
-		stbi_flip_vertically_on_write(true);
-		stbi_write_png(std::string(ND_RESLOC("res/images/itemAtlas/item_block/" + block.toString() + ".png")).c_str(), itemBlockSize* maxMetaSize, itemBlockSize, STBI_rgb_alpha, deformArray, itemBlockSize * 4* maxMetaSize);
+		stbi_write_png(std::string(ND_RESLOC("res/images/itemAtlas/item_block/" + block.getItemIDFromBlock() + ".png")).c_str(), itemBlockSize* maxMetaSize, itemBlockSize, STBI_rgb_alpha, deformArray, itemBlockSize * 4* maxMetaSize);
 
 		delete[] deformArray;
 	}

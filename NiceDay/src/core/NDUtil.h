@@ -561,7 +561,7 @@ public:
 
 typedef JobAssignment* JobAssignmentP;
 
-//todo make startAssigning() and flushAssigning()
+
 template <typename WorkAssignment>
 class Worker
 {

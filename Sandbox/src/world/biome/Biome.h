@@ -14,7 +14,9 @@ private:
 
 protected:
 	Sprite2D** m_sprites;
+	Sprite2D** m_sky_sprites;
 	int m_sprites_size;
+	int m_sky_sprites_size;
 	bool m_normal_lighting_enable=false;
 	uint8_t m_background_light;
 	Biome(int id);
@@ -25,6 +27,8 @@ public:
 	inline int getID() const { return m_id; }
 	int getBGSpritesSize() { return m_sprites_size; }
 	inline Sprite2D** getBGSprites() { return m_sprites; }
+	int getSkyBGSpritesSize() { return m_sky_sprites_size; }
+	inline Sprite2D** getSkyBGSprites() { return m_sky_sprites; }
 
 	bool hasSkyLighting() const { return m_normal_lighting_enable; }
 	virtual uint8_t getBackgroundLight(World* w)

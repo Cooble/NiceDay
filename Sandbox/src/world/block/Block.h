@@ -204,6 +204,7 @@ public:
 	}
 
 	virtual const ItemBlock& getItemFromBlock() const;
+	virtual std::string getItemIDFromBlock() const;
 
 	virtual ItemStack* createItemStackFromBlock(const BlockStruct& b) const;
 

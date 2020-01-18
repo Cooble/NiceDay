@@ -347,7 +347,6 @@ void PlayWindow::setWorlds(const std::vector<WorldInfoData>& worlds)
 	}
 	m_world_column->adaptToParent();
 	m_world_slider->setValue(1);
-	//todo fuck you  
 }
 
 PauseWindow::PauseWindow(const MessageConsumer& c)
