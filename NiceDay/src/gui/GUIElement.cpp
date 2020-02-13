@@ -48,6 +48,7 @@ void GUIElement::checkFocus(MouseMoveEvent& e)
 
 void GUIElement::appendChild(GUIElement* element)
 {
+	GUIE_CHECK_PARENT(element);
 	m_children.push_back(element);
 	m_children[m_children.size() - 1]->m_parent = this;
 	element->onParentAttached();
@@ -107,8 +108,9 @@ void GUIElement::onParentAttached()
 
 void GUIElement::onDimensionChange()
 {
+	adaptToParent();
 	for (auto child : m_children)
-		child->adaptToParent();
+		child->onParentChanged();
 
 	if (isAlwaysPacked)
 		packDimensions();

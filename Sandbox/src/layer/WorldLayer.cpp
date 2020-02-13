@@ -109,6 +109,7 @@ void WorldLayer::registerItems()
 	//items
 	ND_REGISTER_ITEM(new ItemPickaxe());
 	ND_REGISTER_ITEM(new ItemShotgun());
+	ND_REGISTER_ITEM(new ItemTnt());
 	ND_REGISTER_ITEM(
 		&(new ItemBlock(SID("door"), BlockRegistry::get().getBlockID("door_close"), "door"))->setNoBlockTexture(true));
 	nd_register_itemblocks();
@@ -1175,6 +1176,11 @@ void WorldLayer::onEvent(Event& e)
 					)
 						BlockRegistry::get().getBlock(stru.block_id).onBlockClicked(
 							*m_world, &getPlayer(), CURSOR_X, CURSOR_Y, stru);
+				}
+				if(inHand->isEmpty())
+				{
+					//destroy inHandItem
+					getPlayer().getInventory().takeFromIndex(getPlayer().getInventory().getHandIndex(),-1)->destroy();
 				}
 			}
 			else

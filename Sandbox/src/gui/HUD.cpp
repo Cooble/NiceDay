@@ -239,13 +239,13 @@ void HUD::consumeContainerEvent(const std::string& id, int slot, Event& e)
 		{
 			inHand = c->takeFromIndex(slot,1);
 		}
-		if (inHand && c->putAtIndex(inHand, InventorySlot::HAND) != nullptr)
+		if (inHand && m_player->putAtIndex(inHand, InventorySlot::HAND) != nullptr)
 			ND_ERROR("This shouldnot happen because the slot is free");
 	}
 	//we have something in hand
 	else
 	{
-		inHand = c->takeFromIndex(InventorySlot::HAND);
+		inHand = m_player->takeFromIndex(InventorySlot::HAND,-1);
 		
 		//put everything in the slot
 		if(left)
@@ -270,7 +270,7 @@ void HUD::consumeContainerEvent(const std::string& id, int slot, Event& e)
 				inHand = c->putAtIndex(inHand, slot,1);
 			}
 		}
-		if (inHand && c->putAtIndex(inHand, InventorySlot::HAND) != nullptr)
+		if (inHand && m_player->putAtIndex(inHand, InventorySlot::HAND) != nullptr)
 			ND_ERROR("This shouldnot happen because the slot is free");
 	}
 }

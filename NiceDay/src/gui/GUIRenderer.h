@@ -27,6 +27,7 @@ protected:
 	virtual void renderCheckBox(BatchRenderer2D& renderer, GUICheckBox& e);
 	virtual void renderSlider(BatchRenderer2D& renderer, GUISlider& e);
 	virtual void renderVSlider(BatchRenderer2D& renderer, GUIVSlider& e);
+	virtual void renderHSlider(BatchRenderer2D& renderer, GUIHSlider& e);
 	virtual void renderText(BatchRenderer2D& renderer, GUIText& e);
 	virtual void renderTextBox(BatchRenderer2D& renderer, GUITextBox& e);
 	virtual void renderWindow(BatchRenderer2D& renderer, GUIWindow& e);

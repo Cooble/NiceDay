@@ -129,12 +129,16 @@ Window::Window(int width, int height, const std::string& title,bool fullscreen) 
 	const GLubyte* renderer = glad_glGetString(GL_RENDERER); // Returns a hint to the model
 	const GLubyte* gl = glad_glGetString(GL_VERSION); // Returns a hint to the model
 	const GLubyte* glsl = glad_glGetString(GL_SHADING_LANGUAGE_VERSION); // Returns a hint to the model
+	uint64_t maxVertAttrib;
+	glad_glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, (int*)&maxVertAttrib); // Returns a hint to the model
 
 	ND_TRACE("Graphics card info:");
 	ND_TRACE((char*)vendor);
 	ND_TRACE((char*)renderer);
 	ND_TRACE("GL version: {}", gl);
 	ND_TRACE("GLSL version: {}", glsl);
+	ND_TRACE("MaxVertexAttribs: {}", maxVertAttrib);
+	
 
 	if(fullscreen)
 		setFullScreen(true);

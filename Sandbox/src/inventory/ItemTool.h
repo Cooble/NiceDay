@@ -33,3 +33,10 @@ public:
 
 
 };
+/*class ItemThrowable:public Item
+{
+protected:
+
+public:
+	//ItemThrowable(ItemID id, const std::string& textName);
+};*/

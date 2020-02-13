@@ -48,3 +48,20 @@ std::string ItemShotgun::getTitle(ItemStack* stack) const
 	return Font::colorize(Font::BLACK, Font::DARK_GREY) + "SuperShotgun"+Font::BLACK+"XXX";
 }
 
+ItemTnt::ItemTnt()
+	:Item(SID("tnt"),"tnt")
+{
+	m_maxStackSize = 111;
+}
+
+bool ItemTnt::onRightClick(World& world, ItemStack& stack, WorldEntity& owner, int x, int y) const
+{
+	stack.addSize(-1);
+	auto bullet = (EntityRoundBullet*)EntityAllocator::createEntity(ENTITY_TYPE_TNT);
+	bullet->getPosition() = owner.getPosition() + glm::vec2(0, 1.5);
+	bullet->fire({ x, y }, 60.f / 60);
+	bullet->setOwner(owner.getID());
+	world.spawnEntity(bullet);
+	return true;
+}
+

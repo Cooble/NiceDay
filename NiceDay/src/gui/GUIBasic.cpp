@@ -5,9 +5,10 @@
 #include "GUIContext.h"
 #include "event/KeyEvent.h"
 #include "GLFW/glfw3.h"
+#include "core/AppGlobals.h"
 
 
-GUIText::GUIText(FontMaterial* mat) : GUIElement(GETYPE::Text),fontMaterial(mat)
+GUIText::GUIText(FontMaterial* mat) : GUIElement(GETYPE::Text), fontMaterial(mat)
 {
 	isAlwaysPacked = true;
 	isNotSpacial = true;
@@ -17,7 +18,7 @@ bool GUIText::packDimensions()
 {
 	auto lastW = width;
 	width = widthPadding() + fontMaterial->font->getTextWidth(m_text);
-	height = fontMaterial->font->lineHeight+heightPadding();
+	height = fontMaterial->font->lineHeight + heightPadding();
 	if (lastW != width)
 		onDimensionChange();
 	markDirty();
@@ -46,7 +47,6 @@ void GUITextBox::setValue(const std::string& val)
 
 void GUITextBox::onValueModified()
 {
-	
 }
 
 void GUITextBox::moveCursor(int delta)
@@ -138,13 +138,12 @@ void GUITextBox::onMyEvent(Event& e)
 }
 
 GUIButton::GUIButton()
-	:GUIElement(GETYPE::Button)
+	: GUIElement(GETYPE::Button)
 {
 }
 
 void GUIButton::onMyEvent(Event& e)
 {
-	
 	GUIElement::onMyEvent(e);
 
 	if (e.getEventType() == Event::EventType::MousePress)
@@ -152,11 +151,12 @@ void GUIButton::onMyEvent(Event& e)
 		if (onPressed)
 			onPressed(*this);
 	}
-	else if (e.getEventType() == Event::EventType::MouseFocusGain) {
+	else if (e.getEventType() == Event::EventType::MouseFocusGain)
+	{
 		if (onFocusGain)
 			onFocusGain(*this);
 	}
-	else if(e.getEventType()==Event::EventType::MouseFocusLost)
+	else if (e.getEventType() == Event::EventType::MouseFocusLost)
 	{
 		if (onFocusLost)
 			onFocusLost(*this);
@@ -238,7 +238,7 @@ GUIImage::GUIImage()
 bool GUIImage::packDimensions()
 {
 	auto old = dim;
-	if(image)
+	if (image)
 		this->dim = image->getSize();
 	return old != dim;
 }
@@ -365,7 +365,8 @@ void GUIColumn::repositionChildren()
 	auto oldW = this->width;
 	auto oldH = this->height;
 
-	if (isAlwaysPacked) {
+	if (isAlwaysPacked)
+	{
 		this->width = 0;
 		this->height = 0;
 
@@ -378,10 +379,10 @@ void GUIColumn::repositionChildren()
 			this->height -= space;
 	}
 	if (getParent())
-		switch(dimInherit)
+		switch (dimInherit)
 		{
 		case GUIDimensionInherit::WIDTH:
-			this->width = getParent()->width-getParent()->widthPadding();
+			this->width = getParent()->width - getParent()->widthPadding();
 			break;
 		case GUIDimensionInherit::HEIGHT:
 			this->height = getParent()->height - getParent()->heightPadding();
@@ -520,7 +521,7 @@ void GUIGrid::onChildChange()
 {
 	bool lastHeight = height;
 	repositionChildren();
-	if(lastHeight!=height)
+	if (lastHeight != height)
 	{
 		if (m_parent)
 			m_parent->onChildChange();
@@ -537,6 +538,36 @@ GUISlider::GUISlider()
 	setPadding(10);
 }
 
+void GUISlider::setQuantization(int possibleStates)
+{
+	minValue = 0;
+	maxValue = possibleStates - 1;
+	step = 1;
+	//setValue(m_value);
+}
+
+void GUISlider::setNormalQuantization(int possibleStates)
+{
+	minValue = 0;
+	maxValue = 1;
+	step = 1.f / (possibleStates - 1);
+}
+
+static float calculateSliderValue(float normalVal, bool invertedVal, float min, float max)
+{
+	return min + (invertedVal ? (1 - normalVal) : normalVal) * (max - min);
+}
+
+static float quantizeSliderNormalValue(float normalVal, float step, float min, float max)
+{
+	if (step)
+	{
+		float normalizedStep = step / (max - min);
+		return glm::round(normalVal / normalizedStep) * normalizedStep;
+	}
+	return normalVal;
+}
+
 void GUISlider::onMyEvent(Event& e)
 {
 	GUIElement::onMyEvent(e);
@@ -549,28 +580,32 @@ void GUISlider::onMyEvent(Event& e)
 	{
 		auto& m = static_cast<MousePressEvent&>(e);
 
-		float old = value;
-		value = std::clamp(
+		m_normalValue = std::clamp(
 			(m.getPos().x - GUIContext::get().getStackPos().x - x - padding[GUI_LEFT]) / (width - padding[GUI_LEFT]
 				-
 				padding[GUI_RIGHT]), 0.f, 1.f);
 
-		if (dividor)
-		{
-			value *= dividor;
-			value = std::round(value) / dividor;;
-		}
+		m_normalValue = quantizeSliderNormalValue(m_normalValue, step, minValue, maxValue);
+		float old = m_value;
 
-		if (old != value && on_changed)
+		m_value = calculateSliderValue(m_normalValue, invertedVal, minValue, maxValue);
+
+		if (old != m_value && on_changed)
 			on_changed(*this);
 	}
 }
 
 void GUISlider::setValue(float v)
 {
-	value = v;
+	v = glm::clamp(v, minValue, maxValue);
+	v -= minValue;
+	if (step)
+		v = glm::round(v / step) * step;
+	m_normalValue = v / (maxValue - minValue);
+	if (invertedVal)
+		m_normalValue = 1 - m_normalValue;
+	m_value = v + minValue;
 }
-
 
 GUIVSlider::GUIVSlider()
 	: GUIElement(GETYPE::VSlider)
@@ -578,83 +613,76 @@ GUIVSlider::GUIVSlider()
 	setPadding(1);
 }
 
-constexpr glm::vec2 invalidVec = {10000000, 100000000};
-
 void GUIVSlider::onMyEvent(Event& e)
 {
 	GUIElement::onMyEvent(e);
 
 	float slideHeight = height - padding[GUI_TOP] - padding[GUI_BOTTOM];
 	sliderHeight = slideHeight * this->sliderRatio;
-	slideHeight = slideHeight * (1 - this->sliderRatio);
 
-	if (sliderRatio == 1)
+	/*if (sliderRatio == 1)
 	{
-		auto old = value;
-		value = 1;
-		if (value != old)
+		auto old = m_normalValue;
+		m_normalValue = 1;
+		if (m_normalValue != old)
 			if (on_changed)
 				on_changed(*this);
 		return;
-	}
+	}*/
 
+	float oldNormal = m_normalValue;
 	if (e.getEventType() == Event::EventType::MousePress)
 	{
 		auto& m = static_cast<MousePressEvent&>(e);
 		m_draggedCursor = m.getPos();
-		m_oldVal = value;
-		auto localY = m.getPos().y - GUIContext::get().getStackPos().y - y;
-		bool isUnderSlider = localY < getValue() * slideHeight + padding[GUI_BOTTOM];
-		bool isAboveSlider = localY > getValue() * slideHeight + padding[GUI_BOTTOM] + sliderHeight;
+		auto localY = m.getPos().y - GUIContext::get().getStackPos().y - y - padding[GUI_BOTTOM];
+		bool isUnderSlider = localY < (m_normalValue * (1 - sliderRatio) * slideHeight);
+		bool isAboveSlider = localY > (m_normalValue * (1 - sliderRatio) * slideHeight + sliderHeight);
+		float placeOfClick = localY / slideHeight;
 		if (isUnderSlider || isAboveSlider)
 		{
-			m_draggedCursor = invalidVec;
-			value = std::clamp(value + sliderRatio * (isUnderSlider ? -1 : 1), 0.f, 1.f);
-			if (dividor)
-			{
-				value *= dividor;
-				value = std::round(value) / dividor;;
-			}
-			if (m_oldVal != value && on_changed)
-				on_changed(*this);
+			m_normalValue = glm::clamp(placeOfClick - sliderRatio / 2, 0.f, 1.f - sliderRatio);
+			m_draggedCursor = {
+				0,
+				GUIContext::get().getStackPos().y + y + padding[GUI_BOTTOM] + (m_normalValue + sliderRatio / 2) *
+				slideHeight
+			};
+
+			m_normalValue /= (1 - sliderRatio);
+			m_normalValue = quantizeSliderNormalValue(m_normalValue, step, minValue, maxValue);
+			m_value = calculateSliderValue(m_normalValue, invertedVal, minValue, maxValue);
 		}
+		m_old_placeOfClick = m_normalValue * (1 - sliderRatio);
+
+		if (oldNormal != m_normalValue && on_changed)
+			on_changed(*this);
 	}
-	if (e.getEventType() == Event::EventType::MouseMove && m_is_pressed && m_draggedCursor != invalidVec)
+	if (e.getEventType() == Event::EventType::MouseMove && m_is_pressed)
 	{
-		auto& m = static_cast<MousePressEvent&>(e);
+		auto& m = static_cast<MouseMoveEvent&>(e);
+		auto localY = m.getPos().y - m_draggedCursor.y;
+		float placeOfClick = localY / slideHeight;
 
-		float old = value;
+		m_normalValue = glm::clamp(m_old_placeOfClick + placeOfClick, 0.f, 1 - sliderRatio) / (1 - sliderRatio);
 
-		float delta = m.getY() - m_draggedCursor.y;
-		delta /= slideHeight;
+		m_normalValue = quantizeSliderNormalValue(m_normalValue, step, minValue, maxValue);
+		m_value = calculateSliderValue(m_normalValue, invertedVal, minValue, maxValue);
 
-		value = std::clamp(m_oldVal + delta, 0.f, 1.f);
-
-		if (dividor)
-		{
-			value *= dividor;
-			value = std::round(value) / dividor;;
-		}
-
-		if (old != value && on_changed)
+		if (oldNormal != m_normalValue && on_changed)
 			on_changed(*this);
 	}
 
-	if (e.getEventType() == Event::EventType::MouseScroll && (m_has_focus|| m_scroll_focus))
+	if (e.getEventType() == Event::EventType::MouseScroll && (m_has_focus || m_scroll_focus))
 	{
 		auto& m = static_cast<MouseScrollEvent&>(e);
 
-		float old = value;
-		value = std::clamp(value + (dividor ? (m.getScrollY() / (dividor + 1.f)) : sliderRatio * m.getScrollY()), 0.f,
-		                   1.f);
+		float delta = m.getScrollY();
+		if (step != 0)
+			setValue(m_value + delta * step);
+		else
+			setValue(m_value + delta * ((maxValue - minValue) / 10));
 
-		if (dividor)
-		{
-			value *= dividor;
-			value = std::round(value) / dividor;;
-		}
-
-		if (old != value && on_changed)
+		if (oldNormal != m_normalValue && on_changed)
 			on_changed(*this);
 	}
 }
@@ -662,8 +690,125 @@ void GUIVSlider::onMyEvent(Event& e)
 
 void GUIVSlider::setValue(float v)
 {
-	this->value = v;
-	m_oldVal = v;
+	v = glm::clamp(v, minValue, maxValue);
+	v -= minValue;
+	if (step)
+		v = glm::round(v / step) * step;
+	m_normalValue = v / (maxValue - minValue);
+	if (invertedVal)
+		m_normalValue = 1 - m_normalValue;
+	m_value = v + minValue;
+}
+
+void GUIVSlider::setQuantization(int possibleStates)
+{
+	minValue = 0;
+	maxValue = possibleStates - 1;
+	step = 1;
+	//setValue(m_value);
+}
+
+void GUIVSlider::setNormalQuantization(int possibleStates)
+{
+	minValue = 0;
+	maxValue = 1;
+	step = 1.f / (possibleStates - 1);
+}
+
+GUIHSlider::GUIHSlider()
+	: GUIElement(GETYPE::HSlider)
+{
+	setPadding(1);
+}
+
+void GUIHSlider::onMyEvent(Event& e)
+{
+	GUIElement::onMyEvent(e);
+
+	float slideWidth = width - widthPadding();
+	sliderWidth = slideWidth * this->sliderRatio;
+
+	float oldNormal = m_normalValue;
+	if (e.getEventType() == Event::EventType::MousePress)
+	{
+		auto& m = static_cast<MousePressEvent&>(e);
+		m_draggedCursor = m.getPos();
+		auto localX = m.getPos().x - GUIContext::get().getStackPos().x - x - padding[GUI_LEFT];
+		bool isUnderSlider = localX < (m_normalValue * (1 - sliderRatio) * slideWidth);
+		bool isAboveSlider = localX > (m_normalValue * (1 - sliderRatio) * slideWidth + sliderWidth);
+		float placeOfClick = localX / slideWidth;
+		if (isUnderSlider || isAboveSlider)
+		{
+			m_normalValue = glm::clamp(placeOfClick - sliderRatio / 2, 0.f, 1.f - sliderRatio);
+			m_draggedCursor = {
+				GUIContext::get().getStackPos().x + x + padding[GUI_LEFT] + (m_normalValue + sliderRatio / 2) *
+				slideWidth,
+				0
+			};
+
+			m_normalValue /= (1 - sliderRatio);
+			m_normalValue = quantizeSliderNormalValue(m_normalValue, step, minValue, maxValue);
+			m_value = calculateSliderValue(m_normalValue, invertedVal, minValue, maxValue);
+		}
+		m_old_placeOfClick = m_normalValue * (1 - sliderRatio);
+
+		if (oldNormal != m_normalValue && on_changed)
+			on_changed(*this);
+	}
+	if (e.getEventType() == Event::EventType::MouseMove && m_is_pressed)
+	{
+		auto& m = static_cast<MouseMoveEvent&>(e);
+		auto localX = m.getPos().x - m_draggedCursor.x;
+		float placeOfClick = localX / slideWidth;
+
+		m_normalValue = glm::clamp(m_old_placeOfClick + placeOfClick, 0.f, 1 - sliderRatio) / (1 - sliderRatio);
+
+		m_normalValue = quantizeSliderNormalValue(m_normalValue, step, minValue, maxValue);
+		m_value = calculateSliderValue(m_normalValue, invertedVal, minValue, maxValue);
+
+		if (oldNormal != m_normalValue && on_changed)
+			on_changed(*this);
+	}
+
+	if (e.getEventType() == Event::EventType::MouseScroll && (m_has_focus || m_scroll_focus))
+	{
+		auto& m = static_cast<MouseScrollEvent&>(e);
+
+		float delta = m.getScrollY();
+		if (step != 0)
+			setValue(m_value + delta * step);
+		else
+			setValue(m_value + delta * ((maxValue - minValue) / 10));
+
+		if (oldNormal != m_normalValue && on_changed)
+			on_changed(*this);
+	}
+}
+
+void GUIHSlider::setValue(float v)
+{
+	v = glm::clamp(v, minValue, maxValue);
+	v -= minValue;
+	if (step)
+		v = glm::round(v / step) * step;
+	m_normalValue = v / (maxValue - minValue);
+	if (invertedVal)
+		m_normalValue = 1 - m_normalValue;
+	m_value = v + minValue;
+}
+
+void GUIHSlider::setQuantization(int possibleStates)
+{
+	minValue = 0;
+	maxValue = possibleStates - 1;
+	step = 1;
+}
+
+void GUIHSlider::setNormalQuantization(int possibleStates)
+{
+	minValue = 0;
+	maxValue = 1;
+	step = 1.f / (possibleStates - 1);
 }
 
 GUIBlank::GUIBlank(): GUIElement(GETYPE::Blank)
@@ -696,9 +841,11 @@ GUIHorizontalSplit::GUIHorizontalSplit(bool isUpMain) : GUIElement(GETYPE::Split
 
 	m_is_up_main = isUpMain;
 	dimInherit = GUIDimensionInherit::WIDTH_HEIGHT;
-	isVisible = false;
+	isVisible = true;
+	//isVisible = true;
 	isNotSpacial = true;
 	space = 5;
+	color = { 0,1,0,1 };
 	setAlignment(GUIAlign::CENTER);
 }
 
@@ -738,7 +885,7 @@ void GUIHorizontalSplit::onDimensionChange()
 	auto downC = getDownChild();
 	if (m_is_up_main)
 	{
-		upC->adaptToParent();
+		upC->onDimensionChange();
 		upC->pos = {0, height - upC->height};
 
 		downC->dim = {width, height - upC->height - space};
@@ -747,7 +894,7 @@ void GUIHorizontalSplit::onDimensionChange()
 	}
 	else
 	{
-		downC->adaptToParent();
+		downC->onDimensionChange();
 		downC->pos = {0, 0};
 
 		upC->dim = {width, height - downC->height - space};
@@ -827,7 +974,7 @@ void GUIVerticalSplit::onDimensionChange()
 	leftC->pos = {0, 0};
 	if (!m_is_left_main)
 	{
-		rightC->adaptToParent();
+		rightC->onDimensionChange();
 		rightC->pos = {width - rightC->width, 0};
 
 		leftC->dim = {width - rightC->width - space, height};
@@ -835,7 +982,7 @@ void GUIVerticalSplit::onDimensionChange()
 	}
 	else
 	{
-		leftC->adaptToParent();
+		leftC->onDimensionChange();
 
 		rightC->dim = {width - leftC->width - space, height};
 		rightC->pos = {leftC->width + space, 0};
@@ -877,7 +1024,7 @@ void GUIView::removeChild(int index)
 GUIVerticalSplit* createGUISliderView(bool sliderOnLeft)
 {
 	auto split = new GUIVerticalSplit(sliderOnLeft);
-	
+
 	auto slider = new GUIVSlider();
 	auto view = new GUIView();
 	auto inside = view->getInside();
@@ -899,7 +1046,7 @@ GUIVerticalSplit* createGUISliderView(bool sliderOnLeft)
 			(1 - slider->getValue()) * (view->getInside()->height - (view->height - view->heightPadding()));
 	};
 	view->dimInherit = GUIDimensionInherit::WIDTH_HEIGHT;
-	inside->color = {0.2,0.2,0.2,1};
+	inside->color = {0.2, 0.2, 0.2, 1};
 	slider->dimInherit = GUIDimensionInherit::HEIGHT;
 	slider->width = 20;
 	slider->on_changed = [view,slider](GUIElement& e)
@@ -914,16 +1061,16 @@ GUIVerticalSplit* createGUISliderView(bool sliderOnLeft)
 	//ensure that scrolling in view will also trigger slider
 	view->onMyEventFunc = [slider](Event& e,GUIElement& v)
 	{
-		if(e.getEventType()==Event::EventType::MouseFocusGain)
+		if (e.getEventType() == Event::EventType::MouseFocusGain)
 		{
 			slider->setHasScrollFocus(true);
-		}else if (e.getEventType() == Event::EventType::MouseFocusLost)
+		}
+		else if (e.getEventType() == Event::EventType::MouseFocusLost)
 			slider->setHasScrollFocus(false);
 	};
 
 	return split;
 }
-
 
 
 static float smootherstep(float x)
@@ -932,7 +1079,8 @@ static float smootherstep(float x)
 	return x * x * x * (x * (x * 6 - 15) + 10);
 }
 
-GUISpecialTextButton::GUISpecialTextButton(const std::string& text, FontMaterial* material) :GUITextButton(text, material)
+GUISpecialTextButton::GUISpecialTextButton(const std::string& text, FontMaterial* material) : GUITextButton(
+	text, material)
 {
 	isVisible = false;
 }

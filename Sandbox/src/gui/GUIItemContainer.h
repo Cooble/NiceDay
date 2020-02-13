@@ -18,6 +18,7 @@ public:
 public:
 	GUIItemContainer();
 	void onMyEvent(Event& e) override;
+	void setContainerSlot(int slot);
 	void setContainer(Inventory* c, int slot);
 	const ItemStack* getItemStack() const;
 };

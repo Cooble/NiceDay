@@ -540,7 +540,54 @@ ControlsWindow::ControlsWindow(const MessageConsumer& c)
 			}
 		};
 	}
-	
+	for (auto& pair : ControlMap::getControlsList())
+	{
+		auto button = new GUISpecialTextButton(pair.first + ": " + Font::colorize(Font::BLACK, "#013220") + ControlMap::getKeyName(*pair.second.pointer), materialSmall);
+		button->minScale = 1;
+		button->maxScale = 1;
+		button->setPadding(10);
+		button->packDimensions();
+		keyColumn->appendChild(button);
+		button->onPressed = [button, titlo = pair.first](GUIElement& e)
+		{
+			if (GUIContext::get().getFocusedElement() != &e)
+			{
+				GUIContext::get().setFocusedElement(&e);
+				button->getTextElement()->setText(Font::BLUE + titlo + ": " + Font::colorize(Font::BLACK, "#013220") + ControlMap::getKeyName(*ControlMap::getButtonData(titlo)->pointer));
+			}
+			else {
+				auto loc = App::get().getInput().getMouseLocation();
+				if (!e.contains(loc.x, loc.y))
+				{
+					GUIContext::get().setFocusedElement(nullptr);
+					e.onMyEventFunc(MouseFocusLost(0, 0), e);
+				}
+
+			}
+		};
+		button->onMyEventFunc = [button, titlo = pair.first](Event& eve, GUIElement& e)
+		{
+
+			if (GUIContext::get().getFocusedElement() == &e)
+			{
+				if (eve.getEventType() == Event::EventType::KeyPress)
+				{
+					auto m = static_cast<KeyPressEvent&>(eve);
+					ControlMap::setValueAtPointer(titlo, m.getKey());
+					button->getTextElement()->setText(titlo + ": " + Font::colorize(Font::BLACK, "#013220") + ControlMap::getKeyName(m.getKey()));
+					GUIContext::get().setFocusedElement(nullptr);
+				}
+			}
+			else if (eve.getEventType() == Event::EventType::MouseFocusGain)
+			{
+				button->getTextElement()->setText(Font::GREEN + titlo + ": " + Font::colorize(Font::BLACK, "#013220") + ControlMap::getKeyName(*ControlMap::getButtonData(titlo)->pointer));
+			}
+			else if (eve.getEventType() == Event::EventType::MouseFocusLost)
+			{
+				button->getTextElement()->setText(titlo + ": " + Font::colorize(Font::BLACK, "#013220") + ControlMap::getKeyName(*ControlMap::getButtonData(titlo)->pointer));
+			}
+		};
+	}
 
 	src->getInside()->appendChild(keyColumn);
 	

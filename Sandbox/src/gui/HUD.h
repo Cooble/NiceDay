@@ -13,10 +13,10 @@ public:
 	virtual ~GUIEntity() = default;
 	virtual void onAttachedToHUD(HUD& hud)=0;
 	virtual void onDetached() {};
-	virtual void render(BatchRenderer2D& renderer)=0;
-	virtual void update(World& w)=0;
+	virtual void render(BatchRenderer2D& renderer){};
+	virtual void update(World& w){};
 	// if inventory does not exist return null
-	virtual Inventory* getInventory() = 0;
+	virtual Inventory* getInventory() { return nullptr; };
 };
 
 class HUD:public GUIWindow

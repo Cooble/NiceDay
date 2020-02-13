@@ -69,7 +69,7 @@ void GUIRenderer::renderElement(BatchRenderer2D& renderer, GUIElement& e)
 		break;
 	case GETYPE::Window:
 	{
-		auto t = static_cast<GUIWindow&>(e);
+		auto& t = static_cast<GUIWindow&>(e);
 		if (t.isEnabled)
 			renderWindow(renderer, t);
 	}
@@ -88,6 +88,9 @@ void GUIRenderer::renderElement(BatchRenderer2D& renderer, GUIElement& e)
 		break;
 	case GETYPE::VSlider:
 		renderVSlider(renderer, static_cast<GUIVSlider&>(e));
+		break;
+		case GETYPE::HSlider:
+		renderHSlider(renderer, static_cast<GUIHSlider&>(e));
 		break;
 	case GETYPE::View:
 		renderView(renderer, static_cast<GUIView&>(e));
@@ -157,7 +160,7 @@ void GUIRenderer::renderSlider(BatchRenderer2D& renderer, GUISlider& e)
 	constexpr float sliderW = 15;
 	constexpr float sliderH = 30;
 	renderer.submitColorQuad({
-		                         m_stackPos.x + e.padding[GUI_LEFT] + e.getValue() * width - sliderW / 2,
+		                         m_stackPos.x + e.padding[GUI_LEFT] + e.getGraphicalValue() * width - sliderW / 2,
 		                         m_stackPos.y + e.height / 2 - sliderH / 2, m_z_pos
 	                         }, {sliderW, sliderH},
 	                         brightColor);
@@ -169,10 +172,22 @@ void GUIRenderer::renderVSlider(BatchRenderer2D& renderer, GUIVSlider& e)
 	incrementZ();
 	renderer.submitColorQuad({m_stackPos.x + 1, m_stackPos.y + 1, m_z_pos}, {e.width - 2, e.height - 2}, lightColor);
 	incrementZ();
-	float y = e.getValue() * (e.height - e.padding[GUI_TOP] - e.padding[GUI_BOTTOM] - e.sliderHeight);
+	float y = e.getGraphicalValue() * (e.height - e.heightPadding()-e.sliderHeight);
 
 	renderer.submitColorQuad({m_stackPos.x + e.padding[GUI_LEFT], m_stackPos.y + y + e.padding[GUI_BOTTOM], m_z_pos},
 	                         {e.width - e.widthPadding(), e.sliderHeight}, darkColor);
+}
+
+void GUIRenderer::renderHSlider(BatchRenderer2D& renderer, GUIHSlider& e)
+{
+	renderer.submitColorQuad({ m_stackPos.x, m_stackPos.y, m_z_pos }, { e.width, e.height }, lighterColor);
+	incrementZ();
+	renderer.submitColorQuad({ m_stackPos.x + 1, m_stackPos.y + 1, m_z_pos }, { e.width - 2, e.height - 2 }, lightColor);
+	incrementZ();
+	float x = e.getGraphicalValue() * (e.width - e.widthPadding() - e.sliderWidth);
+
+	renderer.submitColorQuad({ m_stackPos.x + e.padding[GUI_LEFT] +x, m_stackPos.y + e.padding[GUI_BOTTOM], m_z_pos },
+		{ e.sliderWidth, e.height - e.heightPadding()}, darkColor);
 }
 
 void GUIRenderer::renderText(BatchRenderer2D& renderer, GUIText& e)

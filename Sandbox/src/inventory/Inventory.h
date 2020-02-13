@@ -33,8 +33,10 @@ public:
 	virtual bool isSpaceFor(const ItemStack* stack) const { return true; };
 	
 };
+
 class BasicInventory:public Inventory,public NBTSaveable
 {
+protected:
 	std::vector<ItemStack*> m_items;
 	std::string m_id;
 public:

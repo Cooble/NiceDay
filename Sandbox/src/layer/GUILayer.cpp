@@ -15,8 +15,11 @@
 #include "world/entity/EntityAllocator.h"
 #include "event/SandboxControls.h"
 #include "gui/GUIEntityPlayer.h"
+#include "core/Stats.h"
+#include "gui/GUIEntityCreativeTab.h"
 
 GUILayer::GUILayer()
+	:m_gui_creative(nullptr)
 {
 	ND_PROFILE_METHOD();
 	m_bound_func = std::bind(&GUILayer::consumeWindowEvent, this, std::placeholders::_1);
@@ -269,10 +272,24 @@ void GUILayer::onEvent(Event& e)
 			if (!m_hud->isRegistered("player")) {
 				m_gui_player = new GUIEntityPlayer(&m_world->getPlayer());
 				m_hud->registerGUIEntity(m_gui_player);
+				if(m_world->getPlayer().hasCreative())
+				{
+					m_gui_creative = new GUIEntityCreativeTab();
+					m_hud->registerGUIEntity(m_gui_creative);
+				}
 			}
 			else
 			{
+				
 				m_gui_player->openInventory(!m_gui_player->isOpenedInventory());
+
+				if (m_gui_player->isOpenedInventory() && m_world->getPlayer().hasCreative())
+				{
+					m_gui_creative = new GUIEntityCreativeTab();
+					m_hud->registerGUIEntity(m_gui_creative);
+
+				}
+				
 			}
 		}
 		//throw item away

@@ -16,7 +16,7 @@ void GUIItemContainer::onMyEvent(Event& e)
 	GUIElement::onMyEvent(e);
 	if (e.getEventType() == Event::EventType::MouseMove)
 		return;
-	if (m_container && onContainerEventConsumer)
+	if (m_container && onContainerEventConsumer&&m_slotIndex!=-1&& m_slotIndex<m_container->getItemsSize())
 		onContainerEventConsumer(m_container->getID(), m_slotIndex, e);
 	if (!isNotSpacial && e.getEventType() == Event::EventType::MousePress)
 		e.handled = true;
@@ -27,11 +27,15 @@ void GUIItemContainer::setContainer(Inventory* c, int slot)
 	m_container = c;
 	m_slotIndex = slot;
 }
+void GUIItemContainer::setContainerSlot(int slot)
+{
+	m_slotIndex = slot;
+}
 
 const ItemStack* GUIItemContainer::getItemStack() const
 {
-	
-	if (m_container == nullptr)
+
+	if (m_container == nullptr||m_slotIndex==-1||m_slotIndex>=m_container->getItemsSize())
 		return nullptr;
 	return m_container->getItemStack(m_slotIndex);
 }

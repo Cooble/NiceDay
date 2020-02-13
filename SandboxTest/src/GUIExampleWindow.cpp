@@ -2,7 +2,6 @@
 #include "GUIExampleWindow.h"
 #include "core/App.h"
 #include "graphics/API/Texture.h"
-#include "globals.h"
 
 GUIExampleWindow::GUIExampleWindow()
 {
@@ -10,6 +9,7 @@ GUIExampleWindow::GUIExampleWindow()
 	height = App::get().getWindow()->getHeight() / 3 * 2;
 	setCenterPosition(App::get().getWindow()->getWidth(), App::get().getWindow()->getHeight());
 
+	auto g_fontMat = FontMatLib::getMaterial("res/fonts/andrew.fnt");
 	auto backTexture = Texture::create(TextureInfo("res/images/gui_back.png"));
 	static SpriteSheetResource* res = new SpriteSheetResource(backTexture, 1, 1);
 	auto backSprite = new Sprite(res);
@@ -54,12 +54,15 @@ GUIExampleWindow::GUIExampleWindow()
 	auto optionsColumn = new GUIColumn();
 	optionsColumn->setAlignment(GUIAlign::CENTER);
 	optionsColumn->setPadding(20);
+	optionsColumn->isAlwaysPacked = true;
 	lowerSettingSplit->getLeftChild()->appendChild(optionsColumn);
 	lowerSettingSplit->getLeftChild()->color = { 1, 1, 0, 1 };
 	lowerSettingSplit->getLeftChild()->isAlwaysPacked = false;
+	lowerSettingSplit->getLeftChild()->isVisible = true;
 	lowerSettingSplit->getLeftChild()->width = 200;
 
 	auto textBox = new GUITextBox();
+	textBox->font = g_fontMat;
 	textBox->dim = { 170, 50 };
 	textBox->setAlignment(GUIAlign::CENTER_UP);
 
@@ -79,81 +82,41 @@ GUIExampleWindow::GUIExampleWindow()
 	optionsColumn->appendChild(textBox);
 	auto sl = new GUISlider();
 	sl->dim = { 130,40 };
-	sl->on_changed = [textBox,sl](GUIElement& e)
+	sl->on_changed = [textBox, sl](GUIElement& e)
 	{
 		textBox->setValue(std::to_string(sl->getValue()));
 	};
 	optionsColumn->appendChild(sl);
 	auto cbox = new GUICheckBox();
-	cbox->dim = { g_fontMat->font->getTextWidth("Despair: Disabled")+cbox->widthPadding()+50,40 };
+	cbox->dim = { g_fontMat->font->getTextWidth("Despair: Disabled") + cbox->widthPadding() + 50,40 };
 	cbox->setText("Despair: Enabled", "Despair: Disabled");
 	leftRow->appendChild(cbox);
-	
-	
-	
-	/*auto slid = new GUIVSlider();
-	slid->setAlignment(GUIAlign::RIGHT);
-	slid->dim = { 45,350 };
-	slid->sliderRatio = 0.33;
-	slid->dividor = 25;
-	slid->on_changed = [slid](GUIElement& e)
+
+	auto grid = new GUIGrid();
+	grid->dimInherit = GUIDimensionInherit::WIDTH;
+	grid->setAlignment(GUIAlign::CENTER);
+	grid->isAlwaysPacked = true;
+	for (int i = 0; i < 30; ++i)
 	{
-		ND_INFO("value: {}", slid->getValue());
-	};
-	lowerSettingSplit->getRightChild()->appendChild(slid);*/
-	/*{
-		auto view = new GUIView();
-		view->setAlignment(GUIAlign::CENTER_DOWN);
-		view->dimension_inherit = GUIDimensionInherit::WIDTH;
-		view->dim = { 400,200 };
-		
-		auto grid = new GUIGrid();
-		grid->dimension_inherit = GUIDimensionInherit::WIDTH;
-		grid->setAlignment(GUIAlign::LEFT_DOWN);
-		for (int i = 0; i < 25; ++i)
-		{
-			auto img = new GUIImage();
-			img->setValue(backSprite);
-			img->dim = { 30+i*2, 20+i*3 };
-			grid->appendChild(img);
-		}
-		
-		view->getInside()->appendChild(grid);
-		view->getInside()->setAlignment(GUIAlign::LEFT_UP);
-		view->getInside()->is_always_packed = true;
-		view->getInside()->dimension_inherit = GUIDimensionInherit::WIDTH;
-		lowerSettingSplit->getRightChild()->appendChild(view);
-
-		
+		auto img = new GUIImage();
+		img->setImage(backSprite);
+		img->dim = { 100 + i * 2, 100 + i * 3 };
+		grid->appendChild(img);
 	}
-	*/
+	lastBut->onPressed = [grid, backSprite](GUIElement& e)
+	{
+		auto img = new GUIImage();
+		img->setImage(backSprite);
 
-	
-		auto grid = new GUIGrid();
-		grid->dimInherit = GUIDimensionInherit::WIDTH;
-		grid->setAlignment(GUIAlign::CENTER);
-		grid->isAlwaysPacked = true;
-		for (int i = 0; i < 30; ++i)
-		{
-			auto img = new GUIImage();
-			img->setImage(backSprite);
-			img->dim = {100 + i * 2, 100 + i * 3};
-			grid->appendChild(img);
-		}
-		lastBut->onPressed = [grid, backSprite](GUIElement& e)
-		{
-			auto img = new GUIImage();
-			img->setImage(backSprite);
+		img->dim = { 100 + std::rand() % 60,100 + std::rand() % 60 };
+		grid->appendChild(img);
+	};
+	preBut->onPressed = [grid](GUIElement& e)
+	{
+		if (grid->getChildren().size())
+			grid->removeChild(0);
+	};
 
-			img->dim = {100 + std::rand() % 60,100 + std::rand() % 60};
-			grid->appendChild(img);
-		};
-		preBut->onPressed = [grid](GUIElement& e)
-		{
-			if (grid->getChildren().size())
-				grid->removeChild(0);
-		};
-	
 	auto split = createGUISliderView(false);
 	split->getRightChild()->getChildren()[0]->setPadding(5);
 	split->getRightChild()->getChildren()[0]->dim = { 30,0 };

@@ -17,7 +17,7 @@ const unsigned int SCR_HEIGHT = 600;
 	_declspec(dllexport) DWORD NvOptimusEnablement = 1;
 }*/
 
-int main()
+int mainp()
 {
 	// glfw: initialize and configure
 	// ------------------------------

@@ -26,6 +26,7 @@ enum class GETYPE
 	RadioButton,
 	Slider,
 	VSlider,
+	HSlider,
 	TextBox,
 	TextArea,
 	SplitHorizontal,
@@ -64,9 +65,13 @@ enum class GUIDimensionInherit : int
 constexpr float GUIElement_InvalidNumber = -100000;
 class GUIElement
 {
+
 private:
 	GUIAlign m_alignment=GUIAlign::INVALID;
 protected:
+#ifdef ND_DEBUG
+	bool m_has_parent = false;
+#endif
 	std::vector<GUIElement*> m_children;
 	GUIElement* m_parent = nullptr;
 
@@ -82,6 +87,12 @@ protected:
 
 	//checks if element gained or lost focus
 	void checkFocus(MouseMoveEvent& e);
+
+#ifdef ND_DEBUG
+#define GUIE_CHECK_PARENT(child) ASSERT(!child->m_has_parent,"Adding child which already has a parent!");child->m_has_parent=true;
+#else
+#define GUIE_CHECK_PARENT()
+#endif
 
 public:
 	/**

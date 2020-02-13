@@ -30,6 +30,22 @@ GUISlots::GUISlots(Inventory* inv, HUD& hud, int fromIndex, int toIndex, int row
 	appendChild(column);
 }
 
+void GUISlots::updateIndexes(int fromIndex, int toIndex)
+{
+	int currentIndex = 0;
+	for (auto row : getFirstChild()->getChildren())
+	{
+		for (auto& i : row->getChildren())
+		{
+			auto c = (GUIItemContainer*)i;
+			c->setContainerSlot(fromIndex + currentIndex > toIndex?-1:fromIndex + currentIndex);
+			currentIndex++;
+
+		}
+		
+	}
+}
+
 Inventory* GUIEntityChest::getInventory()
 {
 	return &m_disgusting_chest->getInventory();
@@ -41,13 +57,6 @@ GUIEntityChest::GUIEntityChest(TileEntityChest* chest)
 
 }
 
-void GUIEntityChest::update(World& w)
-{
-}
-
-void GUIEntityChest::render(BatchRenderer2D& renderer)
-{
-}
 
 void GUIEntityChest::onAttachedToHUD(HUD& hud)
 {

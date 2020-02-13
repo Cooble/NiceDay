@@ -140,6 +140,7 @@
     <ClInclude Include="src\globals.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\globals.cpp" />
     <ClCompile Include="src\GUIExampleWindow.cpp" />
     <ClCompile Include="src\GUITestLayer.cpp" />
     <ClCompile Include="src\simple.cpp" />

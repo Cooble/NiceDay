@@ -9,6 +9,10 @@ class GUISlots :public GUIElement
 {
 public:
 	GUISlots(Inventory* inv, HUD& hud,int fromIndex,int toIndex,int rowSize);
+
+	//changes containers to point at different slots
+	//if toIndex-fromIndex < container size  -> the rest of containers will be invalidated
+	void updateIndexes(int fromIndex, int toIndex);
 };
 
 class GUIEntityChest :public GUIEntity
@@ -21,8 +25,6 @@ private:
 public:
 	Inventory* getInventory() override;
 	GUIEntityChest(TileEntityChest* chest);
-	void update(World& w) override;
-	void render(BatchRenderer2D& renderer) override;
 	void onAttachedToHUD(HUD& hud) override;
 	void onDetached() override;
 	const std::string& getID() const override;

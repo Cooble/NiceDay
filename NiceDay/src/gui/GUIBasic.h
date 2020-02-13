@@ -150,7 +150,7 @@ public:
 	void onChildChange() override;
 };
 
-// Split
+// Split up and down
 class GUIHorizontalSplit :public GUIElement
 {
 protected:
@@ -190,34 +190,106 @@ public:
 // Slider
 class GUISlider :public GUIElement
 {
-	float value=0;
+	// value between 0 and 1
+	float m_normalValue=0;
+	// value between minVal and maxVal
+	float m_value=0;
 	glm::vec2 m_draggedCursor;
 
 public:
-	int dividor=0;
+	// how big the step is
+	// 0 means smooth progress (any value between minV and maxV is possible) 
+	float step = 0;
+	float minValue=0, maxValue=1;
+	// true means up = minValue, down =maxVal
+	bool invertedVal=false;
+	
+	// called when value is changed
 	ActionF on_changed;
 	GUISlider();
 	void onMyEvent(Event& e) override;
 	virtual void setValue(float v);
-	virtual float getValue()const { return value; }
+	virtual float getValue() const { return m_value; }
+	inline void prepare(float minValue, float maxValue, float step) { this->minValue = minValue; this->maxValue = maxValue; this->step = step; }
+	// enables quantization: minVal = 0, maxValue=(possibleStates-1), step=1
+	void setQuantization(int possibleStates);
+	// enables quantization: minVal = 0, maxValue=1, step=1/(possibleStates-1)
+	void setNormalQuantization(int possibleStates);
+	float getGraphicalValue() const { return m_normalValue; }
 };
+// VSlider
 class GUIVSlider :public GUIElement
 {
-	float value = 0;
+	// value between 0 and 1
+	float m_normalValue = 0;
+	// value between minVal and maxVal
+	float m_value = 0;
 	glm::vec2 m_draggedCursor;
-	float m_oldVal;
+
 	bool m_scroll_focus;
+	float m_old_placeOfClick = 0;
 public:
-	inline void setHasScrollFocus(bool focus) { m_scroll_focus = focus; }
-	float sliderRatio=0.1f;
+	
+	float sliderRatio = 0.1f;
 	float sliderHeight = 50;
-	int dividor = 0;
+	// how big the step is
+	// 0 means smooth progress (any value between minV and maxV is possible) 
+	float step = 0;
+	float minValue = 0, maxValue = 1;
+	// true means up = minValue, down =maxVal
+	bool invertedVal = false;
+
+	// called when value is changed
 	ActionF on_changed;
 	GUIVSlider();
 	void onMyEvent(Event& e) override;
 	virtual void setValue(float v);
-	virtual float getValue()const { return value; }
+	virtual float getValue() const { return m_value; }
+	inline void prepare(float minValue, float maxValue, float step) { this->minValue = minValue; this->maxValue = maxValue; this->step = step; }
+	// enables quantization: minVal = 0, maxValue=(possibleStates-1), step=1
+	void setQuantization(int possibleStates);
+	// enables quantization: minVal = 0, maxValue=1, step=1/(possibleStates-1)
+	void setNormalQuantization(int possibleStates);
+	float getGraphicalValue() const { return m_normalValue; }
+	inline void setHasScrollFocus(bool focus) { m_scroll_focus = focus; }
 };
+// HSlider
+class GUIHSlider :public GUIElement
+{
+	// value between 0 and 1
+	float m_normalValue = 0;
+	// value between minVal and maxVal
+	float m_value = 0;
+	glm::vec2 m_draggedCursor;
+
+	bool m_scroll_focus;
+	float m_old_placeOfClick = 0;
+public:
+
+	float sliderRatio = 0.1f;
+	float sliderWidth = 50;
+	// how big the step is
+	// 0 means smooth progress (any value between minV and maxV is possible) 
+	float step = 0;
+	float minValue = 0, maxValue = 1;
+	// true means up = minValue, down =maxVal
+	bool invertedVal = false;
+
+	// called when value is changed
+	ActionF on_changed;
+	GUIHSlider();
+	void onMyEvent(Event& e) override;
+	virtual void setValue(float v);
+	virtual float getValue() const { return m_value; }
+	inline void prepare(float minValue, float maxValue, float step) { this->minValue = minValue; this->maxValue = maxValue; this->step = step; }
+	// enables quantization: minVal = 0, maxValue=(possibleStates-1), step=1
+	void setQuantization(int possibleStates);
+	// enables quantization: minVal = 0, maxValue=1, step=1/(possibleStates-1)
+	void setNormalQuantization(int possibleStates);
+	float getGraphicalValue() const { return m_normalValue; }
+	inline void setHasScrollFocus(bool focus) { m_scroll_focus = focus; }
+};
+
 class GUIView :public GUIElement
 {
 public:

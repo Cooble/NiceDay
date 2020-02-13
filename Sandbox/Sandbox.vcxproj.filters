@@ -235,6 +235,8 @@
     <ClInclude Include="src\world\ChunkMesh.h">
       <Filter>world</Filter>
     </ClInclude>
+    <ClInclude Include="src\gui\GUIEntityCreativeTab.h" />
+    <ClInclude Include="src\inventory\CreativeInventory.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\core\EntryPoint.cpp">
@@ -415,5 +417,7 @@
     <ClCompile Include="src\world\ChunkMesh.cpp">
       <Filter>world</Filter>
     </ClCompile>
+    <ClCompile Include="src\gui\GUIEntityCreativeTab.cpp" />
+    <ClCompile Include="src\inventory\CreativeInventory.cpp" />
   </ItemGroup>
 </Project>

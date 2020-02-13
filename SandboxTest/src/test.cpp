@@ -49,7 +49,7 @@ public:
 		textMesh = new TextMesh(300);
 		ND_INFO("TestLayer attached");
 
-		FontParser::parse(font,"andrew.fnt");
+		FontParser::parse(font,"arial.fnt");
 		font.xSpace = -10;
 		font.ySpace= -5;
 
@@ -131,18 +131,18 @@ public:
 	TestApp()
 	{
 		m_imgui_enable = false;
-		//m_LayerStack.pushLayer(new GUITestLayer());
+		m_LayerStack.pushLayer(new GUITestLayer());
 		//m_LayerStack.pushLayer(new TestLayer());
 	}
 	
 };
 #ifdef ND_TEST
-int mainp()
+int main()
 {
 	Log::init();
-	/*TestApp t;
+	TestApp t;
 
-	t.start();*/
+	t.start();
 	
 	
 	ND_INFO("EXxit test");

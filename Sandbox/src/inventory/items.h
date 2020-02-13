@@ -19,3 +19,10 @@ public:
 
 	std::string getTitle(ItemStack* stack) const override;
 };
+class ItemTnt : public Item
+{
+public:
+	ItemTnt();
+
+	bool onRightClick(World& world, ItemStack& stack, WorldEntity& owner, int x, int y) const override;
+};
