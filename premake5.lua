@@ -31,7 +31,7 @@ project "NiceDay"
 	language "C++"
     cppdialect "C++17"
 	staticruntime "on"
-
+    
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
 	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
 
@@ -68,6 +68,9 @@ project "NiceDay"
         "%{prj.name}/vendor/lua/src/lua",
         "%{prj.name}/vendor/luabridge",
         
+        "%{prj.name}/vendor/portaudio_libs/include",
+        "%{prj.name}/vendor/libogg_libs/include",
+        "%{prj.name}/vendor/libvorbis_libs/include",        
 
 	
 	}
@@ -76,9 +79,21 @@ project "NiceDay"
 		"glfw",
 		"glad",
 		"imgui",
-		"opengl32.lib",
         "lua",
+		"opengl32.lib",
+        "portaudio_x64.lib",
+        "libogg.lib",
+        "libvorbis.lib",
+        "libvorbisfile.lib",
+      
 	}
+    
+    libdirs 
+    { 
+        "%{prj.name}/vendor/portaudio_libs/lib",
+        "%{prj.name}/vendor/libogg_libs/lib",
+        "%{prj.name}/vendor/libvorbis_libs/lib",
+    }
 
 	filter "system:windows"
 		systemversion "latest"
@@ -115,7 +130,8 @@ project "SandboxTest"
     cppdialect "C++17"
 	staticruntime "on"
 
-	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
+    TarDir = "bin/" .. outputdir .. "/%{prj.name}"
+	targetdir (TarDir)
 	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
 
 	files
@@ -139,6 +155,10 @@ project "SandboxTest"
 		"NiceDay/vendor/lua/src",
         "NiceDay/vendor/lua/src/lua",
         "NiceDay/vendor/luabridge",
+        
+        "%{prj.name}/vendor/portaudio_libs/include",
+        "%{prj.name}/vendor/libogg_libs/include",
+        "%{prj.name}/vendor/libvorbis_libs/include",     
 	}
     links 
 	{ 
@@ -172,6 +192,11 @@ project "SandboxTest"
 		defines "ND_DIST"
 		runtime "Release"
 		optimize "On"
+    filter "system:windows"
+        postbuildcommands 
+        {
+            "copy \"..\\NiceDay\\vendor\\portaudio_libs\\lib\\*.dll\" \"..\\bin\\" .. outputdir .. "\\%{prj.name}\""
+        }
 
 project "Sandbox"
 	location "Sandbox"
@@ -180,6 +205,7 @@ project "Sandbox"
     cppdialect "C++17"
 	staticruntime "on"
 
+    customDllDir = "bin/" .. outputdir .. "/%{prj.name}"
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
 	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
 
@@ -204,6 +230,10 @@ project "Sandbox"
         "NiceDay/vendor/lua/src",
         "NiceDay/vendor/lua/src/lua",
         "NiceDay/vendor/luabridge",
+        
+        "%{prj.name}/vendor/portaudio_libs/include",
+        "%{prj.name}/vendor/libogg_libs/include",
+        "%{prj.name}/vendor/libvorbis_libs/include",     
 	}
     links 
 	{ 
@@ -237,3 +267,12 @@ project "Sandbox"
 		defines "ND_DIST"
 		runtime "Release"
 		optimize "On"
+    filter "configurations:All"
+		defines "ND_DIST"
+		runtime "Release"
+		optimize "On"
+    filter "system:windows"
+        postbuildcommands 
+        {
+            "copy \"..\\NiceDay\\vendor\\portaudio_libs\\lib\\*.dll\" \"..\\bin\\" .. outputdir .. "\\%{prj.name}\""
+        }

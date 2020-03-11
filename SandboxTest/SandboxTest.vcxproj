@@ -79,7 +79,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>ND_PLATFORM_WINDOWS;GLFW_INCLUDE_NONE;ND_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>src;..\NiceDay\src;..\NiceDay\vendor;..\NiceDay\vendor\spdlog\include;..\NiceDay\vendor\imgui;..\NiceDay\vendor\glm;..\NiceDay\vendor\glfw\include;..\NiceDay\vendor\glad\include;..\NiceDay\vendor\stb_image;..\NiceDay\vendor\lua\src;..\NiceDay\vendor\lua\src\lua;..\NiceDay\vendor\luabridge;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src;..\NiceDay\src;..\NiceDay\vendor;..\NiceDay\vendor\spdlog\include;..\NiceDay\vendor\imgui;..\NiceDay\vendor\glm;..\NiceDay\vendor\glfw\include;..\NiceDay\vendor\glad\include;..\NiceDay\vendor\stb_image;..\NiceDay\vendor\lua\src;..\NiceDay\vendor\lua\src\lua;..\NiceDay\vendor\luabridge;vendor\portaudio_libs\include;vendor\libogg_libs\include;vendor\libvorbis_libs\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
       <MinimalRebuild>false</MinimalRebuild>
@@ -91,13 +91,16 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <PostBuildEvent>
+      <Command>copy "..\NiceDay\vendor\portaudio_libs\lib\*.dll" "..\bin\Debug-windows-x86_64\$(ProjectName)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>ND_PLATFORM_WINDOWS;GLFW_INCLUDE_NONE;ND_RELEASE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>src;..\NiceDay\src;..\NiceDay\vendor;..\NiceDay\vendor\spdlog\include;..\NiceDay\vendor\imgui;..\NiceDay\vendor\glm;..\NiceDay\vendor\glfw\include;..\NiceDay\vendor\glad\include;..\NiceDay\vendor\stb_image;..\NiceDay\vendor\lua\src;..\NiceDay\vendor\lua\src\lua;..\NiceDay\vendor\luabridge;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src;..\NiceDay\src;..\NiceDay\vendor;..\NiceDay\vendor\spdlog\include;..\NiceDay\vendor\imgui;..\NiceDay\vendor\glm;..\NiceDay\vendor\glfw\include;..\NiceDay\vendor\glad\include;..\NiceDay\vendor\stb_image;..\NiceDay\vendor\lua\src;..\NiceDay\vendor\lua\src\lua;..\NiceDay\vendor\luabridge;vendor\portaudio_libs\include;vendor\libogg_libs\include;vendor\libvorbis_libs\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -112,13 +115,16 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
+    <PostBuildEvent>
+      <Command>copy "..\NiceDay\vendor\portaudio_libs\lib\*.dll" "..\bin\Release-windows-x86_64\$(ProjectName)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Dist|x64'">
     <ClCompile>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>ND_PLATFORM_WINDOWS;GLFW_INCLUDE_NONE;ND_DIST;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>src;..\NiceDay\src;..\NiceDay\vendor;..\NiceDay\vendor\spdlog\include;..\NiceDay\vendor\imgui;..\NiceDay\vendor\glm;..\NiceDay\vendor\glfw\include;..\NiceDay\vendor\glad\include;..\NiceDay\vendor\stb_image;..\NiceDay\vendor\lua\src;..\NiceDay\vendor\lua\src\lua;..\NiceDay\vendor\luabridge;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src;..\NiceDay\src;..\NiceDay\vendor;..\NiceDay\vendor\spdlog\include;..\NiceDay\vendor\imgui;..\NiceDay\vendor\glm;..\NiceDay\vendor\glfw\include;..\NiceDay\vendor\glad\include;..\NiceDay\vendor\stb_image;..\NiceDay\vendor\lua\src;..\NiceDay\vendor\lua\src\lua;..\NiceDay\vendor\luabridge;vendor\portaudio_libs\include;vendor\libogg_libs\include;vendor\libvorbis_libs\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -133,6 +139,9 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
+    <PostBuildEvent>
+      <Command>copy "..\NiceDay\vendor\portaudio_libs\lib\*.dll" "..\bin\Dist-windows-x86_64\$(ProjectName)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="src\GUIExampleWindow.h" />
@@ -140,9 +149,9 @@
     <ClInclude Include="src\globals.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\globals.cpp" />
     <ClCompile Include="src\GUIExampleWindow.cpp" />
     <ClCompile Include="src\GUITestLayer.cpp" />
+    <ClCompile Include="src\globals.cpp" />
     <ClCompile Include="src\simple.cpp" />
     <ClCompile Include="src\test.cpp" />
   </ItemGroup>

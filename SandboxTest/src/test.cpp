@@ -130,7 +130,6 @@ class TestApp:public App
 public:
 	TestApp()
 	{
-		m_imgui_enable = false;
 		m_LayerStack.pushLayer(new GUITestLayer());
 		//m_LayerStack.pushLayer(new TestLayer());
 	}

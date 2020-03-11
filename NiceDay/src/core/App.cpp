@@ -14,11 +14,14 @@
 #include "layer/LuaLayer.h"
 #include "event/ControlMap.h"
 #include "event/KeyEvent.h"
+#include "layer/SoundLayer.h"
+
 
 #define BIND_EVENT_FN(x) std::bind(&App::x, &App::get(), std::placeholders::_1)
 
 
 App* App::s_Instance = nullptr;
+
 
 App::App(int width, int height, const std::string& title)
 	:m_scheduler(200),
@@ -40,6 +43,7 @@ void App::init(int width, int height, const std::string& title)
 	m_Window->setEventCallback(eventCallback);
 	m_lua_layer = new LuaLayer();
 	m_LayerStack.pushLayer(m_lua_layer);
+	m_LayerStack.pushLayer(new SoundLayer());
 	m_imgui_enable = true;
 	if (m_imgui_enable) {	
 		m_ImGuiLayer = new ImGuiLayer();
@@ -305,7 +309,7 @@ void ImGuiLayer::onEvent(Event& e)
 	else if(e.getEventType() == Event::EventType::KeyPress)
 	{
 		auto& m = dynamic_cast<KeyPressEvent&>(e);
-		if(m.getKey()==GLFW_KEY_P&&recordingScopeTicks==0)
+		if(m.getKey()==GLFW_KEY_P && recordingScopeTicks==0)
 		{
 			recordingScopeTicks = 60;
 			ND_PROFILE_BEGIN_SESSION("test","test.json");

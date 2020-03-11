@@ -4,6 +4,9 @@
     <Filter Include="src">
       <UniqueIdentifier>{2DAB880B-99B4-887C-2230-9F7C8E38947C}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\audio">
+      <UniqueIdentifier>{0E37D9B4-7AA1-8D2B-C3DF-3ED12F896B80}</UniqueIdentifier>
+    </Filter>
     <Filter Include="src\core">
       <UniqueIdentifier>{C55F2ECF-B12C-89DA-DA45-7782C671BE68}</UniqueIdentifier>
     </Filter>
@@ -61,14 +64,23 @@
     <Filter Include="vendor\luabridge">
       <UniqueIdentifier>{D1523BD1-BD4B-5A23-E67D-3FA8D2D5392F}</UniqueIdentifier>
     </Filter>
-    <Filter Include="vendor\luabridge\detail">
-      <UniqueIdentifier>{73D563CB-DF0C-AC62-E816-108654CDD25B}</UniqueIdentifier>
+    <Filter Include="vendor\luabridge\LuaBridge">
+      <UniqueIdentifier>{2FFBC183-1B0B-6E54-84C4-D27270F35CED}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="vendor\luabridge\LuaBridge\detail">
+      <UniqueIdentifier>{11A8099F-7D16-5F1E-C6FF-191E32AD54BA}</UniqueIdentifier>
     </Filter>
     <Filter Include="vendor\stb_image">
       <UniqueIdentifier>{0DA0BA59-F998-D9AB-22CB-BE300E23B9B7}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\audio\Player.h">
+      <Filter>src\audio</Filter>
+    </ClInclude>
+    <ClInclude Include="src\audio\RingBuffer.h">
+      <Filter>src\audio</Filter>
+    </ClInclude>
     <ClInclude Include="src\core\App.h">
       <Filter>src\core</Filter>
     </ClInclude>
@@ -90,6 +102,9 @@
     <ClInclude Include="src\core\Scheduler.h">
       <Filter>src\core</Filter>
     </ClInclude>
+    <ClInclude Include="src\core\Scoper.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
     <ClInclude Include="src\core\Stats.h">
       <Filter>src\core</Filter>
     </ClInclude>
@@ -101,6 +116,12 @@
     </ClInclude>
     <ClInclude Include="src\core\physShapes.h">
       <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\sids.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\event\ControlMap.h">
+      <Filter>src\event</Filter>
     </ClInclude>
     <ClInclude Include="src\event\Event.h">
       <Filter>src\event</Filter>
@@ -153,6 +174,9 @@
     <ClInclude Include="src\graphics\IBatchRenderable2D.h">
       <Filter>src\graphics</Filter>
     </ClInclude>
+    <ClInclude Include="src\graphics\Imager2D.h">
+      <Filter>src\graphics</Filter>
+    </ClInclude>
     <ClInclude Include="src\graphics\ParticleRenderer.h">
       <Filter>src\graphics</Filter>
     </ClInclude>
@@ -202,6 +226,9 @@
       <Filter>src\layer</Filter>
     </ClInclude>
     <ClInclude Include="src\layer\LuaLayer.h">
+      <Filter>src\layer</Filter>
+    </ClInclude>
+    <ClInclude Include="src\layer\SoundLayer.h">
       <Filter>src\layer</Filter>
     </ClInclude>
     <ClInclude Include="src\memory\Pool.h">
@@ -1332,6 +1359,75 @@
     <ClInclude Include="vendor\glm\glm\vector_relational.hpp">
       <Filter>vendor\glm\glm</Filter>
     </ClInclude>
+    <ClInclude Include="vendor\luabridge\LuaBridge\List.h">
+      <Filter>vendor\luabridge\LuaBridge</Filter>
+    </ClInclude>
+    <ClInclude Include="vendor\luabridge\LuaBridge\LuaBridge.h">
+      <Filter>vendor\luabridge\LuaBridge</Filter>
+    </ClInclude>
+    <ClInclude Include="vendor\luabridge\LuaBridge\Map.h">
+      <Filter>vendor\luabridge\LuaBridge</Filter>
+    </ClInclude>
+    <ClInclude Include="vendor\luabridge\LuaBridge\RefCountedObject.h">
+      <Filter>vendor\luabridge\LuaBridge</Filter>
+    </ClInclude>
+    <ClInclude Include="vendor\luabridge\LuaBridge\RefCountedPtr.h">
+      <Filter>vendor\luabridge\LuaBridge</Filter>
+    </ClInclude>
+    <ClInclude Include="vendor\luabridge\LuaBridge\UnorderedMap.h">
+      <Filter>vendor\luabridge\LuaBridge</Filter>
+    </ClInclude>
+    <ClInclude Include="vendor\luabridge\LuaBridge\Vector.h">
+      <Filter>vendor\luabridge\LuaBridge</Filter>
+    </ClInclude>
+    <ClInclude Include="vendor\luabridge\LuaBridge\detail\CFunctions.h">
+      <Filter>vendor\luabridge\LuaBridge\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="vendor\luabridge\LuaBridge\detail\ClassInfo.h">
+      <Filter>vendor\luabridge\LuaBridge\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="vendor\luabridge\LuaBridge\detail\Config.h">
+      <Filter>vendor\luabridge\LuaBridge\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="vendor\luabridge\LuaBridge\detail\Constructor.h">
+      <Filter>vendor\luabridge\LuaBridge\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="vendor\luabridge\LuaBridge\detail\FuncTraits.h">
+      <Filter>vendor\luabridge\LuaBridge\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="vendor\luabridge\LuaBridge\detail\Iterator.h">
+      <Filter>vendor\luabridge\LuaBridge\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="vendor\luabridge\LuaBridge\detail\LuaException.h">
+      <Filter>vendor\luabridge\LuaBridge\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="vendor\luabridge\LuaBridge\detail\LuaHelpers.h">
+      <Filter>vendor\luabridge\LuaBridge\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="vendor\luabridge\LuaBridge\detail\LuaRef.h">
+      <Filter>vendor\luabridge\LuaBridge\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="vendor\luabridge\LuaBridge\detail\Namespace.h">
+      <Filter>vendor\luabridge\LuaBridge\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="vendor\luabridge\LuaBridge\detail\Security.h">
+      <Filter>vendor\luabridge\LuaBridge\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="vendor\luabridge\LuaBridge\detail\Stack.h">
+      <Filter>vendor\luabridge\LuaBridge\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="vendor\luabridge\LuaBridge\detail\TypeList.h">
+      <Filter>vendor\luabridge\LuaBridge\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="vendor\luabridge\LuaBridge\detail\TypeTraits.h">
+      <Filter>vendor\luabridge\LuaBridge\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="vendor\luabridge\LuaBridge\detail\Userdata.h">
+      <Filter>vendor\luabridge\LuaBridge\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="vendor\luabridge\LuaBridge\detail\dump.h">
+      <Filter>vendor\luabridge\LuaBridge\detail</Filter>
+    </ClInclude>
     <ClInclude Include="vendor\stb_image\stb_image.h">
       <Filter>vendor\stb_image</Filter>
     </ClInclude>
@@ -1341,83 +1437,14 @@
     <ClInclude Include="vendor\stb_image\stb_image_write.h">
       <Filter>vendor\stb_image</Filter>
     </ClInclude>
-    <ClInclude Include="vendor\luabridge\LuaBridge\List.h">
-      <Filter>vendor\luabridge</Filter>
-    </ClInclude>
-    <ClInclude Include="vendor\luabridge\LuaBridge\LuaBridge.h">
-      <Filter>vendor\luabridge</Filter>
-    </ClInclude>
-    <ClInclude Include="vendor\luabridge\LuaBridge\Map.h">
-      <Filter>vendor\luabridge</Filter>
-    </ClInclude>
-    <ClInclude Include="vendor\luabridge\LuaBridge\RefCountedObject.h">
-      <Filter>vendor\luabridge</Filter>
-    </ClInclude>
-    <ClInclude Include="vendor\luabridge\LuaBridge\RefCountedPtr.h">
-      <Filter>vendor\luabridge</Filter>
-    </ClInclude>
-    <ClInclude Include="vendor\luabridge\LuaBridge\UnorderedMap.h">
-      <Filter>vendor\luabridge</Filter>
-    </ClInclude>
-    <ClInclude Include="vendor\luabridge\LuaBridge\Vector.h">
-      <Filter>vendor\luabridge</Filter>
-    </ClInclude>
-    <ClInclude Include="vendor\luabridge\LuaBridge\detail\CFunctions.h">
-      <Filter>vendor\luabridge\detail</Filter>
-    </ClInclude>
-    <ClInclude Include="vendor\luabridge\LuaBridge\detail\ClassInfo.h">
-      <Filter>vendor\luabridge\detail</Filter>
-    </ClInclude>
-    <ClInclude Include="vendor\luabridge\LuaBridge\detail\Config.h">
-      <Filter>vendor\luabridge\detail</Filter>
-    </ClInclude>
-    <ClInclude Include="vendor\luabridge\LuaBridge\detail\Constructor.h">
-      <Filter>vendor\luabridge\detail</Filter>
-    </ClInclude>
-    <ClInclude Include="vendor\luabridge\LuaBridge\detail\dump.h">
-      <Filter>vendor\luabridge\detail</Filter>
-    </ClInclude>
-    <ClInclude Include="vendor\luabridge\LuaBridge\detail\FuncTraits.h">
-      <Filter>vendor\luabridge\detail</Filter>
-    </ClInclude>
-    <ClInclude Include="vendor\luabridge\LuaBridge\detail\Iterator.h">
-      <Filter>vendor\luabridge\detail</Filter>
-    </ClInclude>
-    <ClInclude Include="vendor\luabridge\LuaBridge\detail\LuaException.h">
-      <Filter>vendor\luabridge\detail</Filter>
-    </ClInclude>
-    <ClInclude Include="vendor\luabridge\LuaBridge\detail\LuaHelpers.h">
-      <Filter>vendor\luabridge\detail</Filter>
-    </ClInclude>
-    <ClInclude Include="vendor\luabridge\LuaBridge\detail\LuaRef.h">
-      <Filter>vendor\luabridge\detail</Filter>
-    </ClInclude>
-    <ClInclude Include="vendor\luabridge\LuaBridge\detail\Namespace.h">
-      <Filter>vendor\luabridge\detail</Filter>
-    </ClInclude>
-    <ClInclude Include="vendor\luabridge\LuaBridge\detail\Security.h">
-      <Filter>vendor\luabridge\detail</Filter>
-    </ClInclude>
-    <ClInclude Include="vendor\luabridge\LuaBridge\detail\Stack.h">
-      <Filter>vendor\luabridge\detail</Filter>
-    </ClInclude>
-    <ClInclude Include="vendor\luabridge\LuaBridge\detail\TypeList.h">
-      <Filter>vendor\luabridge\detail</Filter>
-    </ClInclude>
-    <ClInclude Include="vendor\luabridge\LuaBridge\detail\TypeTraits.h">
-      <Filter>vendor\luabridge\detail</Filter>
-    </ClInclude>
-    <ClInclude Include="vendor\luabridge\LuaBridge\detail\Userdata.h">
-      <Filter>vendor\luabridge\detail</Filter>
-    </ClInclude>
-    <ClInclude Include="src\core\sids.h">
-      <Filter>src\core</Filter>
-    </ClInclude>
-    <ClInclude Include="src\graphics\Imager2D.h" />
-    <ClInclude Include="src\event\ControlMap.h" />
-    <ClInclude Include="src\core\Scoper.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\audio\Player.cpp">
+      <Filter>src\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="src\audio\RingBuffer.cpp">
+      <Filter>src\audio</Filter>
+    </ClCompile>
     <ClCompile Include="src\core\App.cpp">
       <Filter>src\core</Filter>
     </ClCompile>
@@ -1433,6 +1460,9 @@
     <ClCompile Include="src\core\Scheduler.cpp">
       <Filter>src\core</Filter>
     </ClCompile>
+    <ClCompile Include="src\core\Scoper.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
     <ClCompile Include="src\core\State.cpp">
       <Filter>src\core</Filter>
     </ClCompile>
@@ -1444,6 +1474,12 @@
     </ClCompile>
     <ClCompile Include="src\core\physShapes.cpp">
       <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\sids.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\event\ControlMap.cpp">
+      <Filter>src\event</Filter>
     </ClCompile>
     <ClCompile Include="src\event\KeyEvent.cpp">
       <Filter>src\event</Filter>
@@ -1485,6 +1521,9 @@
       <Filter>src\graphics</Filter>
     </ClCompile>
     <ClCompile Include="src\graphics\IBatchRenderable2D.cpp">
+      <Filter>src\graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\Imager2D.cpp">
       <Filter>src\graphics</Filter>
     </ClCompile>
     <ClCompile Include="src\graphics\ParticleRenderer.cpp">
@@ -1541,6 +1580,9 @@
     <ClCompile Include="src\layer\LuaLayer.cpp">
       <Filter>src\layer</Filter>
     </ClCompile>
+    <ClCompile Include="src\layer\SoundLayer.cpp">
+      <Filter>src\layer</Filter>
+    </ClCompile>
     <ClCompile Include="src\layer\imgui_build.cpp">
       <Filter>src\layer</Filter>
     </ClCompile>
@@ -1583,11 +1625,5 @@
     <ClCompile Include="vendor\stb_image\stb_image.cpp">
       <Filter>vendor\stb_image</Filter>
     </ClCompile>
-    <ClCompile Include="src\core\sids.cpp">
-      <Filter>src\core</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\Imager2D.cpp" />
-    <ClCompile Include="src\event\ControlMap.cpp" />
-    <ClCompile Include="src\core\Scoper.cpp" />
   </ItemGroup>
 </Project>

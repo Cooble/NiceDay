@@ -29,10 +29,7 @@ private:
 
 
 public:
-	GUITestLayer()
-	{
-		m_name = "gui_test";
-	};
+	GUITestLayer();
 
 	inline void onAttach() override
 	{

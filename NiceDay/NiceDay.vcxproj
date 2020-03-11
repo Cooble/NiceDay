@@ -77,21 +77,21 @@
       <PrecompiledHeaderFile>ndpch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;ND_PLATFORM_WINDOWS;GLFW_INCLUDE_NONE;ND_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>src;vendor\spdlog\include;vendor\glfw\include;vendor\glad\include;vendor\imgui;vendor\glm;vendor\stb_image;vendor\lua\src;vendor\lua\src\lua;vendor\luabridge;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src;vendor\spdlog\include;vendor\glfw\include;vendor\glad\include;vendor\imgui;vendor\glm;vendor\stb_image;vendor\lua\src;vendor\lua\src\lua;vendor\luabridge;vendor\portaudio_libs\include;vendor\libogg_libs\include;vendor\libvorbis_libs\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
       <MinimalRebuild>false</MinimalRebuild>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <BasicRuntimeChecks>StackFrameRuntimeCheck</BasicRuntimeChecks>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <Lib>
-      <AdditionalDependencies>opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opengl32.lib;portaudio_x64.lib;libogg.lib;libvorbis.lib;libvorbisfile.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>vendor\portaudio_libs\lib;vendor\libogg_libs\lib;vendor\libvorbis_libs\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -100,7 +100,7 @@
       <PrecompiledHeaderFile>ndpch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;ND_PLATFORM_WINDOWS;GLFW_INCLUDE_NONE;ND_RELEASE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>src;vendor\spdlog\include;vendor\glfw\include;vendor\glad\include;vendor\imgui;vendor\glm;vendor\stb_image;vendor\lua\src;vendor\lua\src\lua;vendor\luabridge;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src;vendor\spdlog\include;vendor\glfw\include;vendor\glad\include;vendor\imgui;vendor\glm;vendor\stb_image;vendor\lua\src;vendor\lua\src\lua;vendor\luabridge;vendor\portaudio_libs\include;vendor\libogg_libs\include;vendor\libvorbis_libs\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -116,7 +116,8 @@
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
     <Lib>
-      <AdditionalDependencies>opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opengl32.lib;portaudio_x64.lib;libogg.lib;libvorbis.lib;libvorbisfile.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>vendor\portaudio_libs\lib;vendor\libogg_libs\lib;vendor\libvorbis_libs\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Dist|x64'">
@@ -125,7 +126,7 @@
       <PrecompiledHeaderFile>ndpch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;ND_PLATFORM_WINDOWS;GLFW_INCLUDE_NONE;ND_DIST;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>src;vendor\spdlog\include;vendor\glfw\include;vendor\glad\include;vendor\imgui;vendor\glm;vendor\stb_image;vendor\lua\src;vendor\lua\src\lua;vendor\luabridge;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src;vendor\spdlog\include;vendor\glfw\include;vendor\glad\include;vendor\imgui;vendor\glm;vendor\stb_image;vendor\lua\src;vendor\lua\src\lua;vendor\luabridge;vendor\portaudio_libs\include;vendor\libogg_libs\include;vendor\libvorbis_libs\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -141,10 +142,13 @@
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
     <Lib>
-      <AdditionalDependencies>opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opengl32.lib;portaudio_x64.lib;libogg.lib;libvorbis.lib;libvorbisfile.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>vendor\portaudio_libs\lib;vendor\libogg_libs\lib;vendor\libvorbis_libs\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\audio\Player.h" />
+    <ClInclude Include="src\audio\RingBuffer.h" />
     <ClInclude Include="src\core\App.h" />
     <ClInclude Include="src\core\AppGlobals.h" />
     <ClInclude Include="src\core\Core.h" />
@@ -194,6 +198,7 @@
     <ClInclude Include="src\layer\LayerStack.h" />
     <ClInclude Include="src\layer\LuaExampel.h" />
     <ClInclude Include="src\layer\LuaLayer.h" />
+    <ClInclude Include="src\layer\SoundLayer.h" />
     <ClInclude Include="src\memory\Pool.h" />
     <ClInclude Include="src\memory\StackAllocator.h" />
     <ClInclude Include="src\memory\stack_allocator.h" />
@@ -598,6 +603,8 @@
     <ClInclude Include="vendor\stb_image\stb_image_write.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\audio\Player.cpp" />
+    <ClCompile Include="src\audio\RingBuffer.cpp" />
     <ClCompile Include="src\core\App.cpp" />
     <ClCompile Include="src\core\AppGlobals.cpp" />
     <ClCompile Include="src\core\Input.cpp" />
@@ -643,6 +650,7 @@
     <ClCompile Include="src\layer\LuaExampel.cpp" />
     <ClCompile Include="src\layer\LuaExampel_wrap.cpp" />
     <ClCompile Include="src\layer\LuaLayer.cpp" />
+    <ClCompile Include="src\layer\SoundLayer.cpp" />
     <ClCompile Include="src\layer\imgui_build.cpp" />
     <ClCompile Include="src\memory\Pool.cpp" />
     <ClCompile Include="src\memory\StackAllocator.cpp" />
