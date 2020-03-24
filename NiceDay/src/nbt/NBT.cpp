@@ -31,3 +31,17 @@ void NBT::destroy()
 {
 	NBT::destroy(this);
 }
+
+static char buf[1024];
+std::string readStringFromFile(const char* filePath)
+{
+	FILE* f = fopen(filePath, "r");
+	if (!f)
+		return "";
+	int read = 0;
+	std::string out;
+	while((read = fread(buf, 1, 1024, f))!=0)
+		out += std::string_view(buf,read);
+	fclose(f);
+	return out;
+}

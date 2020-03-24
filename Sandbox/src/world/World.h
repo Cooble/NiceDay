@@ -403,7 +403,7 @@ public:
 
 	inline WorldEntity* getLoadedTileEntity(int x, int y)
 	{
-		auto f = m_tile_entity_map.find(Phys::Vecti(x, y).toInt64());
+		auto f = m_tile_entity_map.find(Phys::toInt64(x,y));
 		if (f == m_tile_entity_map.end())
 			return nullptr;
 		return m_entity_manager.entity(f->second);

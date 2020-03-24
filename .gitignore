@@ -10,6 +10,8 @@ NiceDay/vendor/libogg/
 NiceDay/vendor/libvorbis/
 NiceDay/vendor/oggtest/
 profiles/
+res/audio/
+res/lua/temp/
 
 
 # Files
@@ -17,3 +19,4 @@ profiles/
 *.world
 *.world.entity
 *imgui.ini
+*lua_editor_settings.dat

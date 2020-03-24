@@ -92,7 +92,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PostBuildEvent>
-      <Command>copy "..\NiceDay\vendor\portaudio_libs\lib\*.dll" "..\bin\Debug-windows-x86_64\$(ProjectName)"</Command>
+      <Command>copy /Y "..\NiceDay\vendor\portaudio_libs\lib\Debug\*.dll" "..\bin\Debug-windows-x86_64\$(ProjectName)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -116,7 +116,7 @@
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
     <PostBuildEvent>
-      <Command>copy "..\NiceDay\vendor\portaudio_libs\lib\*.dll" "..\bin\Release-windows-x86_64\$(ProjectName)"</Command>
+      <Command>copy /Y "..\NiceDay\vendor\portaudio_libs\lib\Release\*.dll" "..\bin\Release-windows-x86_64\$(ProjectName)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Dist|x64'">
@@ -140,7 +140,7 @@
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
     <PostBuildEvent>
-      <Command>copy "..\NiceDay\vendor\portaudio_libs\lib\*.dll" "..\bin\Dist-windows-x86_64\$(ProjectName)"</Command>
+      <Command>copy /Y "..\NiceDay\vendor\portaudio_libs\lib\Dist\*.dll" "..\bin\Dist-windows-x86_64\$(ProjectName)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>

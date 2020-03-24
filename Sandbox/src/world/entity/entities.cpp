@@ -25,14 +25,14 @@ using namespace glm;
 
 
 //return if we have intersection
-inline static bool findBlockIntersection(World& w, const Phys::Vect& entityPos, const Phys::Polygon& entityBound)
+inline static bool findBlockIntersection(World& w, const glm::vec2& entityPos, const Phys::Polygon& entityBound)
 {
 	auto& entityRectangle = entityBound.getBounds();
 	for (int x = entityRectangle.x0 - 1; x < ceil(entityRectangle.x1) + 1; ++x)
 	{
 		for (int y = entityRectangle.y0 - 1; y < ceil(entityRectangle.y1) + 1; ++y)
 		{
-			Phys::Vect blockPos(x, y);
+			glm::vec2 blockPos(x, y);
 			blockPos += entityPos;
 
 			auto stru = w.getBlock((int)blockPos.x, (int)blockPos.y);
@@ -51,7 +51,7 @@ inline static bool findBlockIntersection(World& w, const Phys::Vect& entityPos, 
 	return false;
 }
 
-inline static float getFloorHeight(World& w, const Phys::Vect& entityPos, const Phys::Rectangle& entityRectangle)
+inline static float getFloorHeight(World& w, const glm::vec2& entityPos, const Phys::Rectangle& entityRectangle)
 {
 	float lineY = std::numeric_limits<float>::lowest();
 	for (int i = 0; i < 2; ++i)
@@ -60,8 +60,8 @@ inline static float getFloorHeight(World& w, const Phys::Vect& entityPos, const 
 		{
 			float x = entityRectangle.x0 + entityPos.x + i * entityRectangle.width();
 			float y = entityRectangle.y0 + entityPos.y + yy;
-			auto& pointDown0 = Phys::Vect(x, y);
-			auto& pointDown1 = Phys::Vect(x, y - 10000);
+			auto& pointDown0 = glm::vec2(x, y);
+			auto& pointDown1 = glm::vec2(x, y - 10000);
 
 			auto stru = w.getBlock((int)pointDown0.x, (int)pointDown0.y);
 			if (stru == nullptr || stru->block_id == BLOCK_AIR)
@@ -71,7 +71,7 @@ inline static float getFloorHeight(World& w, const Phys::Vect& entityPos, const 
 				continue;
 
 			auto blockBounds = block.getCollisionBox((int)pointDown0.x, (int)pointDown0.y, *stru).copy();
-			auto blockPos = Phys::Vect((int)pointDown0.x, (int)pointDown0.y);
+			auto blockPos = glm::vec2((int)pointDown0.x, (int)pointDown0.y);
 			for (int j = 0; j < blockBounds.size(); ++j)
 			{
 				auto& v0 = blockBounds[j] + blockPos;
@@ -86,7 +86,7 @@ inline static float getFloorHeight(World& w, const Phys::Vect& entityPos, const 
 					lineY = max(lineY, v0.y);
 
 				auto v = Phys::intersectLines(v0, v1, pointDown0, pointDown1);
-				if (v.isValid() && v.y < entityRectangle.y1 + entityPos.y)
+				if (Phys::isValid(v) && v.y < entityRectangle.y1 + entityPos.y)
 					lineY = max(lineY, v.y);
 			}
 		}
@@ -145,7 +145,7 @@ void PhysEntity::computePhysics(World& w)
 				break;
 		}
 	}*/
-	float lengthCab = Phys::asVect(m_velocity).length();
+	float lengthCab = glm::length(m_velocity);
 
 	if (lengthCab > maxDistancePerStep)
 	{
@@ -336,7 +336,7 @@ void PhysEntity::load(NBT& src)
 bool Bullet::checkCollisions(World& w, float dt)
 {
 	m_pos += m_velocity * dt;
-	m_angle = Phys::asVect(m_velocity).angleDegrees();
+	m_angle = Phys::angleDegrees(m_velocity);
 	auto blokk = w.getBlock(m_pos.x, m_pos.y);
 	if (blokk)
 	{
@@ -346,7 +346,7 @@ bool Bullet::checkCollisions(World& w, float dt)
 			auto& blokTemplate = BlockRegistry::get().getBlock(blok.block_id);
 			if (blokTemplate.hasCollisionBox() &&
 				Phys::contains(blokTemplate.getCollisionBox(m_pos.x, m_pos.y, blok),
-				               Phys::Vect(m_pos.x - (int)m_pos.x, m_pos.y - (int)m_pos.y)))
+				               glm::vec2(m_pos.x - (int)m_pos.x, m_pos.y - (int)m_pos.y)))
 			{
 				if (onBlockHit(w, m_pos.x, m_pos.y))
 					return true;
@@ -381,7 +381,7 @@ bool Bullet::checkCollisions(World& w, float dt)
 						continue; //no interaction with other bullets
 				
 					if (e->getID() != m_owner_id && d->getCollisionBox().size() != 0 &&
-						Phys::contains(d->getCollisionBox(), Phys::asVect(m_pos - d->getPosition())))
+						Phys::contains(d->getCollisionBox(), m_pos - d->getPosition()))
 					{
 						if (onEntityHit(w, e))
 							return true;
@@ -405,7 +405,7 @@ void Bullet::update(World& w)
 		return;
 	}
 	PhysEntity::computeVelocity(w);
-	auto lengthCab = Phys::asVect(m_velocity).length();
+	auto lengthCab = glm::length(m_velocity);
 	if (lengthCab > maxDistancePerStep)
 	{
 		int dividor = ceil(lengthCab / maxDistancePerStep);
@@ -749,7 +749,7 @@ void Creature::render(BatchRenderer2D& renderer)
 			{
 				for (int y = entityRectangle.y0-1; y < ceil(entityRectangle.y1)+1; ++y)
 				{
-					Phys::Vect blockPos(x, y);
+					glm::vec2 blockPos(x, y);
 					blockPos += m_pos;
 
 					auto stru = Stats::world->getLoadedBlockPointer((int)blockPos.x, (int)blockPos.y);
@@ -980,7 +980,8 @@ void EntityTNT::boom(World& w)
 	{
 		for (int j = -7; j < 7; ++j)
 		{
-			if (Phys::Vect(i, j).lengthCab() < 6)
+		
+			if ((i+ j) < 6)
 			{
 				if (auto point = w.getBlock(m_pos.x + i, m_pos.y + j))
 					if (point && !point->isAir()) {

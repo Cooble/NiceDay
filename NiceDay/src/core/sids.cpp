@@ -2,9 +2,9 @@
 #include "sids.h"
 
 
-std::unordered_map<uint64_t, std::string> StringIdLookup::s_strings;
+std::unordered_map<Strid, std::string> StringIdLookup::s_strings;
 
-void StringIdLookup::insertString(uint64_t key, const std::string& s)
+void StringIdLookup::insertString(Strid key, const std::string& s)
 {
 	auto f = s_strings.find(key);
 	if(f!=s_strings.end()&&f->first!=key)
@@ -30,7 +30,7 @@ StringId StringIdLookup::sids(const std::string& s)
 	return e;
 }
 
-uint64_t StringIdLookup::sid(const std::string& s)
+Strid StringIdLookup::sid(const std::string& s)
 {
 	StringId e(s.c_str());
 	StringIdLookup::insertString(e(), s);
@@ -44,7 +44,7 @@ StringId StringIdLookup::sids(const char* s)
 	return e;
 }
 
-uint64_t StringIdLookup::sid(const char* s)
+Strid StringIdLookup::sid(const char* s)
 {
 	StringId e(s);
 	StringIdLookup::insertString(e(), std::string(s));

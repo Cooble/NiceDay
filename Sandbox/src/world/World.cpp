@@ -1112,7 +1112,7 @@ void World::loadEntity(WorldEntity* pEntity)
 
 	if (dynamic_cast<TileEntity*>(pEntity))
 	{
-		m_tile_entity_map[Phys::Vecti(pEntity->getPosition().x, pEntity->getPosition().y).toInt64()] = pEntity->getID();
+		m_tile_entity_map[Phys::toInt64(pEntity->getPosition().x, pEntity->getPosition().y)] = pEntity->getID();
 	}
 	else
 		m_entity_array.push_back(id);

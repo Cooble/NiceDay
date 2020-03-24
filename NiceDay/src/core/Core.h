@@ -28,6 +28,11 @@ public:
 	inline long long getUS();
 
 	~TimerStaper();
+
+	static inline uint64_t getNowMicros()
+	{
+		return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+	}
 };
 
 inline TimerStaper::TimerStaper(std::string name): namee(std::move(name)),

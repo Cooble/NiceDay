@@ -42,16 +42,16 @@ constexpr unsigned long long stringIdHash(const char* str)
 // end FNV-1a hash
 
 
+typedef uint64_t Strid;
 // String ID
 //-----------------------------------------------------------------------------
-
 class StringId
 {
 private:
-	uint64_t m_data;
+	Strid m_data;
 public:
-	StringId() : StringId(static_cast<uint64_t>(0)) { }
-	StringId(uint64_t data) : m_data(data) { }
+	StringId() : StringId(static_cast<Strid>(0)) { }
+	StringId(Strid data) : m_data(data) { }
 	StringId(const char* str) : m_data(stringIdHash(str)) { }
 
 	static StringId concat(const StringId& sid, const char* str)
@@ -64,9 +64,9 @@ public:
 		return StringId(stringIdHashConcat(m_data, str));
 	}
 
-	uint64_t getValue() const { return m_data; }
+	Strid getValue() const { return m_data; }
 
-	uint64_t operator()()const {return m_data;}
+	Strid operator()()const {return m_data;}
 
 };
 
@@ -97,16 +97,16 @@ class StringIdLookup
 private:
 	StringIdLookup() = default;
 	
-	static std::unordered_map<uint64_t, std::string> s_strings;
+	static std::unordered_map<Strid, std::string> s_strings;
 public:
-	static void insertString(uint64_t key, const std::string& s);
-	static const std::string* getString(uint64_t key);
+	static void insertString(Strid key, const std::string& s);
+	static const std::string* getString(Strid key);
 
 	static StringId sids(const std::string& s);
-	static uint64_t sid(const std::string& s);
+	static Strid sid(const std::string& s);
 
 	static StringId sids(const char* s);
-	static uint64_t sid(const char* s);
+	static Strid sid(const char* s);
 };
 
 

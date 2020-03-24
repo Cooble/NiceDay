@@ -3,7 +3,7 @@
 #include "entities.h"
 
 
-void PathTracer::init(World* world, EntityID physEntity,Phys::Vect acceleration,Phys::Vect maxVelocity)
+void PathTracer::init(World* world, EntityID physEntity,glm::vec2 acceleration,glm::vec2 maxVelocity)
 {
 	m_world = world;
 	m_phys_entity = physEntity;
@@ -26,7 +26,7 @@ TaskResponse PathTracer::update()
 		m_running = false;
 		return TaskResponse::FAIL;
 	}
-	Phys::Vect vecto;
+	glm::vec2 vecto;
 	if(m_entity_target!=ENTITY_ID_INVALID)
 	{
 		//get target entity ID
@@ -43,19 +43,19 @@ TaskResponse PathTracer::update()
 	}
 	
 
-	if (vecto.lengthSquared() < std::pow(0.5f,2)) {
+	if (glm::length2(vecto) < std::pow(0.5f,2)) {
 		m_running = false;
 		return TaskResponse::SUCCESS;
 	}
 	if(entity->isOnFloor()&&(entity->getBlockageState()== PhysEntity::RIGHT||entity->getBlockageState()==PhysEntity::LEFT))
 	{
-		if (m_last_jump.distanceSquared(entity->getPosition())>0.1f) {
+		if (glm::distance2(m_last_jump,entity->getPosition())>0.1f) {
 			entity->getVelocity().y = 100;//jmp
 			m_last_jump = entity->getPosition();
 		}
 	}
 	else if(entity->isOnFloor())
-		m_last_jump = Phys::Vect(std::numeric_limits<float>::max());
+		m_last_jump = glm::vec2(std::numeric_limits<float>::max());
 	if(abs(entity->getVelocity().x)<=m_max_velocity.x)
 		entity->getAcceleration().x = abs(vecto.x)/vecto.x * m_acceleration.x;
 	else entity->getAcceleration().x = 0;

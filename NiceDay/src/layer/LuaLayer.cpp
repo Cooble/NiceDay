@@ -7,6 +7,8 @@
 #include "memory/stack_allocator.h"
 #include <lua.hpp>
 #include <LuaBridge/LuaBridge.h>
+#include "audio/Player.h"
+#include "imguifiledialog/ImGuiFileDialog.h"
 
 //-----------------------------------------------------------------------------
 // [SECTION] Example App: Debug Console / ShowExampleAppConsole()
@@ -16,6 +18,31 @@
 #define LUACON_TRACE_PREF "[trace]"
 #define LUACON_INFO_PREF "[info_]"
 #define LUACON_WARN_PREF "[warn_]"
+
+static NBT* s_settings;
+static const char* s_settings_file = "lua_editor_settings.dat";
+
+struct FileOpen
+{
+	std::string filePath;
+	std::string name;
+	std::string text;
+	bool saved;
+};
+
+static std::vector<FileOpen> s_files;
+static bool s_needs_settings_load = false;
+static int s_currentFileIndex = 0;
+
+
+static char text[1024 * 32];
+static const char* textExample =
+	"--Basic Lua Script\n"
+	"a = 10\n"
+	"b= 35\n"
+	"c = (a+b)*b/2\n"
+	"\n"
+	"ND_TRACE(c)\n\0";
 
 // Demonstrate creating a simple console window, with scrolling, filtering, completion and history.
 // For the console example, here we are using a more C++ like approach of declaring a class to hold the data and the functions.
@@ -45,7 +72,7 @@ struct LuaConsole
 		// "classify" is only here to provide an example of "C"+[tab] completing to "CL" and displaying matches.
 		AutoScroll = true;
 		ScrollToBottom = true;
-		AddLog("Welcome to Dear ImGui!");
+	//	AddLog("Welcome to Dear ImGui!");
 	}
 
 	~LuaConsole()
@@ -119,37 +146,226 @@ struct LuaConsole
 
 	void Draw(bool* p_open)
 	{
+		static bool keepDefaultFile = false;
+		static bool fileSaved = true;
+		static bool scriptEditOpen = false;
+		if (s_files.empty())
+		{
+			s_files.push_back({"", "unsaved", "--something interesting", false});
+			s_currentFileIndex = 0;
+		}
 		if (show_script_editor)
 		{
 			ImGui::SetNextWindowSize(ImVec2(400, 500), ImGuiCond_FirstUseEver);
-			if (ImGui::Begin("Script Editor", p_open))
+			if (ImGui::Begin("Script Editor", &show_script_editor))
 			{
+				ImGui::TextColored({0, 1, 0, 1},
+				                   (s_files[s_currentFileIndex].filePath + (s_files[s_currentFileIndex].saved ? "" : " *")).
+				                   c_str());
+
 				// Note: we are using a fixed-sized buffer for simplicity here. See ImGuiInputTextFlags_CallbackResize
-			// and the code in misc/cpp/imgui_stdlib.h for how to setup InputText() for dynamically resizing strings.
-				static char text[1024 * 32] =
-					"--Basic Lua Script\n"
-					"a = 10\n"
-					"b= 35\n"
-					"c = (a+b)*b/2\n"
-					"\n"
-					"ND_TRACE(c)\n";
-				
-				if (ImGui::SmallButton("Run script"))
+				// and the code in misc/cpp/imgui_stdlib.h for how to setup InputText() for dynamically resizing strings.
+
+
+				if (ImGui::SmallButton("Run"))
 				{
 					layer->runScriptInConsole(nullptr, text);
 				}
 				ImGui::SameLine();
+				if (ImGui::SmallButton("AsyncRun"))
+				{
+					std::string s = text;
+					s = "local asddfaqq = function()\n" + s + "\nend\nregisterCoroutine(asddfaqq)";
+					layer->runScriptInConsole(nullptr, s.c_str());
+				}
+
+				ImGui::SameLine();
 				if (ImGui::SmallButton("Clear"))
 				{
-					memset(text, 0, IM_ARRAYSIZE(text));
+					s_files[s_currentFileIndex].text = "";
+					s_files[s_currentFileIndex].saved = false;
+					ZeroMemory(text, IM_ARRAYSIZE(text));
+				}
+				ImGui::SameLine();
+				if (ImGui::SmallButton("New"))
+				{
+					int length = strlen(text);
+					s_files[s_currentFileIndex].text = std::string(text);
+
+					s_files.push_back({"", "unsaved", "--example", false});
+					s_currentFileIndex = s_files.size() - 1;
+					ZeroMemory(text, IM_ARRAYSIZE(text));
+					memcpy(&text, s_files[s_currentFileIndex].text.c_str(),
+					       strlen(s_files[s_currentFileIndex].text.c_str()));
+				}
+				ImGui::SameLine();
+				if (ImGui::SmallButton("Close"))
+				{
+					s_files.erase(s_files.begin() + s_currentFileIndex);
+					if (s_files.empty())
+					{
+						s_files.push_back({"", "unsaved", "--example", false});
+						s_currentFileIndex = 0;
+						ZeroMemory(text, IM_ARRAYSIZE(text));
+						memcpy(&text, s_files[s_currentFileIndex].text.c_str(),
+						       strlen(s_files[s_currentFileIndex].text.c_str()));
+					}
+					else
+					{
+						if (s_currentFileIndex == s_files.size())
+							s_currentFileIndex--;
+						ZeroMemory(text, IM_ARRAYSIZE(text));
+						memcpy(&text, s_files[s_currentFileIndex].text.c_str(),
+						       strlen(s_files[s_currentFileIndex].text.c_str()));
+					}
+				}
+				ImGui::SameLine();
+				if (ImGui::SmallButton("Save"))
+				{
+					if (!s_files[s_currentFileIndex].filePath.empty())
+					{
+						FILE* file = fopen(s_files[s_currentFileIndex].filePath.c_str(), "w");
+						if (file)
+						{
+							size_t length = strlen(text);
+							size_t written = 0;
+							while (length != 0)
+							{
+								written += fwrite(text + written, 1, length, file);
+								length -= written;
+							}
+							fclose(file);
+							keepDefaultFile = true;
+						}
+						s_files[s_currentFileIndex].saved = true;
+					}
+					else
+					{
+						keepDefaultFile = false;
+						ImGuiFileDialog::Instance()->OpenDialog("SaveFileDlgKey", "Save File", ".lua\0\0", ".");
+					}
+				}
+				ImGui::SameLine();
+				if (ImGui::SmallButton("Save As"))
+				{
+					keepDefaultFile = true;
+					ImGuiFileDialog::Instance()->OpenDialog("SaveFileDlgKey", "Save File", ".lua\0\0", ".");
+				}
+				// display
+				if (ImGuiFileDialog::Instance()->FileDialog("SaveFileDlgKey"))
+				{
+					// action if OK
+					if (ImGuiFileDialog::Instance()->IsOk == true)
+					{
+						std::string filePathName = ImGuiFileDialog::Instance()->GetFilepathName();
+						std::string filePath = ImGuiFileDialog::Instance()->GetCurrentPath();
+
+						FILE* file = fopen(filePathName.c_str(), "w");
+						if (file)
+						{
+							auto index = strlen(text);
+							size_t length = index + 1;
+							size_t written = 0;
+							while (length != 0)
+							{
+								written += fwrite(text + written, 1, length, file);
+								length -= written;
+							}
+							fclose(file);
+
+							if (s_files[s_currentFileIndex].filePath == "")
+							{
+								s_files[s_currentFileIndex].filePath = filePathName;
+								s_files[s_currentFileIndex].name = filePathName.substr(filePath.size() + 1);
+								s_files[s_currentFileIndex].saved = true;
+							}
+						}
+					}
+					// close
+					ImGuiFileDialog::Instance()->CloseDialog("SaveFileDlgKey");
+				}
+				ImGui::SameLine();
+				if (ImGui::SmallButton("Open"))
+				{
+					ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", "Open File", ".lua\0\0", ".");
+				}
+				// display
+				if (ImGuiFileDialog::Instance()->FileDialog("ChooseFileDlgKey"))
+				{
+					// action if OK
+					if (ImGuiFileDialog::Instance()->IsOk == true)
+					{
+						int length = strlen(text);
+						s_files[s_currentFileIndex].text = std::string(text);
+
+						std::string filePathName = ImGuiFileDialog::Instance()->GetFilepathName();
+						std::string filePath = ImGuiFileDialog::Instance()->GetCurrentPath();
+
+						FILE* file = fopen(filePathName.c_str(), "r");
+						if (file)
+						{
+							//ZeroMemory(text, IM_ARRAYSIZE(text));
+							size_t lengthRead = 0;
+							size_t currentRead;
+							while ((currentRead = fread(text + lengthRead, 1, 4096, file)) > 0)
+							{
+								lengthRead += currentRead;
+							}
+							fclose(file);
+							ZeroMemory(text+ lengthRead, IM_ARRAYSIZE(text)- lengthRead);
+
+							s_files.push_back({filePathName, "", "", true});
+							s_currentFileIndex = s_files.size() - 1;
+							s_files[s_currentFileIndex].name = filePathName.substr(filePath.size() + 1);
+							s_files[s_currentFileIndex].text = std::string(text);
+						}
+					}
+					// close
+					ImGuiFileDialog::Instance()->CloseDialog("ChooseFileDlgKey");
+				}
+				ImGui::SameLine();
+				ImGui::SmallButton("       ");
+				for (int i = 0; i < s_files.size(); ++i)
+				{
+					auto& file = s_files[i];
+					ImGui::SameLine();
+					std::string title = file.name;
+					bool selected = i == s_currentFileIndex;
+					if (selected)
+					{
+						title = "[" + title + "]";
+						ImGui::PushStyleColor(ImGuiCol_Button, {0.f, 1.f, 0.f, 1.f});
+						ImGui::PushStyleColor(ImGuiCol_Text, {0.f, 0.f, 0.f, 1.f});
+						ImGui::PushStyleColor(ImGuiCol_ButtonHovered, {0.f, 1.f, 0.f, 1.f});
+						ImGui::PushStyleColor(ImGuiCol_ButtonActive, {0.f, 1.f, 0.f, 1.f});
+					}
+					if (ImGui::SmallButton(title.c_str()))
+					{
+						if (i != s_currentFileIndex)
+						{
+							int length = strlen(text);
+							s_files[s_currentFileIndex].text = std::string(text);
+							s_currentFileIndex = i;
+							ZeroMemory(text, IM_ARRAYSIZE(text));
+							memcpy(&text, s_files[s_currentFileIndex].text.c_str(),
+							       strlen(s_files[s_currentFileIndex].text.c_str()));
+						}
+					}
+					if (selected)
+					{
+						ImGui::PopStyleColor();
+						ImGui::PopStyleColor();
+						ImGui::PopStyleColor();
+						ImGui::PopStyleColor();
+					}
 				}
 				static ImGuiInputTextFlags flags = ImGuiInputTextFlags_AllowTabInput;
 				//ImGui::CheckboxFlags("ImGuiInputTextFlags_ReadOnly", (unsigned int*)&flags, ImGuiInputTextFlags_ReadOnly);
 				//ImGui::CheckboxFlags("ImGuiInputTextFlags_AllowTabInput", (unsigned int*)&flags, ImGuiInputTextFlags_AllowTabInput);
 				//ImGui::CheckboxFlags("ImGuiInputTextFlags_CtrlEnterForNewLine", (unsigned int*)&flags, ImGuiInputTextFlags_CtrlEnterForNewLine);
-				ImGui::InputTextMultiline("##source", text, IM_ARRAYSIZE(text),
-					ImVec2(-1.0f, -1.f), flags);
-				
+				if (ImGui::InputTextMultiline("##source", text, IM_ARRAYSIZE(text),
+				                              ImVec2(-1.0f, -1.f), flags))
+					s_files[s_currentFileIndex].saved = false;
 			}
 			ImGui::End();
 		}
@@ -160,23 +376,29 @@ struct LuaConsole
 			return;
 		}
 
-		ImGui::PushItemWidth(ImGui::GetFontSize() * -12);           // Use fixed width for labels (by passing a negative value), the rest goes to widgets. We choose a width proportional to our font size.
+		ImGui::PushItemWidth(ImGui::GetFontSize() * -12);
+		// Use fixed width for labels (by passing a negative value), the rest goes to widgets. We choose a width proportional to our font size.
+		
+		
 		if (ImGui::BeginMenuBar())
 		{
-		
-			if (ImGui::BeginMenu("Windows"))
+			if (ImGui::Button("Script Editor"))
+			{
+				show_script_editor = !show_script_editor;
+			}
+			/*if (ImGui::BeginMenu("Windows"))
 			{
 				ImGui::MenuItem("Script editor", NULL, &show_script_editor);
-			
+
 				ImGui::EndMenu();
 			}
-			if (ImGui::BeginMenu("Help"))//needs to be here otherwise no menu will be visible
+			if (ImGui::BeginMenu("Help")) //needs to be here otherwise no menu will be visible
 			{
 				ImGui::EndMenu();
-			}
+			}*/
 			ImGui::EndMenuBar();
 		}
-		
+
 		/*if (ImGui::BeginMenuBar())
 		{
 			if (ImGui::BeginMenu("Windows"))
@@ -526,23 +748,59 @@ static int catch_panic(lua_State* L)
 	ND_ERROR("LUA PANIC ERROR: {}", message);
 	return 0;
 }
+
 static int nd_run_lua_file_script(lua_State* L)
 {
 	auto string = lua_tostring(L, 1);
 	s_lua_layer->runScriptFromFile(L, string);
 	return 0;
 }
+
 static int nd_exit(lua_State* L)
 {
 	s_lua_layer->closeConsole();
 	return 0;
 }
+
 static int vec2_to_string(lua_State* L)
 {
-	
 	s_lua_layer->closeConsole();
 	return 0;
 }
+
+//returns table with pairs of path and isDirectory
+static int ls(lua_State* L)
+{
+	if (!lua_isstring(L, 1))
+	{
+		ND_WARN("invalid lua argument");
+		return 0;
+	}
+	auto string = lua_tostring(L, 1);
+	if (!std::filesystem::is_directory(string))
+	{
+		ND_WARN("{} is not directory",string);
+		return 0;
+	}
+
+	lua_newtable(L);
+	int i = 0;
+	for (auto& p : std::filesystem::directory_iterator(string))
+	{
+		lua_pushnumber(L, i + 1); // parent table index
+		lua_newtable(L);
+		lua_pushstring(L, "path");
+		lua_pushstring(L, p.path().generic_string().c_str());
+		lua_settable(L, -3);
+		lua_pushstring(L, "isDirectory");
+		lua_pushboolean(L, p.is_directory());
+		lua_settable(L, -3);
+		lua_settable(L, -3);
+		i++;
+	}
+	return 1;
+}
+
 
 void LuaLayer::print_error(lua_State* state)
 {
@@ -553,6 +811,7 @@ void LuaLayer::print_error(lua_State* state)
 	ND_ERROR("LUA ERROR:\n {}", message);
 	lua_pop(state, 1);
 }
+
 class A
 {
 protected:
@@ -574,21 +833,92 @@ public:
 		printf("Hello, my name is %s!\n", this->name.c_str());
 	}
 };
-static glm::vec2 addVec2(glm::vec2& a,glm::vec2 b)
+
+static glm::vec2 addVec2(glm::vec2& a, glm::vec2 b)
 {
 	return a + b;
 }
+
 static void consumeVector(glm::vec2& vec)
 {
 	ND_INFO("we have a vec2 {},{}", vec.x, vec.y);
 }
-static glm::vec3 ad(const glm::vec3& a,const glm::vec3& b)
-{
-	return glm::vec3(a.x + b.x, a.y + b.y, a.z + b.z );
 
+static glm::vec3 ad(const glm::vec3& a, const glm::vec3& b)
+{
+	return glm::vec3(a.x + b.x, a.y + b.y, a.z + b.z);
 }
+
+static int playSound(lua_State* L)
+{
+	auto numberOfArgs = lua_gettop(L);
+	float volume = 1;
+	float pitch = 1;
+	if (numberOfArgs == 0)
+	{
+		ND_ERROR("Lua error invaliad number of args");
+		return 0;
+	}
+	const char* c = lua_tostring(L, 1);
+	if (numberOfArgs > 1)
+		volume = lua_tonumber(L, 2);
+	if (numberOfArgs > 2)
+		pitch = lua_tonumber(L, 3);
+	Sounder::get().playSound(c, volume, pitch);
+
+	return 0;
+}
+
+static int playMusic(lua_State* L)
+{
+	auto numberOfArgs = lua_gettop(L);
+	float volume = 1;
+	float pitch = 1;
+	if (numberOfArgs == 0)
+	{
+		ND_ERROR("Lua error invaliad number of args");
+		return 0;
+	}
+	const char* c = lua_tostring(L, 1);
+	if (numberOfArgs > 1)
+		volume = lua_tonumber(L, 2);
+	if (numberOfArgs > 2)
+		pitch = lua_tonumber(L, 3);
+	Sounder::get().playMusic(c, volume, pitch);
+
+	return 0;
+}
+
+static std::string s_couroutineFileSrc;
 void LuaLayer::onAttach()
 {
+	//settings save and load
+	{
+		ZeroMemory(text, IM_ARRAYSIZE(text));
+		s_settings = NBT::create();
+		BasicIStream ss = ND_BASICISTREAM_IN(s_settings_file);
+		if (ss.isOpen())
+		{
+			
+			s_settings->deserialize(&ss);
+			s_currentFileIndex = s_settings->get("current_file_index",(int)0);
+			for (int i = 0; i < s_settings->get("files_size", 0); ++i)
+			{
+				s_files.emplace_back();
+				auto& t = s_files[s_files.size() - 1];
+				t.filePath = s_settings->get<std::string>("filepath" + nd::to_string(i));
+				t.name = s_settings->get<std::string>("name" + nd::to_string(i));
+				t.saved = s_settings->get<bool>("saved" + nd::to_string(i));
+				t.text = s_settings->get<std::string>("text" + nd::to_string(i));
+				if(i==s_currentFileIndex)
+				{
+					ZeroMemory(text, IM_ARRAYSIZE(text));
+					memcpy(text, t.text.c_str(), t.text.size()+1);
+				}
+			}
+		}
+	}
+	
 	s_lua_layer = this;
 	m_console = new LuaConsole(this);
 
@@ -607,15 +937,44 @@ void LuaLayer::onAttach()
 	lua_register(m_L, "ND_RUN_FILE", nd_run_lua_file_script);
 	lua_register(m_L, "runf", nd_run_lua_file_script);
 	lua_register(m_L, "exit", nd_exit);
+	lua_register(m_L, "playSound", playSound);
+	lua_register(m_L, "playMusic", playMusic);
+	lua_register(m_L, "ls", ls);
 
 	loadGlmVec();
+	loadSoundHandle();
 	
 
+	s_couroutineFileSrc = readStringFromFile(ND_RESLOC("res/lua/coroutines.lua").c_str());
 	runScriptFromFile(m_L, "res/lua/startup.lua");
+	
+	
 }
 
 void LuaLayer::onDetach()
 {
+	BasicIStream ss = ND_BASICISTREAM_OUT(s_settings_file);
+	s_settings->clear();
+	if (ss.isOpen())
+	{
+		if(s_currentFileIndex!=-1)
+		s_files[s_currentFileIndex].text = std::string(text);
+		s_settings->set("files_size", (int)s_files.size());
+		s_settings->set("current_file_index", s_currentFileIndex);
+		for (int i = 0; i < s_files.size(); ++i)
+		{
+			auto& file = s_files[i];
+			s_settings->set("filepath" + nd::to_string(i), file.filePath);
+			s_settings->set("name" + nd::to_string(i), file.name);
+			s_settings->set("saved" + nd::to_string(i), file.saved);
+			s_settings->set("text" + nd::to_string(i), file.text);
+		}
+		
+		s_settings->serialize(&ss);
+	}
+	else
+		ND_WARN("cannot save lua settings");
+
 	lua_close(m_L);
 	delete m_console;
 }
@@ -676,25 +1035,60 @@ void LuaLayer::loadGlmVec()
 {
 	luabridge::getGlobalNamespace(m_L)
 		.beginClass<glm::vec2>("glmvec2")
-		.addConstructor<void(*) (float, float)>()
+		.addConstructor<void(*)(float, float)>()
 		.addData("x", &glm::vec2::x)
 		.addData("y", &glm::vec2::y)
 		.endClass();
 
 	luabridge::getGlobalNamespace(m_L)
 		.beginClass<glm::vec3>("glmvec3")
-		.addConstructor<void(*) (float, float, float)>()
+		.addConstructor<void(*)(float, float, float)>()
 		.addData("x", &glm::vec3::x)
 		.addData("y", &glm::vec3::y)
 		.addData("z", &glm::vec3::z)
 		.endClass();
 	luabridge::getGlobalNamespace(m_L)
 		.beginClass<glm::vec4>("glmvec4")
-		.addConstructor<void(*) (float, float, float, float)>()
+		.addConstructor<void(*)(float, float, float, float)>()
 		.addData("x", &glm::vec4::x)
 		.addData("y", &glm::vec4::y)
 		.addData("z", &glm::vec4::z)
 		.addData("w", &glm::vec4::w)
+		.endClass();
+}
+
+void LuaLayer::loadSoundHandle()
+{
+	luabridge::getGlobalNamespace(m_L)
+		.beginClass<SoundHandle>("Sound")
+		.addConstructor<void(*)()>()
+		.addFunction("open",&SoundHandle::open)
+		.addFunction("play",&SoundHandle::play)
+		.addFunction("pause",&SoundHandle::pause)
+		.addFunction("stop",&SoundHandle::stop)
+		.addFunction("setLoop",&SoundHandle::setLoop)
+		.addFunction("l",&SoundHandle::setLoop)
+		.addFunction("setPitch",&SoundHandle::setPitch)
+		.addFunction("p",&SoundHandle::setPitch)
+		.addFunction("setVolume",&SoundHandle::setVolume)
+		.addFunction("v",&SoundHandle::setVolume)
+		.addFunction("isPlaying",&SoundHandle::isPlaying)
+		.endClass();
+	
+	luabridge::getGlobalNamespace(m_L)
+		.beginClass<MusicHandle>("Music")
+		.addConstructor<void(*)()>()
+		.addFunction("open", &MusicHandle::open)
+		.addFunction("play", &MusicHandle::play)
+		.addFunction("pause", &MusicHandle::pause)
+		.addFunction("stop", &MusicHandle::stop)
+		.addFunction("setLoop", &MusicHandle::setLoop)
+		.addFunction("l", &MusicHandle::setLoop)
+		.addFunction("setPitch", &MusicHandle::setPitch)
+		.addFunction("p", &MusicHandle::setPitch)
+		.addFunction("setVolume", &MusicHandle::setVolume)
+		.addFunction("v", &MusicHandle::setVolume)
+		.addFunction("isPlaying", &MusicHandle::isPlaying)
 		.endClass();
 }
 
@@ -711,5 +1105,14 @@ void LuaLayer::onUpdate()
 			print_error(m_L);
 			return;
 		}
+	}
+	//call coroutes
+	luaL_loadstring(m_L, s_couroutineFileSrc.c_str());
+	auto result = lua_pcall(m_L, 0, LUA_MULTRET, 0);
+
+	if (result != LUA_OK)
+	{
+		print_error(m_L);
+		return;
 	}
 }

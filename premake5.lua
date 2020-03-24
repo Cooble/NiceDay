@@ -47,6 +47,8 @@ project "NiceDay"
 		"%{prj.name}/vendor/luabridge/**",
 		"%{prj.name}/vendor/stb_image/**.h",
 		"%{prj.name}/vendor/stb_image/**.cpp",
+        "%{prj.name}/vendor/imgui_filedialog/**.h",
+		"%{prj.name}/vendor/imgui_filedialog/**.cpp",
 	}
     defines
 	{
@@ -64,6 +66,7 @@ project "NiceDay"
 		"%{prj.name}/vendor/imgui",
 		"%{prj.name}/vendor/glm",
 		"%{prj.name}/vendor/stb_image",
+		"%{prj.name}/vendor/imgui_filedialog",
         "%{prj.name}/vendor/lua/src",
         "%{prj.name}/vendor/lua/src/lua",
         "%{prj.name}/vendor/luabridge",
@@ -90,9 +93,9 @@ project "NiceDay"
     
     libdirs 
     { 
-        "%{prj.name}/vendor/portaudio_libs/lib",
-        "%{prj.name}/vendor/libogg_libs/lib",
-        "%{prj.name}/vendor/libvorbis_libs/lib",
+        "%{prj.name}/vendor/portaudio_libs/lib/%{cfg.buildcfg}",
+        "%{prj.name}/vendor/libogg_libs/lib/%{cfg.buildcfg}",
+        "%{prj.name}/vendor/libvorbis_libs/lib/%{cfg.buildcfg}",
     }
 
 	filter "system:windows"
@@ -195,7 +198,7 @@ project "SandboxTest"
     filter "system:windows"
         postbuildcommands 
         {
-            "copy \"..\\NiceDay\\vendor\\portaudio_libs\\lib\\*.dll\" \"..\\bin\\" .. outputdir .. "\\%{prj.name}\""
+            "copy /Y \"..\\NiceDay\\vendor\\portaudio_libs\\lib\\%{cfg.buildcfg}\\*.dll\" \"..\\bin\\" .. outputdir .. "\\%{prj.name}\""
         }
 
 project "Sandbox"
@@ -274,5 +277,5 @@ project "Sandbox"
     filter "system:windows"
         postbuildcommands 
         {
-            "copy \"..\\NiceDay\\vendor\\portaudio_libs\\lib\\*.dll\" \"..\\bin\\" .. outputdir .. "\\%{prj.name}\""
+            "copy /Y \"..\\NiceDay\\vendor\\portaudio_libs\\lib\\%{cfg.buildcfg}\\*.dll\" \"..\\bin\\" .. outputdir .. "\\%{prj.name}\""
         }

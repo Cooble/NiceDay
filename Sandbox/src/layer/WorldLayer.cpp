@@ -661,7 +661,7 @@ void WorldLayer::onCreativeUpdate()
 				for (int i = 0; i < BULLET_COUNT; ++i)
 				{
 					auto bullet = (EntityRoundBullet*)EntityAllocator::createEntity(ENTITY_TYPE_ROUND_BULLET);
-					bullet->getPosition() = m_cam->getPosition() + Phys::Vect(0, 10.f).asGLM();
+					bullet->getPosition() = m_cam->getPosition() + glm::vec2(0, 10.f);
 					bullet->fire(3.14159f * 2 / BULLET_COUNT * i, 50.f / 60);
 					m_world->spawnEntity(bullet);
 				}
@@ -678,7 +678,7 @@ void WorldLayer::onCreativeUpdate()
 				{
 					counter = 0;
 					auto bullet = (EntityRoundBullet*)EntityAllocator::createEntity(ENTITY_TYPE_ROUND_BULLET);
-					bullet->getPosition() = m_cam->getPosition() + Phys::Vect(0, 1.f).asGLM();
+					bullet->getPosition() = m_cam->getPosition() + glm::vec2(0, 1.f);
 					bullet->fire({CURSOR_X, CURSOR_Y}, 50.f / 60);
 					bullet->setOwner(getPlayer().getID());
 					m_world->spawnEntity(bullet);

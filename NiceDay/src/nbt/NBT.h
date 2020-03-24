@@ -305,6 +305,7 @@ public:
 };
 */
 #pragma once
+#pragma warning(disable : 4267)
 #include "core/physShapes.h"
 #include "ndpch.h"
 #include "memory/Pool.h"
@@ -430,19 +431,28 @@ public:
 	}
 };
 
-class BasicIStream : public std::fstream, public IStream
+
+#define ND_BASICISTREAM_IN(fileName) BasicIStream((fileName),std::ios::in | std::ios::binary)
+#define ND_BASICISTREAM_OUT(fileName) BasicIStream((fileName),std::ios::out | std::ios::binary | std::ios::trunc)
+class BasicIStream : public IStream
 {
+private:
+	std::fstream m_stream;
 public:
+	template<typename... Args>
+	BasicIStream(Args&&... args)
+	:m_stream(std::forward<Args>(args)...)
+	{}
 	virtual ~BasicIStream() = default;
-
-	virtual void write(const char* b, uint32_t length) override
+	inline bool isOpen() const { return m_stream.is_open(); }
+	void write(const char* b, uint32_t length) override
 	{
-		std::fstream::write(b, length);
+		m_stream.write(b, length);
 	}
-
-	virtual bool read(char* b, uint32_t length) override
+	bool read(char* b, uint32_t length) override
 	{
-		std::fstream::read(b, length);
+		m_stream.read(b, length);
+		return true;//this is bad
 	}
 };
 
@@ -588,7 +598,7 @@ private:
 
 public:
 
-	inline void setPrefix(std::string prefix) { m_prefix = prefix + ":"; }
+	inline void setPrefix(const std::string& prefix) { m_prefix = prefix + ":"; }
 	inline void resetPrefix() { m_prefix = ""; }
 
 	void clear()
@@ -605,7 +615,7 @@ public:
 	{
 		auto& stream = *strea;
 
-		NBTHeader data;
+		NBTHeader data{};
 		data.string_count = m_strings.size();
 		data.ints_count = m_ints.size();
 		data.long_count = m_longs.size();
@@ -732,8 +742,8 @@ public:
 
 	NBT_BUILD_FUNC(uint64_t, m_longs, int64_t)
 	NBT_BUILD_FUNC(int64_t, m_longs, int64_t)
-	NBT_BUILD_FUNC(Phys::Vect, m_longs, int64_t)
 	NBT_BUILD_FUNC(glm::vec2, m_longs, int64_t)
 
 	~NBT() = default;
 };
+std::string readStringFromFile(const char* filePath);

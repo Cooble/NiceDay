@@ -557,6 +557,9 @@ public:
 		m_worker = 0;
 		m_variable = 0;
 	}
+
+	inline bool isSuccess() const { return m_variable == JOB_SUCCESS; }
+	inline bool isFailure() const { return m_variable != JOB_SUCCESS; }
 };
 
 typedef JobAssignment* JobAssignmentP;
@@ -567,9 +570,9 @@ class Worker
 {
 private:
 	std::thread m_t;
-	bool m_is_buffering_assignments = false;
-	bool m_is_stopped = true;
-	bool m_is_running = false;
+	std::atomic_bool m_is_buffering_assignments = false;
+	std::atomic_bool m_is_stopped = true;
+	std::atomic_bool m_is_running = false;
 	std::mutex m_queue_mutex;
 	std::queue<WorkAssignment> m_queue; // Have I found everybody fun assignment to do today?
 	std::condition_variable m_wait_condition_variable;
@@ -603,7 +606,6 @@ private:
 				{
 					std::unique_lock<std::mutex> guard(m_queue_mutex);
 					runAgain = !m_queue.empty() && m_is_running;
-					//we dont need to wait for m_wait_condition_variable.notify_one();
 				}
 			}
 		}
@@ -679,6 +681,4 @@ public:
 		assignWork(&assignment, 1);
 	}
 };
-
-
 

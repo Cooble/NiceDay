@@ -14,7 +14,7 @@ class ItemStack;
 typedef uint64_t ItemID;
 
 class Block;
-class BlockStruct;
+struct BlockStruct;
 class Item
 {
 protected:

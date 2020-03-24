@@ -61,6 +61,12 @@
     <Filter Include="vendor\glm\glm\gtx">
       <UniqueIdentifier>{B3A6A76B-9F8A-68C1-08EB-6214F4ED5243}</UniqueIdentifier>
     </Filter>
+    <Filter Include="vendor\imgui_filedialog">
+      <UniqueIdentifier>{AC74CC89-18AC-1421-21B6-78448D6C3B1A}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="vendor\imgui_filedialog\imguifiledialog">
+      <UniqueIdentifier>{E69022D7-5220-E4C1-5B1C-C5D9C72A1FCE}</UniqueIdentifier>
+    </Filter>
     <Filter Include="vendor\luabridge">
       <UniqueIdentifier>{D1523BD1-BD4B-5A23-E67D-3FA8D2D5392F}</UniqueIdentifier>
     </Filter>
@@ -75,10 +81,10 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\audio\Player.h">
+    <ClInclude Include="src\audio\audio.h">
       <Filter>src\audio</Filter>
     </ClInclude>
-    <ClInclude Include="src\audio\RingBuffer.h">
+    <ClInclude Include="src\audio\player.h">
       <Filter>src\audio</Filter>
     </ClInclude>
     <ClInclude Include="src\core\App.h">
@@ -232,6 +238,9 @@
       <Filter>src\layer</Filter>
     </ClInclude>
     <ClInclude Include="src\memory\Pool.h">
+      <Filter>src\memory</Filter>
+    </ClInclude>
+    <ClInclude Include="src\memory\RingBuffer.h">
       <Filter>src\memory</Filter>
     </ClInclude>
     <ClInclude Include="src\memory\StackAllocator.h">
@@ -1359,6 +1368,15 @@
     <ClInclude Include="vendor\glm\glm\vector_relational.hpp">
       <Filter>vendor\glm\glm</Filter>
     </ClInclude>
+    <ClInclude Include="vendor\imgui_filedialog\imguifiledialog\ImGuiFileDialog.h">
+      <Filter>vendor\imgui_filedialog\imguifiledialog</Filter>
+    </ClInclude>
+    <ClInclude Include="vendor\imgui_filedialog\imguifiledialog\ImGuiFileDialogConfig.h">
+      <Filter>vendor\imgui_filedialog\imguifiledialog</Filter>
+    </ClInclude>
+    <ClInclude Include="vendor\imgui_filedialog\imguifiledialog\dirent.h">
+      <Filter>vendor\imgui_filedialog\imguifiledialog</Filter>
+    </ClInclude>
     <ClInclude Include="vendor\luabridge\LuaBridge\List.h">
       <Filter>vendor\luabridge\LuaBridge</Filter>
     </ClInclude>
@@ -1439,10 +1457,10 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\audio\Player.cpp">
+    <ClCompile Include="src\audio\audio.cpp">
       <Filter>src\audio</Filter>
     </ClCompile>
-    <ClCompile Include="src\audio\RingBuffer.cpp">
+    <ClCompile Include="src\audio\player.cpp">
       <Filter>src\audio</Filter>
     </ClCompile>
     <ClCompile Include="src\core\App.cpp">
@@ -1621,6 +1639,9 @@
     </ClCompile>
     <ClCompile Include="src\platform\OpenGL\GLVertexArray.cpp">
       <Filter>src\platform\OpenGL</Filter>
+    </ClCompile>
+    <ClCompile Include="vendor\imgui_filedialog\imguifiledialog\ImGuiFileDialog.cpp">
+      <Filter>vendor\imgui_filedialog\imguifiledialog</Filter>
     </ClCompile>
     <ClCompile Include="vendor\stb_image\stb_image.cpp">
       <Filter>vendor\stb_image</Filter>

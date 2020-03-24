@@ -41,7 +41,7 @@ void ParticleManager::update()
 		particle.pos += particle.velocity;
 		if(particle.rotation<0)
 		{
-			particle.rotation = Phys::toRad(-360+Phys::Vect(particle.velocity).angleDegrees());
+			particle.rotation = -2 * 3.1415926535f+Phys::angleRad(particle.velocity);
 		}else
 			particle.rotation += particle.rotationSpeed;
 		++particle.frameAge;

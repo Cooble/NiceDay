@@ -118,7 +118,8 @@ void App::start()
 		}
 		m_tel_tick_millis = maxMil;
 		
-		if(nowTime()-lastRenderTime<1000/m_target_tps)
+		//if(nowTime()-lastRenderTime<1000/m_target_tps)
+		if(nowTime()-lastRenderTime<1000/50)
 			continue;//skip render
 		now = nowTime();
 		lastRenderTime = now;

@@ -28,6 +28,7 @@ Block::Block(BlockID id)
 Phys::Vecti Block::getTileEntityCoords(int x, int y, const BlockStruct& b) const
 {
 	return Phys::Vecti(x, y);
+	
 }
 
 const Phys::Polygon& Block::getCollisionBox(int x, int y, const BlockStruct& b) const

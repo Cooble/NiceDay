@@ -13,19 +13,19 @@ class PathTracer
 private:
 	World* m_world;
 	EntityID m_phys_entity;
-	Phys::Vect m_target;
+	glm::vec2 m_target;
 	EntityID m_entity_target=ENTITY_ID_INVALID;
-	Phys::Vect m_acceleration;
-	Phys::Vect m_max_velocity;
+	glm::vec2 m_acceleration;
+	glm::vec2 m_max_velocity;
 
-	Phys::Vect m_last_jump;
+	glm::vec2 m_last_jump;
 	bool m_running=false;
 public:
 
 	PathTracer() = default;
-	void init(World* world, EntityID physEntity, Phys::Vect acceleration, Phys::Vect maxVelocity);
+	void init(World* world, EntityID physEntity, glm::vec2 acceleration, glm::vec2  maxVelocity);
 
-	inline void setTarget(const Phys::Vect& target)
+	inline void setTarget(const glm::vec2& target)
 	{
 		if(m_target!=target)//new order new rules
 			m_running = true;

@@ -230,7 +230,6 @@ void GUILayer::onRender()
 	m_renderer.pop();
 }
 
-
 void GUILayer::onEvent(Event& e)
 {
 	

@@ -41,6 +41,9 @@ public:
 	ActionF onPressed;
 	ActionF onFocusGain;
 	ActionF onFocusLost;
+	float soundVolume = 1;
+	std::string soundClick;
+	std::string soundFocus;
 public:
 	GUIButton();
 	void onMyEvent(Event& e) override;

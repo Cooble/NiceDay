@@ -6,6 +6,7 @@
 #include "event/KeyEvent.h"
 #include "GLFW/glfw3.h"
 #include "core/AppGlobals.h"
+#include "audio/Player.h"
 
 
 GUIText::GUIText(FontMaterial* mat) : GUIElement(GETYPE::Text), fontMaterial(mat)
@@ -148,11 +149,15 @@ void GUIButton::onMyEvent(Event& e)
 
 	if (e.getEventType() == Event::EventType::MousePress)
 	{
+		if(soundClick!="")
+			Sounder::get().playSound(soundClick, soundVolume);
 		if (onPressed)
 			onPressed(*this);
 	}
 	else if (e.getEventType() == Event::EventType::MouseFocusGain)
 	{
+		if (soundFocus != "")
+			Sounder::get().playSound(soundFocus, soundVolume);
 		if (onFocusGain)
 			onFocusGain(*this);
 	}
@@ -519,7 +524,7 @@ void GUIGrid::repositionChildren()
 
 void GUIGrid::onChildChange()
 {
-	bool lastHeight = height;
+	float lastHeight = height;
 	repositionChildren();
 	if (lastHeight != height)
 	{
@@ -1079,10 +1084,13 @@ static float smootherstep(float x)
 	return x * x * x * (x * (x * 6 - 15) + 10);
 }
 
-GUISpecialTextButton::GUISpecialTextButton(const std::string& text, FontMaterial* material) : GUITextButton(
+GUISpecialTextButton::GUISpecialTextButton(const std::string& text, FontMaterial* material): GUITextButton(
 	text, material)
 {
 	isVisible = false;
+	soundClick = "res/audio/click.ogg";
+	soundFocus = "res/audio/click.ogg";
+	soundVolume = 0.4f;
 }
 
 void GUISpecialTextButton::update()

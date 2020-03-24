@@ -257,6 +257,8 @@ bool GUIElement::packDimensions()
 
 bool GUIElement::adaptToParent()
 {
+	if (getParent() == nullptr)
+		return false;
 	auto oldw = width;
 	auto oldh = height;
 	if (dimInherit != GUIDimensionInherit::INVALID)
@@ -418,6 +420,10 @@ GUIElement* GUIElement::takeChild(GEID id)
 		{
 			m_children.erase(m_children.begin() + i);
 			onChildChange();
+			child->m_parent = nullptr;
+#ifdef ND_DEBUG
+			child->m_has_parent= false;
+#endif
 			return child;
 		}
 	}

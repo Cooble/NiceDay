@@ -23,11 +23,11 @@ ItemShotgun::ItemShotgun()
 bool ItemShotgun::onRightClick(World& world, ItemStack& stack, WorldEntity& owner, int x, int y) const
 {
 
-	float angle = Phys::toRad(Phys::Vect(dynamic_cast<Creature&>(owner).getFacingDirection()).angleDegrees());
+	float angle = Phys::angleRad(dynamic_cast<Creature&>(owner).getFacingDirection());
 	const int BULLET_COUNT = 10;
 	constexpr float spreadAngle = 0.35;
 	constexpr float speed = 1.2;
-	//ND_INFO("NAgle {}", Phys::Vect(dynamic_cast<Creature&>(owner).getFacingDirection()).angleDegrees());
+	//ND_INFO("NAgle {}", glm::vec2(dynamic_cast<Creature&>(owner).getFacingDirection()).angleDegrees());
 	
 	for (int i = 0; i < BULLET_COUNT; ++i)
 	{
