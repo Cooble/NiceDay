@@ -1,5 +1,6 @@
 #pragma once
 #include "ndpch.h"
+#include "core/physShapes.h"
 //=======================GROUPs=======================
 
 #define BLOCK_GROUP_AIR_BIT			0

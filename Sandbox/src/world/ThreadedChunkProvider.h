@@ -46,7 +46,7 @@ struct WorldIOAssignment
 		WAIT,
 	} type;
 
-	IChunkProvider::SerialFunction func;
+	IBinaryStream::RWFunc func;
 
 	WorldIOAssignment() = default;
 
@@ -60,7 +60,7 @@ struct WorldIOAssignment
 	}
 
 	WorldIOAssignment(JobAssignment* job, void* pointer, uint64_t data, uint64_t data2, int type,
-	                  IChunkProvider::SerialFunction func)
+		IBinaryStream::RWFunc func)
 		: job(job),
 		  chunk((Chunk*)pointer),
 		  data(data),
@@ -83,13 +83,11 @@ public:
 	void assignWorldInfoLoad(JobAssignment* jobAssigment, WorldInfo* info) override;
 	void assignNBTLoad(JobAssignment* jobAssigment, int chunkId, NBT* nbt) override;
 	void assignNBTSave(JobAssignment* jobAssigment, int chunkId, const NBT* nbt) override;
-	void assignEntityLoad(JobAssignment* jobAssigment, int chunkId, WorldEntity*** entities, int* numberOfEntities)
-	override;
-	void assignEntitySave(JobAssignment* jobAssigment, int chunkId, WorldEntity** entities, int numberOfEntities)
-	override;
+	void assignEntityLoad(JobAssignment* jobAssigment, int chunkId, WorldEntity*** entities, int* numberOfEntities)override;
+	void assignEntitySave(JobAssignment* jobAssigment, int chunkId, WorldEntity** entities, int numberOfEntities)override;
 	void assignWait(JobAssignment* jobAssigment) override;
 	void assignBoolGenLoad(JobAssignment* jobAssigment, NDUtil::Bitset* bitset) override;
 	void assignBoolGenSave(JobAssignment* jobAssigment, const NDUtil::Bitset* bitset) override;
-	void assignSerialize(JobAssignment* jobAssigment, int chunkId, SerialFunction func) override;
-	void assignDeserialize(JobAssignment* jobAssigment, int chunkId, SerialFunction func) override;
+	void assignSerialize(JobAssignment* jobAssigment, int chunkId, const IBinaryStream::RWFunc& func) override;
+	void assignDeserialize(JobAssignment* jobAssigment, int chunkId, const IBinaryStream::RWFunc& func) override;
 };

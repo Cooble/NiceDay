@@ -201,8 +201,8 @@ public:
 	TO_ENTITY_STRING(EntityRoundBullet)
 	ND_FACTORY_METH_ENTITY_BUILD(EntityRoundBullet)
 
-	/*void save(NBT& src) override;
-	void load(NBT& src) override;*/
+	/*void save(NBT2& src) override;
+	void load(NBT2& src) override;*/
 };
 
 class Creature : public PhysEntity, public IBatchRenderable2D
@@ -252,6 +252,9 @@ private:
 	bool flip;
 
 public:
+	bool m_deleteWalls=false;
+	int m_radius=5;
+	
 	EntityTNT();
 
 	void update(World& w) override;
@@ -260,6 +263,31 @@ public:
 
 	TO_ENTITY_STRING(EntityTNT)
 	ND_FACTORY_METH_ENTITY_BUILD(EntityTNT)
+
+	void save(NBT& src) override;
+	void load(NBT& src) override;
+};
+class EntityBomb : public Creature
+{
+private:
+	int m_timeToBoom = 60 * 2;
+	int m_blinkTime = 0;
+	bool flip;
+	bool m_deleteWalls = false;
+	int m_blastRadius = 5;
+
+public:
+
+
+	EntityBomb();
+
+	void setBombType(int blastRadius, bool deleteWalls,int meta);
+	void update(World& w) override;
+	void boom(World& w);
+	EntityType getEntityType() const override;
+
+	TO_ENTITY_STRING(EntityBomb);
+	ND_FACTORY_METH_ENTITY_BUILD(EntityBomb);
 
 	void save(NBT& src) override;
 	void load(NBT& src) override;

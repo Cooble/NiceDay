@@ -1,6 +1,8 @@
 ﻿#pragma once
 #include "ndpch.h"
 
+class NBT;
+
 struct ControlButton
 {
 	std::string id;
@@ -30,6 +32,4 @@ public:
 
 	static void init();
 	static const std::string& getKeyName(uint64_t key);
-	//static bool hasDuplicateInFamily(const std::string& id,const std::string& family);
-	//static bool hasDuplicateInFamily(const std::string& id);
 };

@@ -129,28 +129,28 @@ ItemStack* BasicInventory::takeFromIndex(int index, int number)
 
 void BasicInventory::save(NBT& src)
 {
-	src.set("size", m_items.size());
+	src.save("size",m_items.size());
+	NBT list;
 	for (int i = 0; i < m_items.size(); ++i)
 	{
 		if (m_items[i] != nullptr)
 		{
-			NBT out;
-			m_items[i]->serialize(out);
-			src.set("slot_" + nd::to_string(i), out);
+			NBT t;
+			t["slotter"] = i;
+			m_items[i]->serialize(t);
+			list.push_back(std::move(t));
 		}
 	}
+	src["slots"] = std::move(list);
 }
 
 void BasicInventory::load(NBT& src)
 {
 	m_items.clear();
-	m_items.resize(src.get<size_t>("size"));
+	NBT& list = src["slots"];
+	m_items.resize(src["size"]);
+	
 	ZeroMemory(m_items.data(), m_items.size() * sizeof(ItemStack*));
-
-	for (int i = 0; i < m_items.size(); ++i)
-	{
-		auto name = "slot_" + nd::to_string(i);
-		if (src.exists<NBT>(name))
-			m_items[i] = ItemStack::deserialize(src.get<NBT>(name));
-	}
+	for (auto value : list.arrays())
+		m_items[value["slotter"]] = ItemStack::deserialize(value);
 }

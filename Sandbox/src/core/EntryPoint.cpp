@@ -1,4 +1,6 @@
 #include "Sandbox.h"
+#include "world/WorldIO.h"
+#include "core/NBT.h"
 
 std::string getName()
 {
@@ -16,59 +18,10 @@ std::string getRandomStringName()
 	buff[size] = 0;
 	
 
-	return std::string(buff,size);
+	//return std::string(buff,size);
+	return "kareljeposuk";
 }
 
-void createRandomNBT(NBT& nbt, int deep)
-{
-	for (int i = 0; i < 10; ++i)
-	{
-		switch (std::rand() % 5)
-		{
-		case 0:
-			nbt.set<int8_t>(nd::temp_string(getName()), (char)((std::rand() % 127)+1));
-			break;
-		case 1:
-			nbt.set<uint32_t>(nd::temp_string(getName()), std::rand() % std::numeric_limits<uint32_t>::max());
-			break;
-		case 2:
-			nbt.set<uint64_t>(nd::temp_string(getName()), std::rand() % std::numeric_limits<uint64_t>::max());
-			break;
-		case 3:
-			nbt.set<std::string>(nd::temp_string(getName()), getRandomStringName());
-			break;
-		case 4:
-			
-			if (deep++ < 3) {
-				createRandomNBT(nbt.get<NBT>(nd::temp_string(getName())),deep);
-			}
-			break;
-		}
-		}
-	}
-
-
-bool equalsNBT(NBT& one,NBT& two)
-{
-	for (auto& t : one.m_strings) {
-		std::string& first = std::string(t.first);
-		const char* c = first.c_str();
-		std::string& oneoo = t.second;
-		std::string& second = two.m_strings[first];
-		if (oneoo != second)
-			return false;
-	}
-	for (auto& t : one.m_ints)
-		if (two.m_ints[t.first] != t.second)
-			return false;
-	for (auto& t : one.m_longs)
-		if (two.m_longs[t.first] != t.second)
-			return false;
-	for (auto& t : one.m_nbts)
-		if (!equalsNBT(two.m_nbts[t.first], t.second))
-			return false;
-	return true;
-}
 
 
 
@@ -129,14 +82,78 @@ void testUnorderedMap()
 	}
 	
 }
-
+#include <nlohmann/json.hpp>
 #ifndef ND_TEST
 int main()
 {
+	
 	ND_PROFILE_BEGIN_SESSION("start", "start.json");
 	Log::init();
-	
 	Sandbox game;
+
+	NBT n;
+	n = 12;
+	NBT mapka;
+	mapka["twelfe"] = n;
+	mapka["something else"] = n;
+	int twe;
+	std::string twe1="hhheeee";
+	mapka.save("blemc", twe);
+	mapka.save("blemc", twe1);
+	mapka.load("blemc", twe1, std::string("hohhoo"));
+	mapka.load("blemc2", twe1, std::string("hohhoo"));
+
+	NBT listik;
+	listik[0] = 1;
+	listik[2] = 2.5;
+	listik[2] = 3;
+	mapka["listik"] = listik;
+	ND_INFO("\n"+mapka.dump());
+
+	int twelfe = int(listik[0]);
+	double d0 = int(listik[0]);
+	double d1 = double(listik[2]);
+	double d2 = (double)listik[2];
+	NBT ssss = "whatever";
+	ssss.string() += " blemc ";
+	ssss = "nwever";
+	NBT lis;
+	for (int i = 0; i < 5; ++i)
+	{
+		lis.push_back("Help " + std::to_string(i));
+	}
+	lis.push_back(3.0f);
+	lis.push_back(true);
+	lis.push_back(std::numeric_limits<uint64_t>::max());
+	lis.push_back(lis);
+	lis.emplace_back("emplaced stringooo hhoho");
+	lis.push_back(mapka);
+	
+	
+	ND_INFO("\n" + lis.dump());
+	NBT::saveToFile("hayaku.json", lis);
+	NBT newlIs;
+	NBT::loadFromFile("hayaku.json", newlIs);
+	bool equ = newlIs==lis;
+	
+	ND_INFO("nbt2 through json\n" + NBT::fromJson(lis.toJson()).dump());
+
+	bool eq = NBT::fromJson(lis.toJson()) == lis;
+	NBT cop = lis;
+	//cop.push_back(5);
+	bool eqne = NBT::fromJson(cop.toJson()) == lis;
+
+	std::fstream stream;
+	stream.open("cruci.dat", std::ios::binary | std::ios::out);
+	BinarySerializer::write(lis, std::bind(&std::fstream::write, &stream, std::placeholders::_1, std::placeholders::_2));
+	stream.flush();
+	stream.close();
+	NBT newLis;
+	std::fstream stream2;
+	stream2.open("cruci.dat", std::ios::binary | std::ios::in);
+	BinarySerializer::read(newLis, std::bind(&std::fstream::read, &stream2, std::placeholders::_1, std::placeholders::_2));
+	stream2.close();
+	ASSERT(newlIs == lis, "shit");
 	ND_PROFILE_END_SESSION();
 	game.start();
 

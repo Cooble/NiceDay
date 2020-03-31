@@ -1,5 +1,6 @@
 #pragma once
 #include "ndpch.h"
+#include "core/IBinaryStream.h"
 
 /*
 WorldIO::Session is responsible for loading and saving world related data i.e. WorldInfo, Chunks.
@@ -99,7 +100,7 @@ namespace WorldIO
 	//				read(smth,srhthr); .....
 	//		
 	//		endSession();
-	class DynamicSaver :public IStream
+	class DynamicSaver
 	{
 
 	private:
@@ -117,6 +118,7 @@ namespace WorldIO
 		std::fstream* m_stream = nullptr;
 		uint32_t m_segment_count = 0;
 		int m_writeChunkID = 0;
+		bool m_dirty_vtable=false;
 
 
 		std::deque<uint32_t> m_free_offsets;
@@ -146,7 +148,7 @@ namespace WorldIO
 
 		// should be called often to save changes to vtable
 		// NOTE: 
-		//		Without table data is completely useless
+		//		Without table, data is completely useless
 		// (called within begin/endSession)
 		void saveVTable();
 
@@ -179,12 +181,14 @@ namespace WorldIO
 
 		// there is no upper limit of how big array can be
 		// it will automaticaly create another segment if currently used one is full
-		virtual void write(const char* b, uint32_t length) override;
+		void write(const char* b, uint32_t length);
+		inline void writeI(const char* b, size_t length) { write(b, (uint32_t)length); }
 
 		// returns false if next segment doesn't exist (doesn't care if no other data is available)
 		// when reading you need to know the size of data beforehand 
 		// otherwise you could read random stuff to the end of the segment
-		virtual bool read(char* b, uint32_t length) override;
+		bool read(char* b, uint32_t length);
+		inline void readI(char* b, size_t length) { read(b, (uint32_t)length); }
 
 		template<typename T>
 		void write(const T& t)
@@ -202,5 +206,6 @@ namespace WorldIO
 		void clearEverything();
 		inline bool isOpened()const { return m_is_opened; }
 	};
+	IBinaryStream::RWStream streamFuncs(DynamicSaver* saver); 
 
 }

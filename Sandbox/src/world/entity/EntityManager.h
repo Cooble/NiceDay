@@ -2,7 +2,7 @@
 
 #define EE_ENTITY_MINIMAL_FREE_SIZE 255
 #define EE_ENTITY_MAXIMAL_SIZE (1<<23)
-
+#include "core/IBinaryStream.h"
 
 class WorldEntity;
 
@@ -78,6 +78,6 @@ public:
 		return m_p_entities[index(e)];
 	}
 
-	void serialize(IStream* stream);
-	void deserialize(IStream* stream);
+	void serialize(const IBinaryStream::RWStream& stream);
+	void deserialize(const IBinaryStream::RWStream& stream);
 };

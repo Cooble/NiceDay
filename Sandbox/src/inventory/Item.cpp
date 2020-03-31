@@ -1,26 +1,21 @@
 ﻿#include "Item.h"
 #include "graphics/TextureAtlas.h"
 #include "graphics/font/FontParser.h"
-#include "memory/stack_allocator.h"
 
 ItemStack::ItemStack(ItemID item, int size)
-	: m_item(item), m_size(size), m_nbt(nullptr)
+	: m_item(item), m_size(size)
 {
-	if (getItem().hasNBT())
-		m_nbt = NBT::create();
 }
 
 ItemStack::ItemStack(const ItemStack& s)
-	: m_item(s.m_item), m_size(s.m_size), m_nbt(nullptr)
+	: m_item(s.m_item), m_size(s.m_size),m_metadata(s.m_metadata)
 {
-	if (s.m_nbt)
-		m_nbt = NBT::create(*s.m_nbt);
+	if (getItem().hasNBT())
+		m_nbt = s.m_nbt;//copy nbt
 }
 
 ItemStack::~ItemStack()
 {
-	if (m_nbt)
-		m_nbt->destroy();
 }
 
 bool ItemStack::equals(const ItemStack* stack) const
@@ -32,11 +27,11 @@ bool ItemStack::equals(const ItemStack* stack) const
 
 void ItemStack::serialize(NBT& nbt)
 {
-	nbt.set("size", m_size);
-	nbt.set("meta", m_metadata);
-	nbt.set("item", m_item);
+	nbt.save("size", m_size);
+	nbt.save("meta", m_metadata);
+	nbt.save("item", m_item);
 	if(m_nbt)
-		nbt.set("nbt", *m_nbt);
+		nbt.save("nbt", m_nbt);
 }
 
 bool ItemStack::isFullStack() const
@@ -46,10 +41,10 @@ bool ItemStack::isFullStack() const
 
 ItemStack* ItemStack::deserialize(const NBT& nbt)
 {
-	auto out = ItemStack::create(nbt.get<ItemID>("item"), nbt.get<int>("size"));
-	out->setMetadata(nbt.get<uint64_t>("meta"));
-	if (nbt.exists<NBT>("nbt"))
-		out->m_nbt = nbt.get<NBT>("nbt").copy();
+	auto out = ItemStack::create(nbt["item"], nbt["size"]);
+	out->setMetadata(nbt["meta"]);
+	if (nbt.exists("nbt"))
+		out->m_nbt = nbt["nbt"];
 	return out;
 }
 
@@ -71,7 +66,7 @@ void Item::onTextureLoaded(const TextureAtlas& atlas)
 
 int Item::getTextureOffset(const ItemStack& b) const
 {
-	return m_texture_pos;
+	return m_texture_pos+(m_max_texture_metadata?half_int(b.getMetadata(),0):half_int(0,0));
 }
 
 int Item::getBlockID() const

@@ -1,5 +1,6 @@
 ﻿#include "EntityAllocator.h"
 #include "EntityRegistry.h"
+#include "core/NBT.h"
 
 WorldEntity* EntityAllocator::allocate(EntityType id)
 {
@@ -17,8 +18,8 @@ WorldEntity* EntityAllocator::createEntity(EntityType id)
 
 WorldEntity* EntityAllocator::loadInstance(NBT& nbt)
 {
-	ASSERT(nbt.exists<EntityType>("entityTypeID"), "Invalid entity nbt");
-	EntityType type = nbt.get<EntityType>("entityTypeID");
+	ASSERT(nbt.exists("entityTypeID"), "Invalid entity nbt");
+	EntityType type = nbt["entityTypeID"];
 	auto entity = createEntity(type);
 	entity->load(nbt);
 	return entity;

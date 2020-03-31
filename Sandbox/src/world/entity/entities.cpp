@@ -15,9 +15,9 @@
 #include "world/particle/particles.h"
 #include "gui/HUD.h"
 #include "gui/GUIEntityChest.h"
-#include "graphics/TextureAtlas.h"
 #include "EntityAllocator.h"
 #include "EntityPlayer.h"
+#include "core/NBT.h"
 
 using namespace glm;
 
@@ -114,7 +114,7 @@ void PhysEntity::computePhysics(World& w)
 	{
 		WorldEntity* e = w.getEntityManager().entity(id);
 		auto collidier = dynamic_cast<PhysEntity*>(e);
-		if (collidier && e->getID() != getID()&&e->hasFlag(EFLAG_COLLIDER))
+		if (collidier && e->getID() != getID() && e->hasFlag(EFLAG_COLLIDER))
 			if (Phys::isIntersects(collidier->getCollisionBox(), collidier->getPosition(), m_bound, m_pos))
 			{
 				float maxDistance = collidier->getCollisionBox().getBounds().width() + m_bound.getBounds().width();
@@ -277,12 +277,14 @@ bool PhysEntity::moveOrCollideOnlyBlocksNoBounds(World& w)
 {
 	auto possiblePos = m_pos + m_velocity;
 	auto b = w.getBlock(possiblePos.x, possiblePos.y);
-	if(b)
+	if (b)
 	{
 		auto& block = BlockRegistry::get().getBlock(b->block_id);
-		if (block.hasCollisionBox()) {
+		if (block.hasCollisionBox())
+		{
 			auto& blockBounds = block.getCollisionBox((int)possiblePos.x, (int)possiblePos.y, *b);
-			if (Phys::contains(blockBounds, { (possiblePos.x - (int)possiblePos.x),(possiblePos.y - (int)possiblePos.y) }))
+			if (Phys::contains(blockBounds,
+			                   {(possiblePos.x - (int)possiblePos.x), (possiblePos.y - (int)possiblePos.y)}))
 				return false;
 		}
 	}
@@ -297,7 +299,7 @@ void PhysEntity::computeVelocity(World& w)
 	m_velocity = glm::clamp(m_velocity, -m_max_velocity, m_max_velocity);
 }
 
-void PhysEntity::computeWindResistance(World& w,float windResistance)
+void PhysEntity::computeWindResistance(World& w, float windResistance)
 {
 	//wind resistance================================
 	//constexpr float windResistance = 0.01;
@@ -320,15 +322,15 @@ void PhysEntity::computeWindResistance(World& w,float windResistance)
 void PhysEntity::save(NBT& src)
 {
 	WorldEntity::save(src);
-	src.set("velocity", m_velocity);
-	src.set("acceleration", m_acceleration);
+	src.save("velocity", m_velocity);
+	src.save("acceleration", m_acceleration);
 }
 
 void PhysEntity::load(NBT& src)
 {
 	WorldEntity::load(src);
-	m_velocity = src.get("velocity", glm::vec2(0, 0));
-	m_acceleration = src.get("acceleration", glm::vec2(0, -9.8f / 60));
+	src.load("velocity", m_velocity,glm::vec2(0,0));
+	src.load("acceleration", glm::vec2(0, -9.8f / 60));
 }
 
 //Bullet======================================================
@@ -379,7 +381,7 @@ bool Bullet::checkCollisions(World& w, float dt)
 				{
 					if (dynamic_cast<Bullet*>(d))
 						continue; //no interaction with other bullets
-				
+
 					if (e->getID() != m_owner_id && d->getCollisionBox().size() != 0 &&
 						Phys::contains(d->getCollisionBox(), m_pos - d->getPosition()))
 					{
@@ -398,7 +400,7 @@ void Bullet::update(World& w)
 		m_ticks_to_ignore_owner--;
 	}
 	else m_owner_id = ENTITY_ID_INVALID;
-	
+
 	if (m_live_ticks++ == m_max_live_ticks)
 	{
 		markDead();
@@ -440,16 +442,19 @@ void Bullet::render(BatchRenderer2D& renderer)
 	renderer.pop();
 }
 
-constexpr float entityItemGravityLower = -0.6f/60;
+constexpr float entityItemGravityLower = -0.6f / 60;
 
 static Texture* s_atlas_texture;
 constexpr float atlasBit = 1.f / 16;
+
 static void loadItemAtlas()
 {
 	static bool loaded = false;
-	if (!loaded) {
+	if (!loaded)
+	{
 		loaded = true;
-		s_atlas_texture = Texture::create(TextureInfo("res/images/itemAtlas/atlas.png").filterMode(TextureFilterMode::LINEAR));
+		s_atlas_texture = Texture::create(
+			TextureInfo("res/images/itemAtlas/atlas.png").filterMode(TextureFilterMode::LINEAR));
 	}
 }
 
@@ -462,27 +467,24 @@ EntityItem::EntityItem()
 {
 	m_max_live_ticks = 60 * 60;
 	m_max_velocity = glm::vec2(entityItemMaxVelocityNormal);
-	m_acceleration = { 0, entityItemGravityLower };
+	m_acceleration = {0, entityItemGravityLower};
 
-	m_bound = Phys::toPolygon({ -0.25, -0.5, 0.5, 0.5 });
+	m_bound = Phys::toPolygon({-0.25, -0.5, 0.5, 0.5});
 	loadItemAtlas();
 }
 
 void EntityItem::setItemStack(ItemStack* stack)
 {
-	
 	m_item_stack = stack;
-	
+
 	if (stack == nullptr)
 		return;
 	auto& item = stack->getItem();
 
 	half_int txtOffset = item.getTextureOffset(*stack);
 
-	m_sprite = UVQuad::build({ txtOffset.x * atlasBit,txtOffset.y * atlasBit }, { atlasBit ,atlasBit });
+	m_sprite = UVQuad::build({txtOffset.x * atlasBit, txtOffset.y * atlasBit}, {atlasBit, atlasBit});
 }
-
-
 
 
 void EntityItem::update(World& w)
@@ -490,16 +492,17 @@ void EntityItem::update(World& w)
 	/*long long now = duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
 	ND_INFO("between update {}", now - lastTime);
 	lastTime = now;*/
-	
+
 	constexpr float maxDistance = 5;
 	constexpr float minDistance = 1;
-	constexpr  float accelerationTowardsOwner = 0.1;
+	constexpr float accelerationTowardsOwner = 0.1;
 	//if there is no one we can go to
 	if (m_target == ENTITY_ID_INVALID)
 	{
-		m_acceleration = { 0,entityItemGravityLower };
+		m_acceleration = {0, entityItemGravityLower};
 		m_ticks_to_new_search--;
-		if (m_ticks_to_new_search == 0) {
+		if (m_ticks_to_new_search == 0)
+		{
 			m_ticks_to_new_search = 15;
 			auto& entities = w.getEntitiesInRadius(m_pos, maxDistance);
 			for (auto entity : entities)
@@ -510,45 +513,46 @@ void EntityItem::update(World& w)
 				}
 		}
 	}
-	else 
+	else
 	{
-		FROWARD:
+	FROWARD:
 		auto e = w.getEntityManager().entity(m_target);
 		//add half block up to compensate for player's loc on the ground
-		auto pos = e->getPosition()+glm::vec2(0,0.5f);
+		auto pos = e->getPosition() + glm::vec2(0, 0.5f);
 		float dist2 = glm::distance2(m_pos, pos);
-		if(e==nullptr||dist2> maxDistance*maxDistance)
+		if (e == nullptr || dist2 > maxDistance * maxDistance)
 		{
 			m_target = ENTITY_ID_INVALID;
-		}else
+		}
+		else
 		{
-			m_speed_mode_ticks_remaining = 10;//still in the speed mode
+			m_speed_mode_ticks_remaining = 10; //still in the speed mode
 			//we are sufficiently close to future owner
-			if(dist2< minDistance* minDistance)
+			if (dist2 < minDistance * minDistance)
 			{
 				m_item_stack = e->consumeItem(m_item_stack);
 				//we can die
-				if(m_item_stack==nullptr)
+				if (m_item_stack == nullptr)
 				{
 					m_target = ENTITY_ID_INVALID;
 					markDead();
 					return;
 				}
-				//owner didnt take everything :(
+					//owner didnt take everything :(
 				else
 				{
 					m_target = ENTITY_ID_INVALID;
 				}
 			}
-			auto force = glm::normalize(pos-m_pos);
-			m_acceleration = force* accelerationTowardsOwner;
+			auto force = glm::normalize(pos - m_pos);
+			m_acceleration = force * accelerationTowardsOwner;
 			//todo penalize wrong direction
 			auto error = m_velocity - force;
 			m_velocity -= error / 30.f;
 		}
 	}
-	
-	if(m_speed_mode_ticks_remaining)
+
+	if (m_speed_mode_ticks_remaining)
 	{
 		m_speed_mode_ticks_remaining--;
 		m_max_velocity = glm::vec2(entityItemMaxVelocityFaster);
@@ -560,8 +564,8 @@ void EntityItem::update(World& w)
 		m_acceleration.y = entityItemGravityLower;
 	}
 	PhysEntity::computeVelocity(w);
-	PhysEntity::computeWindResistance(w, m_speed_mode_ticks_remaining?0.003f:0.01);
-	if(!PhysEntity::moveOrCollideOnlyBlocksNoBounds(w)&&m_speed_mode_ticks_remaining)
+	PhysEntity::computeWindResistance(w, m_speed_mode_ticks_remaining ? 0.003f : 0.01);
+	if (!PhysEntity::moveOrCollideOnlyBlocksNoBounds(w) && m_speed_mode_ticks_remaining)
 	{
 		m_max_velocity = glm::vec2(entityItemMaxVelocityNormal);
 		PhysEntity::moveOrCollideOnlyBlocksNoBounds(w);
@@ -572,7 +576,7 @@ void EntityItem::update(World& w)
 void EntityItem::render(BatchRenderer2D& renderer)
 {
 	renderer.push(glm::translate(glm::mat4(1.0f), glm::vec3(m_pos.x, m_pos.y, 0)));
-	renderer.submitTextureQuad({ -1.f,-0.5f,0 }, { 2.f,2.f }, m_sprite, s_atlas_texture);
+	renderer.submitTextureQuad({-1.f, -0.5f, 0}, {2.f, 2.f}, m_sprite, s_atlas_texture);
 	renderer.pop();
 }
 
@@ -586,13 +590,13 @@ void EntityItem::save(NBT& src)
 	PhysEntity::save(src);
 	NBT t;
 	m_item_stack->serialize(t);
-	src.set("item", t);
+	src["item"] = std::move(t);
 }
 
 void EntityItem::load(NBT& src)
 {
 	PhysEntity::load(src);
-	setItemStack(ItemStack::deserialize(src.get<NBT>("item")));
+	setItemStack(ItemStack::deserialize(src["item"]));
 }
 
 void EntityItem::onSpawned(World& w)
@@ -698,21 +702,23 @@ Creature::Creature()
 	m_health_bar = Bar::buildDefault(glm::vec2(-1, -0.25f));
 }
 
-void Creature::throwItem(World& w,ItemStack* stack)
+void Creature::throwItem(World& w, ItemStack* stack)
 {
 	stack->getItem().onDisposed(w, *stack, *this);
 	auto man = (EntityItem*)EntityAllocator::createEntity(ENTITY_TYPE_ITEM);
 	man->getPosition() = getPosition() + glm::vec2(0, 1.7f);
 
 	//get cursor vector
-	if (dynamic_cast<EntityPlayer*>(this)) {
+	if (dynamic_cast<EntityPlayer*>(this))
+	{
 		auto loc = App::get().getInput().getMouseLocation();
 		auto dims = App::get().getWindow()->getDimensions();
 		loc.x = loc.x - dims.x / 2;
 		loc.y = -loc.y + dims.y / 2;;
 		loc = glm::normalize(loc);
 		man->getVelocity() = loc * 0.4f;
-	}else
+	}
+	else
 	{
 		man->getVelocity() = glm::normalize(this->getVelocity()) * 0.1f;
 	}
@@ -795,13 +801,13 @@ void Creature::render(BatchRenderer2D& renderer)
 void Creature::save(NBT& src)
 {
 	PhysEntity::save(src);
-	src.set("Health", m_health);
+	src.save("Health", m_health);
 }
 
 void Creature::load(NBT& src)
 {
 	PhysEntity::load(src);
-	m_health = src.get("Health", m_max_health);
+	src.load("Health", m_health,m_max_health);
 }
 
 
@@ -901,13 +907,13 @@ void TileEntityChest::save(NBT& src)
 	TileEntity::save(src);
 	NBT t;
 	m_inventory.save(t);
-	src.set("inventory", t);
+	src.save("inventory", t);
 }
 
 void TileEntityChest::load(NBT& src)
 {
 	TileEntity::load(src);
-	m_inventory.load(src.get<NBT>("inventory"));
+	m_inventory.load(src["inventory"]);
 }
 
 void TileEntityChest::onGUIEntityClosed()
@@ -932,7 +938,6 @@ void TileEntitySapling::update(World& w)
 
 EntityTNT::EntityTNT()
 {
-
 	m_timeToBoom = 60 * 2;
 	m_blinkTime = 0;
 	m_velocity = vec2(0);
@@ -976,21 +981,21 @@ void EntityTNT::boom(World& w)
 	//	w.setWall(m_pos.x, m_pos.y, 0);//leave the wall be
 
 	//w.beginBlockSet();
-	for (int i = -7; i < 7; ++i)
-	{
-		for (int j = -7; j < 7; ++j)
+	for (int i = -m_radius; i < m_radius; ++i)
+		for (int j = -m_radius; j < m_radius; ++j)
 		{
-		
-			if ((i+ j) < 6)
-			{
-				if (auto point = w.getBlock(m_pos.x + i, m_pos.y + j))
-					if (point && !point->isAir()) {
-						w.spawnBlockBreakParticles(m_pos.x + i, m_pos.y + j);
-						w.setBlockWithNotify(m_pos.x + i, m_pos.y + j, 0);
-					}
-			}
+			if ((glm::abs(i) + glm::abs(j)) > m_radius)
+				continue;
+			if (auto point = w.getBlock(m_pos.x + i, m_pos.y + j))
+				if (point && !point->isAir())
+				{
+					w.spawnBlockBreakParticles(m_pos.x + i, m_pos.y + j);
+					w.setBlockWithNotify(m_pos.x + i, m_pos.y + j, 0);
+					if (m_deleteWalls)
+						w.setWall(m_pos.x + i, m_pos.y + j, 0);
+				}
 		}
-	}
+	
 	for (int i = 0; i < 100; ++i)
 	{
 		auto angle = i / 50.f * 3.14159f;
@@ -1019,11 +1024,115 @@ EntityType EntityTNT::getEntityType() const
 void EntityTNT::save(NBT& src)
 {
 	Creature::save(src);
+	src.save("deletewalls", m_deleteWalls);
+	src.save("radius", m_radius);
 }
 
 void EntityTNT::load(NBT& src)
 {
 	Creature::load(src);
+	src.load("deletewalls", m_deleteWalls,false);
+	src.load("radius", m_radius,5);
+}
+
+EntityBomb::EntityBomb()
+{
+	m_timeToBoom = 60 * 2;
+	m_blinkTime = 0;
+	m_velocity = vec2(0);
+	m_acceleration = { 0.f, -1.f / 60 };
+	m_max_velocity = vec2(50.0f / 60);
+
+	static SpriteSheetResource res(Texture::create(
+		TextureInfo("res/images/tnt.png")
+		.filterMode(TextureFilterMode::NEAREST)
+		.format(TextureFormat::RGBA)), 3, 1);
+	m_animation = Animation(&res);
+	m_animation.setSpriteIndex(0, 0);
+
+	m_animation.setPosition(glm::vec3(-1, 0, 0));
+	m_animation.setSize(glm::vec2(2, 2));
+
+	m_bound = Phys::toPolygon({ -1, 0, 1, 2 });
+}
+
+void EntityBomb::setBombType(int blastRadius, bool deleteWalls,int meta)
+{
+	m_animation.setSpriteIndex(meta, 0);
+	m_deleteWalls = deleteWalls;
+	m_blastRadius = blastRadius;
+}
+
+void EntityBomb::update(World& w)
+{
+	PhysEntity::computePhysics(w);
+
+	glm::vec2 vel(0, 0.01f+ 0.05f*randFloat());
+	w.spawnParticle(ParticleList::torch_smoke, m_pos+glm::vec2(0,1.7), vel, -vel * 0.01f, 50 + std::rand() % 30);
+	
+	if (m_timeToBoom-- == 0)
+		boom(w);
+}
+
+void EntityBomb::boom(World& w)
+{
+	//auto point = w.getBlock(m_pos.x, m_pos.y);
+	//if (point)
+	//	w.setWall(m_pos.x, m_pos.y, 0);//leave the wall be
+
+	//w.beginBlockSet();
+	for (int i = -m_blastRadius; i < m_blastRadius; ++i)
+		for (int j = -m_blastRadius; j < m_blastRadius; ++j)
+		{
+			if ((glm::abs(i) + glm::abs(j)) > m_blastRadius)
+				continue;
+			if (auto point = w.getBlock(m_pos.x + i, m_pos.y + j))
+				if (point && !point->isAir())
+				{
+					w.spawnBlockBreakParticles(m_pos.x + i, m_pos.y + j);
+					w.setBlockWithNotify(m_pos.x + i, m_pos.y + j, 0);
+					if (m_deleteWalls)
+						w.setWall(m_pos.x + i, m_pos.y + j, 0);
+				}
+		}
+
+	for (int i = 0; i < 100; ++i)
+	{
+		auto angle = i / 50.f * 3.14159f;
+		glm::vec2 vel(std::cos(angle), std::sin(angle));
+		vel *= (std::rand() % 100) / 100.f / 3;
+
+		w.spawnParticle(ParticleList::torch_smoke, m_pos, vel, -vel * 0.01f, 50 + std::rand() % 30);
+		if (std::rand() % 10 == 0)
+			w.spawnParticle(ParticleList::torch_fire, m_pos, vel * 0.1f, -vel * 0.001f, 50 + std::rand() % 30);
+	}
+	/*for (int i = 0; i < 20; ++i)
+	{
+		glm::vec2 speed(std::cos(6.28f * (float)i / 20), std::sin(6.28f * (float)i / 20));
+		w.spawnParticle(ParticleList::torch_fire, m_pos, speed * 0.015f, speed * -0.01f, 200);
+
+	}*/
+	//w.flushBlockSet();
+	markDead();
+}
+
+EntityType EntityBomb::getEntityType() const
+{
+	return ENTITY_TYPE_BOMB;
+}
+
+void EntityBomb::save(NBT& src)
+{
+	Creature::save(src);
+	src.save("deletewalls", m_deleteWalls);
+	src.save("radius", m_blastRadius);
+}
+
+void EntityBomb::load(NBT& src)
+{
+	Creature::load(src);
+	src.load("deletewalls", m_deleteWalls,false);
+	src.load("radius", m_blastRadius,5);
 }
 
 

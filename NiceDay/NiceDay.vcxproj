@@ -77,7 +77,7 @@
       <PrecompiledHeaderFile>ndpch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;ND_PLATFORM_WINDOWS;GLFW_INCLUDE_NONE;ND_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>src;vendor\spdlog\include;vendor\glfw\include;vendor\glad\include;vendor\imgui;vendor\glm;vendor\stb_image;vendor\imgui_filedialog;vendor\lua\src;vendor\lua\src\lua;vendor\luabridge;vendor\portaudio_libs\include;vendor\libogg_libs\include;vendor\libvorbis_libs\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src;vendor\spdlog\include;vendor\glfw\include;vendor\glad\include;vendor\imgui;vendor\glm;vendor\json\include;vendor\stb_image;vendor\imgui_filedialog;vendor\lua\src;vendor\lua\src\lua;vendor\luabridge;vendor\portaudio_libs\include;vendor\libogg_libs\include;vendor\libvorbis_libs\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
       <MinimalRebuild>false</MinimalRebuild>
@@ -100,7 +100,7 @@
       <PrecompiledHeaderFile>ndpch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;ND_PLATFORM_WINDOWS;GLFW_INCLUDE_NONE;ND_RELEASE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>src;vendor\spdlog\include;vendor\glfw\include;vendor\glad\include;vendor\imgui;vendor\glm;vendor\stb_image;vendor\imgui_filedialog;vendor\lua\src;vendor\lua\src\lua;vendor\luabridge;vendor\portaudio_libs\include;vendor\libogg_libs\include;vendor\libvorbis_libs\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src;vendor\spdlog\include;vendor\glfw\include;vendor\glad\include;vendor\imgui;vendor\glm;vendor\json\include;vendor\stb_image;vendor\imgui_filedialog;vendor\lua\src;vendor\lua\src\lua;vendor\luabridge;vendor\portaudio_libs\include;vendor\libogg_libs\include;vendor\libvorbis_libs\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -126,7 +126,7 @@
       <PrecompiledHeaderFile>ndpch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;ND_PLATFORM_WINDOWS;GLFW_INCLUDE_NONE;ND_DIST;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>src;vendor\spdlog\include;vendor\glfw\include;vendor\glad\include;vendor\imgui;vendor\glm;vendor\stb_image;vendor\imgui_filedialog;vendor\lua\src;vendor\lua\src\lua;vendor\luabridge;vendor\portaudio_libs\include;vendor\libogg_libs\include;vendor\libvorbis_libs\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src;vendor\spdlog\include;vendor\glfw\include;vendor\glad\include;vendor\imgui;vendor\glm;vendor\json\include;vendor\stb_image;vendor\imgui_filedialog;vendor\lua\src;vendor\lua\src\lua;vendor\luabridge;vendor\portaudio_libs\include;vendor\libogg_libs\include;vendor\libvorbis_libs\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -152,8 +152,10 @@
     <ClInclude Include="src\core\App.h" />
     <ClInclude Include="src\core\AppGlobals.h" />
     <ClInclude Include="src\core\Core.h" />
+    <ClInclude Include="src\core\IBinaryStream.h" />
     <ClInclude Include="src\core\Input.h" />
     <ClInclude Include="src\core\Log.h" />
+    <ClInclude Include="src\core\NBT.h" />
     <ClInclude Include="src\core\NDUtil.h" />
     <ClInclude Include="src\core\Scheduler.h" />
     <ClInclude Include="src\core\Scoper.h" />
@@ -203,7 +205,6 @@
     <ClInclude Include="src\memory\RingBuffer.h" />
     <ClInclude Include="src\memory\StackAllocator.h" />
     <ClInclude Include="src\memory\stack_allocator.h" />
-    <ClInclude Include="src\nbt\NBT.h" />
     <ClInclude Include="src\ndpch.h" />
     <ClInclude Include="src\platform\OpenGL\GLBuffer.h" />
     <ClInclude Include="src\platform\OpenGL\GLContext.h" />
@@ -579,6 +580,40 @@
     <ClInclude Include="vendor\imgui_filedialog\imguifiledialog\ImGuiFileDialog.h" />
     <ClInclude Include="vendor\imgui_filedialog\imguifiledialog\ImGuiFileDialogConfig.h" />
     <ClInclude Include="vendor\imgui_filedialog\imguifiledialog\dirent.h" />
+    <ClInclude Include="vendor\json\include\nlohmann\adl_serializer.hpp" />
+    <ClInclude Include="vendor\json\include\nlohmann\detail\conversions\from_json.hpp" />
+    <ClInclude Include="vendor\json\include\nlohmann\detail\conversions\to_chars.hpp" />
+    <ClInclude Include="vendor\json\include\nlohmann\detail\conversions\to_json.hpp" />
+    <ClInclude Include="vendor\json\include\nlohmann\detail\exceptions.hpp" />
+    <ClInclude Include="vendor\json\include\nlohmann\detail\input\binary_reader.hpp" />
+    <ClInclude Include="vendor\json\include\nlohmann\detail\input\input_adapters.hpp" />
+    <ClInclude Include="vendor\json\include\nlohmann\detail\input\json_sax.hpp" />
+    <ClInclude Include="vendor\json\include\nlohmann\detail\input\lexer.hpp" />
+    <ClInclude Include="vendor\json\include\nlohmann\detail\input\parser.hpp" />
+    <ClInclude Include="vendor\json\include\nlohmann\detail\input\position_t.hpp" />
+    <ClInclude Include="vendor\json\include\nlohmann\detail\iterators\internal_iterator.hpp" />
+    <ClInclude Include="vendor\json\include\nlohmann\detail\iterators\iter_impl.hpp" />
+    <ClInclude Include="vendor\json\include\nlohmann\detail\iterators\iteration_proxy.hpp" />
+    <ClInclude Include="vendor\json\include\nlohmann\detail\iterators\iterator_traits.hpp" />
+    <ClInclude Include="vendor\json\include\nlohmann\detail\iterators\json_reverse_iterator.hpp" />
+    <ClInclude Include="vendor\json\include\nlohmann\detail\iterators\primitive_iterator.hpp" />
+    <ClInclude Include="vendor\json\include\nlohmann\detail\json_pointer.hpp" />
+    <ClInclude Include="vendor\json\include\nlohmann\detail\json_ref.hpp" />
+    <ClInclude Include="vendor\json\include\nlohmann\detail\macro_scope.hpp" />
+    <ClInclude Include="vendor\json\include\nlohmann\detail\macro_unscope.hpp" />
+    <ClInclude Include="vendor\json\include\nlohmann\detail\meta\cpp_future.hpp" />
+    <ClInclude Include="vendor\json\include\nlohmann\detail\meta\detected.hpp" />
+    <ClInclude Include="vendor\json\include\nlohmann\detail\meta\is_sax.hpp" />
+    <ClInclude Include="vendor\json\include\nlohmann\detail\meta\type_traits.hpp" />
+    <ClInclude Include="vendor\json\include\nlohmann\detail\meta\void_t.hpp" />
+    <ClInclude Include="vendor\json\include\nlohmann\detail\output\binary_writer.hpp" />
+    <ClInclude Include="vendor\json\include\nlohmann\detail\output\output_adapters.hpp" />
+    <ClInclude Include="vendor\json\include\nlohmann\detail\output\serializer.hpp" />
+    <ClInclude Include="vendor\json\include\nlohmann\detail\value_t.hpp" />
+    <ClInclude Include="vendor\json\include\nlohmann\json.hpp" />
+    <ClInclude Include="vendor\json\include\nlohmann\json_fwd.hpp" />
+    <ClInclude Include="vendor\json\include\nlohmann\thirdparty\hedley\hedley.hpp" />
+    <ClInclude Include="vendor\json\include\nlohmann\thirdparty\hedley\hedley_undef.hpp" />
     <ClInclude Include="vendor\luabridge\LuaBridge\List.h" />
     <ClInclude Include="vendor\luabridge\LuaBridge\LuaBridge.h" />
     <ClInclude Include="vendor\luabridge\LuaBridge\Map.h" />
@@ -613,6 +648,7 @@
     <ClCompile Include="src\core\AppGlobals.cpp" />
     <ClCompile Include="src\core\Input.cpp" />
     <ClCompile Include="src\core\Log.cpp" />
+    <ClCompile Include="src\core\NBT.cpp" />
     <ClCompile Include="src\core\Scheduler.cpp" />
     <ClCompile Include="src\core\Scoper.cpp" />
     <ClCompile Include="src\core\State.cpp" />
@@ -659,7 +695,6 @@
     <ClCompile Include="src\memory\Pool.cpp" />
     <ClCompile Include="src\memory\StackAllocator.cpp" />
     <ClCompile Include="src\memory\stack_allocator.cpp" />
-    <ClCompile Include="src\nbt\NBT.cpp" />
     <ClCompile Include="src\ndpch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>

@@ -92,7 +92,7 @@ static void nd_register_itemblocks()
 		if (missing)
 		{
 			ND_REGISTER_ITEM(
-				new ItemBlock(SID(block->toString()), block->getID(), block->toString(), block->hasMetaTexturesInRow()
+				new ItemBlock(SID(block->toString()), block->getID(), block->toString(), block->hasMetaTexturesInRow()?block->getMaxMetadata():0
 				));
 			out += ", " + block->toString();
 		}
@@ -160,6 +160,7 @@ void WorldLayer::registerEntities()
 	ND_REGISTER_ENTITY(ENTITY_TYPE_SNOWMAN, EntitySnowman);
 	ND_REGISTER_ENTITY(ENTITY_TYPE_TILE_CHEST, TileEntityChest);
 	ND_REGISTER_ENTITY(ENTITY_TYPE_ITEM, EntityItem);
+	ND_REGISTER_ENTITY(ENTITY_TYPE_BOMB, EntityBomb);
 }
 
 void WorldLayer::registerBiomes()
@@ -254,7 +255,7 @@ void WorldLayer::loadWorld(nd::temp_string& worldname, bool regen)
 
 	strcpy_s(info.name, worldname.c_str());
 	info.chunk_width = 50;
-	info.chunk_height = 50;
+	info.chunk_height = 10;
 	info.seed = 0;
 	info.terrain_level = (info.chunk_height - 4) * WORLD_CHUNK_SIZE;
 
@@ -352,10 +353,10 @@ void WorldLayer::onWorldLoaded()
 	                                                  BLOCK_TEXTURE_ATLAS_SIZE);
 
 	//load entity manager
-	if (m_world->getWorldNBT().exists<EntityID>("playerID"))
+	if (m_world->getWorldNBT().exists("playerID"))
 	{
-		playerID = m_world->getWorldNBT().get<EntityID>("playerID");
-		ChunkID chunk = m_world->getWorldNBT().get<ChunkID>("player_chunkID");
+		m_world->getWorldNBT().load("playerID",playerID);
+		ChunkID chunk = m_world->getWorldNBT()["player_chunkID"];
 		m_world->loadChunk( //load chunk where player is
 			half_int::X(chunk),
 			half_int::Y(chunk));
@@ -386,6 +387,7 @@ void WorldLayer::onWorldLoaded()
 	}
 	else
 	{
+		ND_INFO("No player found, creating new one");
 		auto buff = (EntityItem*)EntityAllocator::createEntity(ENTITY_TYPE_PLAYER);
 
 		playerID = m_world->spawnEntity((WorldEntity*)buff);
@@ -483,8 +485,8 @@ void WorldLayer::onDetach()
 	if (s_no_save)
 		return;
 	auto pos = getPlayer().getPosition();
-	m_world->getWorldNBT().set("player_chunkID", Chunk::getChunkIDFromWorldPos(pos.x, pos.y));
-	m_world->getWorldNBT().set("playerID", playerID);
+	m_world->getWorldNBT().save("player_chunkID", Chunk::getChunkIDFromWorldPos(pos.x, pos.y));
+	m_world->getWorldNBT().save("playerID", playerID);
 
 	m_chunk_loader->clearEntities();
 	m_chunk_loader->onUpdate(); //this will unload all chunks
@@ -493,7 +495,7 @@ void WorldLayer::onDetach()
 	while (!job->isDone())
 		std::this_thread::sleep_for(std::chrono::milliseconds(200));
 
-	if (job->m_variable != JobAssignment::JOB_SUCCESS)
+	if (job->isFailure())
 		ND_INFO("Cannot save world");
 	else
 		ND_INFO("World saved");
@@ -648,6 +650,7 @@ void WorldLayer::onCreativeUpdate()
 			((WorldEntity*)entityBuff)->getPosition() = m_cam->getPosition();
 			((WorldEntity*)entityBuff)->getPosition().y += 10;
 			m_world->spawnEntity((WorldEntity*)entityBuff);
+			ND_TRACE("bum");
 		}
 
 		if (App::get().getInput().isKeyPressed(Controls::SPAWN_BULLETS))
@@ -1180,7 +1183,7 @@ void WorldLayer::onEvent(Event& e)
 				if(inHand->isEmpty())
 				{
 					//destroy inHandItem
-					getPlayer().getInventory().takeFromIndex(getPlayer().getInventory().getHandIndex(),-1)->destroy();
+					getPlayer().getInventory().takeFromIndex(getPlayer().getInventory().itemInHandSlot(),-1)->destroy();
 				}
 			}
 			else

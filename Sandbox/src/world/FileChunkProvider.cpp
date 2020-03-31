@@ -13,9 +13,11 @@ FileChunkProvider::FileChunkProvider(const std::string& file_path)
 void FileChunkProvider::proccessAssignments(std::vector<WorldIOAssignment>& assignments)
 {
 	auto stream = WorldIO::Session(m_file_path, true);
+	IBinaryStream::RWStream streamFuncs = WorldIO::streamFuncs(&m_nbt_saver);
+
 	for (auto& assignment : assignments)
 	{
-		if (assignment.job->m_variable == JobAssignment::JOB_FAILURE) {
+		if (assignment.job->isFailure()) {
 			assignment.job->markDone();
 			continue;
 		}
@@ -52,37 +54,47 @@ void FileChunkProvider::proccessAssignments(std::vector<WorldIOAssignment>& assi
 				m_nbt_saver.beginSession();
 
 			if (m_nbt_saver.setReadChunkID(assignment.chunkID))
-				assignment.func(&m_nbt_saver);
-			//else 
-			//	assignment.job->m_variable = JobAssignment::JOB_FAILURE;//mark as fucked up
+				assignment.func(streamFuncs);
+			else 
+				assignment.job->m_variable = JobAssignment::JOB_FAILURE;//mark as fucked up
 			break;
 		case WorldIOAssignment::SERIALIZE:
 			if (!m_nbt_saver.isOpened())
 				m_nbt_saver.beginSession();
 			m_nbt_saver.setWriteChunkID(assignment.chunkID);
-			assignment.func(&m_nbt_saver);
+			assignment.func(streamFuncs);
 			m_nbt_saver.flushWrite();
 			break;
 		case WorldIOAssignment::ENTITY_WRITE:
 			{
+				
 				if (!m_nbt_saver.isOpened())
 					m_nbt_saver.beginSession();
+				NBT t;
 				m_nbt_saver.setWriteChunkID(assignment.chunkID);
 				if (assignment.entitySize)
 				{
-					NBT t;
-
-					t.set("entity_count", (int)assignment.entitySize);
+					t.save("entity_count", assignment.entitySize);
+					NBT list;
 					for (int i = 0; i < assignment.entitySize; ++i)
 					{
 						auto entity = assignment.entities[i];
-						auto& entityNBT = t.get("ent_" + std::to_string(i), NBT());
-						//todo building and coppying nbt = slow as f
+						NBT entityNBT;
 						entity->save(entityNBT);
+						list.push_back(std::move(entityNBT));
 					}
-					t.serialize(&m_nbt_saver);
+					t["list"] = std::move(list);
+					t.write(streamFuncs);
 				}
 				m_nbt_saver.flushWrite();
+				m_nbt_saver.endSession();
+				m_nbt_saver.beginSession();
+				if (m_nbt_saver.setReadChunkID(assignment.chunkID)) {
+					NBT tt;
+					tt.read(streamFuncs);
+					ASSERT(tt == t, "Shi");
+				}
+				
 			}
 			break;
 		case WorldIOAssignment::ENTITY_READ:
@@ -93,24 +105,15 @@ void FileChunkProvider::proccessAssignments(std::vector<WorldIOAssignment>& assi
 				if (m_nbt_saver.setReadChunkID(assignment.chunkID))
 				{
 					NBT t;
-					t.deserialize(&m_nbt_saver);
-					number = t.get("entity_count", 0);
+					t.read(streamFuncs);
+					t.load("entity_count", number, 0);
 					*assignment.entitySizePointer = number;
 					if (number)
 					{
 						auto entities = new WorldEntity*[number];
-						for (int i = 0; i < number; ++i)
-						{
-							auto name = "ent_" + std::to_string(i);
-							if (!t.exists<NBT>(name))
-							{
-								ND_WARN("World chunk corruption detected,cannot load, entity is missing");
-								//	throw "World chunk corruption detected,cannot load, entity is missing";
-								entities[i] = nullptr;
-								continue;
-							}
-							entities[i] = EntityAllocator::loadInstance(t.get<NBT>(name));
-						}
+						NBT& ls = t["list"];
+						for (int i = 0; i < ls.size(); ++i)
+							entities[i] = EntityAllocator::loadInstance(ls[i]);
 						*assignment.entitiesPointer = entities; //set array pointer to foreign(boss) variable
 					}
 				}

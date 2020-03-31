@@ -8,6 +8,7 @@ inline glm::vec2 toglm(float f) { return glm::vec2(f, f); }
 
 namespace Phys
 {
+	
 	typedef glm::vec<2, int> Vecti;
 	struct Polygon;
 	using namespace glm;

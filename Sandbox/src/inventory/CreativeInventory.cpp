@@ -4,10 +4,17 @@ CreativeInventory::CreativeInventory()
 {
 	m_id = "creative";
 	auto& items = ItemRegistry::get().getItems();
-	setInventorySize(items.size());
-	int index = 0;
-	for (auto item : items)
-		m_items[index++] = ItemStack::create(item.first);
+	for (auto item : items) {
+		for (int i = 0; i < item.second->getMaxTextureMeta(); ++i)
+		{
+			auto t = ItemStack::create(item.first);
+			t->setMetadata(i);
+			m_items.push_back(t);
+		}
+		if(!item.second->getMaxTextureMeta())
+			m_items.push_back(ItemStack::create(item.first));
+	}
+	//setInventorySize(m_items.size());
 }
 
 ItemStack* CreativeInventory::takeFromIndex(int index, int number)

@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "audio.h"
+#include "memory/Pool.h"
 // enables possibility to get currently playing list of streams using Sounder::getDebugInfo()
 #define SOUNDER_DEBUG_INFO 1
 // unique identifier of each audio stream of Sounder

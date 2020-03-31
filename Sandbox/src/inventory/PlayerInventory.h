@@ -14,7 +14,7 @@ enum InventorySlot :int
 	INVENTORY_SLOT_RANDOM_FIRST = INVENTORY_SLOT_ACTION_FIRST + 10,
 };
 
-class PlayerInventory:public Inventory,public NBTSaveable
+class PlayerInventory:public Inventory
 {
 private:
 	int m_special_hand_slot;
@@ -32,8 +32,6 @@ public:
 	const std::string& getID() const override;
 	int getItemsSize() const override;
 	ItemStack* takeFromIndex(int index, int number) override;
-	void save(NBT& src) override;
-	void load(NBT& src) override;
 	/**
 	 * returns item that player is currently holding (by cursor or in selected itemslot)
 	 */
@@ -47,4 +45,7 @@ public:
 	bool isSpaceFor(const ItemStack* stack) const override;
 	void setHandIndex(int index);
 	int getHandIndex();
+
+	void save(NBT& src);
+	void load(NBT& src);
 };

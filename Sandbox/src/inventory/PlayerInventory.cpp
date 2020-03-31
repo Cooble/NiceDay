@@ -1,6 +1,7 @@
 ﻿#include "PlayerInventory.h"
 #include "world/World.h"
 #include "core/Stats.h"
+#include "core/NBT.h"
 #include <stack>
 
 PlayerInventory::PlayerInventory(WorldEntity* player)
@@ -193,34 +194,6 @@ ItemStack* PlayerInventory::takeFromIndex(int index, int number)
 	}
 }
 
-void PlayerInventory::save(NBT& src)
-{
-	src.set("size", m_items.size());
-	for (int i = 0; i < m_items.size(); ++i)
-	{
-		if (m_items[i] != nullptr)
-		{
-			NBT out;
-			m_items[i]->serialize(out);
-			src.set("slot_" + nd::to_string(i), out);
-		}
-	}
-}
-
-void PlayerInventory::load(NBT& src)
-{
-	m_items.clear();
-	m_items.resize(src.get<size_t>("size"));
-	ZeroMemory(m_items.data(), m_items.size() * sizeof(ItemStack*));
-
-	for (int i = 0; i < m_items.size(); ++i)
-	{
-		auto name = "slot_" + nd::to_string(i);
-		if (src.exists<NBT>(name))
-			m_items[i] = ItemStack::deserialize(src.get<NBT>(name));
-	}
-}
-
 ItemStack*& PlayerInventory::itemInHand()
 {
 	if (m_items[InventorySlot::HAND] != nullptr)
@@ -274,4 +247,32 @@ void PlayerInventory::setHandIndex(int index)
 int PlayerInventory::getHandIndex()
 {
 	return m_special_hand_slot;
+}
+
+void PlayerInventory::save(NBT& src)
+{
+	src.save("size", m_items.size());
+	NBT list;
+	for (int i = 0; i < m_items.size(); ++i)
+	{
+		if (m_items[i] != nullptr)
+		{
+			NBT t;
+			t["slotter"] = i;
+			m_items[i]->serialize(t);
+			list.push_back(std::move(t));
+		}
+	}
+	src["slots"] = std::move(list);
+}
+
+void PlayerInventory::load(NBT& src)
+{
+	m_items.clear();
+	NBT& list = src["slots"];
+	m_items.resize(src["size"]);
+
+	ZeroMemory(m_items.data(), m_items.size() * sizeof(ItemStack*));
+	for (auto value : list.arrays())
+		m_items[value["slotter"]] = ItemStack::deserialize(value);
 }

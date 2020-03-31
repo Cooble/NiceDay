@@ -1,6 +1,8 @@
 ﻿#include "ndpch.h"
 #include "ControlMap.h"
 #include "GLFW/glfw3.h"
+#include "core/NBT.h"
+
 
 std::unordered_map<std::string, ControlButton> ControlMap::s_buttons;
 std::unordered_map<uint64_t, std::string> ControlMap::s_button_names;
@@ -33,24 +35,21 @@ const ControlButton* ControlMap::getButtonData(const std::string& id)
 
 void ControlMap::serialize(NBT& t)
 {
-	int idx = 0;
 	for (auto& pair : s_buttons)
 	{
 		NBT tt;
-		tt.set("name", pair.second.id);
-		tt.set("value", *pair.second.pointer);
-		t.set(nd::to_string(idx++), tt);
+		tt.save("name", pair.second.id);
+		tt.save("value", *pair.second.pointer);
+		t.push_back(std::move(tt));
 	}
 }
 
 void ControlMap::deserialize(NBT& t)
 {
-	int idx = 0;
-	while (t.exists<NBT>(nd::to_string(idx)))
-	{
-		auto& tt = t.get<NBT>(nd::to_string(idx++));
-		*s_buttons[tt.get<std::string>("name")].pointer = tt.get<uint64_t>("value");
-	}
+	if (t.size() == 0)
+		return;
+	for (auto& val : t.arrays())
+		*s_buttons[val["name"].string()].pointer = val["value"];
 }
 
 #define CM_ADD_KEY(x) s_button_names[x] = std::string(#x).substr(9)

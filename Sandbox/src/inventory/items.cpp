@@ -52,16 +52,17 @@ ItemTnt::ItemTnt()
 	:Item(SID("tnt"),"tnt")
 {
 	m_maxStackSize = 111;
+	m_max_texture_metadata = 3;
 }
 
 bool ItemTnt::onRightClick(World& world, ItemStack& stack, WorldEntity& owner, int x, int y) const
 {
 	stack.addSize(-1);
-	auto bullet = (EntityRoundBullet*)EntityAllocator::createEntity(ENTITY_TYPE_TNT);
-	bullet->getPosition() = owner.getPosition() + glm::vec2(0, 1.5);
-	bullet->fire({ x, y }, 60.f / 60);
-	bullet->setOwner(owner.getID());
-	world.spawnEntity(bullet);
+	auto tnt = (EntityBomb*)EntityAllocator::createEntity(ENTITY_TYPE_BOMB);
+	tnt->getPosition() = owner.getPosition() + glm::vec2(0, 1.5);
+	tnt->setBombType(stack.getMetadata() + 1 * 3, stack.getMetadata() == 2, stack.getMetadata());
+	tnt->getVelocity() = glm::normalize(glm::vec2(x,y) - owner.getPosition()) * 0.9f;
+	world.spawnEntity(tnt);
 	return true;
 }
 

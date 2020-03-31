@@ -179,15 +179,15 @@ void EntityPlayer::onHit(World& w, WorldEntity* e, float damage)
 void EntityPlayer::save(NBT& src)
 {
 	Creature::save(src);
-	src.set("playerName", m_name);
+	src.save("playerName", m_name);
 	NBT t;
 	m_inventory.save(t);
-	src.set("inventory", t);
+	src["inventory"] = std::move(t);
 }
 
 void EntityPlayer::load(NBT& src)
 {
 	Creature::load(src);
-	m_name = src.get<std::string>("playerName", "Karel");
-	m_inventory.load(src.get<NBT>("inventory"));
+	src.load("playerName", m_name,std::string("Karel"));
+	m_inventory.load(src["inventory"]);
 }

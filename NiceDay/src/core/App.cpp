@@ -260,7 +260,7 @@ void ImGuiLayer::end()
 		glfwMakeContextCurrent(backup_current_context);
 	}*/
 	m_imgui_consuming = ImGui::IsAnyItemActive()||ImGui::IsMouseHoveringAnyWindow();
-	AppGlobals::get().nbt.set("imgui consumi", m_imgui_consuming);
+	AppGlobals::get().nbt.save("imgui consumi", m_imgui_consuming);
 
 }
 
@@ -370,22 +370,22 @@ void ImGuiLayer::drawTelemetry()
 
 void ImGuiLayer::drawGlobals()
 {
-	if (ImGui::TreeNode("Globals")) {
+	/*if (ImGui::TreeNode("Globals")) {
 
 		if (ImGui::TreeNode("Ints")) {
 
-			for (auto& val : AppGlobals::get().nbt.m_ints)
-				ImGui::Value(val.first.c_str(), val.second);
+			for (auto& val : AppGlobals::get().nbt.m_floats)
+				ImGui::Value(val.first.c_str(), (float)val.second);
 			ImGui::TreePop();
 		}
 		if (ImGui::TreeNode("Floats")) {
 
-			for (auto& val : AppGlobals::get().nbt.m_ints)
+			for (auto& val : AppGlobals::get().nbt.m_floats)
 				ImGui::Value(val.first.c_str(), *(float*)&val.second);
 			ImGui::TreePop();
 		}
 		if (ImGui::TreeNode("Bools")) {
-			for (auto& val : AppGlobals::get().nbt.m_ints)
+			for (auto& val : AppGlobals::get().nbt.m_floats)
 				ImGui::Value(val.first.c_str(), val.second==1?"true":"false");
 			ImGui::TreePop();
 		}
@@ -395,7 +395,7 @@ void ImGuiLayer::drawGlobals()
 			ImGui::TreePop();
 		}
 		ImGui::TreePop();
-	}
+	}*/
 	
 }
 

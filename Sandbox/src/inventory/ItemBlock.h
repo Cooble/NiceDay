@@ -7,11 +7,10 @@ class ItemBlock:public Item
 {
 protected:
 	int m_block_id;
-	bool m_shift_with_meta;
 	//texture is either in item/... or in item_block/...
 	bool m_no_block_texture=false;
 public:
-	ItemBlock(ItemID id,BlockID blockID, const std::string& name,bool shiftTextureWithMeta=false);
+	ItemBlock(ItemID id,BlockID blockID, const std::string& name,int maxTextureMetadata=0);
 	inline ItemBlock& setNoBlockTexture(bool noBlockTexture) { m_no_block_texture = noBlockTexture; return *this; }
 	void onTextureLoaded(const TextureAtlas& atlas) override;
 	int getTextureOffset(const ItemStack& b) const override;

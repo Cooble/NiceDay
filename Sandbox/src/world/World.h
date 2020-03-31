@@ -7,10 +7,10 @@
 #include "entity/WorldEntity.h"
 #include "world/WorldTime.h"
 #include "particle/ParticleManager.h"
-#include "memory/Pool.h"
 #include "ThreadedWorldGen.h"
 #include "BlockAccess.h"
 #include "memory/stack_allocator.h"
+#include "core/NBT.h"
 
 
 class IChunkProvider;

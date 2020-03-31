@@ -674,13 +674,13 @@ void World::unloadChunks(nd::temp_set<int>& chunk_ids)
 		for (auto it = m_tile_entity_map.begin(); it != m_tile_entity_map.end();)
 		{
 			auto& pair = *it;
-			auto pos = (Phys::Vecti*)&pair.first;
+			auto pos = (glm::vec2*)&pair.first;
 			EntityID id = pair.second;
 			auto pointer = m_entity_manager.entity(id);
 			ASSERT(pointer, "world array contains unloaded entities");
 
-			if (chunkId == half_int(pos->x / WORLD_CHUNK_SIZE,
-			                        pos->y / WORLD_CHUNK_SIZE))
+			if (chunkId == half_int((int)pos->x / WORLD_CHUNK_SIZE,
+			                        (int)pos->y / WORLD_CHUNK_SIZE))
 			{
 				bool temp = pointer->hasFlag(EFLAG_TEMPORARY);
 				unloadEntityNoDestruction(pointer, temp);
@@ -1131,9 +1131,9 @@ JobAssignmentP World::saveWorld()
 	m_chunk_provider->assignBoolGenSave(job, &m_is_chunk_gen_map);
 	//entity manager
 	m_chunk_provider->assignSerialize(job, DYNAMIC_ID_ENTITY_MANAGER,
-	                                  std::bind(&EntityManager::serialize, &m_entity_manager, std::placeholders::_1));
+	                                 ND_IBS_HOOK(&EntityManager::serialize, &m_entity_manager));
 	//world nbt
-	m_world_nbt.set<std::string>("teststring", "saving worldnbt");
+	m_world_nbt.save("teststring", "saving worldnbt");
 	m_chunk_provider->assignNBTSave(job, DYNAMIC_ID_WORLD_NBT, &m_world_nbt);
 
 	return job;

@@ -65,13 +65,13 @@ void ThreadedChunkProvider::assignBoolGenSave(JobAssignment* jobAssigment, const
 	assignWork({ jobAssigment, const_cast<NDUtil::Bitset*>(bitset),0,0,WorldIOAssignment::BOOL_GEN_SAVE });
 }
 
-void ThreadedChunkProvider::assignSerialize(JobAssignment* jobAssigment, int chunkId, SerialFunction func)
+void ThreadedChunkProvider::assignSerialize(JobAssignment* jobAssigment, int chunkId,const IBinaryStream::RWFunc& func)
 {
 	jobAssigment->assign();
 	assignWork({ jobAssigment, nullptr,(uint64_t)chunkId,0,WorldIOAssignment::SERIALIZE ,func});
 }
 
-void ThreadedChunkProvider::assignDeserialize(JobAssignment* jobAssigment, int chunkId, SerialFunction func)
+void ThreadedChunkProvider::assignDeserialize(JobAssignment* jobAssigment, int chunkId, const IBinaryStream::RWFunc& func)
 {
 	jobAssigment->assign();
 	assignWork({ jobAssigment, nullptr,(uint64_t)chunkId,0,WorldIOAssignment::DESERIALIZE ,func });
@@ -79,12 +79,10 @@ void ThreadedChunkProvider::assignDeserialize(JobAssignment* jobAssigment, int c
 
 void ThreadedChunkProvider::assignNBTLoad(JobAssignment* jobAssigment, int chunkId, NBT* nbt)
 {
-	auto smth = std::bind(&NBT::deserialize, nbt,std::placeholders::_1);
-	assignDeserialize(jobAssigment, chunkId, smth);
+	assignDeserialize(jobAssigment, chunkId, ND_IBS_HOOK(&NBT::read,nbt));
 }
 
 void ThreadedChunkProvider::assignNBTSave(JobAssignment* jobAssigment, int chunkId, const NBT* nbt)
 {
-	auto smth = std::bind(&NBT::serialize, const_cast<NBT*>(nbt), std::placeholders::_1);
-	assignSerialize(jobAssigment, chunkId, smth);
+	assignSerialize(jobAssigment, chunkId, ND_IBS_HOOK(&NBT::write, nbt));
 }

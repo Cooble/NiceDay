@@ -11,6 +11,7 @@ constexpr EntityType ENTITY_TYPE_TILE_TORCH = 6;
 constexpr EntityType ENTITY_TYPE_SNOWMAN = 7;
 constexpr EntityType ENTITY_TYPE_TILE_CHEST = 8;
 constexpr EntityType ENTITY_TYPE_ITEM = 9;
+constexpr EntityType ENTITY_TYPE_BOMB = 10;
 
 
 

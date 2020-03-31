@@ -3,7 +3,7 @@
 #include "EntityManager.h"
 #include "world/WorldTime.h"
 
-
+class NBT;
 class ItemStack;
 constexpr int EFLAG_TEMPORARY =		BIT(0);//will be killed on chunk unload
 constexpr int EFLAG_CHUNK_LOADER =	BIT(1);//will keep chunks around loaded (usually Player)
@@ -12,7 +12,7 @@ constexpr int EFLAG_COLLIDER  =		BIT(2);//will collide with other entities (will
 class World;
 struct WorldTime;
 
-class WorldEntity: public NBTSaveable
+class WorldEntity
 {
 	friend World;
 private:
@@ -61,8 +61,8 @@ public:
 	virtual void onKilled(World& w){}
 
 
-	void save(NBT& src) override;
-	void load(NBT& src) override;
+	virtual void save(NBT& src);
+	virtual void load(NBT& src);
 
 	inline virtual std::string toString() const { return "UNDEFINED_ENTITY"; }
 

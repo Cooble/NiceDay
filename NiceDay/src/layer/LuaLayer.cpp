@@ -9,6 +9,7 @@
 #include <LuaBridge/LuaBridge.h>
 #include "audio/Player.h"
 #include "imguifiledialog/ImGuiFileDialog.h"
+#include "core/NBT.h"
 
 //-----------------------------------------------------------------------------
 // [SECTION] Example App: Debug Console / ShowExampleAppConsole()
@@ -19,8 +20,8 @@
 #define LUACON_INFO_PREF "[info_]"
 #define LUACON_WARN_PREF "[warn_]"
 
-static NBT* s_settings;
-static const char* s_settings_file = "lua_editor_settings.dat";
+static NBT s_settings;
+static const char* s_settings_file = "lua_editor_settings.json";
 
 struct FileOpen
 {
@@ -72,7 +73,7 @@ struct LuaConsole
 		// "classify" is only here to provide an example of "C"+[tab] completing to "CL" and displaying matches.
 		AutoScroll = true;
 		ScrollToBottom = true;
-	//	AddLog("Welcome to Dear ImGui!");
+		//	AddLog("Welcome to Dear ImGui!");
 	}
 
 	~LuaConsole()
@@ -160,7 +161,9 @@ struct LuaConsole
 			if (ImGui::Begin("Script Editor", &show_script_editor))
 			{
 				ImGui::TextColored({0, 1, 0, 1},
-				                   (s_files[s_currentFileIndex].filePath + (s_files[s_currentFileIndex].saved ? "" : " *")).
+				                   (s_files[s_currentFileIndex].filePath + (s_files[s_currentFileIndex].saved
+					                                                            ? ""
+					                                                            : " *")).
 				                   c_str());
 
 				// Note: we are using a fixed-sized buffer for simplicity here. See ImGuiInputTextFlags_CallbackResize
@@ -378,8 +381,8 @@ struct LuaConsole
 
 		ImGui::PushItemWidth(ImGui::GetFontSize() * -12);
 		// Use fixed width for labels (by passing a negative value), the rest goes to widgets. We choose a width proportional to our font size.
-		
-		
+
+
 		if (ImGui::BeginMenuBar())
 		{
 			if (ImGui::Button("Script Editor"))
@@ -779,7 +782,7 @@ static int ls(lua_State* L)
 	auto string = lua_tostring(L, 1);
 	if (!std::filesystem::is_directory(string))
 	{
-		ND_WARN("{} is not directory",string);
+		ND_WARN("{} is not directory", string);
 		return 0;
 	}
 
@@ -890,35 +893,47 @@ static int playMusic(lua_State* L)
 }
 
 static std::string s_couroutineFileSrc;
+static char buf[1024];
+static std::string readStringFromFile(const char* filePath)
+{
+	FILE* f = fopen(filePath, "r");
+	if (!f)
+		return "";
+	int read = 0;
+	std::string out;
+	while ((read = fread(buf, 1, 1024, f)) != 0)
+		out += std::string_view(buf, read);
+	fclose(f);
+	return out;
+}
 void LuaLayer::onAttach()
 {
 	//settings save and load
+
+	ZeroMemory(text, IM_ARRAYSIZE(text));
+	s_settings = NBT();
+	if (NBT::loadFromFile(s_settings_file, s_settings))
 	{
-		ZeroMemory(text, IM_ARRAYSIZE(text));
-		s_settings = NBT::create();
-		BasicIStream ss = ND_BASICISTREAM_IN(s_settings_file);
-		if (ss.isOpen())
+		s_settings.load("current_file_index", s_currentFileIndex);
+		NBT& list = s_settings["list"];
+		s_currentFileIndex = std::min(s_currentFileIndex, (int)list.size() - 1);
+		for (int i = 0; i < list.size(); ++i)
 		{
-			
-			s_settings->deserialize(&ss);
-			s_currentFileIndex = s_settings->get("current_file_index",(int)0);
-			for (int i = 0; i < s_settings->get("files_size", 0); ++i)
+			s_files.emplace_back();
+			auto& t = s_files[s_files.size() - 1];
+			list[i].load("filepath", t.filePath);
+			list[i].load("name", t.name);
+			list[i].load("saved", t.saved);
+			list[i].load("text", t.text);
+			if (i == s_currentFileIndex)
 			{
-				s_files.emplace_back();
-				auto& t = s_files[s_files.size() - 1];
-				t.filePath = s_settings->get<std::string>("filepath" + nd::to_string(i));
-				t.name = s_settings->get<std::string>("name" + nd::to_string(i));
-				t.saved = s_settings->get<bool>("saved" + nd::to_string(i));
-				t.text = s_settings->get<std::string>("text" + nd::to_string(i));
-				if(i==s_currentFileIndex)
-				{
-					ZeroMemory(text, IM_ARRAYSIZE(text));
-					memcpy(text, t.text.c_str(), t.text.size()+1);
-				}
+				ZeroMemory(text, IM_ARRAYSIZE(text));
+				memcpy(text, t.text.c_str(), t.text.size() + 1);
 			}
 		}
 	}
-	
+
+
 	s_lua_layer = this;
 	m_console = new LuaConsole(this);
 
@@ -943,37 +958,29 @@ void LuaLayer::onAttach()
 
 	loadGlmVec();
 	loadSoundHandle();
-	
+
 
 	s_couroutineFileSrc = readStringFromFile(ND_RESLOC("res/lua/coroutines.lua").c_str());
 	runScriptFromFile(m_L, "res/lua/startup.lua");
-	
-	
 }
 
 void LuaLayer::onDetach()
 {
-	BasicIStream ss = ND_BASICISTREAM_OUT(s_settings_file);
-	s_settings->clear();
-	if (ss.isOpen())
+	s_settings = NBT();
+	s_settings["current_file_index"] = s_currentFileIndex;
+	NBT list;
+	for (auto& file : s_files)
 	{
-		if(s_currentFileIndex!=-1)
-		s_files[s_currentFileIndex].text = std::string(text);
-		s_settings->set("files_size", (int)s_files.size());
-		s_settings->set("current_file_index", s_currentFileIndex);
-		for (int i = 0; i < s_files.size(); ++i)
-		{
-			auto& file = s_files[i];
-			s_settings->set("filepath" + nd::to_string(i), file.filePath);
-			s_settings->set("name" + nd::to_string(i), file.name);
-			s_settings->set("saved" + nd::to_string(i), file.saved);
-			s_settings->set("text" + nd::to_string(i), file.text);
-		}
-		
-		s_settings->serialize(&ss);
+		NBT cell;
+		cell["filepath"] = file.filePath;
+		cell["name"] = file.name;
+		cell["saved"] = file.saved;
+		cell["text"] = file.text;
+		list.push_back(std::move(cell));
 	}
-	else
-		ND_WARN("cannot save lua settings");
+	s_settings["list"] = std::move(list);
+	NBT::saveToFile(s_settings_file, s_settings);
+
 
 	lua_close(m_L);
 	delete m_console;
@@ -1062,19 +1069,19 @@ void LuaLayer::loadSoundHandle()
 	luabridge::getGlobalNamespace(m_L)
 		.beginClass<SoundHandle>("Sound")
 		.addConstructor<void(*)()>()
-		.addFunction("open",&SoundHandle::open)
-		.addFunction("play",&SoundHandle::play)
-		.addFunction("pause",&SoundHandle::pause)
-		.addFunction("stop",&SoundHandle::stop)
-		.addFunction("setLoop",&SoundHandle::setLoop)
-		.addFunction("l",&SoundHandle::setLoop)
-		.addFunction("setPitch",&SoundHandle::setPitch)
-		.addFunction("p",&SoundHandle::setPitch)
-		.addFunction("setVolume",&SoundHandle::setVolume)
-		.addFunction("v",&SoundHandle::setVolume)
-		.addFunction("isPlaying",&SoundHandle::isPlaying)
+		.addFunction("open", &SoundHandle::open)
+		.addFunction("play", &SoundHandle::play)
+		.addFunction("pause", &SoundHandle::pause)
+		.addFunction("stop", &SoundHandle::stop)
+		.addFunction("setLoop", &SoundHandle::setLoop)
+		.addFunction("l", &SoundHandle::setLoop)
+		.addFunction("setPitch", &SoundHandle::setPitch)
+		.addFunction("p", &SoundHandle::setPitch)
+		.addFunction("setVolume", &SoundHandle::setVolume)
+		.addFunction("v", &SoundHandle::setVolume)
+		.addFunction("isPlaying", &SoundHandle::isPlaying)
 		.endClass();
-	
+
 	luabridge::getGlobalNamespace(m_L)
 		.beginClass<MusicHandle>("Music")
 		.addConstructor<void(*)()>()

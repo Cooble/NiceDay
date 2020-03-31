@@ -2,11 +2,11 @@
 #include "graphics/TextureAtlas.h"
 #include "world/block/BlockRegistry.h"
 
-ItemBlock::ItemBlock(ItemID id, BlockID blockID, const std::string& name,bool shiftTextureWithMeta) :
+ItemBlock::ItemBlock(ItemID id, BlockID blockID, const std::string& name,int maxTextureMetadata) :
 Item(id, name),
-m_block_id(blockID),
-m_shift_with_meta(shiftTextureWithMeta)
+m_block_id(blockID)
 {
+	m_max_texture_metadata = maxTextureMetadata;
 	m_is_block = true;
 }
 
@@ -17,7 +17,7 @@ void ItemBlock::onTextureLoaded(const TextureAtlas& atlas)
 
 int ItemBlock::getTextureOffset(const ItemStack& b) const
 {
-	return m_texture_pos + (m_shift_with_meta?half_int(b.getMetadata(), 0):0);
+	return m_texture_pos + (m_max_texture_metadata?half_int(b.getMetadata(), 0):0);
 }
 
 int ItemBlock::getBlockMetadata(ItemStack* stack) const

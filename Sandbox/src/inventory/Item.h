@@ -2,9 +2,11 @@
 #include "ndpch.h"
 #include "memory/Pool.h"
 #include "core/sids.h"
+#include "core/NBT.h"
 
 #define ND_REGISTER_ITEM(item)\
 	ItemRegistry::get().registerItem(item);
+
 
 class WorldEntity;
 class World;
@@ -24,12 +26,16 @@ protected:
 	half_int m_texture_pos;
 	bool m_has_nbt;
 	bool m_is_block;
+	// number of textures that will corespond to the item based on its metadata
+	uint64_t m_max_texture_metadata = 0;
+
 	
 public:
 	virtual ~Item() = default;
 	Item(ItemID id,const std::string& textName);
 
 	inline Item& setMaxStackSize(int size) { m_maxStackSize = size; return *this; }
+	inline uint64_t getMaxTextureMeta()const { return m_max_texture_metadata; }
 
 	virtual void onTextureLoaded(const TextureAtlas& atlas);
 	virtual int getTextureOffset(const ItemStack& b) const;
@@ -116,7 +122,7 @@ private:
 	ItemID m_item;
 	uint64_t m_metadata=0;
 	int m_size;
-	NBT* m_nbt;
+	NBT m_nbt;
 public:
 	ItemStack(ItemID item, int size = 1);
 	ItemStack(const ItemStack& s);
@@ -129,8 +135,8 @@ public:
 	inline bool isEmpty() const { return m_size <= 0; }
 	inline ItemID getItemID() const { return m_item; }
 	inline const Item& getItem() const { return ItemRegistry::get().getItem(m_item); }
-	inline const NBT& getNBT() const { return *m_nbt; }
-	inline NBT& getNBT() { return *m_nbt; }
+	inline const NBT& getNBT() const { return m_nbt; }
+	inline NBT& getNBT() { return m_nbt; }
 	inline void destroy() { ItemStack::destroy(this); }
 	inline ItemStack* copy() const { return ItemStack::create(this); }
 	bool equals(const ItemStack* stack) const;

@@ -1,6 +1,6 @@
 ﻿#pragma once
 #include "ndpch.h"
-#include "nbt/NBT.h"
+#include "core/NBT.h"
 
 
 class AppGlobals
@@ -11,4 +11,4 @@ public:
 	NBT nbt;
 	
 };
-#define ND_GLOBAL_LOG(name,val) AppGlobals::get().nbt.set((name),(val))
+#define ND_GLOBAL_LOG(name,val) AppGlobals::get().nbt.save((name),(val))

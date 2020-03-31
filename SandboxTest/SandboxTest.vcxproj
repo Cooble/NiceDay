@@ -79,7 +79,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>ND_PLATFORM_WINDOWS;GLFW_INCLUDE_NONE;ND_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>src;..\NiceDay\src;..\NiceDay\vendor;..\NiceDay\vendor\spdlog\include;..\NiceDay\vendor\imgui;..\NiceDay\vendor\glm;..\NiceDay\vendor\glfw\include;..\NiceDay\vendor\glad\include;..\NiceDay\vendor\stb_image;..\NiceDay\vendor\lua\src;..\NiceDay\vendor\lua\src\lua;..\NiceDay\vendor\luabridge;vendor\portaudio_libs\include;vendor\libogg_libs\include;vendor\libvorbis_libs\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src;..\NiceDay\src;..\NiceDay\vendor;..\NiceDay\vendor\spdlog\include;..\NiceDay\vendor\imgui;..\NiceDay\vendor\glm;..\NiceDay\vendor\json\include;..\NiceDay\vendor\glfw\include;..\NiceDay\vendor\glad\include;..\NiceDay\vendor\stb_image;..\NiceDay\vendor\lua\src;..\NiceDay\vendor\lua\src\lua;..\NiceDay\vendor\luabridge;vendor\portaudio_libs\include;vendor\libogg_libs\include;vendor\libvorbis_libs\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
       <MinimalRebuild>false</MinimalRebuild>
@@ -100,7 +100,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>ND_PLATFORM_WINDOWS;GLFW_INCLUDE_NONE;ND_RELEASE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>src;..\NiceDay\src;..\NiceDay\vendor;..\NiceDay\vendor\spdlog\include;..\NiceDay\vendor\imgui;..\NiceDay\vendor\glm;..\NiceDay\vendor\glfw\include;..\NiceDay\vendor\glad\include;..\NiceDay\vendor\stb_image;..\NiceDay\vendor\lua\src;..\NiceDay\vendor\lua\src\lua;..\NiceDay\vendor\luabridge;vendor\portaudio_libs\include;vendor\libogg_libs\include;vendor\libvorbis_libs\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src;..\NiceDay\src;..\NiceDay\vendor;..\NiceDay\vendor\spdlog\include;..\NiceDay\vendor\imgui;..\NiceDay\vendor\glm;..\NiceDay\vendor\json\include;..\NiceDay\vendor\glfw\include;..\NiceDay\vendor\glad\include;..\NiceDay\vendor\stb_image;..\NiceDay\vendor\lua\src;..\NiceDay\vendor\lua\src\lua;..\NiceDay\vendor\luabridge;vendor\portaudio_libs\include;vendor\libogg_libs\include;vendor\libvorbis_libs\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -124,7 +124,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>ND_PLATFORM_WINDOWS;GLFW_INCLUDE_NONE;ND_DIST;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>src;..\NiceDay\src;..\NiceDay\vendor;..\NiceDay\vendor\spdlog\include;..\NiceDay\vendor\imgui;..\NiceDay\vendor\glm;..\NiceDay\vendor\glfw\include;..\NiceDay\vendor\glad\include;..\NiceDay\vendor\stb_image;..\NiceDay\vendor\lua\src;..\NiceDay\vendor\lua\src\lua;..\NiceDay\vendor\luabridge;vendor\portaudio_libs\include;vendor\libogg_libs\include;vendor\libvorbis_libs\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src;..\NiceDay\src;..\NiceDay\vendor;..\NiceDay\vendor\spdlog\include;..\NiceDay\vendor\imgui;..\NiceDay\vendor\glm;..\NiceDay\vendor\json\include;..\NiceDay\vendor\glfw\include;..\NiceDay\vendor\glad\include;..\NiceDay\vendor\stb_image;..\NiceDay\vendor\lua\src;..\NiceDay\vendor\lua\src\lua;..\NiceDay\vendor\luabridge;vendor\portaudio_libs\include;vendor\libogg_libs\include;vendor\libvorbis_libs\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>

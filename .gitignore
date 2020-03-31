@@ -19,4 +19,4 @@ res/lua/temp/
 *.world
 *.world.entity
 *imgui.ini
-*lua_editor_settings.dat
+*lua_editor_settings.json

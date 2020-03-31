@@ -38,37 +38,38 @@ void EntityManager::killEntity(EntityID e)
 	}
 }
 
-
-struct MHeader{
+struct MHeader {
 	uint32_t freeListSize;
 	uint32_t generationSize;
 };
 
-void EntityManager::serialize(IStream* stream)
+void EntityManager::serialize(const IBinaryStream::RWStream& stream)
 {
 	MHeader h = {};
 	h.freeListSize = m_freeList.size();
 	h.generationSize = m_generations.size();
-	stream->write(h);
+	stream.write(h);
 	for (uint32_t value : m_freeList)
-		stream->write(value);
-
-	stream->write((char*)m_generations.data(), h.generationSize * sizeof(uint8_t));
+		stream.write(value);
+	stream.write((char*)m_generations.data(), h.generationSize * sizeof(uint8_t));
 }
 
-void EntityManager::deserialize(IStream* stream)
+void EntityManager::deserialize(const IBinaryStream::RWStream& stream)
 {
-	MHeader h={};
-	stream->read(h);
+	MHeader h = {};
+	stream.read(h);
 	uint32_t fre = 0;
 	for (int i = 0; i < h.freeListSize; ++i)
 	{
-		stream->read(fre);
+		stream.read(fre);
 		m_freeList.push_back(fre);
 	}
 	m_generations.resize(h.generationSize);
-	stream->read((char*)m_generations.data(), h.generationSize * sizeof(uint8_t));
+	stream.read((char*)m_generations.data(), h.generationSize * sizeof(uint8_t));
 
 	m_loaded.resize(h.generationSize);
 	m_p_entities.resize(h.generationSize);
 }
+
+
+

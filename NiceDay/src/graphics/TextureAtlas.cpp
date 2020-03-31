@@ -1,6 +1,7 @@
 ﻿#include "ndpch.h"
 #include "TextureAtlas.h"
 #include "Imager2D.h"
+#include "core/physShapes.h"
 
 #include "stb_image.h"
 #include "stb_image_write.h"

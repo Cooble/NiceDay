@@ -270,6 +270,7 @@ namespace WorldIO
 
 	void DynamicSaver::saveVTable()
 	{
+		m_dirty_vtable = false;
 		BigHeaderHeader header;
 
 		header.segment_count = m_segment_count;
@@ -311,6 +312,8 @@ namespace WorldIO
 	void DynamicSaver::endSession()
 	{
 		if (m_stream) {
+			if(m_dirty_vtable)//always save vtable just to be sure
+				saveVTable();
 			m_stream->close();
 			delete m_stream;
 			m_stream = nullptr;
@@ -321,7 +324,8 @@ namespace WorldIO
 
 	void DynamicSaver::setWriteChunkID(int chunkID)
 	{
-		
+
+		m_dirty_vtable = true;
 		m_writeChunkID = chunkID;
 		auto oldSegmentCount = m_segment_count;
 		m_p_offset = getChunkOffset(chunkID);
@@ -456,5 +460,13 @@ namespace WorldIO
 	void DynamicSaver::clearEverything()
 	{
 		std::filesystem::remove(m_path);
+	}
+
+	IBinaryStream::RWStream streamFuncs(DynamicSaver* saver)
+	{
+		return IBinaryStream::RWStream(
+			std::bind(&WorldIO::DynamicSaver::readI, saver, std::placeholders::_1, std::placeholders::_2),
+			std::bind(&WorldIO::DynamicSaver::writeI, saver, std::placeholders::_1, std::placeholders::_2)
+		);
 	}
 }

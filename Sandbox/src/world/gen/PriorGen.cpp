@@ -140,19 +140,19 @@ void PriorGen::genLayer0()
 			else if (y == terrain)
 			{
 				block.block_id = BLOCK_GRASS;
-				block.block_id = BLOCK_SNOW;
+				//block.block_id = BLOCK_SNOW;
 				block.setWall(WALL_AIR);
 			}
 			else if (y == terrain - 1) {
 				block.block_id = BLOCK_DIRT;
-				block.block_id = BLOCK_SNOW;
+				//block.block_id = BLOCK_SNOW;
 				block.setWall(WALL_AIR);
 			}
 			else if (y > terrain - 8)
 			{
 				//5 block of dirt
 				block.block_id = BLOCK_DIRT;
-				block.block_id = BLOCK_SNOW;
+				//block.block_id = BLOCK_SNOW;
 				block.setWall(WALL_DIRT);
 			}
 			else
@@ -186,7 +186,7 @@ void PriorGen::genLayer0()
 					}
 					else
 						block.block_id = BLOCK_STONE;
-						block.block_id = BLOCK_ICE;
+						//block.block_id = BLOCK_ICE;
 				}
 				continue;
 			}
@@ -202,8 +202,8 @@ void PriorGen::genLayer1Grass()
 		auto& grass = getBlock(x, m_height_map[x]);
 		if(m_height_map[x]>=m_height)
 			continue;
-		//if(grass.block_id==BLOCK_GRASS)
-		if(grass.block_id==BLOCK_SNOW)
+		if(grass.block_id==BLOCK_GRASS)
+		//if(grass.block_id==BLOCK_SNOW)
 		{
 			auto& upGrass = getBlock(x, m_height_map[x]+1);
 			if(upGrass.isAir())

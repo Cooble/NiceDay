@@ -24,7 +24,7 @@ namespace NDUtil
 
 		pointer allocate(size_type n, const void* hint = 0)
 		{
-			
+			//return (pointer)malloc(n * sizeof(T));
 			//fprintf(stderr, "Alloc %d bytes.\n", n * sizeof(T));
 			return (pointer)allocateMeehStandard(n * sizeof(T));
 
@@ -33,6 +33,7 @@ namespace NDUtil
 
 		void deallocate(pointer p, size_type n)
 		{
+			//free(p);
 			//fprintf(stderr, "Dealloc %d bytes (%p).\n", n * sizeof(T), p);
 			//return std::allocator<T>::deallocate(p, n);
 			deallocateMeehStandard(p);

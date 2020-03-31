@@ -1,10 +1,10 @@
 ﻿#pragma once
 #include "World.h"
+class NBT;
 
 class IChunkProvider
 {
 public:
-	typedef std::function<void(IStream*)> SerialFunction;
 
 	virtual ~IChunkProvider() =default;
 
@@ -24,9 +24,9 @@ public:
 
 	virtual void assignNBTSave(JobAssignment* jobAssigment, int chunkId, const NBT* nbt)=0;
 	
-	virtual void assignSerialize(JobAssignment* jobAssigment, int chunkId, SerialFunction func)=0;
+	virtual void assignSerialize(JobAssignment* jobAssigment, int chunkId, const IBinaryStream::RWFunc& func)=0;
 
-	virtual void assignDeserialize(JobAssignment* jobAssigment, int chunkId, SerialFunction func)=0;
+	virtual void assignDeserialize(JobAssignment* jobAssigment, int chunkId, const IBinaryStream::RWFunc& func)=0;
 
 	//entity array pointer passed in jobAssignment
 	virtual void assignEntityLoad(JobAssignment* jobAssigment, int chunkId, WorldEntity*** entities, int* numberOfEntities)=0;
