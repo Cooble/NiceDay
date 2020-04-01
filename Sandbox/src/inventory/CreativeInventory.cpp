@@ -7,12 +7,12 @@ CreativeInventory::CreativeInventory()
 	for (auto item : items) {
 		for (int i = 0; i < item.second->getMaxTextureMeta(); ++i)
 		{
-			auto t = ItemStack::create(item.first);
+			auto t = ItemStack::create(item.first,Item::INFINITE_SIZE);
 			t->setMetadata(i);
 			m_items.push_back(t);
 		}
 		if(!item.second->getMaxTextureMeta())
-			m_items.push_back(ItemStack::create(item.first));
+			m_items.push_back(ItemStack::create(item.first, Item::INFINITE_SIZE));
 	}
 	//setInventorySize(m_items.size());
 }

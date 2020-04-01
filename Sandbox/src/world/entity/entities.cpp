@@ -1087,11 +1087,13 @@ void EntityBomb::boom(World& w)
 			if ((glm::abs(i) + glm::abs(j)) > m_blastRadius)
 				continue;
 			if (auto point = w.getBlock(m_pos.x + i, m_pos.y + j))
-				if (point && !point->isAir())
+				if (point)
 				{
-					w.spawnBlockBreakParticles(m_pos.x + i, m_pos.y + j);
-					w.setBlockWithNotify(m_pos.x + i, m_pos.y + j, 0);
-					if (m_deleteWalls)
+					if (!point->isAir()) {
+						w.spawnBlockBreakParticles(m_pos.x + i, m_pos.y + j);
+						w.setBlockWithNotify(m_pos.x + i, m_pos.y + j, 0);
+					}
+					if (!point->isWallFree() && m_deleteWalls)
 						w.setWall(m_pos.x + i, m_pos.y + j, 0);
 				}
 		}

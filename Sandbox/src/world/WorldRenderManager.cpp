@@ -24,6 +24,7 @@ WorldRenderManager::WorldRenderManager(Camera* cam, World* world)
 	  m_bg_sky_fbo(nullptr),
 	  m_light_smooth_fbo(nullptr),
 	  m_block_fbo(nullptr),
+	  m_entity_fbo(nullptr),
 	  m_wall_fbo(nullptr),
 	  m_sky_fbo(nullptr),
 	  m_block_mask_texture(nullptr),
@@ -52,6 +53,7 @@ WorldRenderManager::WorldRenderManager(Camera* cam, World* world)
 	//setup main light texture
 	m_light_fbo = new FrameBufferTexturePair();
 	m_light_smooth_fbo = new FrameBufferTexturePair();
+	m_entity_fbo = new FrameBufferTexturePair();
 	m_block_fbo = new FrameBufferTexturePair();
 	m_wall_fbo = new FrameBufferTexturePair();
 	m_sky_fbo = new FrameBufferTexturePair();
@@ -228,6 +230,7 @@ void WorldRenderManager::onScreenResize()
 	else
 		m_block_mask->replaceTexture(info);
 	m_block_fbo->replaceTexture(Texture::create(info));
+	m_entity_fbo->replaceTexture(Texture::create(info));
 	m_wall_fbo->replaceTexture(Texture::create(info));
 	m_sky_fbo->replaceTexture(Texture::create(info));
 
@@ -527,7 +530,6 @@ void WorldRenderManager::render(BatchRenderer2D& batchRenderer)
 {
 	ND_PROFILE_METHOD();
 
-	//currently takes about max 1.5ms to render
 	
 	//light
 	if (Stats::light_enable)

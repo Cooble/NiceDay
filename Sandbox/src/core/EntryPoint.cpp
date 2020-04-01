@@ -91,7 +91,7 @@ int main()
 	Log::init();
 	Sandbox game;
 
-	NBT n;
+	/*NBT n;
 	n = 12;
 	NBT mapka;
 	mapka["twelfe"] = n;
@@ -153,7 +153,7 @@ int main()
 	stream2.open("cruci.dat", std::ios::binary | std::ios::in);
 	BinarySerializer::read(newLis, std::bind(&std::fstream::read, &stream2, std::placeholders::_1, std::placeholders::_2));
 	stream2.close();
-	ASSERT(newlIs == lis, "shit");
+	ASSERT(newlIs == lis, "shit");*/
 	ND_PROFILE_END_SESSION();
 	game.start();
 

@@ -818,9 +818,15 @@ void WorldLayer::onRender()
 
 	//world
 	m_render_manager->render(*m_batch_renderer);
-	
 
+
+	
 	//entities
+	m_render_manager->getEntityFBO()->bind();
+	Gcon.setClearColor(0, 0, 0, 0);
+	Gcon.clear(BufferBit::COLOR_BUFFER_BIT);
+	Gcon.enableBlend();
+	Gcon.setBlendFunc(Blend::SRC_ALPHA, Blend::ONE_MINUS_SRC_ALPHA);
 	auto worldMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(-m_cam->getPosition().x, -m_cam->getPosition().y, 0));
 
 	m_batch_renderer->begin();
@@ -836,6 +842,14 @@ void WorldLayer::onRender()
 
 	m_batch_renderer->pop();
 	m_batch_renderer->flush();
+	m_render_manager->applyLightMap(m_render_manager->getLightTextureBlur());
+	m_render_manager->getEntityFBO()->unbind();
+	
+	Gcon.enableBlend();
+	glDisable(GL_DEPTH_TEST);
+	Gcon.setBlendFunc(Blend::SRC_ALPHA, Blend::ONE_MINUS_SRC_ALPHA);
+	Effect::renderToCurrentFBO(m_render_manager->getEntityFBO()->getTexture());
+
 	{
 		ND_PROFILE_SCOPE("particle render");
 		//particles

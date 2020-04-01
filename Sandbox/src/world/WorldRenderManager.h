@@ -46,6 +46,7 @@ private:
 
 	//background
 	FrameBufferTexturePair* m_bg_sky_fbo;
+	
 
 
 
@@ -57,6 +58,8 @@ private:
 	FrameBufferTexturePair* m_block_fbo;
 	FrameBufferTexturePair* m_wall_fbo;
 	FrameBufferTexturePair* m_sky_fbo;
+	FrameBufferTexturePair* m_entity_fbo;
+
 
 	//FrameBuffer* m_light_FBO;
 	
@@ -107,7 +110,9 @@ public:
 	inline const glm::mat4& getProjMatrix() { return m_proj_matrix; }
 
 	inline Texture* getLightTextureSmooth() { return m_light_smooth_fbo->getTexture(); }
+	inline Texture* getLightTextureBlur() { return m_blur->getTexture(); }
 	inline Texture* getLightTextureHard() { return m_light_fbo->getTexture(); }
+	inline auto* getEntityFBO() { return m_entity_fbo; }
 };
 
 

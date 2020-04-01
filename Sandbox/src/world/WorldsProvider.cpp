@@ -37,21 +37,23 @@ void WorldsProvider::rescanWorlds()
 	std::string folder = "worlds/";
 	
 	using recursive_directory_iterator = std::filesystem::recursive_directory_iterator;
-	for (const auto& dirEntry : recursive_directory_iterator(folder))
-	{
-		if (!std::filesystem::is_regular_file(dirEntry))
-			continue;
-		std::string txtFile = dirEntry.path().string();
-		if (endsWith(txtFile, ".world"))
-		{
-			
-			std::string name = removeSuffix(txtFile,'.');
-			name = replace(name,'\\','/');
-			name = removePrefix(name, '/');
+    if(std::filesystem::exists(folder)){
+        for (const auto& dirEntry : recursive_directory_iterator(folder))
+        {
+            if (!std::filesystem::is_regular_file(dirEntry))
+                continue;
+            std::string txtFile = dirEntry.path().string();
+            if (endsWith(txtFile, ".world"))
+            {
+                
+                std::string name = removeSuffix(txtFile,'.');
+                name = replace(name,'\\','/');
+                name = removePrefix(name, '/');
 
-			m_worlds.push_back({ name,txtFile });
-		}
-	}
+                m_worlds.push_back({ name,txtFile });
+            }
+        }
+    } else std::filesystem::create_directories(folder);
 }
 
 void WorldsProvider::deleteWorld(const std::string& name)

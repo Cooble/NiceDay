@@ -31,6 +31,7 @@ protected:
 
 	
 public:
+	inline const static int INFINITE_SIZE=-1;
 	virtual ~Item() = default;
 	Item(ItemID id,const std::string& textName);
 
@@ -132,7 +133,7 @@ public:
 	inline void setMetadata(uint64_t meta) { m_metadata = meta; }
 	inline void setSize(int size) { m_size = size; }
 	inline int size()const { return m_size; }
-	inline bool isEmpty() const { return m_size <= 0; }
+	inline bool isEmpty() const { return m_size == 0; }
 	inline ItemID getItemID() const { return m_item; }
 	inline const Item& getItem() const { return ItemRegistry::get().getItem(m_item); }
 	inline const NBT& getNBT() const { return m_nbt; }
@@ -140,7 +141,15 @@ public:
 	inline void destroy() { ItemStack::destroy(this); }
 	inline ItemStack* copy() const { return ItemStack::create(this); }
 	bool equals(const ItemStack* stack) const;
-	inline void addSize(int count) { ASSERT(m_size + count <= getItem().getMaxStackSize(), "Too big itemstack"); m_size += count; }
+	inline void addSize(int count)
+	{
+		if (m_size == Item::INFINITE_SIZE)//ignore change if item has infinite size
+			return;
+		ASSERT(m_size + count <= getItem().getMaxStackSize(), "Too big itemstack");
+		m_size += count;
+		if (m_size < 0)
+			m_size = 0;
+	}
 	void serialize(NBT& nbt);
 	bool isFullStack() const;
 };
