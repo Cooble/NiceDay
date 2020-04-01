@@ -8,6 +8,7 @@ static std::string NBT_INVALID_STRING = "invalidstring";
 
 class NBT
 {
+public:
 	enum NBTType : uint8_t
 	{
 		T_NUMBER_FLOAT = 1,
@@ -20,7 +21,7 @@ class NBT
 		T_ARRAY = 64,
 		T_NULL = 0
 	} type = T_NULL;
-
+private:
 	union
 	{
 		double val_float;
@@ -78,7 +79,8 @@ private:
 		}
 	}
 public:
-
+	inline const char* c_str() const { return val_string->c_str(); }
+	constexpr bool isContainer() const { return isMap()||isArray(); }
 	constexpr bool isMap() const { return type == T_MAP; }
 	constexpr bool isArray() const { return type == T_ARRAY; }
 	constexpr bool isNumber() const { return (type & T_NUMBER) != 0; }
@@ -88,7 +90,8 @@ public:
 	constexpr bool isString() const { return type == T_STRING; }
 	constexpr bool isBool() const { return type == T_BOOL; }
 	constexpr bool isNull() const { return type == T_NULL; }
-	constexpr size_t size() const { return isMap() ? val_map->size() : (isArray() ? val_array->size() : false); }
+	constexpr size_t size() const { return isMap() ? val_map->size() : (isArray() ? val_array->size() : (isString()?string().size():0)); }
+	NBTType types() const { return type; }
 	inline NBT() = default;
 	~NBT(){
 		destruct();
@@ -313,6 +316,17 @@ public:
 	operator float() const { return isFloat()  ? val_float : (isInt()?val_int:invalidCast()); }
 	operator double() const { return isFloat() ? val_float : (isInt() ? val_int : invalidCast()); }
 
+	//will try to return number, if not number -> zero
+	double toNumber() const
+	{
+		if (isInt())
+			return val_int;
+		if (isUInt())
+			return val_uint;
+		if (isFloat())
+			return val_float;
+		return 0;
+	}
 	std::string& string() { return isString() ? *val_string : NBT_INVALID_STRING; }
 	const std::string& string() const { return isString() ? *val_string : NBT_INVALID_STRING; }
 
@@ -448,7 +462,7 @@ public:
 	}
 	
 	//array access
-	NBT& operator[](int index)
+	NBT& access_array(int index)
 	{
 		if (!checkForArray())
 		{
@@ -459,8 +473,7 @@ public:
 			val_array->push_back(NBT());
 		return val_array->operator[](index);
 	}
-
-	const NBT& operator[](int index) const
+	const NBT& access_array_const(int index) const
 	{
 		if (!isArray())
 		{
@@ -468,6 +481,16 @@ public:
 			return nullVal();
 		}
 		return val_array->operator[](index);
+	}
+
+	inline NBT& operator[](int index)
+	{
+		return access_array(index);
+	}
+	
+	inline const NBT& operator[](int index) const
+	{
+		return access_array_const(index);
 	}
 
 	auto& arrays()

@@ -118,7 +118,8 @@ void GUICustomRenderer::renderItemContainer(BatchRenderer2D& renderer, GUIItemCo
 		UVQuad::build({txtOffset.x* m_item_atlas_bit,txtOffset.y* m_item_atlas_bit },{ m_item_atlas_bit ,m_item_atlas_bit }),m_item_texture);
 	incrementZ();
 
-	if (stack->size() <= 1)
+	//dont draw number zero
+	if (stack->size() == 0)
 		return;
 	//number of items
 	static TextMesh mesh(5);
@@ -138,7 +139,6 @@ void GUICustomRenderer::renderBlank(BatchRenderer2D& renderer, GUIBlank& e)
 {
 	renderRectangle(renderer, m_stackPos.x, m_stackPos.y, e.width, e.height);
 }
-
 
 void GUICustomRenderer::renderImage(BatchRenderer2D& renderer, GUIImage& e)
 {

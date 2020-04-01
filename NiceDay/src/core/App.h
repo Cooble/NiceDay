@@ -15,6 +15,7 @@
 #define ND_TEMP_EMPLACE(type, ...)  App::get().getBufferedAllocator().emplace<type>(__VA_ARGS__)
 class ImGuiLayer;
 class LuaLayer;
+class NBT;
 
 class App
 {
@@ -95,5 +96,7 @@ public:
 	inline bool isEventConsuming() { return m_imgui_consuming; }
 
 	void drawGlobals();
+	bool drawNBT(const char* name,NBT& n);
+	void drawNBTConst(const char* name,const NBT& n);
 };
 

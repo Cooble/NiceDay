@@ -807,19 +807,12 @@ void WorldLayer::onRender()
 	Gcon.enableDepthTest(false);
 	if (!m_is_world_ready)
 		return;
-
-
-	
 	{
 		ND_PROFILE_SCOPE("rendeerupdate");
 		m_render_manager->update();
 	}
-
-
 	//world
 	m_render_manager->render(*m_batch_renderer);
-
-
 	
 	//entities
 	m_render_manager->getEntityFBO()->bind();
