@@ -1,6 +1,9 @@
 os: windows
 language: cpp
 
+git:
+    depth: 1
 script:
     - cmake .
+    - cmake --build . --config Debug --target Sandbox
     - cmake --build . --config Release --target Sandbox
