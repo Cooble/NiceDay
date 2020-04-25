@@ -2,4 +2,4 @@ os: windows
 language: cpp
 
 script:
-    - cmake --build . --config Release --target Sandbox -- -i
+    - cmake --build . --config Release --target Sandbox
