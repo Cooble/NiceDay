@@ -4,11 +4,6 @@ bin/
 bin-int/
 nogit/
 ignore/
-vendor/swig/
-NiceDay/vendor/portaudio/
-NiceDay/vendor/libogg/
-NiceDay/vendor/libvorbis/
-NiceDay/vendor/oggtest/
 profiles/
 res/audio/
 res/lua/temp/
@@ -34,6 +29,8 @@ install_manifest.txt
 compile_commands.json
 CTestTestfile.cmake
 _deps
+CPackConfig.cmake
+CPackSourceConfig.cmake
 
 ###
 ### VISUAL STUDIO

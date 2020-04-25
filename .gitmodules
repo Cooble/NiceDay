@@ -27,4 +27,5 @@
 	url = https://github.com/xiph/vorbis
 [submodule "NiceDay/vendor/portaudio"]
 	path = NiceDay/vendor/portaudio
-	url = git://git.assembla.com/portaudio.git
+	
+	url = https://git.assembla.com/portaudio.git
