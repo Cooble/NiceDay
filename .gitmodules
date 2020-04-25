@@ -16,9 +16,6 @@
 [submodule "NiceDay/vendor/luabind-deboostified"]
 	path = NiceDay/vendor/luabind-deboostified
 	url = https://github.com/Cooble/luabind-deboostified.git
-[submodule "NiceDay/vendor/json"]
-	path = NiceDay/vendor/json
-	url = https://github.com/Cooble/Minimal_nlohmann_json.git
 [submodule "NiceDay/vendor/ogg"]
 	path = NiceDay/vendor/ogg
 	url = https://github.com/xiph/ogg.git
