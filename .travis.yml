@@ -1,0 +1,5 @@
+os: windows
+language: cpp
+
+script:
+    - start External-WIN32-Build-Travis.bat

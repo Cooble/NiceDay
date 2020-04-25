@@ -20,11 +20,11 @@ App(1280,720, s_title)
 	Controls::init();
 	m_LayerStack.pushLayer(new MainLayer());
 
-	//m_guiLayer = new GUILayer();
-	//auto worudo = new WorldLayer();
-	//m_guiLayer->setWorldLayer(worudo);
-	//m_LayerStack.pushLayer(worudo);
-	//m_LayerStack.pushLayer(m_guiLayer);
+	m_guiLayer = new GUILayer();
+	auto worudo = new WorldLayer();
+	m_guiLayer->setWorldLayer(worudo);
+	m_LayerStack.pushLayer(worudo);
+	m_LayerStack.pushLayer(m_guiLayer);
 
-	m_LayerStack.pushLayer(new PriorGenLayer());
+	//m_LayerStack.pushLayer(new PriorGenLayer());
 }
