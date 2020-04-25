@@ -18,7 +18,7 @@
 	url = https://github.com/Cooble/luabind-deboostified.git
 [submodule "NiceDay/vendor/json"]
 	path = NiceDay/vendor/json
-	url = https://github.com/Cooble/json.git
+	url = https://github.com/Cooble/Minimal_nlohmann_json.git
 [submodule "NiceDay/vendor/ogg"]
 	path = NiceDay/vendor/ogg
 	url = https://github.com/xiph/ogg.git
@@ -27,5 +27,4 @@
 	url = https://github.com/xiph/vorbis
 [submodule "NiceDay/vendor/portaudio"]
 	path = NiceDay/vendor/portaudio
-	
 	url = https://git.assembla.com/portaudio.git
