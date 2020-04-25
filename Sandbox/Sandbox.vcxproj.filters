@@ -258,6 +258,8 @@
     <ClInclude Include="src\world\particle\particles.h">
       <Filter>world\particle</Filter>
     </ClInclude>
+    <ClInclude Include="src\world\gen\Genom.h" />
+    <ClInclude Include="src\world\gen\OpenSimplexNoise.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\core\EntryPoint.cpp">
@@ -458,5 +460,6 @@
     <ClCompile Include="src\world\particle\particles.cpp">
       <Filter>world\particle</Filter>
     </ClCompile>
+    <ClCompile Include="src\world\gen\Genom.cpp" />
   </ItemGroup>
 </Project>

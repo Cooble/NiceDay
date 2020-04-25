@@ -32,7 +32,10 @@ GLTexture::GLTexture(const TextureInfo& info)
 	}
 	else
 	{
-		GLCall(glTexImage2D(GL_TEXTURE_2D, 0, (int)m_format, m_width, m_height, 0, (int)m_format, GL_UNSIGNED_BYTE, nullptr));
+		// resolves problem with weird alignment of pixels
+		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+		auto fixer = m_format == TextureFormat::RGB ? GL_RGB8 : (int)m_format;
+		GLCall(glTexImage2D(GL_TEXTURE_2D, 0, fixer, m_width, m_height, 0, (int)m_format, GL_UNSIGNED_BYTE, nullptr));
 	}
 	GLCall(glBindTexture(GL_TEXTURE_2D, 0));
 }

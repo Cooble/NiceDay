@@ -36,13 +36,17 @@ public:
 		s_vao->addBuffer(*s_vbo);
 
 		s_shader = ShaderLib::loadOrGetShader("res/shaders/TextureQuad.shader");
+		auto sh = dynamic_cast<GLShader*>(s_shader);
+		sh->bind();
+		sh->setUniformMat4("transform",glm::mat4(1.0f));
+		sh->unbind();
 	}
 
 	//inline static const VertexBuffer& getDefaultVBO() { return *s_vbo; }
 
 	// simple fullscreen quad with simple uv (location=0)=pos, (location=1)=uv,
 	inline static const VertexArray& getDefaultVAO() { return *s_vao; }
-	inline static const Shader& getDefaultShader() { return *s_shader; }
+	inline static Shader& getDefaultShader() { return *s_shader; }
 
 	// draws default vao (shader, textures etc has to be bound at this point)
 	static void renderDefault();

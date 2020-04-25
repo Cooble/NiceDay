@@ -177,6 +177,8 @@
     <ClInclude Include="src\world\ChunkMesh.h" />
     <ClInclude Include="src\world\ChunkPack.h" />
     <ClInclude Include="src\world\FileChunkProvider.h" />
+    <ClInclude Include="src\world\gen\Genom.h" />
+    <ClInclude Include="src\world\gen\OpenSimplexNoise.hpp" />
     <ClInclude Include="src\world\I2DLocalable.h" />
     <ClInclude Include="src\world\IChunkProvider.h" />
     <ClInclude Include="src\world\ITickable.h" />
@@ -251,6 +253,7 @@
     <ClCompile Include="src\world\ChunkMesh.cpp" />
     <ClCompile Include="src\world\ChunkPack.cpp" />
     <ClCompile Include="src\world\FileChunkProvider.cpp" />
+    <ClCompile Include="src\world\gen\Genom.cpp" />
     <ClCompile Include="src\world\IWorld.cpp" />
     <ClCompile Include="src\world\LightCalculator.cpp" />
     <ClCompile Include="src\world\ThreadedChunkProvider.cpp" />

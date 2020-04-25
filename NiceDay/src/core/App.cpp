@@ -46,6 +46,7 @@ void App::init(int width, int height, const std::string& title)
 	m_lua_layer = new LuaLayer();
 	m_LayerStack.pushLayer(m_lua_layer);
 	m_LayerStack.pushLayer(new SoundLayer());
+
 	m_imgui_enable = true;
 	if (m_imgui_enable)
 	{

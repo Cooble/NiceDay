@@ -22,8 +22,7 @@ function playFolder(fileP)
 				musicIndex = musicIndex + 1
                 s = Music()
                 s:open(value.path)
-                s:setVolume(0.5,0)
-s:p(1.25,0)                
+                s:setVolume(0.5,0)             
 s:play(0)
 				
                 ND_INFO("playing (" .. tostring(musicIndex) ..") ".. basename(value.path));

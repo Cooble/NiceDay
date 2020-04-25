@@ -5,12 +5,12 @@
 #include "world/block/basic_blocks.h"
 #include "world/block/block_datas.h"
 #include "world/World.h"
-#include "OpenSimplexNoise.hpp"
+//#include "OpenSimplexNoise.hpp"
 #include "TreeGen.h"
 
 
 PriorGen::PriorGen(const std::string& filePath)
-	: m_file_path(filePath), m_noise(nullptr), m_noise_2(nullptr)
+	: m_file_path(filePath)/*, m_noise(nullptr), m_noise_2(nullptr)*/
 {
 }
 
@@ -99,13 +99,13 @@ void PriorGen::gen(uint64_t seed,int terrainLevel, int width, int height)
 	auto size = m_width * m_height * sizeof(BlockStruct);
 	m_map = (BlockStruct*)malloc(m_width * m_height * sizeof(BlockStruct));
 	m_pixels = (Pix*)malloc(m_width * m_height * sizeof(Pix));
-	if (m_noise)
+	//if (m_noise)
 	{
-		delete m_noise;
-		delete m_noise_2;
+		//delete m_noise;
+	//	delete m_noise_2;
 	}
-	m_noise = new OpenSimplexNoise(m_seed);
-	m_noise_2 = new OpenSimplexNoise(m_seed * 123456);
+	//m_noise = new OpenSimplexNoise(m_seed);
+	//m_noise_2 = new OpenSimplexNoise(m_seed * 123456);
 	memset(m_map, 0, m_width * m_height * sizeof(BlockStruct));
 
 
@@ -237,9 +237,10 @@ void PriorGen::genLayer1Grass()
 
 double PriorGen::genOctave(double octave, double x, double y)
 {
-	double dd = m_noise_2->Evaluate(x * octave, y * octave);
-	dd = (dd + 1) / 2 / octave;
-	return dd;
+	//double dd = m_noise_2->Evaluate(x * octave, y * octave);
+	//dd = (dd + 1) / 2 / octave;
+	//return dd;
+	return 0;
 }
 
 bool PriorGen::genOre(double randomOffset, 

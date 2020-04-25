@@ -1,11 +1,11 @@
 ﻿#pragma once
 #include "layer/Layer.h"
-#include "world/gen/PriorGen.h"
+#include "graphics/API/Texture.h"
+
 
 class PriorGenLayer : public Layer
 {
 private:
-	PriorGen m_gen;
 	Texture* m_tex;
 
 public:
@@ -13,8 +13,10 @@ public:
 
 
 	void onAttach() override;
+	void onDetach() override;
 	void runInner();
 	void onUpdate() override;
 	void onRender() override;
 	void onImGuiRender() override;
+	void onEvent (Event& e) override;
 };

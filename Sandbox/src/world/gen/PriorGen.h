@@ -2,7 +2,7 @@
 #include "world/block/Block.h"
 #include "graphics/API/Texture.h"
 
-class OpenSimplexNoise;
+//class OpenSimplexNoise;
 
 class PriorGen
 {
@@ -14,8 +14,8 @@ private:
 	BlockStruct* m_map=nullptr;
 	Pix* m_pixels=nullptr;
 	uint64_t m_seed;
-	OpenSimplexNoise* m_noise;
-	OpenSimplexNoise* m_noise_2;
+	//OpenSimplexNoise* m_noise;
+	//OpenSimplexNoise* m_noise_2;
 	int m_terrain_level;
 	int* m_height_map;
 

@@ -272,7 +272,7 @@ public:
 		type = T_STRING;
 		return *this;
 	}
-	inline int invalidCast() const { ASSERT(false, "invalid nbt type cast"); return 0; }
+	inline int invalidCast() const { /*ASSERT(false, "invalid nbt type cast");*/ return 0; }
 	inline glm::vec2 invalidCastGLM() const { ASSERT(false, "invalid nbt type cast"); return glm::vec2(0,0); }
 	NBT& operator=(const char* i)
 	{

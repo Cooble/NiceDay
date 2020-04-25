@@ -96,7 +96,7 @@ public:
 	inline bool isEventConsuming() { return m_imgui_consuming; }
 
 	void drawGlobals();
-	bool drawNBT(const char* name,NBT& n);
-	void drawNBTConst(const char* name,const NBT& n);
+	static bool drawNBT(const char* name,NBT& n);
+	static void drawNBTConst(const char* name,const NBT& n);
 };
 
