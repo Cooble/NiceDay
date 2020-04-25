@@ -2,4 +2,4 @@ os: windows
 language: cpp
 
 script:
-    - start External-WIN32-Build-Travis.bat
+    - cmake --build . --config Release --target Sandbox -- -i
