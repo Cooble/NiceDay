@@ -1,5 +1,5 @@
 ﻿#pragma once
-#include <nlohmann/json_fwd.hpp>
+#include "core/json_fwd.h"
 #include "IBinaryStream.h"
 class NBT;
 typedef std::unordered_map<std::string, NBT> NBTMap;

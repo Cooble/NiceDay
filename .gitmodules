@@ -19,3 +19,12 @@
 [submodule "NiceDay/vendor/json"]
 	path = NiceDay/vendor/json
 	url = https://github.com/Cooble/json.git
+[submodule "NiceDay/vendor/ogg"]
+	path = NiceDay/vendor/ogg
+	url = https://github.com/xiph/ogg.git
+[submodule "NiceDay/vendor/vorbis"]
+	path = NiceDay/vendor/vorbis
+	url = https://github.com/xiph/vorbis
+[submodule "NiceDay/vendor/portaudio"]
+	path = NiceDay/vendor/portaudio
+	url = git://git.assembla.com/portaudio.git
