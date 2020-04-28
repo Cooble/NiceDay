@@ -47,6 +47,7 @@
 #include "world/block/block_datas.h"
 #include "graphics/BlockTextureCreator.h"
 #include "event/SandboxControls.h"
+#include "audio/player.h"
 
 const char* WORLD_FILE_PATH;
 int CHUNKS_LOADED;
@@ -139,6 +140,7 @@ void WorldLayer::registerBlocks()
 	ND_REGISTER_BLOCK(new BlockIce());
 	ND_REGISTER_BLOCK(new BlockPumpkin());
 	ND_REGISTER_BLOCK(new BlockChest());
+	ND_REGISTER_BLOCK(new BlockRadio());
 
 
 	//walls
@@ -161,6 +163,7 @@ void WorldLayer::registerEntities()
 	ND_REGISTER_ENTITY(ENTITY_TYPE_TILE_CHEST, TileEntityChest);
 	ND_REGISTER_ENTITY(ENTITY_TYPE_ITEM, EntityItem);
 	ND_REGISTER_ENTITY(ENTITY_TYPE_BOMB, EntityBomb);
+	ND_REGISTER_ENTITY(ENTITY_TYPE_TILE_RADIO, TileEntityRadio);
 }
 
 void WorldLayer::registerBiomes()
@@ -426,6 +429,7 @@ void WorldLayer::loadLuaWorldLibs()
 		.addVariable("dot", &ParticleList::dot, false)
 		.addVariable("line", &ParticleList::line, false)
 		.addVariable("torch_smoke", &ParticleList::torch_smoke, false)
+		.addVariable("note", &ParticleList::note, false)
 		.endNamespace();
 
 	//world wrapper
@@ -532,6 +536,7 @@ void WorldLayer::onUpdate()
 
 	m_world->onUpdate();
 	m_cam->setPosition(play.getPosition());
+	Sounder::get().updateSpatialData(Sounder::PLAYER_ID, { play.getPosition(),{0,0} });
 	m_chunk_loader->onUpdate();
 
 	m_cam->m_light_intensity = Stats::player_light_intensity;
@@ -1209,6 +1214,7 @@ void WorldLayer::onEvent(Event& e)
 
 void WorldLayer::onCreativeEvent(Event& e)
 {
+	
 }
 
 void WorldLayer::onSurvivalEvent(Event& e)

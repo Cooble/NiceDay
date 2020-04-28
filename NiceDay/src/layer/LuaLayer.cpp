@@ -8,6 +8,7 @@
 #include <lua.hpp>
 #include <LuaBridge/LuaBridge.h>
 #include "audio/Player.h"
+#include "audio/audio_handle.h"
 #include "imguifiledialog/ImGuiFileDialog.h"
 #include "core/NBT.h"
 
@@ -1040,6 +1041,14 @@ void LuaLayer::runScriptFromFile(lua_State* L, const nd::temp_string& filePath)
 
 void LuaLayer::loadGlmVec()
 {
+	luabridge::getGlobalNamespace(m_L)
+		.beginClass<half_int>("half_int")
+		.addConstructor<void(*)(short, short)>()
+		.addData("x", &half_int::x)
+		.addData("y", & half_int::x)
+		.endClass();
+
+	
 	luabridge::getGlobalNamespace(m_L)
 		.beginClass<glm::vec2>("glmvec2")
 		.addConstructor<void(*)(float, float)>()

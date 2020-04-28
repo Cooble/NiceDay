@@ -52,6 +52,7 @@ public:
 
 	// rotation if negative will be determined from actual speed of particle
 	void createParticle(ParticleID id, const glm::vec2& pos, const glm::vec2& speed, const glm::vec2& acc, int life,float rotation=0);
+	void createParticle(ParticleID id, const glm::vec2& pos, const glm::vec2& speed, const glm::vec2& acc, int life,float rotation,half_int texturePos);
 	void createBlockParticle(half_int textureOffset, int xPos,int yPos, const glm::vec2& pos, const glm::vec2& speed, const glm::vec2& acc, int life,float rotation=0);
 	void render(ParticleRenderer& renderer);
 };

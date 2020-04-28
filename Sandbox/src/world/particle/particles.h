@@ -9,6 +9,7 @@ namespace ParticleList
 	inline ParticleID line;
 	inline ParticleID bulletShatter;
 	inline ParticleID block;
+	inline ParticleID note;
 
 	void initDefaultParticles(ParticleRegistry& p);
 };

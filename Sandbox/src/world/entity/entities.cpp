@@ -329,7 +329,7 @@ void PhysEntity::save(NBT& src)
 void PhysEntity::load(NBT& src)
 {
 	WorldEntity::load(src);
-	src.load("velocity", m_velocity,glm::vec2(0,0));
+	src.load("velocity", m_velocity, glm::vec2(0, 0));
 	src.load("acceleration", glm::vec2(0, -9.8f / 60));
 }
 
@@ -807,7 +807,7 @@ void Creature::save(NBT& src)
 void Creature::load(NBT& src)
 {
 	PhysEntity::load(src);
-	src.load("Health", m_health,m_max_health);
+	src.load("Health", m_health, m_max_health);
 }
 
 
@@ -921,6 +921,72 @@ void TileEntityChest::onGUIEntityClosed()
 	m_shouldClose = true;
 }
 
+void TileEntityRadio::onUnloaded(World& w)
+{
+	if (m_is_playing)
+		m_music.stop();
+}
+
+void TileEntityRadio::onLoaded(World& w)
+{
+	m_music.open("res/audio/neon.ogg");
+	m_music.updateSpatialData({m_pos, {5, 30}});
+	if (m_is_playing)
+		m_music.play();
+}
+
+void TileEntityRadio::onClicked(World& w, WorldEntity* entity)
+{
+	m_is_playing = !m_is_playing;
+	ND_INFO("Playing {}", m_is_playing);
+	if (m_is_playing)
+		m_music.play();
+	else m_music.stop();
+}
+
+void TileEntityRadio::save(NBT& src)
+{
+	TileEntity::save(src);
+}
+
+void TileEntityRadio::load(NBT& src)
+{
+	TileEntity::load(src);
+}
+
+void TileEntityRadio::update(World& w)
+{
+	if (!m_is_playing)
+		return;
+	if (--m_randTime < 0)
+	{
+		m_randTime = std::rand() % 60 + 1 * 60;
+		w.spawnParticle(
+			ParticleList::note,
+			m_pos + glm::vec2(0.5f + randDispersedFloat(0.05f), 1),
+			{randDispersedFloat(0.001), randFloat(0.001f) + 0.001f},
+			vec2(0),
+			60 * 3,
+			0,
+			half_int(std::rand()&3, 0)
+			);
+
+		w.spawnParticle(
+			ParticleList::note,
+			m_pos + glm::vec2(0.5f + randDispersedFloat(0.05f), 1),
+			{randDispersedFloat(0.01), randFloat(0.005f) + 0.01f},
+			vec2(0),
+			60 * 4,
+			0,
+			half_int(std::rand() & 3, 0));
+	}
+}
+
+EntityType TileEntityRadio::getEntityType() const
+{
+	return ENTITY_TYPE_TILE_RADIO;
+}
+
 
 void TileEntitySapling::update(World& w)
 {
@@ -995,7 +1061,7 @@ void EntityTNT::boom(World& w)
 						w.setWall(m_pos.x + i, m_pos.y + j, 0);
 				}
 		}
-	
+
 	for (int i = 0; i < 100; ++i)
 	{
 		auto angle = i / 50.f * 3.14159f;
@@ -1031,8 +1097,8 @@ void EntityTNT::save(NBT& src)
 void EntityTNT::load(NBT& src)
 {
 	Creature::load(src);
-	src.load("deletewalls", m_deleteWalls,false);
-	src.load("radius", m_radius,5);
+	src.load("deletewalls", m_deleteWalls, false);
+	src.load("radius", m_radius, 5);
 }
 
 EntityBomb::EntityBomb()
@@ -1040,23 +1106,23 @@ EntityBomb::EntityBomb()
 	m_timeToBoom = 60 * 2;
 	m_blinkTime = 0;
 	m_velocity = vec2(0);
-	m_acceleration = { 0.f, -1.f / 60 };
+	m_acceleration = {0.f, -1.f / 60};
 	m_max_velocity = vec2(50.0f / 60);
 
 	static SpriteSheetResource res(Texture::create(
-		TextureInfo("res/images/tnt.png")
-		.filterMode(TextureFilterMode::NEAREST)
-		.format(TextureFormat::RGBA)), 3, 1);
+		                               TextureInfo("res/images/tnt.png")
+		                               .filterMode(TextureFilterMode::NEAREST)
+		                               .format(TextureFormat::RGBA)), 3, 1);
 	m_animation = Animation(&res);
 	m_animation.setSpriteIndex(0, 0);
 
 	m_animation.setPosition(glm::vec3(-1, 0, 0));
 	m_animation.setSize(glm::vec2(2, 2));
 
-	m_bound = Phys::toPolygon({ -1, 0, 1, 2 });
+	m_bound = Phys::toPolygon({-1, 0, 1, 2});
 }
 
-void EntityBomb::setBombType(int blastRadius, bool deleteWalls,int meta)
+void EntityBomb::setBombType(int blastRadius, bool deleteWalls, int meta)
 {
 	m_animation.setSpriteIndex(meta, 0);
 	m_deleteWalls = deleteWalls;
@@ -1067,9 +1133,9 @@ void EntityBomb::update(World& w)
 {
 	PhysEntity::computePhysics(w);
 
-	glm::vec2 vel(0, 0.01f+ 0.05f*randFloat());
-	w.spawnParticle(ParticleList::torch_smoke, m_pos+glm::vec2(0,1.7), vel, -vel * 0.01f, 50 + std::rand() % 30);
-	
+	glm::vec2 vel(0, 0.01f + 0.05f * randFloat());
+	w.spawnParticle(ParticleList::torch_smoke, m_pos + glm::vec2(0, 1.7), vel, -vel * 0.01f, 50 + std::rand() % 30);
+
 	if (m_timeToBoom-- == 0)
 		boom(w);
 }
@@ -1089,7 +1155,8 @@ void EntityBomb::boom(World& w)
 			if (auto point = w.getBlock(m_pos.x + i, m_pos.y + j))
 				if (point)
 				{
-					if (!point->isAir()) {
+					if (!point->isAir())
+					{
 						w.spawnBlockBreakParticles(m_pos.x + i, m_pos.y + j);
 						w.setBlockWithNotify(m_pos.x + i, m_pos.y + j, 0);
 					}
@@ -1133,8 +1200,8 @@ void EntityBomb::save(NBT& src)
 void EntityBomb::load(NBT& src)
 {
 	Creature::load(src);
-	src.load("deletewalls", m_deleteWalls,false);
-	src.load("radius", m_blastRadius,5);
+	src.load("deletewalls", m_deleteWalls, false);
+	src.load("radius", m_blastRadius, 5);
 }
 
 

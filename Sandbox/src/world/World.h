@@ -392,7 +392,7 @@ public:
 	inline EntityManager& getEntityManager() { return m_entity_manager; }
 	inline ParticleManager** particleManager() { return &m_particle_manager; }
 	
-	void spawnParticle(ParticleID id, const glm::vec2& pos, const glm::vec2& speed, const glm::vec2& acc, int life, float rotation = 0);
+	void spawnParticle(ParticleID id, const glm::vec2& pos, const glm::vec2& speed, const glm::vec2& acc, int life, float rotation = 0,half_int texturePos=half_int(-1,-1));
 	void spawnBlockBreakParticles(int x, int y);
 
 

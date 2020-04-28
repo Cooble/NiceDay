@@ -101,7 +101,7 @@ public:
 	bool isEnabled = true;
 	float renderAngle=0;
 	bool isVisible = true;
-	bool isNotSpacial = false;
+	bool isNotSpatial = false;
 	ActionF onDimChange;
 	EventF onMyEventFunc;
 
@@ -149,7 +149,7 @@ public:
 			i = paddin;
 	}
 	inline bool hasFocus() const { return m_has_focus; }
-	inline bool isNotSpaci() const { return isNotSpacial; }
+	inline bool isNotSpaci() const { return isNotSpatial; }
 	inline bool isPressed() const { return m_is_pressed; }
 	inline void setParent(GUIElement* parent) { this->m_parent = parent; }
 	

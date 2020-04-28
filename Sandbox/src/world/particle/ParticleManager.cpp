@@ -88,7 +88,29 @@ void ParticleManager::createParticle(ParticleID id, const glm::vec2& pos, const 
 	p.rotationSpeed = templ.rotationSpeed;
 	p.frameAge = 0;
 	p.isLighted = true;
+}
 
+void ParticleManager::createParticle(ParticleID id, const glm::vec2& pos, const glm::vec2& speed, const glm::vec2& acc,
+	int life, float rotation, half_int texturePos)
+{
+	auto& p = createParticle();
+	auto& templ = ParticleRegistry::get().getTemplate(id);
+	p.isBlock = false;
+	p.id = id;
+	p.pos = pos;
+	p.velocity = speed;
+	p.acceleration = acc;
+	p.life = life;
+	p.textureIndex = templ.texture_pos+texturePos;
+	p.currentFrame = 0;
+	p.nextFrame = templ.frameCount == 1 ? 0 : 1;
+	p.frameCount = templ.frameCount;
+	p.textureSize = templ.size;
+	p.tpf = templ.ticksPerFrame;
+	p.rotation = rotation;
+	p.rotationSpeed = templ.rotationSpeed;
+	p.frameAge = 0;
+	p.isLighted = true;
 }
 
 

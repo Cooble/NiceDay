@@ -1,10 +1,9 @@
 ﻿#pragma once
 #include "audio.h"
 #include "memory/Pool.h"
+#include "audio_header.h"
 // enables possibility to get currently playing list of streams using Sounder::getDebugInfo()
 #define SOUNDER_DEBUG_INFO 1
-// unique identifier of each audio stream of Sounder
-typedef int64_t SoundID;
 
 //how big one soundbuffer can be 
 constexpr int SOUNDER_SOUND_BUFF_SAMPLE_MEMORY_SIZE = 44100 * 4 * 2;//rate * seconds * stereo
@@ -30,11 +29,14 @@ struct SoundData
 	float currentFloatSampleIndex=0;
 	//how much should volume change per sample if(targetVolume!=volume) always positive
 	std::atomic<float> deltaRate = 0;
+	//is already log based
+	std::atomic<float> spatialMultiplier = 1;
+	std::atomic<float> spatialDirection = 0;
 	std::atomic<bool> isPaused;
 	std::atomic_bool shouldClose = false;
 	std::atomic_bool terminateOnFadeOut = false;
 	bool shouldLoop = false;
-
+	
 	float pitch = 1;
 };
 struct MusicData
@@ -53,6 +55,9 @@ struct MusicData
 	//how much should volume change per sample if(targetVolume!=volume) always positive
 	std::atomic<float> deltaVolumeRate = 10000;
 	std::atomic<float> deltaPitchRate = 10000;
+	//is already log based
+	std::atomic<float> spatialMultiplier = 1;
+	std::atomic<float> spatialDirection = 0;
 	std::atomic<bool> isPaused;
 	std::atomic_bool shouldClose = false;
 	std::atomic_bool terminateOnFadeOut = false;
@@ -63,15 +68,16 @@ struct MusicData
 };
 
 typedef void PaStream;
+
 struct Sound
 {
 	const bool isSound = true;
 	SoundID soundid = -1;
 	PaStream* pa_stream = nullptr;
 	SoundData data{};
+	SpatialData spatialData;
 	auto& soundBuffer() { return data.sound_buff; }
 };
-
 struct Music
 {
 	const bool isSound = false;
@@ -87,21 +93,28 @@ struct Music
 	Strid sid = 0;
 	std::atomic_bool hasLoopRing=false;
 	std::atomic_bool shouldTerminate=false;
+	SpatialData spatialData;
 	
 	auto& musicStream() { return data.file_stream; }
 };
+
+inline bool operator==(const SpatialData& lhs, const SpatialData& rhs)
+{
+	return lhs.pos == rhs.pos && rhs.maxDistances == lhs.maxDistances;
+}
 struct SoundAssignment
 {
 	enum
 	{
 		LOAD,
 		PLAY,
+		SET_SPATIAL_DATA,
+		FLUSH_SPATIAL_DATA,
 		PAUSE,
 		FADE,
 		CLOSE,
 		STOP_ALL,
 	} type;
-
 	std::string soundFile;
 	bool sound_or_music;
 	bool loop;
@@ -109,6 +122,7 @@ struct SoundAssignment
 	SoundID id;
 	float timeToChangeVolume = -1;
 	float timeToChangePitch = -1;
+	SpatialData spatialData;
 
 };
 
@@ -139,6 +153,9 @@ struct AudioState
 	bool looping;
 	float volume;
 	float pitch;
+	float spatialMultiplier;
+	float spatialDistance;
+	glm::vec2 spatialMaxes;
 	
 	float timestamp;
 	std::string filePath;
@@ -163,7 +180,8 @@ typedef std::unordered_map<SoundID, AudioState> AudioStateMap;
 class Sounder
 {
 public:
-
+	static const SoundID PLAYER_ID = 1;
+	
 	inline static Sounder& get()
 	{
 		static auto t = new Sounder;
@@ -192,8 +210,9 @@ private:
 	std::mutex m_debug_states_mutex;
 	AudioStateMap m_debug_states;
 #endif
-	SoundID m_current_id;
-	
+	SoundID m_current_id=2;
+	SpatialData m_target_data={{0,0},{0,0}};
+
 	void loopInternal();
 	//will return new soundbuff
 	// in case soundbuffPool is full, nullptr
@@ -212,6 +231,7 @@ private:
 
 	void prepareMusic(Music** musi, const SoundAssignment& command,bool buffFill,bool justLoad);
 	void preparePlaySound(Sound** soun, const SoundAssignment& command);
+	void recalculateSpatialData();
 public:
 
 	// prepares portaudio
@@ -221,12 +241,23 @@ public:
 	// signalizes the sound thread to stop
 	void stop();
 	// returns true when sound thread stopped
-	inline bool isRunning() const { return m_is_running; }
+	bool isRunning() const { return m_is_running; }
+
+	// sets pos and range of sound source or target
+	// When specifying target:
+	//			Use Player::PLAYER_ID to set location target
+	// Note:
+	//		To apply spatial data call flushSpatialData()!
+	void updateSpatialData(SoundID id, const SpatialData& data);
+
+	// will recalculate all spatial sounds to target
+	// Should be called once per tick
+	void flushSpatialData();
 	
-	SoundID playAudio(const std::string& filePath, bool sound_or_music, float volume, float pitch, bool loop, float fadeTime);
-	SoundID playSound(const std::string& filePath, float volume = 1, float pitch = 1, bool loop = false, float fadeTime = 0);
-	SoundID playMusic(const std::string& filePath, float volume = 1, float pitch = 1, bool loop = false, float fadeTime = 0);
-	inline bool isPlaying(SoundID id);
+	SoundID playAudio(const std::string& filePath, bool sound_or_music, float volume, float pitch, bool loop, float fadeTime, const SpatialData& data);
+	SoundID playSound(const std::string& filePath, float volume = 1, float pitch = 1, bool loop = false, float fadeTime = 0, const SpatialData& data = SpatialData());
+	SoundID playMusic(const std::string& filePath, float volume = 1, float pitch = 1, bool loop = false, float fadeTime = 0, const SpatialData& data = SpatialData());
+	bool isPlaying(SoundID id);
 	void stopAllMusic();
 	void submit(const SoundAssignment& assignment);
 
@@ -239,69 +270,5 @@ public:
 #endif
 };
 
-
-/**
- * Represents Audio which is can be played, paused, stopped
- * It is only a handle, true audio proccessing is done on the separate thread in Sounder
- * It's possible to call Sounder directly with Sounder::submit()
- */
-class AudioHandle
-{
-private:
-	SoundID m_handle = -1;
-	float m_volume = 1;
-	float m_pitch = 1;
-	bool m_loop = false;
-	std::string m_file_path;
-	bool m_is_playing = false;
-	const bool m_is_sound;
-	bool m_is_paused = false;
-public:
-	AudioHandle(bool isSound);
-	// sets the filePath of the audio clip (nothing else)
-	void open(const std::string& filePath);
-	// starts playing with fading-in from silence in fadeTime seconds
-	// use fadeTime = 0 to get instant full volume 
-	void play(float fadeTime = 0);
-	// pauses currently playing clip
-	// to play it again use simply play(0)
-	void pause();
-	// stops playing with fading-out into silence in fadeTime seconds
-	// use fadeTime = 0 to stop immediately
-	void stop(float fadeTime = 0);
-	// sets the target volume for clip to reach in fadeTime seconds
-	// can be used before playing and during playing
-	void setVolume(float volume, float fadeTime = 0);
-	// sets the target pitch/speed for clip to reach in fadeTime seconds
-	// can be used before playing
-	// can be also used during playing if it's Music and not Sound
-	void setPitch(float f, float fadeTime = 0);
-	// sets looping of clip (replaying when it reaches end)
-	// can be set only before calling play()
-	inline void setLoop(bool loop) { m_loop = loop; }
-	// true if file is playing
-	bool isPlaying();
-};
-
-
-/**
- * Represents audio that will be cached into the buffer for later (and faster) usage
- * Use with short audio clips (like 4sec max) (it's not mandatory yet advisable)
- */
-class SoundHandle :public AudioHandle
-{
-public:
-	SoundHandle();
-};
-/**
- * Represents audio stream which will be read from file directly into the sound proccessing
- * Won't be loaded all at once
- * Use with songs, ambient sounds and longer audio clips (or with sounds which won't be needed again in the near future)
- */
-class MusicHandle :public AudioHandle
-{
-public:
-	MusicHandle();
-};
 
 

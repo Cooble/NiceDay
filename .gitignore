@@ -9,6 +9,10 @@ res/audio/
 res/lua/temp/
 build/
 
+#atlases made on the go
+res/images/blockAtlas/atlas.png
+res/images/itemAtlas/atlas.png
+res/images/particleAtlas/atlas.png
 
 # Files
 *.user

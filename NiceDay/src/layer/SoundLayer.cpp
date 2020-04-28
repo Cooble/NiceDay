@@ -343,6 +343,7 @@ void SoundLayer::onDetach()
 
 void SoundLayer::onUpdate()
 {
+	Sounder::get().flushSpatialData();
 }
 
 void SoundLayer::onImGuiRender()
@@ -499,6 +500,7 @@ void SoundLayer::onImGuiRender()
 				ImGui::Value("Pitch", audio.second.pitch);
 				ImGui::Value("Loop", audio.second.looping);
 				ImGui::Value("Timestamp", (int)(audio.second.timestamp/1000));
+				ImGui::Value("Spatial", audio.second.spatialMultiplier);
 				ImGui::EndTooltip();
 			}
 		}

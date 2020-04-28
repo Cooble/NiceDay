@@ -9,6 +9,7 @@
 #include "graphics/Sprite.h"
 #include "graphics/Bar.h"
 #include "inventory/Inventory.h"
+#include "audio/audio_handle.h"
 
 class TileEntitySapling :public TileEntity
 {
@@ -57,6 +58,25 @@ public:
 	TO_ENTITY_STRING(TileEntityChest)
 	void onGUIEntityClosed();
 	ND_FACTORY_METH_ENTITY_BUILD(TileEntityChest)
+};
+class TileEntityRadio :public TileEntity
+{
+private:
+	MusicHandle m_music;
+	bool m_is_playing=false;
+	int m_randTime = 0;
+public:
+	TileEntityRadio() = default;
+	virtual ~TileEntityRadio() = default;
+	void onUnloaded(World& w) override;
+	void onLoaded(World& w) override;
+	void onClicked(World& w, WorldEntity* entity) override;
+	void update(World& w) override;
+	EntityType getEntityType() const override;
+	TO_ENTITY_STRING(TileEntityRadio)
+	ND_FACTORY_METH_ENTITY_BUILD(TileEntityRadio)
+	void save(NBT& src) override;
+	void load(NBT& src) override;
 };
 class PhysEntity : public WorldEntity
 {
@@ -336,3 +356,4 @@ public:
 	void save(NBT& src) override;
 	void load(NBT& src) override;
 };
+

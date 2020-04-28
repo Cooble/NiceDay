@@ -550,6 +550,18 @@ int BlockTreeSapling::getCornerOffset(int x, int y, const BlockStruct&) const
 	return BLOCK_STATE_FULL;
 }
 
+
+BlockRadio::BlockRadio()
+	: MultiBlock(BLOCK_RADIO)
+{
+	m_opacity = OPACITY_AIR;
+	m_width = 2;
+	m_height = 2;
+	m_tile_entity = ENTITY_TYPE_TILE_RADIO;
+	setNoCollisionBox();
+}
+
+
 BlockTree::BlockTree()
 	: Block(BLOCK_TREE)
 {

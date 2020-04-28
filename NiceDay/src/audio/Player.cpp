@@ -21,6 +21,8 @@ static int paSoundCallback(const void* inputBuffer, void* outputBuffer,
 
 	float f = data->volume;
 	data->logVolume = f * f * f * f;
+	float leftDir = -glm::max(data->spatialDirection - 1, -1.f);
+	float rightDir = glm::min(data->spatialDirection + 1, 1.f);
 
 	PaStreamCallbackResult result = paContinue;
 	int restZeros = 0;
@@ -28,9 +30,9 @@ static int paSoundCallback(const void* inputBuffer, void* outputBuffer,
 	{
 		for (unsigned int i = 0; i < framesPerBuffer; i++)
 		{
-			*out++ = data->left_phase * data->logVolume;
+			*out++ = data->left_phase * data->logVolume * data->spatialMultiplier * leftDir;
 			if (channels == 2)
-				*out++ = data->right_phase * data->logVolume;
+				*out++ = data->right_phase * data->logVolume * data->spatialMultiplier * rightDir;
 
 			if ((size_t)data->currentFloatSampleIndex >= samplesPerChannel)
 			{
@@ -90,6 +92,8 @@ static int paMusicCallback(const void* inputBuffer, void* outputBuffer,
 	//	f = 0;
 	float f = data->volume;
 	data->logVolume = f * f * f * f;
+	float leftDir = -glm::max(data->spatialDirection - 1, -1.f);
+	float rightDir = glm::min(data->spatialDirection + 1, 1.f);
 
 	PaStreamCallbackResult result = paContinue;
 	int restZeros = 0;
@@ -97,9 +101,9 @@ static int paMusicCallback(const void* inputBuffer, void* outputBuffer,
 	{
 		for (unsigned int i = 0; i < framesPerBuffer; i++)
 		{
-			*out++ = data->left_phase * data->logVolume;
+			*out++ = data->left_phase * data->logVolume*  data->spatialMultiplier*leftDir;
 			if (channels == 2)
-				*out++ = data->right_phase * data->logVolume;
+				*out++ = data->right_phase * data->logVolume *data->spatialMultiplier*rightDir;
 
 			if ((size_t)data->currentFloatSampleIndex >= samplesInFrame)
 			{
@@ -325,7 +329,7 @@ void Sounder::prepareMusic(Music** musi, const SoundAssignment& command, bool bu
 	music->data.targetPitch = justLoad ? 2 : command.pitch;
 	music->isFileOpened = false;
 	music->data.deltaVolumeRate = command.timeToChangeVolume; //will be converted after file load
-
+	music->spatialData = command.spatialData;
 	m_file_opener.assignWork({&music->musicStream(), job, command.soundFile});
 	m_music_streams.push_back(music);
 	m_sound_ids[command.id] = music;
@@ -368,6 +372,7 @@ void Sounder::preparePlaySound(Sound** soun, const SoundAssignment& command)
 	sound->data.targetVolume = command.volume;
 	sound->data.pitch = command.pitch;
 	sound->data.shouldLoop = command.loop;
+	sound->spatialData = command.spatialData;
 
 	auto error = paStartSoundAudioStream(sound);
 	ASSERT(error == paNoError, "cannot open audio stream");
@@ -392,6 +397,47 @@ void Sounder::preparePlaySound(Sound** soun, const SoundAssignment& command)
 #endif
 }
 
+static void getVolume(const SpatialData& target, const SpatialData& source,float& outVolume,float& outDirection)
+{
+	float dist = glm::distance(target.pos, source.pos);
+	float minDist = glm::max(dist, source.maxDistances.x);
+	outVolume = glm::max(0.f, 1- (minDist - source.maxDistances.x) / (source.maxDistances.y - source.maxDistances.x));
+
+	outDirection = (source.pos.x - target.pos.x);
+	if (outDirection == 0)
+		return;
+	///prizpusobit radiusnormal kdyz se bude delit glmabs(outdir)
+	outDirection = glm::clamp((glm::abs(outDirection) - source.maxDistances.x) / (source.maxDistances.y - source.maxDistances.x),0.f,1.f)
+	*(glm::abs(outDirection)/outDirection)
+	;
+	
+	
+}
+
+void Sounder::recalculateSpatialData()
+{
+	
+	for (auto& sound : m_music_streams)
+	{
+		if (sound->spatialData.isValid()) {
+			float vol;
+			float dir;
+			getVolume(m_target_data, sound->spatialData,vol,dir);
+			sound->data.spatialMultiplier = vol*vol*vol*vol;
+			sound->data.spatialDirection = dir;
+		}
+	}
+	for (auto& sound : m_sound_streams)
+	{
+		if (sound->spatialData.isValid()) {
+			float vol;
+			float dir;
+			getVolume(m_target_data, sound->spatialData, vol, dir);
+			sound->data.spatialDirection = 1;
+		}
+	}
+	
+}
 
 void Sounder::loopInternal()
 {
@@ -429,7 +475,7 @@ void Sounder::loopInternal()
 			}
 		}
 		// proccess commands
-		if (!commands.empty())
+		while (!commands.empty())
 		{
 			long long totalTime = 0;
 			TimerStaper staper("comman");
@@ -613,6 +659,31 @@ void Sounder::loopInternal()
 					music->data.targetVolume = 0;
 					music->data.terminateOnFadeOut = !music->optional_sound_buffer;
 				}
+			}
+			break;
+			case SoundAssignment::SET_SPATIAL_DATA:
+			{
+				SoundID id = command.id;
+				if(id==PLAYER_ID)
+				{
+					m_target_data = command.spatialData;
+					break;
+				}
+				auto it = m_sound_ids.find(id);
+				if (it == m_sound_ids.end())
+					break;
+				//forgive me! Devil shall call my name again
+				auto sound = (Sound*)it->second;
+				auto music = (Music*)it->second;
+				if (sound->isSound)
+					sound->spatialData = command.spatialData;
+				else
+					music->spatialData = command.spatialData;
+			}
+			break;
+			case SoundAssignment::FLUSH_SPATIAL_DATA:
+			{
+				recalculateSpatialData();
 			}
 			break;
 			default:;
@@ -812,6 +883,9 @@ void Sounder::loopInternal()
 						state.pitch = sound->data.pitch;
 						state.isPaused = sound->data.isPaused;
 						state.looping = sound->data.shouldLoop;
+						state.spatialMultiplier = glm::sqrt(glm::sqrt(sound->data.spatialMultiplier));
+						//needs to revert back from multiplication
+						//this is solely for debug purposes
 					}
 					else
 					{
@@ -820,6 +894,8 @@ void Sounder::loopInternal()
 						state.isPaused = music->data.isPaused;
 						state.looping = music->data.shouldLoop;
 						state.timestamp = music->musicStream().getCurrentMillis();
+						state.spatialMultiplier = glm::sqrt(glm::sqrt(music->data.spatialMultiplier));
+
 					}
 				}
 			}
@@ -911,13 +987,27 @@ void Sounder::stop()
 	m_should_stop = true;
 }
 
+void Sounder::updateSpatialData(SoundID id, const SpatialData& data)
+{
+	SoundAssignment as;
+	as.type = SoundAssignment::SET_SPATIAL_DATA;
+	as.id = id;
+	as.spatialData = data;
+	submit(as);
+}
+
+void Sounder::flushSpatialData()
+{
+	SoundAssignment as;
+	as.type = SoundAssignment::FLUSH_SPATIAL_DATA;
+	submit(as);
+}
+
 SoundID Sounder::playAudio(const std::string& filePath, bool sound_or_music, float volume, float pitch, bool loop,
-                           float fadeTime)
+                           float fadeTime, const SpatialData& data)
 {
 	auto out = m_current_id++;
-	{
-		std::lock_guard<std::mutex> guard(m_queue_mutex);
-		m_queue.push({
+	submit({
 			SoundAssignment::PLAY,
 			ND_RESLOC(filePath),
 			sound_or_music,
@@ -925,9 +1015,10 @@ SoundID Sounder::playAudio(const std::string& filePath, bool sound_or_music, flo
 			volume,
 			pitch,
 			out,
-			fadeTime
+			fadeTime,
+			-1,
+			data
 		});
-	}
 	{
 		std::lock_guard<std::mutex> guarde(m_states_mutex);
 		m_states[out] = true;
@@ -935,14 +1026,14 @@ SoundID Sounder::playAudio(const std::string& filePath, bool sound_or_music, flo
 	return out;
 }
 
-SoundID Sounder::playSound(const std::string& filePath, float volume, float pitch, bool loop, float fadeTime)
+SoundID Sounder::playSound(const std::string& filePath, float volume, float pitch, bool loop, float fadeTime, const SpatialData& data)
 {
-	return playAudio(filePath, true, volume, pitch, loop, fadeTime);
+	return playAudio(filePath, true, volume, pitch, loop, fadeTime,data);
 }
 
-SoundID Sounder::playMusic(const std::string& filePath, float volume, float pitch, bool loop, float fadeTime)
+SoundID Sounder::playMusic(const std::string& filePath, float volume, float pitch, bool loop, float fadeTime, const SpatialData& data)
 {
-	return playAudio(filePath, false, volume, pitch, loop, fadeTime);
+	return playAudio(filePath, false, volume, pitch, loop, fadeTime,data);
 }
 
 bool Sounder::isPlaying(SoundID id)
@@ -973,100 +1064,3 @@ AudioStateMap Sounder::getDebugInfo()
 
 #endif
 
-AudioHandle::AudioHandle(bool isSound)
-	:
-	m_is_sound(isSound)
-{
-}
-
-bool AudioHandle::isPlaying()
-{
-	return Sounder::get().isPlaying(m_handle);
-}
-
-SoundHandle::SoundHandle()
-	:
-	AudioHandle(true)
-{
-}
-
-MusicHandle::MusicHandle()
-	:
-	AudioHandle(false)
-{
-}
-
-void AudioHandle::open(const std::string& filePath)
-{
-	m_is_playing = false;
-	m_file_path = filePath;
-}
-
-void AudioHandle::pause()
-{
-	if (m_is_paused)
-		return;
-	m_is_paused = true;
-	SoundAssignment as;
-	as.type = SoundAssignment::PAUSE;
-	as.id = m_handle;
-	as.timeToChangeVolume = 0;
-	Sounder::get().submit(as);
-	m_is_playing = false;
-}
-
-void AudioHandle::play(float fadeTime)
-{
-	if (m_is_paused)
-	{
-		SoundAssignment as;
-		as.type = SoundAssignment::PLAY;
-		as.id = m_handle;
-		as.timeToChangeVolume = fadeTime;
-		Sounder::get().submit(as);
-		m_is_paused = false;
-	}
-	else
-		m_handle = Sounder::get().playAudio(m_file_path, m_is_sound, m_volume, m_pitch, m_loop, fadeTime);
-	m_is_playing = true;
-}
-
-void AudioHandle::stop(float fadeTime)
-{
-	SoundAssignment as;
-	as.type = SoundAssignment::CLOSE;
-	as.id = m_handle;
-	as.timeToChangeVolume = fadeTime;
-	Sounder::get().submit(as);
-	m_is_playing = false;
-}
-
-void AudioHandle::setVolume(float volume, float fadeTime)
-{
-	m_volume = volume;
-	if (m_is_playing)
-	{
-		SoundAssignment as;
-		as.type = SoundAssignment::FADE;
-		as.id = m_handle;
-		as.volume = m_volume;
-		as.pitch = m_pitch;
-		as.timeToChangeVolume = fadeTime;
-		Sounder::get().submit(as);
-	}
-}
-
-void AudioHandle::setPitch(float f, float fadeTime)
-{
-	m_pitch = f;
-	if (m_is_playing)
-	{
-		SoundAssignment as;
-		as.type = SoundAssignment::FADE;
-		as.id = m_handle;
-		as.volume = m_volume;
-		as.pitch = m_pitch;
-		as.timeToChangePitch = fadeTime;
-		Sounder::get().submit(as);
-	}
-}

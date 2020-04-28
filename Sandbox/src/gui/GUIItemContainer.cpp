@@ -18,7 +18,7 @@ void GUIItemContainer::onMyEvent(Event& e)
 		return;
 	if (m_container && onContainerEventConsumer&&m_slotIndex!=-1&& m_slotIndex<m_container->getItemsSize())
 		onContainerEventConsumer(m_container->getID(), m_slotIndex, e);
-	if (!isNotSpacial && e.getEventType() == Event::EventType::MousePress)
+	if (!isNotSpatial && e.getEventType() == Event::EventType::MousePress)
 		e.handled = true;
 }
 
@@ -46,7 +46,7 @@ GUIItemTitle::GUIItemTitle():GUIElement(GETYPE::Other)
 	isAlwaysPacked = false;
 	dim = { 100,50 };
 	isVisible = true;
-	isNotSpacial = true;
+	isNotSpatial = true;
 
 	auto mat = FontMatLib::getMaterial("res/fonts/andrew.fnt");
 	auto row = new GUIColumn();

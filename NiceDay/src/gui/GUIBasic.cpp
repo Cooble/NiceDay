@@ -12,7 +12,7 @@
 GUIText::GUIText(FontMaterial* mat) : GUIElement(GETYPE::Text), fontMaterial(mat)
 {
 	isAlwaysPacked = true;
-	isNotSpacial = true;
+	isNotSpatial = true;
 }
 
 bool GUIText::packDimensions()
@@ -237,7 +237,7 @@ GUIImage::GUIImage()
 	:
 	GUIElement(GETYPE::Image)
 {
-	isNotSpacial = true;
+	isNotSpatial = true;
 }
 
 bool GUIImage::packDimensions()
@@ -359,7 +359,7 @@ void GUIWindow::onMyEvent(Event& e)
 
 GUIColumn::GUIColumn(GUIAlign childAlignment) : GUIElement(GETYPE::Column)
 {
-	isNotSpacial = true;
+	isNotSpatial = true;
 	child_alignment = childAlignment;
 	space = 5;
 	isVisible = false;
@@ -431,7 +431,7 @@ GUIRow::GUIRow(GUIAlign childAlignment) :
 	GUIElement(GETYPE::Row)
 {
 	isVisible = false;
-	isNotSpacial = true;
+	isNotSpatial = true;
 	child_alignment = childAlignment;
 	space = 5;
 }
@@ -483,7 +483,7 @@ GUIGrid::GUIGrid() :
 	GUIElement(GETYPE::Grid)
 {
 	isVisible = false;
-	isNotSpacial = true;
+	isNotSpatial = true;
 	space = 5;
 }
 
@@ -819,7 +819,7 @@ void GUIHSlider::setNormalQuantization(int possibleStates)
 GUIBlank::GUIBlank(): GUIElement(GETYPE::Blank)
 {
 	isVisible = false;
-	isNotSpacial = true;
+	isNotSpatial = true;
 	isAlwaysPacked = true;
 }
 
@@ -848,7 +848,7 @@ GUIHorizontalSplit::GUIHorizontalSplit(bool isUpMain) : GUIElement(GETYPE::Split
 	dimInherit = GUIDimensionInherit::WIDTH_HEIGHT;
 	isVisible = true;
 	//isVisible = true;
-	isNotSpacial = true;
+	isNotSpatial = true;
 	space = 5;
 	color = { 0,1,0,1 };
 	setAlignment(GUIAlign::CENTER);
@@ -937,7 +937,7 @@ GUIVerticalSplit::GUIVerticalSplit(bool isLeftMain) : GUIElement(GETYPE::SplitVe
 	m_is_left_main = isLeftMain;
 	dimInherit = GUIDimensionInherit::WIDTH_HEIGHT;
 	isVisible = false;
-	isNotSpacial = true;
+	isNotSpatial = true;
 	space = 5;
 	setAlignment(GUIAlign::CENTER);
 }

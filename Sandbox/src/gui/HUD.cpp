@@ -14,10 +14,10 @@ HUD* HUD::s_hud = nullptr;
 HUD::HUD()
 {
 	s_hud = this;
-	isNotSpacial = true;
+	isNotSpatial = true;
 	m_container_consumer = std::bind(&HUD::consumeContainerEvent, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
 	m_hand = new GUIItemContainer();
-	m_hand->isNotSpacial = true;//disable events
+	m_hand->isNotSpatial = true;//disable events
 	m_hand->dim = { 64,64 };
 	m_hand->isSlotRendered = false;
 	GUIWindow::appendChild(m_hand);

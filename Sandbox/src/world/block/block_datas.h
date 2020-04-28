@@ -33,6 +33,8 @@ constexpr int BLOCK_ICE =			18;
 constexpr int BLOCK_PUMPKIN =		19;
 constexpr int BLOCK_CHEST =			20;
 
+constexpr int BLOCK_RADIO =			21;
+
 //=======================WALL IDs=======================
 
 constexpr int WALL_AIR =			0;

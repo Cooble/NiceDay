@@ -172,6 +172,12 @@ public:
 	bool canBePlaced(World& w, int x, int y) const override;
 	int getCornerOffset(int x, int y, const BlockStruct&) const override;
 };
+class BlockRadio : public MultiBlock
+{
+public:
+	BlockRadio();
+	UUID_STRING("radio");
+};
 
 class BlockTree : public Block
 {
