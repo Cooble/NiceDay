@@ -38,7 +38,7 @@ GUILayer::~GUILayer()
 void GUILayer::setWorldLayer(WorldLayer* l)
 {
 	m_world = l;
-	m_gui_renderer.setItemAtlas(m_world->getItemAtlas().getSize(),
+	m_gui_renderer.setItemAtlas(16,
 	                            Texture::create(
 		                            TextureInfo("res/images/itemAtlas/atlas.png").
 		                            filterMode(TextureFilterMode::NEAREST)));

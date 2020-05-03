@@ -66,7 +66,7 @@ void Item::onTextureLoaded(const TextureAtlas& atlas)
 
 int Item::getTextureOffset(const ItemStack& b) const
 {
-	return m_texture_pos+(m_max_texture_metadata?half_int(b.getMetadata(),0):half_int(0,0));
+	return m_texture_pos+(m_use_meta_as_texture?half_int(b.getMetadata(),0):half_int(0,0));
 }
 
 int Item::getBlockID() const
@@ -109,7 +109,7 @@ void ItemRegistry::registerItem(Item* item)
 
 const Item& ItemRegistry::getItem(ItemID id) const
 {
-	ASSERT(m_items.find(id) != m_items.end(), "Invalid item id");
+	ASSERT(m_items.find(id) != m_items.end(), "Invalid item id: {}",id);
 	return *m_items.at(id);
 }
 

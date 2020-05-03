@@ -1,0 +1,169 @@
+{
+  /*
+    "maxStackSize": 999,
+    "hardness": 1,
+    "hasItemVersion": true,
+    "metaTexturesInRow": true,
+    "maxMeta": 0,
+    "hasBigTexture": true, //or has it
+    "opacity": 1,
+    "lightSrc": 0,
+    "needsWall": true,
+    "cannotFloat":true,
+    //solid if block can be placed on top of it
+    "solid":false,
+    "multiBlock": {
+      "width": 1,
+      "height": 1
+    },
+    "connectGroups": [
+      "A",
+      "default",
+      "cheap"
+    ],
+    "collision": "default",
+    "collision": [ 0.25, 0, 0.5, 1 ]
+    "collision": [ 0.25, 0, 0.5, 1,"door_collision"]
+     "collision": [
+      [ 0.25, 0, 0.5, 0.5 ],
+      [ 0.25, 0, 0.5, 0.5 ],
+     
+      "other_collision or nothing"
+    ],
+    flags: ["flag0","flaother"]//these flags will be set to true
+    flags: {
+        "flag0":false,
+        "flaother":true
+    }
+ "collision": "platform"
+ "corners":false
+*/
+  "stone": {
+    "hardness": 2,
+    "hasBigTexture": true,
+    "connectGroups": "dirt",
+    "corners": "dirt"
+  },
+  "snow": {
+    "hardness": 1,
+    "hasBigTexture": true,
+    "connectGroups": "dirt",
+    "corners": "dirt"
+  },
+  "snow_brick": {
+    "hardness": 1,
+    "hasBigTexture": true,
+    "connectGroups": "dirt",
+    "corners": "glass"
+  },
+  "ice": {
+    "hardness": 1,
+    "hasBigTexture": true,
+    "connectGroups": "dirt",
+    "corners": "dirt"
+  },
+  "dirt": {
+    "hardness": 1,
+    "hasBigTexture": true,
+    "connectGroups": "dirt",
+    "corners": "dirt"
+  },
+  "gold": {
+    "hardness": 1,
+    "hasBigTexture": true,
+    "connectGroups": [ "ore" ],
+    "corners": "dirt"
+  },
+  "adamantite": {
+    "hardness": 1,
+    "hasBigTexture": true,
+    "connectGroups": [ "ore", "dirt" ],
+    "corners": "dirt"
+  },
+  "platform": {
+    "hardness": 1,
+    "connectGroups": "platform",
+    "collision": "platform",
+    "opacity": "air"
+  },
+  "grass": {
+    "hardness": 1,
+    "connectGroups": "dirt",
+    "corners": "dirt"
+  },
+  "glass": {
+    "hardness": 1,
+    "connectGroups": "glass",
+    "corners": "glass",
+    "opacity": "air",
+    "hasBigTexture": true
+  },
+  "torch": {
+    "hardness": 1,
+    "lightSrc": 16,
+    "opacity": 0,
+    "solid": false,
+    "collision": false
+  },
+  "painting": {
+    "opacity": "air",
+    "collision": false,
+    "needsWall": true,
+    "multiBlock": {
+      "width": 4,
+      "height": 3
+    }
+  },
+  "pumpkin": {
+    "opacity": "air",
+    "collision": false,
+    "cannotFloat": true,
+    "multiBlock": {
+      "width": 2,
+      "height": 2
+    }
+  },
+  "chest": {
+    "opacity": "air",
+    "collision": false,
+    "solid": false,
+    "multiBlock": {
+      "width": 2,
+      "height": 2
+    },
+    "tileEntity": "TileEntityChest",
+    "cannotFloat": true
+  },
+  "tree_sapling": {
+    "opacity": "air",
+    "collision": false,
+    "tileEntity": "TileEntitySapling"
+  },
+  "tree": {
+    "opacity": "air",
+    "collision": false
+  },
+  "radio": {
+    "opacity": "air",
+    "collision": false,
+    "cannotFloat": true,
+    "multiBlock": {
+      "width": 2,
+      "height": 2
+    },
+    "tileEntity": "TileEntityRadio",
+    "flags": [ "burnable" ]
+  },
+  "flower": {
+    "plant": true,
+    "cannotFloat": true,
+    "metaTexturesInRow": true,
+    "maxMeta": 8
+  },
+  "grass_plant": {
+    "plant": true,
+    "cannotFloat": true,
+    "metaTexturesInRow": true,
+    "maxMeta": 4
+  }
+}

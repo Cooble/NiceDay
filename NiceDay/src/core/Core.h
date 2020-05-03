@@ -4,7 +4,7 @@
 
 //#ifdef ND_DEBUG
 #define ASSERT(cond,...) if(!(cond))\
-	{ND_ERROR("Assertion Failed: {0}",__VA_ARGS__);\
+	{ND_ERROR("Assertion Failed: {}",#cond);\
 	ND_ERROR(__VA_ARGS__);\
 	__debugbreak();}
 //#else

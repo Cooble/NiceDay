@@ -1,6 +1,7 @@
 #pragma once
 #include "ndpch.h"
 #include "core/physShapes.h"
+#include "block_ids.h"
 //=======================GROUPs=======================
 
 #define BLOCK_GROUP_AIR_BIT			0
@@ -8,39 +9,7 @@
 #define BLOCK_GROUP_PLATFORM_BIT	2
 #define BLOCK_GROUP_ORE_BIT			3
 
-//=======================BLOCK IDs=======================
 
-constexpr int BLOCK_AIR =			0;
-constexpr int BLOCK_STONE =			1;
-constexpr int BLOCK_DIRT =			2;
-constexpr int BLOCK_GOLD =			3;
-constexpr int BLOCK_ADAMANTITE =	4;
-constexpr int BLOCK_PLATFORM =		5;
-constexpr int BLOCK_GRASS =			6;
-constexpr int BLOCK_GLASS =			7;
-constexpr int BLOCK_TORCH =			8;
-constexpr int BLOCK_DOOR_CLOSE =	9;
-constexpr int BLOCK_DOOR_OPEN =		10;
-constexpr int BLOCK_PAINTING =		11;
-constexpr int BLOCK_TREE =			12;
-constexpr int BLOCK_TREE_SAPLING =	13;
-constexpr int BLOCK_FLOWER =		14;
-constexpr int BLOCK_GRASS_PLANT =	15;
-
-constexpr int BLOCK_SNOW =			16;
-constexpr int BLOCK_SNOW_BRICK =	17;
-constexpr int BLOCK_ICE =			18;
-constexpr int BLOCK_PUMPKIN =		19;
-constexpr int BLOCK_CHEST =			20;
-
-constexpr int BLOCK_RADIO =			21;
-
-//=======================WALL IDs=======================
-
-constexpr int WALL_AIR =			0;
-constexpr int WALL_DIRT =			1;
-constexpr int WALL_STONE =			2;
-constexpr int WALL_GLASS =			3;
 
 //=======================BLOCKSTATE Ids=======================
 //00 BLOCK_STATE_FULL
@@ -142,5 +111,5 @@ const Phys::Polygon BLOCK_BOUNDS_DEFAULT[3] = {
 	Phys::Polygon({{0,0},{1,0},{0,1}}) ,//00 RIGHT_CORNER
 };
 const Phys::Polygon BLOCK_BOUNDS_DOOR = Phys::toPolygon(Phys::Rectangle::createFromDimensions(0.25,0,0.5,1));
-const Phys::Polygon BLOCK_BOUNDS_PLATFORM = Phys::toPolygon(Phys::Rectangle::createFromDimensions(0.75,0,1,0.25));
+const Phys::Polygon BLOCK_BOUNDS_PLATFORM = Phys::toPolygon(Phys::Rectangle::createFromDimensions(0,0.75,1,0.25));
 

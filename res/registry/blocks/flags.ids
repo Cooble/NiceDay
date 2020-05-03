@@ -1,0 +1,19 @@
+# indexes of block flags max index is 31
+# you can use '#' to line comment
+# use: "<index_of_flag> <name_of_flag>"
+# name must not contain spaces!
+# example: "17 light_source"
+
+# the six ids below must not be changed! and yes it's commented
+# 0   hasItemVersion
+# 1   metaTexturesInRow
+# 2   needsWall
+# 3   cannotFloat
+# 4   hasBigTexture
+# 5   solid
+
+# first index must be 6!
+6   burnable
+
+
+

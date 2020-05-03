@@ -2,7 +2,6 @@
 #include "WorldLayer.h"
 #include "world/World.h"
 #include "world/block/BlockRegistry.h"
-#include "world/biome/BiomeRegistry.h"
 #include "world/LightCalculator.h"
 #include "world/WorldIO.h"
 #include "event/KeyEvent.h"
@@ -12,12 +11,9 @@
 #include <GLFW/glfw3.h>
 
 #include "world/biome/BiomeForest.h"
-#include "world/biome/biomes.h"
 
 #include <imgui.h>
 #include "world/block/Block.h"
-#include "world/block/basic_blocks.h"
-#include "world/block/basic_walls.h"
 
 #include "graphics/BatchRenderer2D.h"
 #include "graphics/Sprite.h"
@@ -25,9 +21,6 @@
 #include "world/entity/entity_datas.h"
 #include "world/entity/entities.h"
 #include "graphics/TextureManager.h"
-#include "graphics/BlockTextureAtlas.h"
-#include "graphics/TextureAtlas.h"
-#include "world/particle/ParticleRegistry.h"
 #include "world/particle/particles.h"
 #include "world/ChunkMesh.h"
 #include "core/imgui_utils.h"
@@ -38,9 +31,7 @@
 #include "CommonMessages.h"
 #include "layer/LuaLayer.h"
 #include <lua.hpp>
-#include <lua.hpp>
 #include <LuaBridge/LuaBridge.h>
-#include "inventory/items.h"
 #include "world/entity/EntityPlayer.h"
 #include "world/entity/EntityAllocator.h"
 #include "inventory/ItemBlock.h"
@@ -48,6 +39,7 @@
 #include "graphics/BlockTextureCreator.h"
 #include "event/SandboxControls.h"
 #include "audio/player.h"
+#include "world/nd_registry.h"
 
 const char* WORLD_FILE_PATH;
 int CHUNKS_LOADED;
@@ -72,113 +64,6 @@ static SpriteSheetResource* res;
 static bool m_is_world_ready = false;
 static bool s_no_save = false;
 
-static void nd_register_itemblocks()
-{
-	nd::temp_string out = "[Registered ItemBlocks]: ";
-	out.reserve(200);
-	for (auto& block : BlockRegistry::get().getBlocks())
-	{
-		bool missing = true;
-		if (!block->hasItemVersion())
-			continue;
-
-		for (auto& item : ItemRegistry::get().getItems())
-		{
-			if (item.second->getID() == SID(block->getItemIDFromBlock()))
-			{
-				missing = false;
-				break;
-			}
-		}
-		if (missing)
-		{
-			ND_REGISTER_ITEM(
-				new ItemBlock(SID(block->toString()), block->getID(), block->toString(), block->hasMetaTexturesInRow()?block->getMaxMetadata():0
-				));
-			out += ", " + block->toString();
-		}
-	}
-	ND_TRACE(out);
-}
-
-void WorldLayer::registerEverything()
-{
-}
-
-void WorldLayer::registerItems()
-{
-	//items
-	ND_REGISTER_ITEM(new ItemPickaxe());
-	ND_REGISTER_ITEM(new ItemShotgun());
-	ND_REGISTER_ITEM(new ItemTnt());
-	ND_REGISTER_ITEM(
-		&(new ItemBlock(SID("door"), BlockRegistry::get().getBlockID("door_close"), "door"))->setNoBlockTexture(true));
-	nd_register_itemblocks();
-}
-
-void WorldLayer::registerBlocks()
-{
-	//blocks
-	ND_REGISTER_BLOCK(new BlockAir());
-	ND_REGISTER_BLOCK(new BlockStone());
-	ND_REGISTER_BLOCK(new BlockDirt());
-	ND_REGISTER_BLOCK(new BlockGold());
-	ND_REGISTER_BLOCK(new BlockAdamantite());
-	ND_REGISTER_BLOCK(new BlockPlatform());
-	ND_REGISTER_BLOCK(new BlockGrass());
-	ND_REGISTER_BLOCK(new BlockGlass());
-	ND_REGISTER_BLOCK(new BlockTorch());
-	ND_REGISTER_BLOCK(new BlockDoorClose());
-	ND_REGISTER_BLOCK(new BlockDoorOpen());
-	ND_REGISTER_BLOCK(new BlockPainting());
-	ND_REGISTER_BLOCK(new BlockTree());
-	ND_REGISTER_BLOCK(new BlockTreeSapling());
-	ND_REGISTER_BLOCK(new BlockFlower());
-	ND_REGISTER_BLOCK(new BlockGrassPlant());
-	ND_REGISTER_BLOCK(new BlockSnow());
-	ND_REGISTER_BLOCK(new BlockSnowBrick());
-	ND_REGISTER_BLOCK(new BlockIce());
-	ND_REGISTER_BLOCK(new BlockPumpkin());
-	ND_REGISTER_BLOCK(new BlockChest());
-	ND_REGISTER_BLOCK(new BlockRadio());
-
-
-	//walls
-	ND_REGISTER_WALL(new WallAir());
-	ND_REGISTER_WALL(new WallDirt());
-	ND_REGISTER_WALL(new WallStone());
-	ND_REGISTER_WALL(new WallGlass());
-}
-
-void WorldLayer::registerEntities()
-{
-	//entities
-	ND_REGISTER_ENTITY(ENTITY_TYPE_PLAYER, EntityPlayer);
-	ND_REGISTER_ENTITY(ENTITY_TYPE_TNT, EntityTNT);
-	ND_REGISTER_ENTITY(ENTITY_TYPE_ZOMBIE, EntityZombie);
-	ND_REGISTER_ENTITY(ENTITY_TYPE_ROUND_BULLET, EntityRoundBullet);
-	ND_REGISTER_ENTITY(ENTITY_TYPE_TILE_SAPLING, TileEntitySapling);
-	ND_REGISTER_ENTITY(ENTITY_TYPE_TILE_TORCH, TileEntityTorch);
-	ND_REGISTER_ENTITY(ENTITY_TYPE_SNOWMAN, EntitySnowman);
-	ND_REGISTER_ENTITY(ENTITY_TYPE_TILE_CHEST, TileEntityChest);
-	ND_REGISTER_ENTITY(ENTITY_TYPE_ITEM, EntityItem);
-	ND_REGISTER_ENTITY(ENTITY_TYPE_BOMB, EntityBomb);
-	ND_REGISTER_ENTITY(ENTITY_TYPE_TILE_RADIO, TileEntityRadio);
-}
-
-void WorldLayer::registerBiomes()
-{
-	//biomes
-	ND_REGISTER_BIOME(new BiomeForest());
-	ND_REGISTER_BIOME(new BiomeUnderground());
-	ND_REGISTER_BIOME(new BiomeDirt());
-}
-
-void WorldLayer::registerParticles()
-{
-	ParticleList::initDefaultParticles(ParticleRegistry::get());
-}
-
 constexpr int particleAtlasSize = 8;
 constexpr int ITEM_ATLAS_SIZE = 16;
 
@@ -191,44 +76,8 @@ WorldLayer::WorldLayer()
 void WorldLayer::loadResources()
 {
 	ND_PROFILE_METHOD();
-	//blocks
-	std::string blockAtlasFolder = ND_RESLOC("res/images/blockAtlas/");
-	m_block_atlas.createAtlas(blockAtlasFolder, 32, 8);
-	ChunkMesh::init();
-	registerBlocks();
-	BlockRegistry::get().initTextures(m_block_atlas);
 
-	//items
-	BlockTextureCreator t;
-	t.createTextures();
-	std::string itemAtlasFolder = ND_RESLOC("res/images/itemAtlas/");
-	m_item_atlas.createAtlas(itemAtlasFolder, ITEM_ATLAS_SIZE, 32);
-	registerItems();
-
-	ItemRegistry::get().initTextures(m_item_atlas);
-
-	//entities
-	registerEntities();
-	{
-		//call all constructors of entities to load static data on main thread
-		size_t max = 0;
-		for (auto& bucket : EntityRegistry::get().getData())
-			max = std::max(bucket.byte_size, max);
-		auto entityBuff = malloc(max);
-		for (auto& bucket : EntityRegistry::get().getData())
-			EntityRegistry::get().createInstance(bucket.entity_type, entityBuff);
-		free(entityBuff);
-	}
-
-	//particles
-	std::string particleAtlasFolder = ND_RESLOC("res/images/particleAtlas/");
-	TextureAtlas particleAtlas;
-	particleAtlas.createAtlas(particleAtlasFolder, particleAtlasSize, 8);
-	registerParticles();
-	ParticleRegistry::get().initTextures(particleAtlas);
-
-	//biomes
-	registerBiomes();
+	nd_registry::registerEverything(true);
 
 
 	static SpriteSheetResource res(Texture::create(
@@ -346,7 +195,7 @@ void WorldLayer::onWorldLoaded()
 	m_render_manager = new WorldRenderManager(m_cam, m_world);
 	Texture* particleAtlasT = Texture::create(
 		TextureInfo("res/images/particleAtlas/atlas.png")
-		.filterMode(TextureFilterMode::NEAREST)
+		.filterMode(TextureFilterMode::LINEAR)
 		.format(TextureFormat::RGBA));
 	Texture* blockAtlas = Texture::create(
 		TextureInfo("res/images/blockAtlas/atlas.png")
@@ -563,7 +412,7 @@ void WorldLayer::onUpdate()
 	if (m_world->isBlockValid(CURSOR_X, CURSOR_Y))
 	{
 		CURRENT_BLOCK = m_world->getBlockOrAir(CURSOR_X, CURSOR_Y);
-		CURRENT_BLOCK_ID = BlockRegistry::get().getBlock(CURRENT_BLOCK->block_id).toString();
+		CURRENT_BLOCK_ID = BlockRegistry::get().getBlock(CURRENT_BLOCK->block_id).getStringID();
 	}
 
 	bool istsunderBlock = !m_world->isAir(m_cam->getPosition().x, m_cam->getPosition().y - 1);
@@ -771,7 +620,7 @@ void WorldLayer::onSurvivalUpdate()
 			auto t = blok.createItemStackFromBlock(*structInWorld);
 			if (t == nullptr)
 			{
-				ASSERT(false, "Cannot spawn item from block");
+				ASSERT(false, "Cannot spawn item from block: {}", blok.getStringID());
 				return;
 			}
 			auto itemEntity = (EntityItem*)EntityAllocator::createEntity(ENTITY_TYPE_ITEM);
@@ -982,14 +831,14 @@ void WorldLayer::onImGuiRenderWorld()
 		if (!CURRENT_BLOCK->isWallOccupied())
 			wallid = -1;
 		ImGui::Text("Current Wall: %s (id: %d)",
-		            BlockRegistry::get().getWall(CURRENT_BLOCK->wall_id[0]).toString().c_str(), wallid);
+		            BlockRegistry::get().getWall(CURRENT_BLOCK->wall_id[0]).getStringID().c_str(), wallid);
 
 		for (int i = 0; i < 2; ++i)
 			for (int j = 0; j < 2; ++j)
 			{
 				const Wall& w = BlockRegistry::get().getWall(CURRENT_BLOCK->wall_id[i * 2 + j]);
 				ImGui::Text(" -> (%d, %d): corner:%d, %s ", j, i, CURRENT_BLOCK->wall_corner[i * 2 + j],
-				            w.toString().c_str());
+				            w.getStringID().c_str());
 			}
 		int ccx = CURSOR_X;
 		int ccy = CURSOR_Y;
@@ -997,7 +846,7 @@ void WorldLayer::onImGuiRenderWorld()
 		int i = CURSOR_Y - ccy < 0.5f ? 0 : 1;
 		const Wall& w = BlockRegistry::get().getWall(CURRENT_BLOCK->wall_id[i * 2 + j]);
 		ImGui::Text("Selected Wall -> (%d, %d): corner:%d, %s ", j, i, CURRENT_BLOCK->wall_corner[i * 2 + j],
-		            w.toString().c_str());
+		            w.getStringID().c_str());
 	}
 
 	ImGui::Separator();
@@ -1012,7 +861,7 @@ void WorldLayer::onImGuiRenderWorld()
 			for (int n = 0; n < blocks.size(); n++)
 			{
 				char buf[32];
-				sprintf(buf, "%s", blocks[n]->toString().c_str());
+				sprintf(buf, "%s", blocks[n]->getStringID().c_str());
 				if (ImGui::Selectable(buf, BLOCK_PALLETE_SELECTED == n))
 					BLOCK_PALLETE_SELECTED = n;
 			}
@@ -1027,7 +876,7 @@ void WorldLayer::onImGuiRenderWorld()
 			for (int n = 0; n < walls.size(); n++)
 			{
 				char buf[32];
-				sprintf(buf, "%s", walls[n]->toString().c_str());
+				sprintf(buf, "%s", walls[n]->getStringID().c_str());
 				if (ImGui::Selectable(buf, BLOCK_PALLETE_SELECTED == n))
 					BLOCK_PALLETE_SELECTED = n;
 			}

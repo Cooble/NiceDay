@@ -26,3 +26,15 @@ public:
 
 	bool onRightClick(World& world, ItemStack& stack, WorldEntity& owner, int x, int y) const override;
 };
+
+class ItemVinyl : public Item
+{
+public:
+	ItemVinyl();
+
+	std::string getTitle(ItemStack* stack) const override;
+	bool onRightClickOnBlock(World& world, ItemStack& stack, WorldEntity& owner, int x, int y, BlockStruct& block) const override;
+	
+
+	
+};

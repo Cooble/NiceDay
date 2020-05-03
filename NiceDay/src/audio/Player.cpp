@@ -375,7 +375,7 @@ void Sounder::preparePlaySound(Sound** soun, const SoundAssignment& command)
 	sound->spatialData = command.spatialData;
 
 	auto error = paStartSoundAudioStream(sound);
-	ASSERT(error == paNoError, "cannot open audio stream");
+	ASSERT(error == paNoError, "cannot open audio stream: {}",command.soundFile);
 
 	m_sound_ids[command.id] = sound;
 	sound->soundid = command.id;
@@ -743,7 +743,7 @@ void Sounder::loopInternal()
 						else music->optional_sound_buffer = nullptr; // no memory left for cache
 					}
 					auto error = paStartMusicAudioStream(music);
-					ASSERT(error == paNoError, "cannot open audio stream");
+					ASSERT(error == paNoError, "cannot open audio stream, {}",music->fileName);
 
 					//insert music stream into ring filler
 					std::lock_guard<std::mutex> guard(m_ringfill_mutex);

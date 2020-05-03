@@ -326,7 +326,7 @@ void TextureAtlas::createAtlas(const std::string& folder, int segmentCount, int 
 			int BPP = 0;
 
 			void* currentImage = stbi_load(currentPNGPath.c_str(), &width, &height, &BPP, 4);
-			ASSERT(currentImage, "invalid image");
+			ASSERT(currentImage, "invalid image: {}", currentPNGPath.c_str());
 			stbi_image_free(currentImage);
 
 			//SANITY DEPLETED!
@@ -387,7 +387,7 @@ void TextureAtlas::createAtlas(const std::string& folder, int segmentCount, int 
 
 
 		void* currentImage = stbi_load(path.first.c_str(), &width, &height, &BPP, 4);
-		ASSERT(currentImage,"invalid image");
+		ASSERT(currentImage, "invalid image: {}", path.first.c_str());
 
 		for (auto& value : path.second)
 		{

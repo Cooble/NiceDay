@@ -126,7 +126,8 @@ void App::start()
 			continue; //skip render
 		now = nowTime();
 		lastRenderTime = now;
-		render();
+		if(!m_Window->isIconified())
+			render();
 		m_tel_render_millis = nowTime() - now;
 		static int totalMil = 0;
 		totalMil += m_tel_render_millis;

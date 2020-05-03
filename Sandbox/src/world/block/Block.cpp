@@ -10,19 +10,20 @@
 #include "inventory/ItemBlock.h"
 
 
-Block::Block(BlockID id)
-	: m_id(id),
-	  m_texture_pos(0),
-	  m_corner_translate_array(nullptr),
-	  m_has_big_texture(false),
-	  m_tile_entity(ENTITY_TYPE_NONE),
-	  m_collision_box(BLOCK_BOUNDS_DEFAULT),
-	  m_collision_box_size(3),
-	  m_opacity(OPACITY_SOLID),
-	  m_light_src(0),
-	  m_block_connect_group(0)
-
+Block::Block(std::string id)
+	: m_string_id(std::move(id)),
+	m_texture_pos(0),
+	m_corner_translate_array(nullptr),
+	m_tile_entity(ENTITY_TYPE_NONE),
+	m_collision_box(BLOCK_BOUNDS_DEFAULT),
+	m_collision_box_size(3),
+	m_opacity(OPACITY_SOLID),
+	m_light_src(0),
+	m_block_connect_group(0),
+	m_id(-1)
 {
+	setFlag(BLOCK_FLAG_HAS_ITEM_VERSION, true);
+	setFlag(BLOCK_FLAG_SOLID, true);
 }
 
 Phys::Vecti Block::getTileEntityCoords(int x, int y, const BlockStruct& b) const
@@ -33,12 +34,13 @@ Phys::Vecti Block::getTileEntityCoords(int x, int y, const BlockStruct& b) const
 
 const Phys::Polygon& Block::getCollisionBox(int x, int y, const BlockStruct& b) const
 {
+	auto i = m_collision_box_size >= 3 ? 1 : 0;
 	switch (b.block_corner)
 	{
 	case BLOCK_STATE_CORNER_UP_LEFT:
-		return m_collision_box[1];
+		return m_collision_box[1* i];
 	case BLOCK_STATE_CORNER_UP_RIGHT:
-		return m_collision_box[2];
+		return m_collision_box[2* i];
 	default:
 		return m_collision_box[0];
 	}
@@ -48,12 +50,12 @@ bool Block::hasCollisionBox() const { return m_collision_box_size != 0; }
 
 void Block::onTextureLoaded(const BlockTextureAtlas& atlas)
 {
-	m_texture_pos = atlas.getTexture("block/" + toString());
+	m_texture_pos = atlas.getTexture("block/" + getStringID());
 }
 
 int Block::getTextureOffset(int x, int y, const BlockStruct& b) const
 {
-	if (!m_has_big_texture)
+	if (!hasBigTexture())
 		return m_texture_pos.i;
 
 	return half_int(m_texture_pos.x + (x & 3), m_texture_pos.y + (y & 3)).i;
@@ -61,8 +63,7 @@ int Block::getTextureOffset(int x, int y, const BlockStruct& b) const
 
 int Block::getCornerOffset(int x, int y, const BlockStruct& b) const
 {
-	ASSERT(m_corner_translate_array, " m_corner_translate_array  cannot be null");
-	return m_corner_translate_array[(int)b.block_corner].i;
+	return m_corner_translate_array?m_corner_translate_array[(int)b.block_corner].i:BLOCK_STATE_FULL;
 }
 
 bool Block::isInGroup(BlockAccess& w, int x, int y, int group) const
@@ -133,6 +134,16 @@ void Block::onBlockClicked(World& w, WorldEntity* e, int x, int y, BlockStruct& 
 	}
 }
 
+bool Block::canBePlaced(World& w, int x, int y) const
+{
+	if(needsWall() && w.getBlock(x, y)->isWallFree())
+		return false;
+	//todo make every block flags that would inform if block is solid or not and others
+	if(cannotFloat() && !w.getBlockInstance(x, y - 1).isSolid())
+		return false;
+	return true;
+}
+
 const ItemBlock& Block::getItemFromBlock() const
 {
 	return dynamic_cast<const ItemBlock&>(ItemRegistry::get().getItem(SID(getItemIDFromBlock())));
@@ -141,7 +152,7 @@ const ItemBlock& Block::getItemFromBlock() const
 
 std::string Block::getItemIDFromBlock() const
 {
-	return toString();
+	return getStringID();
 }
 
 ItemStack* Block::createItemStackFromBlock(const BlockStruct& b) const 
@@ -156,8 +167,8 @@ ItemStack* Block::createItemStackFromBlock(const BlockStruct& b) const
 
 
 //MULTIBLOCK==================================================
-MultiBlock::MultiBlock(int id)
-	: Block(id)
+MultiBlock::MultiBlock(std::string id)
+	: Block(std::move(id))
 {
 }
 
@@ -165,11 +176,6 @@ Phys::Vecti MultiBlock::getTileEntityCoords(int x, int y, const BlockStruct& b)c
 {
 	quarter_int offset = b.block_metadata;
 	return { x - offset.x, y - offset.y };
-}
-
-int MultiBlock::getCornerOffset(int x, int y, const BlockStruct& b) const
-{
-	return BLOCK_STATE_FULL;
 }
 
 int MultiBlock::getTextureOffset(int x, int y, const BlockStruct& b) const
@@ -228,18 +234,25 @@ void MultiBlock::onBlockDestroyed(World& w, WorldEntity* e, int xx, int yy, Bloc
 bool MultiBlock::canBePlaced(World& w, int xx, int yy) const
 {
 	for (int x = 0; x < m_width; ++x)
-		for (int y = 0; y < m_height; ++y)
-			if (!w.getBlock(xx + x, yy + y)->isAir())
+		for (int y = 0; y < m_height; ++y) {
+			auto b = w.getBlock(xx + x, yy + y);
+			if (!b ->isAir() || (needsWall() && b->isWallFree()))
 				return false;
+		}
+	if (cannotFloat())
+		for (int x = 0; x < m_width; ++x){
+			if (!w.getBlockInstance(xx + x, yy - 1).isSolid())
+				return false;
+		}
 	return true;
 }
 
 
 //WALL======================================================
-Wall::Wall(int id)
-	: m_id(id),
+Wall::Wall(std::string id)
+	: m_string_id(std::move(id)),
 	  m_texture_pos(0),
-	  m_corner_translate_array(nullptr),
+	  m_corner_translate_array(BlockRegistry::get().getCorners("dirt",true)),
 	  m_transparent(false)
 {
 }
@@ -249,7 +262,7 @@ Wall::~Wall() = default;
 
 void Wall::onTextureLoaded(const BlockTextureAtlas& atlas)
 {
-	m_texture_pos = atlas.getTexture("wall/" + toString());
+	m_texture_pos = atlas.getTexture("wall/" + getStringID());
 }
 
 int Wall::getTextureOffset(int wx, int wy, const BlockStruct&) const

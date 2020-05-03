@@ -1,0 +1,10 @@
+{
+  "stone": {},
+  "dirt": {},
+  "gold": {},
+
+  "glass": {
+    "isTransparent": true,
+    "corners": "glass"
+  }
+}

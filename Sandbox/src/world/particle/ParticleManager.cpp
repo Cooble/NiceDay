@@ -9,12 +9,16 @@
 
 
 ParticleManager::ParticleManager(int maxparticles,Texture* atlas,int atlasSegmentCount, Texture* blockAtlas, int blockAtlasSegmentCount):
-m_list_size(maxparticles),m_atlas(atlas),m_block_atlas(blockAtlas),m_atlas_segment_count(atlasSegmentCount), m_block_atlas_segment_count(blockAtlasSegmentCount){
+m_list_size(maxparticles),
+m_atlas(atlas),
+m_block_atlas(blockAtlas),
+m_atlas_segment_count(atlasSegmentCount),
+m_block_atlas_segment_count(blockAtlasSegmentCount){
 	m_list = (Particle*) malloc(sizeof(Particle)*maxparticles);
 }
 
 ParticleManager::ParticleManager()
-:m_list(nullptr){
+{
 }
 
 ParticleManager::~ParticleManager()

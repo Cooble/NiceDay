@@ -54,8 +54,7 @@ BiomeForest::BiomeForest()
 	m_moon = new Sprite2D(Texture::create(info));
 
 	info.file_path = "res/images/bg/stars.png";
-	info.wrapMode(TextureWrapMode::REPEAT)
-	.filterMode(TextureFilterMode::NEAREST);
+	info.wrapMode(TextureWrapMode::REPEAT);
 
 	m_star = new Sprite2D(Texture::create(info));
 	m_star->setPosition(glm::vec2(-1, -1));
@@ -73,7 +72,6 @@ BiomeForest::BiomeForest()
 		TextureInfo info(std::string("res/images/bg/forest_") + std::to_string(i) + ".png");
 		info.wrap_mode_s = TextureWrapMode::REPEAT;
 		info.wrap_mode_t = TextureWrapMode::CLAMP_TO_BORDER;
-		info.filterMode(TextureFilterMode::NEAREST);
 		m_sprites[index] = new Sprite2D(Texture::create(info));
 		m_sprites[index]->setPosition(glm::vec2(-1, -1));
 		m_sprites[index]->setScale(glm::vec2(2, 2));

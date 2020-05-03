@@ -22,8 +22,7 @@ public:
 
 	TO_ENTITY_STRING(TileEntitySapling)
 	ND_FACTORY_METH_ENTITY_BUILD(TileEntitySapling)
-private:
-	void buildTree(World& w, int x, int y);
+	
 };
 class TileEntityTorch :public TileEntity
 {
@@ -65,6 +64,7 @@ private:
 	MusicHandle m_music;
 	bool m_is_playing=false;
 	int m_randTime = 0;
+	ItemStack* m_disc= nullptr;
 public:
 	TileEntityRadio() = default;
 	virtual ~TileEntityRadio() = default;
@@ -109,8 +109,8 @@ public:
 	bool moveOrCollide(World& w, float dt);
 	//regards this as dimensionless structure, checks for collisions only blocks
 	bool moveOrCollideOnlyBlocksNoBounds(World& w);
-	inline void computeVelocity(World& w);
-	inline void computeWindResistance(World& w,float windResistance=0.01f);
+	void computeVelocity(World& w);
+	void computeWindResistance(World& w,float windResistance=0.01f);
 
 	void save(NBT& src) override;
 	void load(NBT& src) override;

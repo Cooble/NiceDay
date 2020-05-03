@@ -1,0 +1,14 @@
+// list of all connect group names
+// it is obligatory to specify here all used connect group names
+[
+    "default",
+    "dirt",
+    "glass",
+    "ore",
+    "platform"
+   
+
+]
+
+
+

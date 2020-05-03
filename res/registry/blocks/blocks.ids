@@ -1,0 +1,31 @@
+# indexes of blocks
+# you can use '#' to line comment
+# use: "<index_of_block> <name_of_block>"
+# block name must not contain spaces!
+# example: "17 grass_plant"
+
+0   air
+1   stone
+2   dirt
+3   gold
+4   adamantite
+5   platform
+6   grass
+7   glass
+8   torch
+9   door_close
+10  door_open
+11  painting
+12  tree
+13  tree_sapling
+14  flower
+15  grass_plant
+16  snow
+17  snow_brick
+18  ice
+19  pumpkin
+20  chest
+21  radio
+
+
+

@@ -52,7 +52,8 @@ ItemTnt::ItemTnt()
 	:Item(SID("tnt"),"tnt")
 {
 	m_maxStackSize = 111;
-	m_max_texture_metadata = 3;
+	m_use_meta_as_texture = true;
+	m_max_metadata = 3;
 }
 
 bool ItemTnt::onRightClick(World& world, ItemStack& stack, WorldEntity& owner, int x, int y) const
@@ -65,4 +66,31 @@ bool ItemTnt::onRightClick(World& world, ItemStack& stack, WorldEntity& owner, i
 	world.spawnEntity(tnt);
 	return true;
 }
+
+static std::array<const char*,2 > vinylPlays = { "Neon", "Tower Clock"};
+static std::array<const char*,2 > vinylPlaysPath = { "neon.ogg", "tower_clock.ogg"};
+
+ItemVinyl::ItemVinyl()
+	:Item(SID("vinyl"),"vinyl")
+{
+	m_maxStackSize = 1;
+	m_has_nbt = true;
+	m_max_metadata = 2;
+}
+
+std::string ItemVinyl::getTitle(ItemStack* stack) const
+{
+	return Font::colorize(Font::BLACK, Font::YELLOW) + "Vinyl: " + vinylPlays[stack->getMetadata()] + Font::BLACK + "XXX";
+}
+
+bool ItemVinyl::onRightClickOnBlock(World& world, ItemStack& stack, WorldEntity& owner, int x, int y,
+	BlockStruct& block) const
+{
+	if(world.getBlock(x,y)->block_id==BLOCK_RADIO)
+	{
+		
+	}
+	return true;
+}
+
 

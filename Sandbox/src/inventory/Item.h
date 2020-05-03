@@ -26,8 +26,12 @@ protected:
 	half_int m_texture_pos;
 	bool m_has_nbt;
 	bool m_is_block;
-	// number of textures that will corespond to the item based on its metadata
-	uint64_t m_max_texture_metadata = 0;
+	
+	// if the texture metadata is determined by metadata
+	bool m_use_meta_as_texture = false;
+	
+	// how many types of the same exists (tells creative tab to list all possibilities)
+	int m_max_metadata = 0;
 
 	
 public:
@@ -35,17 +39,18 @@ public:
 	virtual ~Item() = default;
 	Item(ItemID id,const std::string& textName);
 
-	inline Item& setMaxStackSize(int size) { m_maxStackSize = size; return *this; }
-	inline uint64_t getMaxTextureMeta()const { return m_max_texture_metadata; }
+	Item& setMaxStackSize(int size) { m_maxStackSize = size; return *this; }
+	int isUseMetaAsTexture()const { return m_use_meta_as_texture; }
+	int getMaxMeta()const { return m_max_metadata; }
 
 	virtual void onTextureLoaded(const TextureAtlas& atlas);
 	virtual int getTextureOffset(const ItemStack& b) const;
 
-	inline int getMaxStackSize() const { return m_maxStackSize; }
-	inline ItemID getID() const { return m_id; }
-	inline const std::string& toString() const { return m_text_name; }
-	inline bool isBlock() const { return m_is_block; }
-	inline bool hasNBT() const { return m_has_nbt; }
+	int getMaxStackSize() const { return m_maxStackSize; }
+	ItemID getID() const { return m_id; }
+	const std::string& toString() const { return m_text_name; }
+	bool isBlock() const { return m_is_block; }
+	bool hasNBT() const { return m_has_nbt; }
 	virtual int getBlockID() const;
 
 	// how fast the blok can be dig out
@@ -145,7 +150,7 @@ public:
 	{
 		if (m_size == Item::INFINITE_SIZE)//ignore change if item has infinite size
 			return;
-		ASSERT(m_size + count <= getItem().getMaxStackSize(), "Too big itemstack");
+		ASSERT(m_size + count <= getItem().getMaxStackSize(), "Too big itemstack, ({}/{})",m_size+count,getItem().getMaxStackSize());
 		m_size += count;
 		if (m_size < 0)
 			m_size = 0;

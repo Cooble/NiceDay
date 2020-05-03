@@ -92,8 +92,8 @@ public:
 	void save(NBT& src) override;
 	void load(NBT& src) override;
 
-	inline int getX()const { return m_pos.x; }
-	inline int getY()const { return m_pos.y; }
+	int getX()const { return m_pos.x; }
+	int getY()const { return m_pos.y; }
 };
 
 

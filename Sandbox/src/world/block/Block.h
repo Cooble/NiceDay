@@ -4,6 +4,7 @@
 #include "world/entity/EntityManager.h"
 #include "world/entity/entity_datas.h"
 #include "inventory/Item.h"
+class BlockRegistry;
 class BlockAccess;
 class BlockTextureAtlas;
 //STATES=========================================================
@@ -69,15 +70,15 @@ struct BlockStruct {
 		block_corner(BLOCK_STATE_FULL),
 		wall_id{ 0,0,0,0 }
 	{}
-	inline int wallID() const { return wall_id[0]; }
-	inline bool isAir() const { return block_id == 0; }
+	int wallID() const { return wall_id[0]; }
+	bool isAir() const { return block_id == 0; }
 
 	//block is either full air or shared
-	inline bool isWallFree() const
+	bool isWallFree() const
 	{
 		return wall_corner[0] != BLOCK_STATE_FULL || wall_id[0] == 0;
 	}
-	inline void setWall(int id)
+	void setWall(int id)
 	{
 		for (int i = 0; i < 4; ++i)
 		{
@@ -87,7 +88,7 @@ struct BlockStruct {
 	}
 
 	//block is either full block or full air
-	inline bool isWallOccupied() const
+	bool isWallOccupied() const
 	{
 		return (wall_corner[0] == BLOCK_STATE_FULL
 			&& wall_corner[1] == BLOCK_STATE_FULL
@@ -105,27 +106,39 @@ class WorldEntity;
 
 constexpr uint8_t OPACITY_AIR = 1;
 constexpr uint8_t OPACITY_SOLID = 3;
+
+constexpr int BLOCK_FLAG_HAS_ITEM_VERSION = 0;
+constexpr int BLOCK_FLAG_HAS_METATEXTURES_IN_ROW = 1;
+//block needs wall behind it (e.g Painting)
+constexpr int BLOCK_FLAG_NEEDS_WALL = 2;
+//block cannot float in the air
+constexpr int BLOCK_FLAG_CANNOT_FLOAT= 3;
+constexpr int BLOCK_FLAG_HAS_BIG_TEXTURE= 4;
+constexpr int BLOCK_FLAG_SOLID= 5;
+
 class ItemBlock;
 class Block
 {
+	friend BlockRegistry;
 private:
-	const int m_id;
-
+	int m_id;
+	const std::string m_string_id;
 protected:
-
+	int m_flags=0;
 	int m_hardness = 1;
-	int m_tier_requried = 0;
-	bool m_has_item_version=true;
-	bool m_has_metatextures_in_row=true;
+	int m_required = 0;
+	//bool m_has_item_version=true;
+	//bool m_has_metatextures_in_row=true;
+	//block needs wall behind it (e.g Painting)
+	//bool m_needs_wall=false;
+	//block cannot float in the air
+	//bool m_cannot_float = false;
 
 	/**
 	 * when one block has for example more flower species this number tells us how many
 	 * used by itemblock
 	 */
 	int m_max_metadata=0;
-
-
-
 	
 	//offset in block texture atlas
 	half_int m_texture_pos;
@@ -133,7 +146,7 @@ protected:
 	const half_int* m_corner_translate_array;
 
 	//if yes the texturepos will be added based on location of block in chunk
-	bool m_has_big_texture;
+	//bool m_has_big_texture;
 
 	EntityType m_tile_entity;
 
@@ -153,34 +166,60 @@ protected:
 	int m_block_connect_group;
 	bool isInGroup(BlockAccess& w, int x, int y, int group) const;
 	bool isInGroup(BlockID blockID, int group) const;
-	inline void setNoCollisionBox()
+	void setNoCollisionBox()
 	{
 		m_collision_box = nullptr;
 		m_collision_box_size = 0;
 	}
-
+	void setFlag(int flag, bool value)
+	{
+		if(value)
+			m_flags |= (1 << flag);
+		else
+			m_flags &= ~(1 << flag);
+	}
 public:
-	Block(BlockID id);
+	Block(std::string id);
 	Block(const Block& c) = delete;
 	void operator=(Block const&) = delete;
 	virtual ~Block()= default;
-	inline int getHardness() const { return m_hardness; }
-	inline int getID() const { return m_id; };
-	inline int getConnectGroup() const { return m_block_connect_group; }
-	inline int getMaxMetadata() const { return m_max_metadata; }
-	inline uint8_t getLightSrcVal() const
+	int getHardness() const { return m_hardness; }
+	int getID() const { return m_id; };
+	int getConnectGroup() const { return m_block_connect_group; }
+	int getMaxMetadata() const { return m_max_metadata; }
+	uint8_t getLightSrcVal() const
 	{
 		return m_light_src;
 	}
-	inline uint8_t getOpacity()const {return m_opacity;}
-	inline bool hasTileEntity()const { return m_tile_entity != ENTITY_TYPE_NONE; }
+	uint8_t getOpacity()const {return m_opacity;}
+	bool hasTileEntity()const { return m_tile_entity != ENTITY_TYPE_NONE; }
 	virtual Phys::Vecti getTileEntityCoords(int x, int y, const BlockStruct& b) const;
-	inline EntityType getTileEntity() const { return m_tile_entity; }
+	EntityType getTileEntity() const { return m_tile_entity; }
 
 	virtual const Phys::Polygon& getCollisionBox(int x, int y, const BlockStruct& b) const;
 	bool hasCollisionBox() const;
 
-	inline bool isInConnectGroup(int groups) const { return (groups & m_block_connect_group) != 0; }//they have group in common 
+	bool isInConnectGroup(int groups) const { return (groups & m_block_connect_group) != 0; }//they have group in common 
+	
+	//basic flags
+	constexpr bool hasItemVersion() const {
+		return m_flags & (1 << BLOCK_FLAG_HAS_ITEM_VERSION);
+	}
+	constexpr bool hasMetaTexturesInRow() const {
+		return m_flags & (1 << BLOCK_FLAG_HAS_METATEXTURES_IN_ROW);
+	}
+	constexpr bool needsWall() const {
+		return m_flags & (1 << BLOCK_FLAG_NEEDS_WALL);
+	}
+	constexpr bool cannotFloat() const {
+		return m_flags & (1 << BLOCK_FLAG_CANNOT_FLOAT);
+	}
+	constexpr bool hasBigTexture() const {
+		return m_flags & (1 << BLOCK_FLAG_HAS_BIG_TEXTURE);
+	}
+	constexpr bool isSolid() const {
+		return m_flags & (1 << BLOCK_FLAG_SOLID);
+	}
 
 
 	virtual void onTextureLoaded(const BlockTextureAtlas& atlas);
@@ -198,57 +237,44 @@ public:
 
 	virtual void onBlockClicked(World& w, WorldEntity* e, int x, int y, BlockStruct& b) const;
 
-	virtual bool canBePlaced(World& w, int x, int y) const
-	{
-		return true;
-	}
+	virtual bool canBePlaced(World& w, int x, int y) const;
+	
 
 	virtual const ItemBlock& getItemFromBlock() const;
 	virtual std::string getItemIDFromBlock() const;
 
 	virtual ItemStack* createItemStackFromBlock(const BlockStruct& b) const;
-
-	/**
-	 * exists item which can be put on the ground to become the block
-	 */
-	inline bool hasItemVersion() const { return m_has_item_version; }
-	inline bool hasMetaTexturesInRow() const { return m_has_metatextures_in_row; }
-
-	inline virtual std::string toString() const { return "UNDEFINED_BLOCK"; }
-
-#define UUID_STRING(x)\
-	inline std::string toString() const override {return x;}
+	const std::string& getStringID() const { return m_string_id; }
 };
 
 class MultiBlock:public Block
 {
+	friend BlockRegistry;
 protected:
 	Phys::Rectanglei m_build_dimensions;
 	int m_width;
 	int m_height;
 
 	template<int Width,int Height>
-	inline void generateCollisionBoxFromDimensions()
+	void generateCollisionBoxFromDimensions()
 	{
 		static Phys::Polygon p = Phys::toPolygon(Phys::Rectangle::createFromDimensions(0,0,Width,Height));
 		m_collision_box = &p;
 	}
 
 public:
-	MultiBlock(int id);
+	MultiBlock(std::string id);
 	virtual ~MultiBlock() = default;
 	MultiBlock(const Block& c) = delete;
 	void operator=(MultiBlock const&) = delete;
 
-	inline int getWidth()const { return m_width; }
-	inline int getHeight()const { return m_height; }
+	int getWidth()const { return m_width; }
+	int getHeight()const { return m_height; }
 
 	Phys::Vecti getTileEntityCoords(int x, int y, const BlockStruct& b)const override;
 
 	//what dimensions need to be placed
 	virtual Phys::Rectanglei getBuildDimensions() const { return m_build_dimensions; }
-
-	int getCornerOffset(int x, int y, const BlockStruct& b) const override;
 
 	int getTextureOffset(int x, int y, const BlockStruct& b) const override;
 
@@ -264,8 +290,10 @@ public:
 
 class Wall
 {
+	friend BlockRegistry;
 private:
-	const int m_id;
+	int m_id;
+	const std::string m_string_id;
 protected:
 	//offset in block texture atlas
 	half_int m_texture_pos;
@@ -273,13 +301,13 @@ protected:
 	const half_int* m_corner_translate_array;
 	bool m_transparent;
 public:
-	Wall(int id);
+	Wall(std::string id);
 	Wall(const Wall& c) = delete;
 	void operator=(Wall const&) = delete;
 	virtual ~Wall();
 	virtual void onTextureLoaded(const BlockTextureAtlas& atlas);
-	inline int getID() const { return m_id; };
-	inline bool isTransparent() const { return m_transparent; }
+	int getID() const { return m_id; };
+	bool isTransparent() const { return m_transparent; }
 
 	//returns -1 if not render
 	virtual int getTextureOffset(int wx, int wy, const BlockStruct&) const;
@@ -288,7 +316,5 @@ public:
 	//returns true if this block was changed as well
 	virtual void onNeighbourWallChange(BlockAccess& world, int x, int y) const;
 
-	inline virtual std::string toString() const { return "UNDEFINED_WALL"; }
-#define UUID_STRING(x)\
-	inline std::string toString() const override {return x;}
+	const std::string& getStringID() const { return m_string_id; }
 };

@@ -112,16 +112,82 @@ void NBT::saveToFile(const std::string& filePath, const NBT& nbt)
 	o.close();
 }
 
+
+constexpr int BIG_JSON_BUFF_SIZE = 500000;
+static char BIG_JSON_BUFFER[BIG_JSON_BUFF_SIZE];
+//removes comments: (replaces with ' ')
+//	1. one liner starting with "//"
+//	2. block comment bounded by "/*" and "*/"
+static void removeComments(int length)
+{
+	int startIndex = -1;
+	bool bigLiner = false;
+	char lastChar = ' ';
+	for (int i = 0; i < length; ++i)
+	{
+		auto val = BIG_JSON_BUFFER[i];
+		if (val == '\0') {
+			if (startIndex != -1)
+			{
+				memset(&BIG_JSON_BUFFER[startIndex], ' ', i-startIndex);
+			}
+			return;
+		}
+		if(startIndex==-1)
+		{
+			if (val == '/') {
+				if(lastChar=='/')
+				{
+					startIndex = i - 1;
+					bigLiner = false;
+
+				}
+			}else if(val == '*')
+			{
+				if (lastChar == '/')
+				{
+					startIndex = i - 1;
+					bigLiner = true;
+				}
+			}
+		}
+		else
+			if(val == '\n' && !bigLiner)
+			{
+				memset(&BIG_JSON_BUFFER[startIndex], ' ', i - startIndex);
+				startIndex = -1;
+			}
+			else if (val == '/' && lastChar == '*' && bigLiner) {
+				memset(&BIG_JSON_BUFFER[startIndex], ' ', i - startIndex+1);
+				startIndex = -1;
+			}
+		
+		lastChar = val;
+	}
+}
+
 bool NBT::loadFromFile(const std::string& filePath, NBT& nbt)
 {
 	std::ifstream o(ND_RESLOC(filePath));
 	if (!o.is_open())
 		return false;
-	json j;
-	o >> j;
-	o.close();
-	nbt = NBT::fromJson(j);
-	return true;
+	
+	o.read(BIG_JSON_BUFFER, BIG_JSON_BUFF_SIZE);
+	if (o.eof())
+	{
+		// got the whole file...
+		removeComments(o.gcount());
+		int red = o.gcount();
+		BIG_JSON_BUFFER[red] = '\0';
+		BIG_JSON_BUFFER[red+1] = '\0';
+		auto j = json::parse(BIG_JSON_BUFFER);
+		o.close();
+		nbt = NBT::fromJson(j);
+		return true;
+
+	}
+	ND_WARN("Cannot load file {}, its too big", filePath);
+	return false;
 }
 
 void NBT::write(const IBinaryStream::RWStream& write) const
@@ -221,7 +287,7 @@ void BinarySerializer::write(const NBT& a, const IBinaryStream::WriteFunc& write
 		write(bu, 1);
 		for (auto& map : a.maps())
 		{
-			ASSERT(map.first.size() < 256,"The key is too long (over 255)");
+			ASSERT(map.first.size() < 256,"The key is too long (over 255): {}", map.first.size());
 			
 			*(uint8_t*)&bu[0] = BB_STRING;
 			*(uint8_t*)&bu[1] = (uint8_t)map.first.size();

@@ -632,7 +632,7 @@ EntityRoundBullet::EntityRoundBullet()
 	m_acceleration = {0, -1.f / 60.f};
 	static SpriteSheetResource res(Texture::create(
 		                               TextureInfo("res/images/player.png")
-		                               .filterMode(TextureFilterMode::NEAREST)
+		                               .filterMode(TextureFilterMode::LINEAR)
 		                               .format(TextureFormat::RGBA)), 4, 4);
 	m_sprite = Sprite(&res);
 	m_sprite.setSpriteIndex(3, 0);
@@ -947,11 +947,15 @@ void TileEntityRadio::onClicked(World& w, WorldEntity* entity)
 void TileEntityRadio::save(NBT& src)
 {
 	TileEntity::save(src);
+	if(m_disc)
+		m_disc->serialize(src["disc"]);
 }
 
 void TileEntityRadio::load(NBT& src)
 {
 	TileEntity::load(src);
+	if(src.exists("disc"))
+		m_disc=ItemStack::deserialize(src["disc"]);
 }
 
 void TileEntityRadio::update(World& w)
@@ -963,7 +967,7 @@ void TileEntityRadio::update(World& w)
 		m_randTime = std::rand() % 60 + 1 * 60;
 		w.spawnParticle(
 			ParticleList::note,
-			m_pos + glm::vec2(0.5f + randDispersedFloat(0.05f), 1),
+			m_pos + glm::vec2(1.f + randDispersedFloat(0.05f), 1.5),
 			{randDispersedFloat(0.001), randFloat(0.001f) + 0.001f},
 			vec2(0),
 			60 * 3,
@@ -986,7 +990,6 @@ EntityType TileEntityRadio::getEntityType() const
 {
 	return ENTITY_TYPE_TILE_RADIO;
 }
-
 
 void TileEntitySapling::update(World& w)
 {
@@ -1012,7 +1015,7 @@ EntityTNT::EntityTNT()
 
 	static SpriteSheetResource res(Texture::create(
 		                               TextureInfo("res/images/player.png")
-		                               .filterMode(TextureFilterMode::NEAREST)
+		                               .filterMode(TextureFilterMode::LINEAR)
 		                               .format(TextureFormat::RGBA)), 4, 4);
 	m_animation = Animation(&res);
 	m_animation.setSpriteIndex(0, 0);
@@ -1111,7 +1114,7 @@ EntityBomb::EntityBomb()
 
 	static SpriteSheetResource res(Texture::create(
 		                               TextureInfo("res/images/tnt.png")
-		                               .filterMode(TextureFilterMode::NEAREST)
+		                               .filterMode(TextureFilterMode::LINEAR)
 		                               .format(TextureFormat::RGBA)), 3, 1);
 	m_animation = Animation(&res);
 	m_animation.setSpriteIndex(0, 0);
@@ -1219,7 +1222,7 @@ EntityZombie::EntityZombie()
 
 	static SpriteSheetResource res(Texture::create(
 		                               TextureInfo("res/images/zombie.png")
-		                               .filterMode(TextureFilterMode::NEAREST)
+		                               .filterMode(TextureFilterMode::LINEAR)
 		                               .format(TextureFormat::RGBA)), 16, 1);
 	m_animation = Animation(&res, {0, 1, 2, 1, 0, 4, 3, 4});
 	m_animation.setSpriteIndex(0, 2);
@@ -1315,7 +1318,7 @@ EntitySnowman::EntitySnowman()
 
 	static SpriteSheetResource res(Texture::create(
 		                               TextureInfo("res/images/snowman.png")
-		                               .filterMode(TextureFilterMode::NEAREST)
+		                               .filterMode(TextureFilterMode::LINEAR)
 		                               .format(TextureFormat::RGBA)), 8, 1);
 	m_animation = Animation(&res, {2, 3, 4, 3, 2, 5, 6, 5});
 	m_animation.setSpriteIndex(0, 2);

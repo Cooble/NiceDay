@@ -44,7 +44,7 @@ public:
 	const std::string& entityTypeToString(EntityType type) const;
 	
 
-	static inline EntityRegistry& get()
+	static EntityRegistry& get()
 	{
 		static EntityRegistry s_instance;
 		return s_instance;
@@ -52,6 +52,6 @@ public:
 
 
 	const EntityTemplate& getBucket(EntityType type) const;
-
-	inline const std::vector<EntityTemplate>& getData() const { return m_entity_templates; }
+	EntityType getEntityType(const std::string& name);
+	const std::vector<EntityTemplate>& getData() const { return m_entity_templates; }
 };

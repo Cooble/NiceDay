@@ -141,13 +141,13 @@ namespace NDUtil
 
 		inline bool get(size_t index) const
 		{
-			ASSERT((index >> 5) < m_bits.size(), "Invalid index");
+			ASSERT((index >> 5) < m_bits.size(), "Invalid index: {}",index);
 			return m_bits[index >> 5][index & ((1 << 5) - 1)];
 		}
 
 		inline void set(size_t index, bool val)
 		{
-			ASSERT((index >> 5) < m_bits.size(), "Invalid index");
+			ASSERT((index >> 5) < m_bits.size(), "Invalid index {}",index);
 			m_bits[index >> 5][index & ((1 << 5) - 1)] = val;
 		}
 

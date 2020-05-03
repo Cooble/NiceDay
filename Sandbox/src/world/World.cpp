@@ -837,6 +837,14 @@ const BlockStruct* World::getBlock(int x, int y) const
 	return nullptr;
 }
 
+const Block& World::getBlockInstance(int x, int y) const
+{
+	auto t = getBlock(x, y);
+	if (t == nullptr)
+		return BlockRegistry::get().getBlock(0);
+	return BlockRegistry::get().getBlock(t->block_id);
+}
+
 const BlockStruct* World::getBlockOrAir(int x, int y) const
 {
 	auto t = getBlock(x, y);

@@ -44,3 +44,13 @@ const EntityRegistry::EntityTemplate& EntityRegistry::getBucket(EntityType type)
 	}
 	ASSERT(false, "Invalid EntityType");
 }
+
+EntityType EntityRegistry::getEntityType(const std::string& name)
+{
+	for (auto& entity_bucket : m_entity_templates)
+	{
+		if (entity_bucket.name == name)
+			return entity_bucket.entity_type;
+	}
+	return ENTITY_ID_INVALID;
+}

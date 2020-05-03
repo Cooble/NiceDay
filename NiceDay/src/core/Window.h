@@ -8,6 +8,7 @@ class Window
 {
 private:
 	bool m_destroyed = false;
+	bool m_iconified = false;
 	GLFWwindow* m_window;
 	using EventCallbackFn = std::function<void(Event&)>;
 
@@ -43,7 +44,10 @@ public:
 	inline unsigned int getWidth() const { return m_data.width; }
 	inline unsigned int getHeight() const { return m_data.height; }
 	inline const char* getTitle() const { return m_data.title.c_str(); }
-	inline bool isFullscreen() const { return m_data.fullscreen; }
+	constexpr bool isFullscreen() const { return m_data.fullscreen; }
+
+	//is window minimized?
+	constexpr bool isIconified() const { return m_iconified; }
 
 private:
 	//void framebuffer_size_callback(GLFWwindow* window, int width, int height);

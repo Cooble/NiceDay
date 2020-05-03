@@ -157,7 +157,7 @@ void HUD::appendChild(GUIElement* element, const std::string& ownerID)
 			break;
 		}
 	}
-	ASSERT(success, "Appending child of invalid ownerID");
+	ASSERT(success, "Appending child of invalid ownerID: {}",ownerID);
 
 	//put hand on the top
 	m_children[m_children.size() - 1] = m_hand;

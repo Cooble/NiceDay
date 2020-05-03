@@ -6,6 +6,8 @@ project(Sandbox)
         "src/*.cpp" 
         "src/*.hpp" 
         "src/*.h" 
+        "../res/registry/blocks/block_ids.h"
+        "../res/registry/blocks/wall_ids.h"
         )
 
 
@@ -16,6 +18,7 @@ project(Sandbox)
 # Include files
     target_include_directories(Sandbox PUBLIC 
         "src"
+        "../res/registry/headers"
     )
 
 # Precompiled Header
@@ -43,3 +46,10 @@ project(Sandbox)
 #    COMMAND ${CMAKE_COMMAND} -E copy_if_different 
 #        "${PROJECT_BINARY_DIR}/vendor/Knihovna/$<CONFIG>/Knihovna.dll"
 #        $<TARGET_FILE_DIR:Runner>)
+execute_process(COMMAND cmake -P ${CMAKE_CURRENT_SOURCE_DIR}/../BuildIDHeader.cmake)
+
+add_custom_target(
+    BuildIdsTarget
+    COMMAND cmake -P ${CMAKE_CURRENT_SOURCE_DIR}/../BuildIDHeader.cmake
+)
+add_dependencies(Sandbox BuildIdsTarget)

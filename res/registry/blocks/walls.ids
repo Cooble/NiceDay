@@ -1,0 +1,12 @@
+# indexes of walls
+# you can use '#' to line comment
+# use: "<index_of_wall> <name_of_wall>"
+# wall name must not contain spaces!
+# example: "17 stone_ore"
+
+0   air
+1   dirt
+2   stone
+3   glass
+4   gold
+

@@ -7,12 +7,14 @@ ignore/
 profiles/
 res/audio/
 res/lua/temp/
+res/registry/headers
 build/
 
 #atlases made on the go
 res/images/blockAtlas/atlas.png
 res/images/itemAtlas/atlas.png
 res/images/particleAtlas/atlas.png
+res/images/itemAtlas/item_block
 
 # Files
 *.user

@@ -98,6 +98,8 @@ void BlockTextureCreator::createTexture(const Block& block)
 
 	auto possibleLoc = std::string(ND_RESLOC("res/images/itemAtlas/item/" + block.getItemIDFromBlock() + ".png"));
 	auto destLoc = std::string(ND_RESLOC("res/images/itemAtlas/item_block/" + block.getItemIDFromBlock() + ".png"));
+
+	std::filesystem::create_directories(ND_RESLOC("res/images/itemAtlas/item_block"));
 	//overriding default block image generation
 	if (std::filesystem::is_regular_file(possibleLoc)) {
 		if (std::filesystem::exists(destLoc))

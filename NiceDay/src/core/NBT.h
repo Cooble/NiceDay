@@ -64,7 +64,7 @@ private:
 		}
 		return true;
 	}
-	constexpr void destruct()
+	constexpr void destruct() noexcept
 	{
 		bool des = isArray() || isMap() || isString();
 		if (isArray())
@@ -92,8 +92,8 @@ public:
 	constexpr bool isNull() const { return type == T_NULL; }
 	constexpr size_t size() const { return isMap() ? val_map->size() : (isArray() ? val_array->size() : (isString()?string().size():0)); }
 	NBTType types() const { return type; }
-	inline NBT() = default;
-	~NBT(){
+	NBT() = default;
+	~NBT() noexcept{
 		destruct();
 	}
 
@@ -526,6 +526,7 @@ public:
 	static NBT fromJson(const json& j);
 	
 	static void saveToFile(const std::string& filePath, const NBT& nbt);
+	// loads nbt from json file (comments in file are allowed, ignored)
 	static bool loadFromFile(const std::string& filePath, NBT& nbt);
 
 	template <typename Arg>
@@ -562,6 +563,30 @@ public:
 		if (found)
 			val = it->second.string();
 		else val = defaultVal;
+		return found;
+	}
+	template <typename Arg>
+	bool loadIfExists(const std::string& key, Arg& val) const
+	{
+		if (!isMap()) {
+			return false;
+		}
+		auto& it = val_map->find(key);
+		bool found = it != val_map->end();
+		if (found)
+			val = Arg(it->second);
+		return found;
+	}
+	template <>
+	bool loadIfExists(const std::string& key, std::string& val) const
+	{
+		if (!isMap()) {
+			return false;
+		}
+		auto& it = val_map->find(key);
+		bool found = it != val_map->end();
+		if (found)
+			val = it->second.string();
 		return found;
 	}
 	/*

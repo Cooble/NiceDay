@@ -21,7 +21,7 @@ public:
 	MessageEvent(const char* title,uint64_t meta=0,void* data=nullptr):
 		m_metadata(meta),m_data(data)
 	{
-		ASSERT(strlen(title) < MESSAGE_EVENT_TITLE_MAX_LENGTH,"Message title too long");
+		ASSERT(strlen(title) < MESSAGE_EVENT_TITLE_MAX_LENGTH,"Message title too long: {}", strlen(title));
 		cpyString(title, &m_title[0]);
 	}
 	MessageEvent(int id, uint64_t meta = 0, void* data = nullptr) :

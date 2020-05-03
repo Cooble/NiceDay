@@ -206,6 +206,7 @@ void Window::swapBuffers()
 void Window::pollEvents()
 {
 	glfwPollEvents();
+	m_iconified = (bool)glfwGetWindowAttrib(m_window, GLFW_ICONIFIED);
 }
 
 bool Window::shouldClose()

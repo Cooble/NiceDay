@@ -14,7 +14,7 @@ namespace ParticleList {
 		torch_fire = 
 			ParticleRegistry::get().registerTemplate(ParticleRegistry::ParticleTemplate("torch_fire", half_int(1, 1), 4, 30, 0));
 		bulletShatter = 
-			ParticleRegistry::get().registerTemplate(ParticleRegistry::ParticleTemplate("bulletShatter", half_int(1, 1), 2, 60, 0));
+			ParticleRegistry::get().registerTemplate(ParticleRegistry::ParticleTemplate("bulletShatter", half_int(1,1), 2, 60, 0));
 		block = 
 			ParticleRegistry::get().registerTemplate(ParticleRegistry::ParticleTemplate("block", half_int(1, 1), 2, 35,0));
 		note = 

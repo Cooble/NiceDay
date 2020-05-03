@@ -331,6 +331,7 @@ public:
 	//return nullptr if block is not loaded or invalid coords 
 	//(won't cause chunk load)
 	const BlockStruct* getBlock(int x, int y) const;
+	const Block& getBlockInstance(int x, int y) const;
 
 	// never returns nullptr
 	const BlockStruct* getBlockOrAir(int x, int y) const;
