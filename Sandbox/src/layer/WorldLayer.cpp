@@ -31,7 +31,6 @@
 #include "CommonMessages.h"
 #include "lua/LuaLayer.h"
 #include <lua.hpp>
-#include <LuaBridge/LuaBridge.h>
 #include "world/entity/EntityPlayer.h"
 #include "world/entity/EntityAllocator.h"
 #include "inventory/ItemBlock.h"
@@ -272,7 +271,7 @@ void WorldLayer::loadLuaWorldLibs()
 	auto L = App::get().getLua()->getLuaState();
 
 
-	luabridge::getGlobalNamespace(L)
+	/*luabridge::getGlobalNamespace(L)
 		.beginNamespace("Particle")
 		.addVariable("torch_fire", &ParticleList::torch_fire, false)
 		.addVariable("bulletShatter", &ParticleList::bulletShatter, false)
@@ -311,8 +310,8 @@ void WorldLayer::loadLuaWorldLibs()
 	                                        "	local po = player:getPosition() "
 	                                        "	return VEC2(po.x,po.y)"
 	                                        "end");
-
-	ND_TRACE("Loaded world lua bindings");
+											
+	ND_TRACE("Loaded world lua bindings");*/
 }
 
 //called after chunk with player was loaded
