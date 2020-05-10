@@ -6,20 +6,15 @@
 #include "event/MessageEvent.h"
 #include "WorldLayer.h"
 #include "core/AppGlobals.h"
-#include "CommonMessages.h"
 #include "gui/window_messeages.h"
 #include "event/KeyEvent.h"
 #include "GLFW/glfw3.h"
 #include "gui/GUIEntityPlayer.h"
 #include "world/entity/EntityPlayer.h"
-#include "world/entity/EntityAllocator.h"
 #include "event/SandboxControls.h"
-#include "gui/GUIEntityPlayer.h"
-#include "core/Stats.h"
 #include "gui/GUIEntityCreativeTab.h"
 
 GUILayer::GUILayer()
-	:m_gui_creative(nullptr)
 {
 	ND_PROFILE_METHOD();
 	m_bound_func = std::bind(&GUILayer::consumeWindowEvent, this, std::placeholders::_1);
@@ -187,32 +182,17 @@ void GUILayer::onDetach()
 	GUIContext::get().destroyWindows();
 }
 
-static int isprofiling = 0;
-
-static int profileIdx = 0;
-
 void GUILayer::onUpdate()
 {
-	if(isprofiling)
-	{
-		isprofiling--;
-		if(isprofiling==0)
-		{
-			ND_PROFILE_END_SESSION();
-		}
-	}
 	GUIContext::setContext(m_gui_context);
 	GUIContext::get().onUpdate();
 	for (auto& event : m_window_event_buffer)
-	{
 		proccessWindowEvent(event);
-	}
 	m_window_event_buffer.clear();
 }
 
 void GUILayer::onRender()
 {
-	ND_PROFILE_METHOD();
 	m_renderer.begin();
 	if (m_background_enable)
 		m_renderer.submitTextureQuad({-1, -1.f, 0}, {2.f, 2}, UVQuad::elementary(), m_background);
@@ -232,21 +212,35 @@ void GUILayer::onRender()
 
 void GUILayer::onEvent(Event& e)
 {
-	
+	bool flipped = e.isInCategory(Event::EventCategory::Mouse);
+	if (flipped)
+		static_cast<MouseMoveEvent&>(e).flipY(App::get().getWindow()->getHeight());
+	GUIContext::setContext(m_gui_context);
+	GUIContext::get().onEvent(e);
+	if (flipped)
+		static_cast<MouseMoveEvent&>(e).flipY(App::get().getWindow()->getHeight());
+	if (e.handled)
+		return;
+	if (m_game_screen == GameScreen::World)
+	{
+		if (KeyPressEvent::getKeyNumber(e) == Controls::OPEN_CONSOLE)
+		{
+			if (!m_hud->isRegistered("console"))
+			{
+				m_gui_console = new GUIEntityConsole();
+				m_hud->registerGUIEntity(m_gui_console);
+				m_gui_console->open(true);
+				e.handled = true;
+				return;
+			}
+		}
+	}
+
 	if (e.getEventType() == Event::EventType::KeyPress)
 	{
 		auto m = static_cast<KeyPressEvent&>(e);
-		
-		if (m.getKey() == GLFW_KEY_P)//profile 60ticks
-		{
-			if(isprofiling==0)
-			{
-				isprofiling = 60;
-				ND_PROFILE_BEGIN_SESSION("snippet"+std::to_string(profileIdx), "snippet" + std::to_string(profileIdx)+".json");
-				profileIdx++;
-			}
-			
-		}
+
+
 		if (m.getKey() == GLFW_KEY_ESCAPE)
 		{
 			e.handled = true;
@@ -268,10 +262,11 @@ void GUILayer::onEvent(Event& e)
 		{
 			e.handled = true;
 
-			if (!m_hud->isRegistered("player")) {
+			if (!m_hud->isRegistered("player"))
+			{
 				m_gui_player = new GUIEntityPlayer(&m_world->getPlayer());
 				m_hud->registerGUIEntity(m_gui_player);
-				if(m_world->getPlayer().hasCreative())
+				if (m_world->getPlayer().hasCreative())
 				{
 					m_gui_creative = new GUIEntityCreativeTab();
 					m_hud->registerGUIEntity(m_gui_creative);
@@ -279,16 +274,13 @@ void GUILayer::onEvent(Event& e)
 			}
 			else
 			{
-				
 				m_gui_player->openInventory(!m_gui_player->isOpenedInventory());
 
 				if (m_gui_player->isOpenedInventory() && m_world->getPlayer().hasCreative())
 				{
 					m_gui_creative = new GUIEntityCreativeTab();
 					m_hud->registerGUIEntity(m_gui_creative);
-
 				}
-				
 			}
 		}
 		//throw item away
@@ -317,11 +309,5 @@ void GUILayer::onEvent(Event& e)
 		m_gui_renderer.setScreenDimensions(m.getWidth(), m.getHeight());
 	}
 
-	bool flipped = e.isInCategory(Event::EventCategory::Mouse);
-	if (flipped)
-		static_cast<MouseMoveEvent&>(e).flipY(App::get().getWindow()->getHeight());
-	GUIContext::setContext(m_gui_context);
-	GUIContext::get().onEvent(e);
-	if (flipped)
-		static_cast<MouseMoveEvent&>(e).flipY(App::get().getWindow()->getHeight());
+	
 }

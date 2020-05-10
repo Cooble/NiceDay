@@ -93,6 +93,7 @@ public:
 	constexpr size_t size() const { return isMap() ? val_map->size() : (isArray() ? val_array->size() : (isString()?string().size():0)); }
 	NBTType types() const { return type; }
 	NBT() = default;
+
 	~NBT() noexcept{
 		destruct();
 	}

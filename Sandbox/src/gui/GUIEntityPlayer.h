@@ -3,6 +3,7 @@
 #include "world/entity/EntityManager.h"
 #include "GUIEntityChest.h"
 
+class PlayerInventory;
 class EntityPlayer;
 class GUISlots;
 
@@ -45,3 +46,26 @@ public:
 	void openInventory(bool open);
 	inline auto getPlayerEntity() { return m_disgusting_player; }
 };
+
+class GUIEntityConsole :public GUIEntity
+{
+private:
+	std::vector<std::string> m_messages;
+	std::vector<GUIText*> m_lines;
+	std::string m_currentMessage;
+	GUIColumn* m_col;
+	int m_max_lines = 4;
+	bool m_opened=false;
+public:
+	GUIEntityConsole();
+	void clearChat();
+	void addMessage(const std::string& message);
+	void updateChat();
+	void update(World& w) override;
+	void onEvent(Event& e) override;
+	void render(BatchRenderer2D& renderer) override;
+	void onAttachedToHUD(HUD& hud) override;
+	const std::string& getID() const override;
+	void open(bool open);
+};
+

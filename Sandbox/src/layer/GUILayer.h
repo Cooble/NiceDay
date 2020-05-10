@@ -11,6 +11,7 @@
 class MessageEvent;
 class WorldLayer;
 class GUIEntityPlayer;
+class GUIEntityConsole;
 class GUIEntityCreativeTab;
 class GUILayer : public Layer
 {
@@ -42,6 +43,7 @@ private:
 	
 	WorldLayer* m_world;
 	GUIEntityPlayer* m_gui_player;
+	GUIEntityConsole* m_gui_console;
 	GUIEntityCreativeTab* m_gui_creative=nullptr;
 public:
 	GUILayer();

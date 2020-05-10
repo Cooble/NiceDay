@@ -25,8 +25,6 @@ public:
 	void runScriptInConsole(lua_State* L, const char* c);
 	
 	void runScriptFromFile(lua_State* L, const nd::temp_string& filePath);
-	void loadGlmVec();
-	void loadSoundHandle();
 	void onUpdate() override;
 	virtual void onAttach() override;
 	virtual void onDetach() override;

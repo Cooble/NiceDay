@@ -4,9 +4,6 @@
 #include "core/Stats.h"
 #include "event/Event.h"
 #include "GLFW/glfw3.h"
-#include "GUIEntityPlayer.h"
-#include "world/entity/WorldEntity.h"
-#include "world/entity/EntityPlayer.h"
 
 
 HUD* HUD::s_hud = nullptr;
@@ -15,7 +12,7 @@ HUD::HUD()
 {
 	s_hud = this;
 	isNotSpatial = true;
-	m_container_consumer = std::bind(&HUD::consumeContainerEvent, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+	m_container_consumer = std::bind(&HUD::consumeContainerEvent, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4);
 	m_hand = new GUIItemContainer();
 	m_hand->isNotSpatial = true;//disable events
 	m_hand->dim = { 64,64 };
@@ -47,14 +44,14 @@ HUD::~HUD()
 		delete entity.entity;
 }
 
+void HUD::setHandSlot(Inventory* inv, int slot)
+{
+	m_hand_inventory = inv;
+	m_hand->setContainer(inv,slot);
+}
+
 void HUD::registerGUIEntity(GUIEntity* e)
 {
-	auto pl = dynamic_cast<GUIEntityPlayer*>(getEntity("player"));
-	if (pl)
-	{
-		if (!pl->isOpenedInventory())
-			pl->openInventory(true);//if the inventory is not opened (player has only actionslots ready we open it first
-	}
 	//if we have duplicate, we remove it first
 	for (auto& entity : m_entities)
 		if(entity.entity->getID()==e->getID())
@@ -65,12 +62,6 @@ void HUD::registerGUIEntity(GUIEntity* e)
 	
 	m_entities.emplace_back(e);
 	e->onAttachedToHUD(*this);
-	auto playerInv = dynamic_cast<GUIEntityPlayer*>(e);
-	if(playerInv)
-	{
-		m_player = dynamic_cast<PlayerInventory*>(playerInv->getInventory());
-		m_hand->setContainer(playerInv->getInventory(), InventorySlot::HAND);
-	}	
 }
 
 bool HUD::isRegistered(const std::string& id)
@@ -91,9 +82,7 @@ void HUD::unregisterGUIEntity(const std::string& id)
 			m_entities[i].entity->onDetached();
 			delete m_entities[i].entity;
 			for (auto child : m_entities[i].children)
-			{
-				removeChildWithID(child);
-			}
+				destroyChildWithID(child);
 			m_entities.erase(m_entities.begin() + i);
 			return;
 		}
@@ -103,9 +92,7 @@ GUIEntity* HUD::getEntity(const std::string& id)
 {
 	for (auto& entitie : m_entities)
 		if (entitie.entity->getID() == id)
-		{
 			return entitie.entity;
-		}
 	return nullptr;
 }
 
@@ -113,9 +100,7 @@ Inventory* HUD::getInventory(const std::string& id)
 {
 	for (auto& entitie : m_entities)
 		if (entitie.entity->getInventory() !=nullptr&&entitie.entity->getInventory()->getID()==id)
-		{
 			return entitie.entity->getInventory();
-		}
 	return nullptr;
 }
 
@@ -128,9 +113,7 @@ void HUD::update()
 {
 	GUIWindow::update();
 	for (auto& entity : m_entities)
-	{
 		entity.entity->update(*Stats::world);
-	}
 }
 
 void HUD::onMyEvent(Event& e)
@@ -141,6 +124,12 @@ void HUD::onMyEvent(Event& e)
 		auto m = static_cast<MouseMoveEvent&>(e);
 		m_hand->pos = m.getPos() - (m_hand->dim / 2.f) - glm::vec2(-m_hand->dim.x / 4, m_hand->dim.x / 4);
 		m_title->pos = m.getPos() - glm::vec2(0,m_title->height/4);
+	}
+	for (auto& entity : m_entities)
+	{
+		entity.entity->onEvent(e);
+		if(e.handled)
+			break;
 	}
 }
 
@@ -165,24 +154,24 @@ void HUD::appendChild(GUIElement* element, const std::string& ownerID)
 	m_children[m_children.size() - 3] = element;
 }
 
-void HUD::consumeContainerEvent(const std::string& id, int slot, Event& e)
+void HUD::consumeContainerEvent(const std::string& id, int slot, Inventory* inv, Event& e)
 {
-	if (m_player == nullptr)
+	if (m_hand_inventory == nullptr)
 		return;
-	if(e.getEventType()==Event::EventType::MouseFocusGain)
+	if (e.getEventType() == Event::EventType::MouseFocusGain)
 	{
-		auto item = getInventory(id)->getItemStack(slot);
+		auto item = inv->getItemStack(slot);
 		if (item != nullptr) {
 			m_title->isEnabled = true;
-			m_title->setTitle(Font::colorize(Font::BLACK,Font::DARK_AQUA) + item->getItem().toString());
+			m_title->setTitle(Font::colorize(Font::BLACK, Font::DARK_AQUA) + item->getItem().toString());
 			m_title->setMeta(Font::colorize(Font::WHITE, Font::DARK_PURPLE) + std::to_string(item->getMetadata()));
 		}
-		
+
 		m_focused_slot = slot;
 		m_focused_owner = id;
 		return;
 	}
-	else if(e.getEventType() == Event::EventType::MouseFocusLost)
+	else if (e.getEventType() == Event::EventType::MouseFocusLost)
 	{
 		if (m_focused_slot == slot && m_focused_owner == id) {
 			m_title->isEnabled = false;
@@ -195,31 +184,16 @@ void HUD::consumeContainerEvent(const std::string& id, int slot, Event& e)
 	if (e.getEventType() != Event::EventType::MousePress)
 		return;
 
-	auto playerInv = dynamic_cast<GUIEntityPlayer*>(getEntity("player"));
-	if (playerInv)
-	{
-		if (!playerInv->isOpenedInventory())
-			return;
-	}
-	Inventory* c = nullptr;
-	for (auto& ee : m_entities)
-	{
-		auto entity = ee.entity->getInventory();
-		if(entity==nullptr)
-			continue;
-		if(entity->getID()!=id)
-			continue;
-		c = entity;
-		break;
-	}
+	auto c = inv;
 	if (c == nullptr) {
 		ND_WARN("Called from GUIcontainer that has invalid owner id");
 		return;
 	}
 	auto even = static_cast<MousePressEvent&>(e);
 	bool left = even.getButton() == GLFW_MOUSE_BUTTON_LEFT;
-	
-	auto inHand = m_player->handSlot();
+
+	auto inHand = m_hand_inventory->getItemStack(m_hand->getSlot());
+
 	
 	//we have nothing in hand
 	if(inHand==nullptr)
@@ -239,13 +213,13 @@ void HUD::consumeContainerEvent(const std::string& id, int slot, Event& e)
 		{
 			inHand = c->takeFromIndex(slot,1);
 		}
-		if (inHand && m_player->putAtIndex(inHand, InventorySlot::HAND) != nullptr)
+		if (inHand && m_hand_inventory->putAtIndex(inHand, m_hand->getSlot()) != nullptr)
 			ND_ERROR("This shouldnot happen because the slot is free");
 	}
 	//we have something in hand
 	else
 	{
-		inHand = m_player->takeFromIndex(InventorySlot::HAND,-1);
+		inHand = m_hand_inventory->takeFromIndex(m_hand->getSlot(),-1);
 		
 		//put everything in the slot
 		if(left)
@@ -270,7 +244,8 @@ void HUD::consumeContainerEvent(const std::string& id, int slot, Event& e)
 				inHand = c->putAtIndex(inHand, slot,1);
 			}
 		}
-		if (inHand && m_player->putAtIndex(inHand, InventorySlot::HAND) != nullptr)
+		if (inHand && m_hand_inventory->putAtIndex(inHand, m_hand->getSlot()) != nullptr) {
 			ND_ERROR("This shouldnot happen because the slot is free");
+		}
 	}
 }

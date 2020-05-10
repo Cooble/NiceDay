@@ -69,7 +69,7 @@ void GUIElement::onChildChange()
 			onDimChange(*this);
 }
 
-void GUIElement::removeChild(int index)
+void GUIElement::destroyChild(int index)
 {
 	ASSERT(index < m_children.size(), "Invalid child id");
 
@@ -80,7 +80,7 @@ void GUIElement::removeChild(int index)
 	onChildChange();
 }
 
-void GUIElement::removeChildWithID(GEID id)
+void GUIElement::destroyChildWithID(GEID id)
 {
 	for (int i = 0; i < m_children.size(); ++i)
 	{

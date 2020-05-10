@@ -1,7 +1,6 @@
 ﻿#pragma once
 #include "gui/GUIBasic.h"
 #include "gui/GUIItemContainer.h"
-#include "inventory/PlayerInventory.h"
 
 class HUD;
 class World;
@@ -15,24 +14,25 @@ public:
 	virtual void onDetached() {};
 	virtual void render(BatchRenderer2D& renderer){};
 	virtual void update(World& w){};
+	virtual void onEvent(Event& e){};
 	// if inventory does not exist return null
 	virtual Inventory* getInventory() { return nullptr; };
 };
 
-class HUD:public GUIWindow
+class HUD :public GUIWindow
 {
 	ContainerEventConsumer m_container_consumer;
 	struct GUIEntityBundle
 	{
 		GUIEntity* entity;
 		std::vector<GEID> children;
-		GUIEntityBundle(GUIEntity* e):entity(e){}
+		GUIEntityBundle(GUIEntity* e) :entity(e) {}
 	};
 	std::vector<GUIEntityBundle> m_entities;
-	PlayerInventory* m_player=nullptr;
+	Inventory* m_hand_inventory = nullptr;
 	GUIItemContainer* m_hand;
 	GUIItemTitle* m_title;
-	
+
 	static HUD* s_hud;
 
 	int m_focused_slot;
@@ -42,7 +42,9 @@ public:
 	HUD();
 	~HUD();
 
-	inline const auto& getContainerConsumer() const { return m_container_consumer; }
+	void setHandSlot(Inventory* inv, int slot);
+
+	const auto& getContainerConsumer() const { return m_container_consumer; }
 	void registerGUIEntity(GUIEntity* e);
 	bool isRegistered(const std::string& id);
 	void unregisterGUIEntity(const std::string& id);
@@ -52,6 +54,6 @@ public:
 	void onMyEvent(Event& e) override;
 	void appendChild(GUIElement* element,const std::string& ownerID);
 	void appendChild(GUIElement* element) override;
-	void consumeContainerEvent(const std::string& id, int slot, Event& e);
+	void consumeContainerEvent(const std::string& id, int slot, Inventory* inv, Event& e);
 	inline const auto& getEntities() { return m_entities; }
 };

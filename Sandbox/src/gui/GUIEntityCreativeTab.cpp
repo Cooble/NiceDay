@@ -62,6 +62,6 @@ void GUIEntityCreativeTab::onDetached()
 
 const std::string& GUIEntityCreativeTab::getID() const
 {
-	static std::string c = "creative";
+	static std::string c = "player_creative";
 	return c;
 }

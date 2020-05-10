@@ -29,7 +29,7 @@
 #include "core/AppGlobals.h"
 #include "event/MessageEvent.h"
 #include "CommonMessages.h"
-#include "layer/LuaLayer.h"
+#include "lua/LuaLayer.h"
 #include <lua.hpp>
 #include <LuaBridge/LuaBridge.h>
 #include "world/entity/EntityPlayer.h"
@@ -40,6 +40,7 @@
 #include "event/SandboxControls.h"
 #include "audio/player.h"
 #include "world/nd_registry.h"
+#include "gui/GUIContext.h"
 
 const char* WORLD_FILE_PATH;
 int CHUNKS_LOADED;
@@ -110,7 +111,7 @@ void WorldLayer::loadWorld(nd::temp_string& worldname, bool regen)
 	info.chunk_height = 10;
 	info.seed = 0;
 	info.terrain_level = (info.chunk_height - 4) * WORLD_CHUNK_SIZE;
-
+	info.time = TICKS_PER_MINUTE * 60 * 7;//start day at 7 on clock
 	m_world = new World("worlds/" + std::string(info.name) + ".world", info);
 
 	bool worldAlreadyLoaded = true;
@@ -429,7 +430,7 @@ void WorldLayer::onUpdate()
 	float acc = 0.3f;
 	float moveThroughBlockSpeed = 6;
 
-	if (!ImGui::IsAnyItemActive())
+	if (!ImGui::IsAnyItemActive()&&!GUIContext::isAnyItemActive())
 	{
 		if (Stats::move_through_blocks_enable)
 		{
@@ -474,7 +475,7 @@ void WorldLayer::onCreativeUpdate()
 	bool tntenable = true;
 	constexpr int maxDeltaBum = 2;
 	static int deltaBum = 0;
-	if (!ImGui::IsMouseHoveringAnyWindow() && !ImGui::IsAnyItemActive())
+	if (!ImGui::IsMouseHoveringAnyWindow() && !ImGui::IsAnyItemActive() && !GUIContext::isAnyItemActive())
 	{
 		if (App::get().getInput().isKeyPressed(Controls::SPAWN_TNT))
 		{
@@ -491,7 +492,7 @@ void WorldLayer::onCreativeUpdate()
 				}
 			}
 		}
-		if (App::get().getInput().isKeyFreshlyPressed(GLFW_KEY_C))
+		if (App::get().getInput().isKeyFreshlyPressed(Controls::FLY_MODE))
 		{
 			Stats::fly_enable = !Stats::fly_enable;
 			ND_INFO("Fly mode: {}", Stats::fly_enable);

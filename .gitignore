@@ -1,5 +1,6 @@
 # Directories
 .vs/
+.idea/
 bin/
 bin-int/
 nogit/

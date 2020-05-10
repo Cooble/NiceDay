@@ -17,7 +17,7 @@ protected:
 public:
 	
 	GUICreativeTab(HUD& hud);
-	inline auto getInventory() { return m_inv; }
+	auto getInventory() { return m_inv; }
 };
 
 class GUIEntityCreativeTab :public GUIEntity

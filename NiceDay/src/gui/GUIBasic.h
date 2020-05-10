@@ -74,7 +74,6 @@ private:
 public:
 	bool isMoveable = true;
 	bool isResizable = true;
-	bool isEnabled = true;
 	GUIWindow();
 	void onMyEvent(Event& e) override;
 };
@@ -88,7 +87,7 @@ public:
 	int textClipOffset=0;
 	TextMesh textMesh;
 	TextMesh cursorMesh;
-	FontMaterial* font;
+	FontMaterial* fontMaterial;
 	CursorProp prop;
 	int cursorPos=0;
 	char cursorChar = '|';
@@ -103,6 +102,7 @@ public:
 	virtual void moveCursor(int delta);
 
 	void onMyEvent(Event& e) override;
+	void setGainFocus(bool cond);
 };
 class GUICheckBox :public GUIElement
 {
@@ -133,7 +133,8 @@ class GUIColumn :public GUIElement
 {
 public:
 	GUIAlign child_alignment;
-	GUIColumn(GUIAlign childAlignment= GUIAlign::CENTER);
+	GUIColumn(GUIAlign childAlignment);
+	GUIColumn();
 
 	void repositionChildren() override;
 };
@@ -170,7 +171,7 @@ public:
 	inline GUIElement* getDownChild() { return getChildren()[1]; }
 	
 	void appendChild(GUIElement* element) override;
-	void removeChild(int index) override;
+	void destroyChild(int index) override;
 };
 class GUIVerticalSplit :public GUIElement
 {
@@ -187,7 +188,7 @@ public:
 	inline GUIElement* getLeftChild() { return getChildren()[1]; }
 
 	void appendChild(GUIElement* element) override;
-	void removeChild(int index) override;
+	void destroyChild(int index) override;
 };
 
 // Slider
@@ -301,7 +302,7 @@ public:
 	inline GUIElement* getInside() { return getChildren()[0]; }
 
 	void appendChild(GUIElement* element) override;
-	void removeChild(int index) override;
+	void destroyChild(int index) override;
 };
 
 //Special

@@ -3,8 +3,8 @@
 #include "inventory/Inventory.h"
 
 
-//ownerid, slotindex,event
-typedef std::function<void(const std::string&,int,Event& e)> ContainerEventConsumer;
+//ownerid, slotindex, inventory, event
+typedef std::function<void(const std::string&,int,Inventory*,Event& e)> ContainerEventConsumer;
 
 class GUIItemContainer :public GUIElement
 {
@@ -21,6 +21,7 @@ public:
 	void setContainerSlot(int slot);
 	void setContainer(Inventory* c, int slot);
 	const ItemStack* getItemStack() const;
+	int getSlot() const { return m_slotIndex; }
 };
 class GUIText;
 class GUIItemTitle:public GUIElement

@@ -9,22 +9,23 @@ private:
 	bool m_repeat;
 
 public:
-	KeyPressEvent(int key,int mods,bool repeat=false) :
+	KeyPressEvent(int key, int mods, bool repeat = false) :
 		m_key(key), m_mods(mods)
 	{
 	}
 	inline int getKey() const { return m_key; }
 	inline int getMods() const { return m_mods; }
 	inline int isRepeating() const { return m_repeat; }
-	
+
 	bool isAltPressed()const;
 	bool isShiftPressed()const;
 	bool isControlPressed()const;
-	
+
 	EVENT_TYPE_BUILD(KeyPress)
 	EVENT_CATEGORY_BUILD(Key)
 	EVENT_COPY(KeyPressEvent)
 
+	static int getKeyNumber(Event& e);
 
 };
 
@@ -59,6 +60,7 @@ public:
 	EVENT_TYPE_BUILD(KeyType)
 	EVENT_CATEGORY_BUILD(Key)
 	EVENT_COPY(KeyTypeEvent)
+	static int getKeyNumber(Event& e);
 
 
 };

@@ -169,15 +169,15 @@ void GUICustomRenderer::renderTextBox(BatchRenderer2D& renderer, GUITextBox& e)
 	CursorProp prop;
 	prop.cursorCharacter = e.cursorChar;
 	prop.cursorPos = e.cursorPos;
-	bool wasdirty = e.is_dirty;
+	bool wasdirty = e.isDirty;
 
 	float trueWidth = e.width - e.widthPadding();
-	if (e.is_dirty)
+	if (e.isDirty)
 	{
 		e.cursorBlink = 0;
-		e.is_dirty = false;
+		e.isDirty = false;
 
-		int textWidth = e.font->font->getTextWidth(e.getValue().substr(0, e.cursorPos));
+		int textWidth = e.fontMaterial->font->getTextWidth(e.getValue().substr(0, e.cursorPos));
 		int neededOffset = textWidth + e.textClipOffset;
 
 		if (neededOffset > trueWidth)
@@ -191,7 +191,7 @@ void GUICustomRenderer::renderTextBox(BatchRenderer2D& renderer, GUITextBox& e)
 
 
 		e.textMesh.reserve(e.getValue().size());
-		TextBuilder::buildMesh({ e.getValue() }, *e.font->font, e.textMesh, TextBuilder::ALIGN_LEFT,
+		TextBuilder::buildMesh({ e.getValue() }, *e.fontMaterial->font, e.textMesh, TextBuilder::ALIGN_LEFT,
 			{ -e.textClipOffset, -1000, -e.textClipOffset + trueWidth, 2000 }, &prop);
 	}
 
@@ -201,18 +201,19 @@ void GUICustomRenderer::renderTextBox(BatchRenderer2D& renderer, GUITextBox& e)
 		//change cursor pos
 		e.cursorMesh.setChar(0,
 			prop.positions.x, prop.positions.y, prop.positions.z, prop.positions.w,0xffffff00,0x00000000,
-			e.font->font->getChar(e.cursorChar));
+			e.fontMaterial->font->getChar(e.cursorChar));
 		e.cursorMesh.currentCharCount = 1;
 	}
 
-	renderRectangle(renderer,m_stackPos.x, m_stackPos.y, e.width, e.height );
+	if(e.clas!="chat_box")
+		renderRectangle(renderer,m_stackPos.x, m_stackPos.y, e.width, e.height );
 	incrementZ();
 	renderer.push(glm::translate(glm::mat4(1.0), {
 									 m_stackPos.x + e.padding[GUI_LEFT] + e.textClipOffset,
-									 m_stackPos.y + (e.height - e.font->font->lineHeight) / 2,
+									 m_stackPos.y + (e.height - e.fontMaterial->font->lineHeight) / 2,
 									 m_z_pos
 		}));
-	renderer.submitText(e.textMesh, e.font);
+	renderer.submitText(e.textMesh, e.fontMaterial);
 
 
 	renderer.pop();
@@ -228,10 +229,10 @@ void GUICustomRenderer::renderTextBox(BatchRenderer2D& renderer, GUITextBox& e)
 		incrementZ();
 		renderer.push(glm::translate(glm::mat4(1.0), {
 										 m_stackPos.x + e.padding[GUI_LEFT] + e.textClipOffset,
-										 m_stackPos.y + (e.height - e.font->font->lineHeight) / 2,
+										 m_stackPos.y + (e.height - e.fontMaterial->font->lineHeight) / 2,
 										 m_z_pos
 			}));
-		renderer.submitText(e.cursorMesh, e.font);
+		renderer.submitText(e.cursorMesh, e.fontMaterial);
 		renderer.pop();
 	}
 }

@@ -24,7 +24,7 @@ App(1280,720, s_title)
 	auto worudo = new WorldLayer();
 	m_guiLayer->setWorldLayer(worudo);
 	m_LayerStack.pushLayer(worudo);
-	m_LayerStack.pushLayer(m_guiLayer);
+	m_LayerStack.pushOverlay(m_guiLayer);
 
 	//m_LayerStack.pushLayer(new PriorGenLayer());
 }

@@ -17,7 +17,7 @@ void GUIItemContainer::onMyEvent(Event& e)
 	if (e.getEventType() == Event::EventType::MouseMove)
 		return;
 	if (m_container && onContainerEventConsumer&&m_slotIndex!=-1&& m_slotIndex<m_container->getItemsSize())
-		onContainerEventConsumer(m_container->getID(), m_slotIndex, e);
+		onContainerEventConsumer(m_container->getID(), m_slotIndex, m_container, e);
 	if (!isNotSpatial && e.getEventType() == Event::EventType::MousePress)
 		e.handled = true;
 }

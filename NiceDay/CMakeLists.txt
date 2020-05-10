@@ -23,6 +23,7 @@ project(NiceDay)
         "src/*.h" 
         #"vendor/glm/**.hpp"
         "vendor/json/include/**.hpp"
+        "vendor/sol2/**.hpp"
         "vendor/luabridge/**"
         "vendor/stb_image/*.h"
         "vendor/stb_image/*.cpp"
@@ -43,7 +44,8 @@ project(NiceDay)
         "vendor/stb_image"
         "vendor/imguifiledialog"
         "vendor/luabridge"
-       
+        "vendor/sol2"
+
     )
 
 
@@ -142,4 +144,5 @@ project(NiceDay)
        "vendor/json/single_include"
     )
     target_compile_definitions(NiceDay PUBLIC GLFW_INCLUDE_NONE)
+    target_compile_options(NiceDay PUBLIC /bigobj)
 

@@ -62,7 +62,7 @@ GUIExampleWindow::GUIExampleWindow()
 	lowerSettingSplit->getLeftChild()->width = 200;
 
 	auto textBox = new GUITextBox();
-	textBox->font = g_fontMat;
+	textBox->fontMaterial = g_fontMat;
 	textBox->dim = { 170, 50 };
 	textBox->setAlignment(GUIAlign::CENTER_UP);
 
@@ -114,7 +114,7 @@ GUIExampleWindow::GUIExampleWindow()
 	preBut->onPressed = [grid](GUIElement& e)
 	{
 		if (grid->getChildren().size())
-			grid->removeChild(0);
+			grid->destroyChild(0);
 	};
 
 	auto split = createGUISliderView(false);

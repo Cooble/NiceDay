@@ -50,3 +50,34 @@ function dump(o)
       return tostring(o)
    end
 end
+
+--printing nbt
+function printNBT2(nbt,lineBlank)
+	if nbt:isMap() then
+		str = "{\n"
+		for k, x in pairs(nbt:maps()) do
+			str = str .."\t".. lineBlank .. k ..":".. printNBT2(x,lineBlank .. "\t").."\n"
+		end
+		str = str ..lineBlank.. '}\n'
+		return str
+	end
+	if nbt:isArray() then
+		str = "{\n"
+		for i=0,#nbt do
+			str = str .."\t".. lineBlank .. tostring(i) ..":".. printNBT2(nbt:nbt(i),lineBlank .. "\t").."\n"
+		end
+		str = str ..lineBlank.. '}\n'
+		return str
+	end
+	if nbt:isNull() then
+		return "NIL"
+	end
+	return tostring(nbt:getValue())
+end
+function printNBT(nbt)
+	return "\n"..printNBT2(nbt,"")
+end
+
+function NBT:__tostring()
+    return printNBT(self)
+end

@@ -3,7 +3,7 @@
 #include "event/KeyEvent.h"
 #include "GLFW/glfw3.h"
 #include "core/Stats.h"
-
+#include "event/SandboxControls.h"
 
 
 GUIActionSlots::GUIActionSlots(PlayerInventory* player, HUD& hud)
@@ -24,9 +24,9 @@ GUIActionSlots::GUIActionSlots(PlayerInventory* player, HUD& hud)
 		auto c = new GUIItemContainer();
 		c->setContainer(player,InventorySlot::INVENTORY_SLOT_ACTION_FIRST+i);
 		c->onContainerEventConsumer = hud.getContainerConsumer();
-		c->onContainerEventConsumer = [this](const std::string& s, int i, Event& e)
+		c->onContainerEventConsumer = [this](const std::string& s, int i,Inventory* inv, Event& e)
 		{
-			HUD::get()->consumeContainerEvent(s, i, e);
+			HUD::get()->consumeContainerEvent(s, i,inv, e);
 			if(e.getEventType()!=Event::EventType::MouseMove)
 				showTitleInternal(this->m_show_title);
 		};
@@ -167,11 +167,9 @@ void GUIEntityPlayer::onAttachedToHUD(HUD& hud)
 	
 	m_gui_action_slots = new GUIActionSlots(&m_disgusting_player->getInventory(),hud);
 	m_col->appendChild(m_gui_action_slots);
-	
-
 
 	hud.appendChild(m_col, getID());
-
+	hud.setHandSlot(&m_disgusting_player->getInventory(), InventorySlot::HAND);
 	openInventory(false);
 }
 
@@ -186,7 +184,7 @@ void GUIEntityPlayer::openInventory(bool open)
 	m_is_inventory_open = open;
 	
 	while(m_col->getChildren().size()>1)
-		m_col->removeChild(m_col->getChildren().size()-1);
+		m_col->destroyChild(m_col->getChildren().size()-1);
 
 	if(m_is_inventory_open)
 	{
@@ -216,10 +214,109 @@ void GUIEntityPlayer::openInventory(bool open)
 		}
 		for (auto& cs : ids)
 		{
-			HUD::get()->unregisterGUIEntity(cs);
+			if(cs._Starts_with("player_"))
+				HUD::get()->unregisterGUIEntity(cs);
 
 			//remove all except our entity
 		}
 		m_gui_action_slots->showTitle(true);
 	}
 }
+
+GUIEntityConsole::GUIEntityConsole()
+{
+
+	auto materialSmall = FontMatLib::getMaterial("res/fonts/andrew.fnt");
+	
+	for (int i = 0; i < m_max_lines; ++i)
+	{
+		auto templat = new GUIText(materialSmall);
+		templat->dim = { 300,50 };
+		templat->isAlwaysPacked = false;
+		
+		m_lines.push_back(templat);
+	}
+}
+
+void GUIEntityConsole::clearChat()
+{
+	m_messages.clear();
+	updateChat();
+}
+
+void GUIEntityConsole::addMessage(const std::string& message)
+{
+	m_messages.push_back(message);
+	if (m_messages.size() > m_lines.size())
+		m_messages.erase(m_messages.begin());
+
+	updateChat();
+}
+
+void GUIEntityConsole::updateChat()
+{
+	for (int i = 0; i < m_lines.size(); ++i)
+		if(i<m_messages.size())
+			m_lines[i]->setText(m_messages[i]);
+		else
+			m_lines[i]->setText("nic");
+}
+
+
+void GUIEntityConsole::update(World& w)
+{
+}
+
+void GUIEntityConsole::onEvent(Event& e)
+{
+	if (e.getEventType() == Event::EventType::MouseMove)
+		return;
+	if (KeyTypeEvent::getKeyNumber(e) == 'f')
+	{
+		ND_INFO("INF");
+	}
+}
+
+void GUIEntityConsole::render(BatchRenderer2D& renderer)
+{
+}
+
+void GUIEntityConsole::onAttachedToHUD(HUD& hud)
+{
+	m_col = new GUIColumn(GUIAlign::LEFT);
+	m_col->setAlignment(GUIAlign::LEFT_DOWN);
+	for (auto& m_line : m_lines)
+		m_col->appendChild(m_line);
+	
+	auto entryBox = new GUITextBox();
+	
+	entryBox->width = 300;
+	entryBox->height= 100;
+	auto materialSmall = FontMatLib::getMaterial("res/fonts/andrew.fnt");
+	entryBox->fontMaterial = materialSmall;
+	m_col->width = 300;
+	m_col->height = 500;
+
+	entryBox->clas = "chat_box";
+	entryBox->onValueEntered = [this, entryBox](GUIElement& e)
+	{
+		addMessage(entryBox->getValue());
+		entryBox->setGainFocus(!entryBox->getValue().empty());
+		entryBox->setValue("");
+	};
+	m_col->appendChild(entryBox);
+	
+	hud.appendChild(m_col,getID());
+}
+
+void GUIEntityConsole::open(bool open)
+{
+	ND_INFO("opening hehhee");
+	m_opened = true;
+}
+const std::string& GUIEntityConsole::getID() const
+{
+	static std::string id = "console";
+	return id;
+}
+

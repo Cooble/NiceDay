@@ -1,11 +1,11 @@
 #pragma once
-#include <cstdint>
 
-typedef uint64_t ControlType;
+typedef unsigned long long ControlType;
 
 namespace Controls {
 	extern ControlType SPAWN_ENTITY;
 	extern ControlType DROP_ITEM;
+	extern ControlType OPEN_CONSOLE;
 	extern ControlType OPEN_INVENTORY;
 
 	extern ControlType GO_UP;
@@ -16,6 +16,8 @@ namespace Controls {
 	extern ControlType SPAWN_TNT;
 	extern ControlType SPAWN_BULLETS;
 
+	extern ControlType FLY_MODE;
+	
 	extern void init();
 
 }

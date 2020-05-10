@@ -72,7 +72,7 @@ void GUIEntityChest::onDetached()
 
 const std::string& GUIEntityChest::getID() const
 {
-	static std::string id = "chest";
+	static std::string id = "player_chest";
 	return id;
 }
 

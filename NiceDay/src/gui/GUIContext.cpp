@@ -2,6 +2,14 @@
 #include "GUIContext.h"
 #include "event/WindowEvent.h"
 
+
+void GUIContext::setFocusedElement(GUIElement* e)
+{
+	m_focused_element = e;
+	isAnyItemActive() = (bool)m_focused_element;
+	bool b = isAnyItemActive();
+}
+
 void GUIContext::onUpdate()
 {
 	currentStackPos = { 0,0 };
@@ -49,6 +57,7 @@ void GUIContext::onEvent(Event& e)
 			}
 			break;
 		default:
+			e.handled = true;
 			glm::vec2 pos = { 0,0 };
 			GUIElement* el = m_focused_element->getParent();
 			while (el)

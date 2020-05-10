@@ -11,7 +11,7 @@
 #include "GLFW/glfw3.h"
 #include "imgui_utils.h"
 #include "core/AppGlobals.h"
-#include "layer/LuaLayer.h"
+#include "lua/LuaLayer.h"
 #include "event/ControlMap.h"
 #include "event/KeyEvent.h"
 #include "layer/SoundLayer.h"

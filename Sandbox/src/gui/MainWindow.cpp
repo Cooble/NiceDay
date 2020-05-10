@@ -252,7 +252,7 @@ PlayWindow::PlayWindow(const MessageConsumer& c)
 
 	//create txtbox
 	auto textBox = new GUITextBox();
-	textBox->font = materialSmall;
+	textBox->fontMaterial = materialSmall;
 	textBox->dimInherit = GUIDimensionInherit::WIDTH;
 	textBox->height = materialSmall->font->lineHeight + textBox->heightPadding();
 	textBox->setAlignment(GUIAlign::CENTER);

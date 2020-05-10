@@ -6,11 +6,11 @@
 #include <GLFW/glfw3.h>
 #include "memory/stack_allocator.h"
 #include <lua.hpp>
-#include <LuaBridge/LuaBridge.h>
-#include "audio/Player.h"
-#include "audio/audio_handle.h"
+#include "nd_luabinder.h"
 #include "imguifiledialog/ImGuiFileDialog.h"
 #include "core/NBT.h"
+#include "sol/sol.hpp"
+#include "gui/GUIBasic.h"
 
 //-----------------------------------------------------------------------------
 // [SECTION] Example App: Debug Console / ShowExampleAppConsole()
@@ -22,6 +22,8 @@
 #define LUACON_WARN_PREF "[warn_]"
 
 static NBT s_settings;
+sol::state s_lua;
+
 static const char* s_settings_file = "lua_editor_settings.json";
 
 struct FileOpen
@@ -33,7 +35,6 @@ struct FileOpen
 };
 
 static std::vector<FileOpen> s_files;
-static bool s_needs_settings_load = false;
 static int s_currentFileIndex = 0;
 
 
@@ -706,43 +707,41 @@ struct LuaConsole
 	}
 };
 
-extern "C" {
-int luaopen_customodul(lua_State* L); // declare the wrapped module
-}
-
-#define LUA_EXTRALIBS {"customodul",luaopen_customodul},
-
 static LuaLayer* s_lua_layer;
 
+static nd::temp_string nd_print(lua_State* L,const char* channel)
+{
+	auto argNumber = lua_gettop(L);
+	nd::temp_string s;
+	s.reserve(100);
+	for (int i = 1; i < argNumber + 1; ++i) {
+		s += lua_tostring(L, i);
+		s += i!=argNumber?", ":"";
+	}
+	s_lua_layer->printToLuaConsole(L, (nd::temp_string(channel) + s).c_str());
+	return s;
+}
 static int nd_info(lua_State* L)
 {
-	auto string = lua_tostring(L, 1);
-	ND_INFO(string);
-	s_lua_layer->printToLuaConsole(L, (nd::temp_string(LUACON_INFO_PREF) + string).c_str());
+	ND_INFO(nd_print(L,LUACON_INFO_PREF));
 	return 0;
 }
 
 static int nd_trace(lua_State* L)
 {
-	auto string = lua_tostring(L, 1);
-	ND_TRACE(string);
-	s_lua_layer->printToLuaConsole(L, (nd::temp_string(LUACON_TRACE_PREF) + string).c_str());
+	ND_TRACE(nd_print(L, LUACON_TRACE_PREF));
 	return 0;
 }
 
 static int nd_error(lua_State* L)
 {
-	auto string = lua_tostring(L, 1);
-	ND_ERROR(string);
-	s_lua_layer->printToLuaConsole(L, (nd::temp_string(LUACON_ERROR_PREF) + string).c_str());
+	ND_ERROR(nd_print(L, LUACON_ERROR_PREF));
 	return 0;
 }
 
 static int nd_warn(lua_State* L)
 {
-	auto string = lua_tostring(L, 1);
-	ND_WARN(string);
-	s_lua_layer->printToLuaConsole(L, (nd::temp_string(LUACON_WARN_PREF) + string).c_str());
+	ND_WARN(nd_print(L, LUACON_WARN_PREF));
 	return 0;
 }
 
@@ -761,12 +760,6 @@ static int nd_run_lua_file_script(lua_State* L)
 }
 
 static int nd_exit(lua_State* L)
-{
-	s_lua_layer->closeConsole();
-	return 0;
-}
-
-static int vec2_to_string(lua_State* L)
 {
 	s_lua_layer->closeConsole();
 	return 0;
@@ -816,82 +809,7 @@ void LuaLayer::print_error(lua_State* state)
 	lua_pop(state, 1);
 }
 
-class A
-{
-protected:
-	std::string name;
 
-public:
-	A(std::string s)
-	{
-		this->name = s;
-	}
-
-	std::string getName()
-	{
-		return this->name;
-	}
-
-	void printName()
-	{
-		printf("Hello, my name is %s!\n", this->name.c_str());
-	}
-};
-
-static glm::vec2 addVec2(glm::vec2& a, glm::vec2 b)
-{
-	return a + b;
-}
-
-static void consumeVector(glm::vec2& vec)
-{
-	ND_INFO("we have a vec2 {},{}", vec.x, vec.y);
-}
-
-static glm::vec3 ad(const glm::vec3& a, const glm::vec3& b)
-{
-	return glm::vec3(a.x + b.x, a.y + b.y, a.z + b.z);
-}
-
-static int playSound(lua_State* L)
-{
-	auto numberOfArgs = lua_gettop(L);
-	float volume = 1;
-	float pitch = 1;
-	if (numberOfArgs == 0)
-	{
-		ND_ERROR("Lua error invaliad number of args");
-		return 0;
-	}
-	const char* c = lua_tostring(L, 1);
-	if (numberOfArgs > 1)
-		volume = lua_tonumber(L, 2);
-	if (numberOfArgs > 2)
-		pitch = lua_tonumber(L, 3);
-	Sounder::get().playSound(c, volume, pitch);
-
-	return 0;
-}
-
-static int playMusic(lua_State* L)
-{
-	auto numberOfArgs = lua_gettop(L);
-	float volume = 1;
-	float pitch = 1;
-	if (numberOfArgs == 0)
-	{
-		ND_ERROR("Lua error invaliad number of args");
-		return 0;
-	}
-	const char* c = lua_tostring(L, 1);
-	if (numberOfArgs > 1)
-		volume = lua_tonumber(L, 2);
-	if (numberOfArgs > 2)
-		pitch = lua_tonumber(L, 3);
-	Sounder::get().playMusic(c, volume, pitch);
-
-	return 0;
-}
 
 static std::string s_couroutineFileSrc;
 static char buf[1024];
@@ -938,11 +856,9 @@ void LuaLayer::onAttach()
 	s_lua_layer = this;
 	m_console = new LuaConsole(this);
 
-
-	m_L = luaL_newstate();
+	m_L = s_lua.lua_state();
 	luaopen_base(m_L); // load basic libs (eg. print)
 	luaL_openlibs(m_L);
-	luaopen_customodul(m_L);
 
 
 	lua_atpanic(m_L, catch_panic);
@@ -951,16 +867,19 @@ void LuaLayer::onAttach()
 	lua_register(m_L, "ND_WARN", nd_warn);
 	lua_register(m_L, "ND_ERROR", nd_error);
 	lua_register(m_L, "ND_RUN_FILE", nd_run_lua_file_script);
+	s_lua.set_function("ND_RESLOC", [](const std::string& a) {return ND_RESLOC(a); });
 	lua_register(m_L, "runf", nd_run_lua_file_script);
 	lua_register(m_L, "exit", nd_exit);
-	lua_register(m_L, "playSound", playSound);
-	lua_register(m_L, "playMusic", playMusic);
+
 	lua_register(m_L, "ls", ls);
 
-	loadGlmVec();
-	loadSoundHandle();
+	nd_luabinder::bindEverything(s_lua);
+	
+	//s_lua.set_function("opii", [](GUIWindow& e, int ee) {ND_INFO("gotcha {}", ee); });
+	//auto namespac = s_lua["GUIContext"].get_or_create<sol::table>();
 
-
+	//namespac.set_function("openWindow", [](GUIWindow& window) {GUIContext::get().openWindow(&window); });
+	
 	s_couroutineFileSrc = readStringFromFile(ND_RESLOC("res/lua/coroutines.lua").c_str());
 	runScriptFromFile(m_L, "res/lua/startup.lua");
 }
@@ -1039,74 +958,14 @@ void LuaLayer::runScriptFromFile(lua_State* L, const nd::temp_string& filePath)
 	}
 }
 
-void LuaLayer::loadGlmVec()
+/*static char* coroutinesByteCode=nullptr;
+static int byteCodeWriterCallback(lua_State* L, const void* p, size_t sz, void* ud)
 {
-	luabridge::getGlobalNamespace(m_L)
-		.beginClass<half_int>("half_int")
-		.addConstructor<void(*)(short, short)>()
-		.addData("x", &half_int::x)
-		.addData("y", & half_int::x)
-		.endClass();
-
-	
-	luabridge::getGlobalNamespace(m_L)
-		.beginClass<glm::vec2>("glmvec2")
-		.addConstructor<void(*)(float, float)>()
-		.addData("x", &glm::vec2::x)
-		.addData("y", &glm::vec2::y)
-		.endClass();
-
-	luabridge::getGlobalNamespace(m_L)
-		.beginClass<glm::vec3>("glmvec3")
-		.addConstructor<void(*)(float, float, float)>()
-		.addData("x", &glm::vec3::x)
-		.addData("y", &glm::vec3::y)
-		.addData("z", &glm::vec3::z)
-		.endClass();
-	luabridge::getGlobalNamespace(m_L)
-		.beginClass<glm::vec4>("glmvec4")
-		.addConstructor<void(*)(float, float, float, float)>()
-		.addData("x", &glm::vec4::x)
-		.addData("y", &glm::vec4::y)
-		.addData("z", &glm::vec4::z)
-		.addData("w", &glm::vec4::w)
-		.endClass();
-}
-
-void LuaLayer::loadSoundHandle()
-{
-	luabridge::getGlobalNamespace(m_L)
-		.beginClass<SoundHandle>("Sound")
-		.addConstructor<void(*)()>()
-		.addFunction("open", &SoundHandle::open)
-		.addFunction("play", &SoundHandle::play)
-		.addFunction("pause", &SoundHandle::pause)
-		.addFunction("stop", &SoundHandle::stop)
-		.addFunction("setLoop", &SoundHandle::setLoop)
-		.addFunction("l", &SoundHandle::setLoop)
-		.addFunction("setPitch", &SoundHandle::setPitch)
-		.addFunction("p", &SoundHandle::setPitch)
-		.addFunction("setVolume", &SoundHandle::setVolume)
-		.addFunction("v", &SoundHandle::setVolume)
-		.addFunction("isPlaying", &SoundHandle::isPlaying)
-		.endClass();
-
-	luabridge::getGlobalNamespace(m_L)
-		.beginClass<MusicHandle>("Music")
-		.addConstructor<void(*)()>()
-		.addFunction("open", &MusicHandle::open)
-		.addFunction("play", &MusicHandle::play)
-		.addFunction("pause", &MusicHandle::pause)
-		.addFunction("stop", &MusicHandle::stop)
-		.addFunction("setLoop", &MusicHandle::setLoop)
-		.addFunction("l", &MusicHandle::setLoop)
-		.addFunction("setPitch", &MusicHandle::setPitch)
-		.addFunction("p", &MusicHandle::setPitch)
-		.addFunction("setVolume", &MusicHandle::setVolume)
-		.addFunction("v", &MusicHandle::setVolume)
-		.addFunction("isPlaying", &MusicHandle::isPlaying)
-		.endClass();
-}
+	if (coroutinesByteCode)
+		free(coroutinesByteCode);
+	coroutinesByteCode = (char*)malloc(sz);
+	memcpy(coroutinesByteCode, p, sz);
+}*/
 
 void LuaLayer::onUpdate()
 {
@@ -1122,6 +981,8 @@ void LuaLayer::onUpdate()
 			return;
 		}
 	}
+	//todo store lua bytecode version instead (dont load it every tick)
+	//lua_dump(m_L, &byteCodeWriterCallback, nullptr,false);
 	//call coroutes
 	luaL_loadstring(m_L, s_couroutineFileSrc.c_str());
 	auto result = lua_pcall(m_L, 0, LUA_MULTRET, 0);

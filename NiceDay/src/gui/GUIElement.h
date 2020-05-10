@@ -13,7 +13,7 @@ typedef std::function<void(GUIElement&)> ActionF;
 typedef std::function<void(Event&,GUIElement&)> EventF;
 typedef int GEID;
 
-enum class GETYPE
+enum class GETYPE : int
 {
 	Window,
 	Text,
@@ -112,7 +112,7 @@ public:
 
 	//every element gets unique id in constructor
 	const GEID id;
-	const GECLASS clas;
+	GECLASS clas;
 	GETYPE type;
 
 	union
@@ -137,7 +137,7 @@ public:
 
 	float margin[4];
 	float padding[4];
-	bool is_dirty;
+	bool isDirty;
 	GUIDimensionInherit dimInherit = GUIDimensionInherit::INVALID;
 
 	GUIElement(GETYPE type);
@@ -157,7 +157,7 @@ public:
 	inline void setAlignment(GUIAlign align) { m_alignment = align; }
 
 
-	inline void markDirty() { is_dirty = true; }
+	inline void markDirty() { isDirty = true; }
 
 	inline GUIElement* getParent() const
 	{
@@ -174,9 +174,9 @@ public:
 	//takes ownership
 	inline virtual void appendChild(GUIElement* element);
 
-	inline virtual void removeChild(int index);
+	inline virtual void destroyChild(int index);
 
-	virtual void removeChildWithID(GEID id);
+	virtual void destroyChildWithID(GEID id);
 
 	// called when this instance was given as a child to some parent element
 	// used to update all static positions and stuff

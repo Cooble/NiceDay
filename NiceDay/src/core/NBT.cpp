@@ -2,6 +2,7 @@
 #include "NBT.h"
 #include <nlohmann/json.hpp>
 
+
 std::string NBT::dump(int depth) const
 {
 	std::string tabs;

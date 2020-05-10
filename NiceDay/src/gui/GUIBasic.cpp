@@ -6,7 +6,7 @@
 #include "event/KeyEvent.h"
 #include "GLFW/glfw3.h"
 #include "core/AppGlobals.h"
-#include "audio/Player.h"
+#include "audio/player.h"
 
 
 GUIText::GUIText(FontMaterial* mat) : GUIElement(GETYPE::Text), fontMaterial(mat)
@@ -40,7 +40,7 @@ GUITextBox::GUITextBox(): GUIElement(GETYPE::TextBox), cursorMesh(1)
 
 void GUITextBox::setValue(const std::string& val)
 {
-	is_dirty = true;
+	isDirty = true;
 	m_text = val;
 	cursorPos = m_text.size();
 	textClipOffset = 0;
@@ -56,7 +56,7 @@ void GUITextBox::moveCursor(int delta)
 	cursorPos += delta;
 	cursorPos = std::clamp(cursorPos, 0, (int)m_text.size());
 
-	is_dirty = oldcur != cursorPos;
+	isDirty = oldcur != cursorPos;
 }
 
 void GUITextBox::onMyEvent(Event& e)
@@ -73,7 +73,7 @@ void GUITextBox::onMyEvent(Event& e)
 				GUIContext::get().setFocusedElement(this);
 				m_has_total_focus = true;
 				cursorPos = m_text.size();
-				is_dirty = true;
+				isDirty = true;
 			}
 			else if (GUIContext::get().getFocusedElement() == this)
 				GUIContext::get().setFocusedElement(nullptr);
@@ -98,7 +98,7 @@ void GUITextBox::onMyEvent(Event& e)
 				if (m_text.size() && cursorPos > 0)
 				{
 					m_text = m_text.substr(0, cursorPos - 1) + m_text.substr(cursorPos);
-					is_dirty = true;
+					isDirty = true;
 					moveCursor(-1);
 					onValueModified();
 				}
@@ -107,7 +107,7 @@ void GUITextBox::onMyEvent(Event& e)
 				if (cursorPos < m_text.size())
 				{
 					m_text = m_text.substr(0, cursorPos) + m_text.substr(cursorPos + 1);
-					is_dirty = true;
+					isDirty = true;
 					onValueModified();
 				}
 				break;
@@ -136,6 +136,12 @@ void GUITextBox::onMyEvent(Event& e)
 		break;
 	default: ;
 	}
+}
+
+void GUITextBox::setGainFocus(bool cond)
+{
+	GUIContext::get().setFocusedElement(cond?this:nullptr);
+	m_has_total_focus = cond;
 }
 
 GUIButton::GUIButton()
@@ -216,7 +222,7 @@ void GUICheckBox::setText(const std::string& trueText, const std::string& falseT
 
 void GUICheckBox::setValue(bool b)
 {
-	is_dirty = b != value;
+	isDirty = b != value;
 	value = b;
 }
 
@@ -227,7 +233,7 @@ void GUICheckBox::onMyEvent(Event& e)
 	if (e.getEventType() == Event::EventType::MousePress)
 	{
 		value = !value;
-		is_dirty = true;
+		isDirty = true;
 		if (on_pressed)
 			on_pressed(*this);
 	}
@@ -364,6 +370,15 @@ GUIColumn::GUIColumn(GUIAlign childAlignment) : GUIElement(GETYPE::Column)
 	space = 5;
 	isVisible = false;
 }
+
+GUIColumn::GUIColumn() : GUIElement(GETYPE::Column)
+{
+	isNotSpatial = true;
+	child_alignment = GUIAlign::CENTER;
+	space = 5;
+	isVisible = false;
+}
+
 
 void GUIColumn::repositionChildren()
 {
@@ -913,7 +928,7 @@ void GUIHorizontalSplit::appendChild(GUIElement* element)
 	ASSERT(false, "Invalid operation");
 }
 
-void GUIHorizontalSplit::removeChild(int index)
+void GUIHorizontalSplit::destroyChild(int index)
 {
 	ASSERT(false, "Invalid operation");
 }
@@ -1000,7 +1015,7 @@ void GUIVerticalSplit::appendChild(GUIElement* element)
 	ASSERT(false, "Invalid operation");
 }
 
-void GUIVerticalSplit::removeChild(int index)
+void GUIVerticalSplit::destroyChild(int index)
 {
 	ASSERT(false, "Invalid operation");
 }
@@ -1021,7 +1036,7 @@ void GUIView::appendChild(GUIElement* element)
 	ASSERT(false, "Invalid operation");
 }
 
-void GUIView::removeChild(int index)
+void GUIView::destroyChild(int index)
 {
 	ASSERT(false, "Invalid operation");
 }
