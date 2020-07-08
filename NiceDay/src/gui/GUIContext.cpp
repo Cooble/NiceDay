@@ -96,8 +96,8 @@ void GUIContext::onEvent(Event& e)
 
 			if (e.isInCategory(Event::EventCategory::Mouse))
 			{
-				auto& m = dynamic_cast<MouseEvent&>(e);
-				if (m_windows[i]->contains(m.getX(), m.getY()))
+				auto m = dynamic_cast<MouseEvent*>(&e);
+				if (m && m_windows[i]->contains(m->getX(), m->getY()))
 				{
 					m_windows[i]->onEvent(e);
 					if (e.handled)

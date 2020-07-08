@@ -11,6 +11,10 @@
 #include "graphics/Sprite.h"
 #include "graphics/FontMaterial.h"
 #include "GUITestLayer.h"
+#include "file/test_DynamicSaver.h"
+#include "ConsoleTestLayer.h"
+#include "MandelBrotLayer.h"
+#include "scene/SceneLayer.h"
 
 static bool textChange;
 static int textSize;
@@ -130,8 +134,15 @@ class TestApp:public App
 public:
 	TestApp()
 	{
-		m_LayerStack.pushLayer(new GUITestLayer());
-		//m_LayerStack.pushLayer(new TestLayer());
+		//m_LayerStack.pushLayer(new GUITestLayer());
+		AppInfo info;
+		info.enableSCENE = true;
+		info.enableIMGUI= true;
+		
+		init(info);
+		m_LayerStack.pushLayer(new ConsoleTestLayer());
+		m_LayerStack.pushLayer(new SceneLayer());
+		//m_LayerStack.pushLayer(new MandelBrotLayer());
 	}
 	
 };

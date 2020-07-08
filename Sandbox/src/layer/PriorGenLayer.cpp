@@ -5,6 +5,7 @@
 #include "event/MouseEvent.h"
 #include "core/App.h"
 #include "world/gen/Genom.h"
+#include "core/ImGuiLayer.h"
 
 
 static NBT settings;
@@ -79,7 +80,7 @@ void PriorGenLayer::onRender()
 	sh->bind();
 	sh->setUniformMat4("transform", trans);
 
-	Effect::renderToCurrentFBO(m_tex);
+	Effect::render(m_tex,Renderer::getDefaultFBO());
 }
 
 

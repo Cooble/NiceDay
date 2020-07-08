@@ -11,6 +11,8 @@ public:
 	GLVertexArray();
 	~GLVertexArray();
 	void addBuffer(const VertexBuffer& vbo) override;
+	void addBuffer(const IndexBuffer& vio) override;
+
 
 	void bind() const override;
 	void unbind() const override;

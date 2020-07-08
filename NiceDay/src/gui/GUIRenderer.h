@@ -14,7 +14,6 @@ protected:
 	float m_z_pos;
 	bool is_view_render_mode;
 	FrameBuffer* m_view_fbo;
-	Texture* m_view_texture=nullptr;
 	
 	inline void incrementZ()
 	{

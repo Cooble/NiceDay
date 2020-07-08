@@ -29,8 +29,10 @@ project(NiceDay)
         "vendor/stb_image/*.cpp"
         "vendor/imguifiledialog/*.h"
         "vendor/imguifiledialog/*.cpp"
-        "vendor/imgui/imgui/examples/imgui_impl_glfw.cpp"
-        "vendor/imgui/imgui/examples/imgui_impl_opengl3.cpp"
+
+        #This is not required, imgui_build.cpp builds these
+        #"vendor/imguidocking/examples/imgui_impl_glfw.cpp"
+        #"vendor/imguidocking/examples/imgui_impl_opengl3.cpp"
         )
 	
 
@@ -95,21 +97,22 @@ project(NiceDay)
     
     # simple libs (no config needed and directory is same as target name)
     add_my_lib(glad)
-    add_my_lib(imgui)
+    #add_my_lib(imgui)
+    add_my_lib(imguidocking)
     add_my_lib(lua)
 
-    # ogg
+    # == ogg
     set(INSTALL_CMAKE_PACKAGE_MODULE OFF CACHE BOOL "" FORCE)
     set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
     add_my_lib(ogg)
     #add_custom_target(Ogg::ogg DEPENDS ogg)
 
-    # glm (no need to subdir (header-only))
+    # == glm (no need to subdir (header-only))
     #set(GLM_TEST_ENABLE OFF CACHE BOOL "" FORCE)
     #add_my_lib(glm glm_static)
     target_include_directories(NiceDay PUBLIC "vendor/glm") 
 
-    # GLFW
+    # == GLFW
     set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
     set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
     set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
@@ -118,25 +121,58 @@ project(NiceDay)
     add_my_lib(glfw)
 
 
-    # vorbis
+    # == vorbis
     modifyVorbisLibCmakeFile()
     nd_disable_find_package() #disable finding ogg package because its already added as subdirectory
     add_my_lib(vorbis vorbis vorbisfile vorbisenc)#directory called vorbis and three targets
     nd_enable_find_package()
     
-    # portadio
+    # == portadio
     set(PA_BUILD_SHARED OFF CACHE BOOL "" FORCE)
     set(PA_USE_ASIO OFF CACHE BOOL "" FORCE)
     set(PA_DISABLE_INSTALL ON CACHE BOOL "" FORCE)
     add_my_lib(portaudio portaudio_static)
+  
+    # == assimp
+    set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+    set(ASSIMP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
     
-    # spdlog (no need to subdir (header-only))
+    #enabling formats section:
+    function(disableAssFormat)
+        foreach(forma IN ITEMS ${ARGV})
+            set(ASSIMP_BUILD_${forma}_EXPORTER OFF CACHE BOOL "" FORCE)
+            set(ASSIMP_BUILD_${forma}_IMPORTER OFF CACHE BOOL "" FORCE)
+        endforeach()
+    endfunction()
+    function(enableAssFormat format)
+        foreach(forma IN ITEMS ${ARGV})
+            set(ASSIMP_BUILD_${forma}_EXPORTER ON CACHE BOOL "" FORCE)
+            set(ASSIMP_BUILD_${forma}_IMPORTER ON CACHE BOOL "" FORCE)
+        endforeach()
+    endfunction()
+    
+    disableAssFormat(ASSXML ASSJSON 3DS AC CSM FBX AMF ASE ASSBIN B3D BVH COLLADA DXF HMP IRRMESH IRR LWO LWS MD2 MD3 MD5 MDC MDL NFF NDO OFF OBJ OGRE OPENGEX PLY MS3D COB BLEND IFC XGL Q3D Q3BSP RAW SIB SMD STL TERRAGEN 3D X X3D GLTF 3MF MMD STEP)
+    #enabled ass formats
+    enableAssFormat(
+        COLLADA
+        FBX
+        OBJ
+        )  
+    add_my_lib(assimp)
+    set_target_properties(IrrXML PROPERTIES USE_FOLDERS ON FOLDER "vendor")
+    set_target_properties(assimp_cmd PROPERTIES USE_FOLDERS ON FOLDER "vendor")
+    set_target_properties(UpdateAssimpLibsDebugSymbolsAndDLLs PROPERTIES USE_FOLDERS ON FOLDER "vendor")
+    set_target_properties(zlib PROPERTIES USE_FOLDERS ON FOLDER "vendor")
+    set_target_properties(zlibstatic PROPERTIES USE_FOLDERS ON FOLDER "vendor")
+    set_target_properties(uninstall PROPERTIES USE_FOLDERS ON FOLDER "vendor")
+    
+    # == spdlog (no need to subdir (header-only))
     #add_subdirectory("vendor/spdlog")
     #list(APPEND EXTRA_LIBS spdlog_headers_for_ide)
     target_include_directories(NiceDay PUBLIC "vendor/spdlog/include") 
 
 
-    # nlohmann_json (no need to subdir (header-only))
+    # == nlohmann_json (no need to subdir (header-only))
     # set(JSON_BuildTests OFF CACHE BOOL "" FORCE)
     # add_subdirectory("vendor/nlohmann_json")
     target_include_directories(NiceDay PUBLIC

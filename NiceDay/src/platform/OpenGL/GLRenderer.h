@@ -1,10 +1,10 @@
 ﻿#pragma once
 #include <glad/glad.h>
 #ifdef ND_DEBUG
-#define GLCall(x) \
+#define GLCall(x) {\
 	while (glGetError() != GL_NO_ERROR);\
 	x;\
-	checkGLError(__LINE__,#x,__FILE__);
+	checkGLError(__LINE__,#x,__FILE__);}
 #else
 #define GLCall(x) x;
 #endif // DEBUG

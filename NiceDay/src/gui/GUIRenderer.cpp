@@ -2,7 +2,6 @@
 #include "GUIRenderer.h"
 #include "graphics/BatchRenderer2D.h"
 #include "graphics/GContext.h"
-#include "core/App.h"
 #include "core/AppGlobals.h"
 
 constexpr glm::vec4 darkColor(30 / 255.f, 30 / 255.f, 30 / 255.f, 1);
@@ -14,20 +13,14 @@ constexpr glm::vec4 brightColor(28 / 255.f, 151 / 255.f, 234 / 255.f, 1);
 
 GUIRenderer::GUIRenderer(glm::vec2 windowSize)
 {
-	m_view_fbo = FrameBuffer::create();
-	setScreenDimensions(windowSize.x, windowSize.y);
+	m_view_fbo = FrameBuffer::create(FrameBufferInfo(windowSize.x, windowSize.y, TextureFormat::RGBA));
 }
 
 void GUIRenderer::setScreenDimensions(int w, int h)
 {
 	if (w == 0 || h == 0)
 		return;
-	if (m_view_texture)
-		delete m_view_texture;
-	m_view_texture = Texture::create(TextureInfo().size(w, h).format(TextureFormat::RGBA));
-	m_view_fbo->bind();
-	m_view_fbo->attachTexture(m_view_texture->getID(), 0);
-	m_view_fbo->unbind();
+	m_view_fbo->resize(w,h);
 }
 
 void GUIRenderer::render(BatchRenderer2D& renderer)
@@ -328,35 +321,31 @@ void GUIRenderer::renderView(BatchRenderer2D& renderer, GUIView& e)
 	//todo make texture list cause i cannot use that texture multiple times when we have batch renderer
 	//todo -> only one view per GuiRenderer is possible
 	renderer.flush();
-	renderer.begin();
 	m_view_fbo->bind();
-	Gcon.setClearColor(e.getInside()->color);
-	Gcon.clear(BufferBit::COLOR_BUFFER_BIT);
-	Gcon.clear(BufferBit::DEPTH_BUFFER_BIT);
-	Gcon.setViewport(m_view_texture->getWidth(), m_view_texture->getHeight());
+	m_view_fbo->clear(BuffBit::COLOR, e.getInside()->color);
+	renderer.begin(m_view_fbo);
 	for (auto child : e.getChildren())
 		renderElements(renderer, *child);
 	renderer.flush();
-	renderer.begin();
-	m_view_fbo->unbind();
-	Gcon.setViewport(App::get().getWindow()->getWidth(), App::get().getWindow()->getHeight());
+	Renderer::getDefaultFBO()->bind();
+	renderer.begin(Renderer::getDefaultFBO());
 
-
+	auto dim = m_view_fbo->getSize();
 	auto uv = UVQuad(
 		{
-			(m_stackPos.x + e.padding[GUI_LEFT]) / m_view_texture->getWidth(),
-			(m_stackPos.y + e.padding[GUI_BOTTOM]) / m_view_texture->getHeight()
+			(m_stackPos.x + e.padding[GUI_LEFT]) /dim.x,
+			(m_stackPos.y + e.padding[GUI_BOTTOM]) / dim.y
 		},
 		{
-			(e.width - e.padding[GUI_LEFT] - e.padding[GUI_RIGHT]) / m_view_texture->getWidth(),
-			(e.height - e.padding[GUI_TOP] - e.padding[GUI_BOTTOM]) / m_view_texture->getHeight()
+			(e.width - e.padding[GUI_LEFT] - e.padding[GUI_RIGHT]) /dim.x,
+			(e.height - e.padding[GUI_TOP] - e.padding[GUI_BOTTOM]) /dim.y
 		});
 	renderer.submitColorQuad({m_stackPos.x, m_stackPos.y, m_z_pos}, {e.width, e.height}, brightColor);
 	incrementZ();
 	renderer.submitTextureQuad(
 		{m_stackPos.x + e.padding[GUI_LEFT], m_stackPos.y + e.padding[GUI_BOTTOM], m_z_pos},
 		{e.width - e.padding[GUI_LEFT] - e.padding[GUI_RIGHT], e.height - e.padding[GUI_TOP] - e.padding[GUI_BOTTOM]},
-		uv, m_view_texture);
+		uv, m_view_fbo->getAttachment(0));
 }
 
 void GUIRenderer::renderBlank(BatchRenderer2D& renderer, GUIBlank& e)

@@ -5,6 +5,9 @@
 #include "memory/RingBuffer.h"
 #include "audio/player.h"
 #include "imguifiledialog/ImGuiFileDialog.h"
+#include "event/KeyEvent.h"
+#include "GLFW/glfw3.h"
+#include "event/MessageEvent.h"
 
 #define SAMPLE_RATE (44100)
 //#define SAMPLE_RATE (22050)
@@ -346,8 +349,11 @@ void SoundLayer::onUpdate()
 	Sounder::get().flushSpatialData();
 }
 
+static bool ImGUIopen = true;
 void SoundLayer::onImGuiRender()
 {
+	if (!ImGUIopen)
+		return;
 	static bool sessionstarted = false;
 	if (!sessionstarted)
 	{
@@ -358,11 +364,10 @@ void SoundLayer::onImGuiRender()
 
 	static AudioStateMap audioMap;
 	static int currentTick=0;
-	static bool open = true;
 	static float vol = 0.2;
 	//ImGui::SetNextWindowSize(ImVec2(400, 500), ImGuiCond_FirstUseEver);
 	int delayPlay = 0;
-	if (ImGui::Begin("Sound Editor", &open))
+	if (ImGui::Begin("Sound Editor", &ImGUIopen))
 	{
 		if (ImGui::SmallButton("PlaySound"))
 		{
@@ -510,4 +515,16 @@ void SoundLayer::onImGuiRender()
 
 		}
 	ImGui::End();
+}
+
+void SoundLayer::onEvent(Event& e)
+{
+	auto ee = dynamic_cast<MessageEvent*>(&e);
+	if(ee)
+	{
+		if (strcmp(ee->getTitle(), "openSoundLayer") == 0)
+			ImGUIopen = true;
+		else if (strcmp(ee->getTitle(), "closeSoundLayer") == 0)
+			ImGUIopen = false;
+	}
 }

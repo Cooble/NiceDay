@@ -45,14 +45,14 @@ public:
 	//inline static const VertexBuffer& getDefaultVBO() { return *s_vbo; }
 
 	// simple fullscreen quad with simple uv (location=0)=pos, (location=1)=uv,
-	inline static const VertexArray& getDefaultVAO() { return *s_vao; }
-	inline static Shader& getDefaultShader() { return *s_shader; }
+	static const VertexArray& getDefaultVAO() { return *s_vao; }
+	static Shader& getDefaultShader() { return *s_shader; }
 
 	// draws default vao (shader, textures etc has to be bound at this point)
-	static void renderDefault();
+	static void renderDefaultVAO();
 
 	// draws texture on whole screen
-	static void renderToCurrentFBO(Texture* t);
+	static void render(const Texture* t,FrameBuffer* fbo);
 };
 
 class FrameBufferTexturePair
@@ -90,9 +90,9 @@ public:
 	SingleTextureEffect(const TextureInfo& targetTexture);
 	~SingleTextureEffect();
 
-	inline Texture* getTexture() { return m_output_texture; }
+	Texture* getTexture() { return m_output_texture; }
 
-	inline void replaceTexture(const TextureInfo& targetTexture)
+	void replaceTexture(const TextureInfo& targetTexture)
 	{
 		if(m_output_texture)
 			delete m_output_texture;
@@ -101,6 +101,9 @@ public:
 		m_fbo->attachTexture(m_output_texture->getID(), 0);
 		m_fbo->unbind();
 	}
+	auto getFBO() { return m_fbo; }
+	void defaultBind();
+	void defaultUnbind();
 };
 class AlphaMaskEffect:public SingleTextureEffect
 {
@@ -189,6 +192,51 @@ protected:
 		return s;
 	}
 };
+class FrameBufferPingPong
+{
+private:
+	FrameBuffer* m_fbos[2];
+	Texture* m_textures[2];
+	int m_currentRenderTarget=0;
+#ifdef ND_DEBUG
+	bool isBounded = false;
+#endif
+public:
+	FrameBufferPingPong(const TextureInfo& info);
+
+	// texture to which evreything is rendered, will change after flip()
+	Texture* getOutputTexture();
+
+	void bind();
+	
+	// changes current bounded fbo
+	// bind() call is required
+	void flip();
+	void unbind();
+};
+namespace Effecto {
+	class Blurer
+	{
+	private:
+		
+	public:
+		static Shader* getShader()
+		{
+			static Shader* s = nullptr;
+			if (s == nullptr)
+			{
+				s = ShaderLib::loadOrGetShader("res/shaders/Blur.shader");
+				s->bind();
+				dynamic_cast<GLShader*>(s)->setUniform1i("u_attachment", 0); //txture input
+				s->unbind();
+			}
+			return s;
+		}
+		static void blur(FrameBufferPingPong& fbos, Texture* input, int repeats);
+	};
+
+
+}
 
 class HorizontalBlur : GaussBlurShader,public SingleTextureEffect
 {

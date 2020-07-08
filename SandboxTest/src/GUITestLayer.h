@@ -31,7 +31,7 @@ private:
 public:
 	GUITestLayer();
 
-	inline void onAttach() override
+	void onAttach() override
 	{
 		g_batch_render = new BatchRenderer2D();
 

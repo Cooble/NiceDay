@@ -79,7 +79,7 @@ private:
 		}
 	}
 public:
-	inline const char* c_str() const { return val_string->c_str(); }
+	const char* c_str() const { return val_string->c_str(); }
 	constexpr bool isContainer() const { return isMap()||isArray(); }
 	constexpr bool isMap() const { return type == T_MAP; }
 	constexpr bool isArray() const { return type == T_ARRAY; }
@@ -98,38 +98,38 @@ public:
 		destruct();
 	}
 
-	inline NBT(int64_t i)
+	NBT(int64_t i)
 	{
 		val_int = i;
 		type = T_NUMBER_INT;
 	}
 	
-	inline NBT(const glm::vec2& i)
+	NBT(const glm::vec2& i)
 	{
 		val_uint = *(uint64_t*)&i;
 		type = T_NUMBER_UINT;
 	}
-	inline NBT(uint64_t i)
+	NBT(uint64_t i)
 	{
 		val_uint = i;
 		type = T_NUMBER_UINT;
 	}
-	inline NBT(double i)
+	NBT(double i)
 	{
 		val_float = i;
 		type = T_NUMBER_FLOAT;
 	}
-	inline NBT(int i)
+	NBT(int i)
 	{
 		val_int = i;
 		type = T_NUMBER_INT;
 	}
-	inline NBT(float i)
+	NBT(float i)
 	{
 		val_float = (double)i;
 		type = T_NUMBER_FLOAT;
 	}
-	inline NBT(bool i)
+	NBT(bool i)
 	{
 		val_int = i;
 		type = T_BOOL;
@@ -165,9 +165,9 @@ public:
 		}
 		return pos == string.size() && !std::isnan(value);
 	}
-	inline NBT(const std::string& i)
+	NBT(const std::string& i)
 	{
-		if(i._Starts_with("#")&&isNumeric(i.substr(1)))
+		if(SUtil::startsWith(i,'#')&&isNumeric(i.substr(1)))
 		{
 			val_uint = toUint64(i.substr(1));
 			type = T_NUMBER_UINT;
@@ -176,7 +176,18 @@ public:
 		val_string = new std::string(i);
 		type = T_STRING;
 	}
-	inline NBT(const char* i):NBT(std::string(i)){}
+	NBT(std::string&& i)
+	{
+		if (SUtil::startsWith(i, '#') && isNumeric(i.substr(1)))
+		{
+			val_uint = toUint64(i.substr(1));
+			type = T_NUMBER_UINT;
+			return;
+		}
+		val_string = new std::string(std::move(i));
+		type = T_STRING;
+	}
+	NBT(const char* i):NBT(std::string(i)){}
 
 	NBT& operator=(bool i)
 	{
@@ -269,8 +280,19 @@ public:
 		else {
 			destruct();
 			val_string = new std::string(i);
+			type = T_STRING;
 		}
-		type = T_STRING;
+		return *this;
+	}
+	NBT& operator=(std::string&& i)
+	{
+		if (type == T_STRING)
+			*val_string = std::move(i);
+		else {
+			destruct();
+			val_string = new std::string(std::move(i));
+			type = T_STRING;
+		}
 		return *this;
 	}
 	inline int invalidCast() const { /*ASSERT(false, "invalid nbt type cast");*/ return 0; }
@@ -445,7 +467,7 @@ public:
 	{
 		return access_map(std::string(name));
 	}
-	const NBT& operator[](const std::string&& name) const
+	const NBT& operator[](const std::string& name) const
 	{
 		return access_map_const(name);
 	}

@@ -10,7 +10,6 @@
 #include "imguifiledialog/ImGuiFileDialog.h"
 #include "core/NBT.h"
 #include "sol/sol.hpp"
-#include "gui/GUIBasic.h"
 
 //-----------------------------------------------------------------------------
 // [SECTION] Example App: Debug Console / ShowExampleAppConsole()
@@ -857,6 +856,8 @@ void LuaLayer::onAttach()
 	m_console = new LuaConsole(this);
 
 	m_L = s_lua.lua_state();
+	//m_L = luaL_newstate();
+
 	luaopen_base(m_L); // load basic libs (eg. print)
 	luaL_openlibs(m_L);
 

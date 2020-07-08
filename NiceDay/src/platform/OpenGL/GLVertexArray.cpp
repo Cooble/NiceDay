@@ -35,6 +35,12 @@ void GLVertexArray::addBuffer(const VertexBuffer& vbo)
 	m_atrib_point_index += ray.size();
 }
 
+void GLVertexArray::addBuffer(const IndexBuffer& vio)
+{
+	bind();
+	vio.bind();
+}
+
 void GLVertexArray::bind() const
 {
 	GLCall(glBindVertexArray(m_id));

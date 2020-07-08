@@ -14,6 +14,7 @@ public:
 	{
 	}
 	inline int getKey() const { return m_key; }
+	inline int getFreshKey() const { return isRepeating()?-1:m_key; }
 	inline int getMods() const { return m_mods; }
 	inline int isRepeating() const { return m_repeat; }
 

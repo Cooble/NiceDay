@@ -8,6 +8,7 @@
 //Disclaimer :::!!!! this should never be set to 1!!!!! (mapping to multiple vbos at once is not good)
 #define USE_MAP_BUF 0
 
+class FrameBuffer;
 struct FontMaterial;
 class TextMesh;
 struct UVQuad;
@@ -51,6 +52,7 @@ private:
 	Shader* m_text_shader;
 	VertexArray* m_text_vao;
 	VertexBuffer* m_text_vbo;
+	FrameBuffer* m_fbo=nullptr;
 
 #if !USE_MAP_BUF
 	VertexData* m_buff;
@@ -77,7 +79,7 @@ public:
 	void push(const mat4& trans);
 	void pop();
 
-	void begin();
+	void begin(FrameBuffer* fbo);
 	void submit(const Renderable2D& ren);
 	void submitTextureQuad(const glm::vec3& pos, const glm::vec2& size, const UVQuad& uv,const Texture* t,float alpha=1);
 	void submitColorQuad(const glm::vec3& pos, const glm::vec2& size, const glm::vec4& color);

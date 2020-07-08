@@ -50,8 +50,7 @@ void FileChunkProvider::proccessAssignments(std::vector<WorldIOAssignment>& assi
 			}
 			break;
 		case WorldIOAssignment::DESERIALIZE:
-			if (!m_nbt_saver.isOpened())
-				m_nbt_saver.beginSession();
+			m_nbt_saver.beginSession();
 
 			if (m_nbt_saver.setReadChunkID(assignment.chunkID))
 				assignment.func(streamFuncs);
@@ -59,22 +58,18 @@ void FileChunkProvider::proccessAssignments(std::vector<WorldIOAssignment>& assi
 				assignment.job->m_variable = JobAssignment::JOB_FAILURE;//mark as fucked up
 			break;
 		case WorldIOAssignment::SERIALIZE:
-			if (!m_nbt_saver.isOpened())
-				m_nbt_saver.beginSession();
+			m_nbt_saver.beginSession();
 			m_nbt_saver.setWriteChunkID(assignment.chunkID);
 			assignment.func(streamFuncs);
 			m_nbt_saver.flushWrite();
 			break;
 		case WorldIOAssignment::ENTITY_WRITE:
 			{
-				
-				if (!m_nbt_saver.isOpened())
-					m_nbt_saver.beginSession();
+				m_nbt_saver.beginSession();
 				NBT t;
 				m_nbt_saver.setWriteChunkID(assignment.chunkID);
 				if (assignment.entitySize)
 				{
-					t.save("entity_count", assignment.entitySize);
 					NBT list;
 					for (int i = 0; i < assignment.entitySize; ++i)
 					{
@@ -87,8 +82,6 @@ void FileChunkProvider::proccessAssignments(std::vector<WorldIOAssignment>& assi
 					t.write(streamFuncs);
 				}
 				m_nbt_saver.flushWrite();
-				m_nbt_saver.endSession();
-				m_nbt_saver.beginSession();
 				if (m_nbt_saver.setReadChunkID(assignment.chunkID)) {
 					NBT tt;
 					tt.read(streamFuncs);
@@ -99,26 +92,24 @@ void FileChunkProvider::proccessAssignments(std::vector<WorldIOAssignment>& assi
 			break;
 		case WorldIOAssignment::ENTITY_READ:
 			{
-				if (!m_nbt_saver.isOpened())
-					m_nbt_saver.beginSession();
-				int number = 0;
+				m_nbt_saver.beginSession();
 				if (m_nbt_saver.setReadChunkID(assignment.chunkID))
 				{
 					NBT t;
 					t.read(streamFuncs);
-					t.load("entity_count", number, 0);
+					auto& ls = t["list"];
+					int number = ls.size();
 					*assignment.entitySizePointer = number;
 					if (number)
 					{
 						auto entities = new WorldEntity*[number];
-						NBT& ls = t["list"];
 						for (int i = 0; i < ls.size(); ++i)
 							entities[i] = EntityAllocator::loadInstance(ls[i]);
 						*assignment.entitiesPointer = entities; //set array pointer to foreign(boss) variable
 					}
 				}
 				else
-					*assignment.entitySizePointer = number;
+					*assignment.entitySizePointer = 0;
 			}
 			break;
 		default:
@@ -126,10 +117,6 @@ void FileChunkProvider::proccessAssignments(std::vector<WorldIOAssignment>& assi
 			break;
 		}
 		assignment.job->markDone();
-	}
-	if (m_nbt_saver.isOpened())
-	{
-		m_nbt_saver.saveVTable(); //is it really necessary to save Vtable so often?
-		m_nbt_saver.endSession();
-	}
+	}	
+	m_nbt_saver.endSession();
 }

@@ -6,16 +6,12 @@
  */
 class Input
 {
-private:
-	std::vector<int8_t> m_keys;
-	int8_t& getKey(int button);
 public:
-	void update();
-	bool isKeyPressed(int button);
-	bool isKeyFreshlyPressed(int button);
-	bool isKeyFreshlyReleased(int button);
-	bool isMousePressed(int button);
-	glm::vec2 getMouseLocation();
-
+	virtual void update(){}
+	virtual bool isKeyPressed(int button) = 0;
+	virtual bool isKeyFreshlyPressed(int button) = 0;
+	virtual bool isKeyFreshlyReleased(int button) = 0;
+	virtual bool isMousePressed(int button) = 0;
+	virtual glm::vec2 getMouseLocation() = 0;
 };
 

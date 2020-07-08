@@ -36,29 +36,23 @@ private:
 	ScaleEdgesEffect* m_edge;
 	AlphaMaskEffect* m_block_mask;
 
-	//whole_screen_quad
-	VertexArray* m_full_screen_quad_VAO;
-	VertexBuffer* m_full_screen_quad_VBO;
+	//background
+	FrameBuffer* m_bg_fbo;
+	FrameBuffer* m_bg_layer_fbo;
 
 	//background
-	FrameBufferTexturePair* m_bg_fbo;
-	FrameBufferTexturePair* m_bg_layer_fbo;
-
-	//background
-	FrameBufferTexturePair* m_bg_sky_fbo;
-	
-
+	FrameBuffer* m_bg_sky_fbo;
 
 
 	//light stuff
 	LightCalculator& m_light_calculator;
 	
-	FrameBufferTexturePair* m_light_fbo;
-	FrameBufferTexturePair* m_light_smooth_fbo;
-	FrameBufferTexturePair* m_block_fbo;
-	FrameBufferTexturePair* m_wall_fbo;
-	FrameBufferTexturePair* m_sky_fbo;
-	FrameBufferTexturePair* m_entity_fbo;
+	FrameBuffer* m_light_fbo;
+	//FrameBuffer* m_light_smooth_fbo;
+	FrameBuffer* m_block_fbo;
+	FrameBuffer* m_wall_fbo;
+	FrameBuffer* m_sky_fbo;
+	FrameBuffer* m_entity_fbo;
 
 
 	//FrameBuffer* m_light_FBO;
@@ -102,17 +96,17 @@ public:
 	void refreshChunkList();
 	//todo make this on different thread
 	void update();
-	void render(BatchRenderer2D& batchRenderer);
+	void render(BatchRenderer2D& batchRenderer,FrameBuffer* fbo);
 	void renderLightMap();
-	void applyLightMap(Texture* lightmap);
-	inline int getChunksSize() const { return m_chunk_width * m_chunk_height; }
-	inline std::unordered_map<int, int>& getMap() { return m_offset_map; }
-	inline const glm::mat4& getProjMatrix() { return m_proj_matrix; }
+	void applyLightMap(const Texture* lightmap,FrameBuffer* fbo);
+	int getChunksSize() const { return m_chunk_width * m_chunk_height; }
+	std::unordered_map<int, int>& getMap() { return m_offset_map; }
+	const glm::mat4& getProjMatrix() { return m_proj_matrix; }
 
-	inline Texture* getLightTextureSmooth() { return m_light_smooth_fbo->getTexture(); }
-	inline Texture* getLightTextureBlur() { return m_blur->getTexture(); }
-	inline Texture* getLightTextureHard() { return m_light_fbo->getTexture(); }
-	inline auto* getEntityFBO() { return m_entity_fbo; }
+	//const Texture* getLightTextureSmooth() { return m_light_smooth_fbo->getAttachment(0); }
+	Texture* getLightTextureBlur() { return m_blur->getTexture(); }
+	const Texture* getLightTextureHard() { return m_light_fbo->getAttachment(0); }
+	auto* getEntityFBO() { return m_entity_fbo; }
 };
 
 

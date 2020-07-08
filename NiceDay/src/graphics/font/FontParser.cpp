@@ -152,7 +152,7 @@ bool FontParser::parse(Font& font, const std::string& filePath)
 		if (line.empty())
 			continue;;
 
-		NDUtil::splitString(line, words);
+		SUtil::splitString(line, words);
 		auto& title = words[0];
 
 		if (title == "info")
@@ -161,26 +161,26 @@ bool FontParser::parse(Font& font, const std::string& filePath)
 			{
 				auto& var = words[i];
 				auto arg = var.substr(var.find_first_of('=') + 1);
-				if (var._Starts_with("face="))
+				if (SUtil::startsWith(var,"face="))
 					font.face = arg.substr(1, arg.size() - 2);
-				else if (var._Starts_with("size="))
+				else if (SUtil::startsWith(var, "size="))
 					font.size = std::stoi(arg);
-				else if (var._Starts_with("bold="))
+				else if (SUtil::startsWith(var, "bold="))
 					font.bold = (bool)std::stoi(arg);
-				else if (var._Starts_with("italic="))
+				else if (SUtil::startsWith(var, "italic="))
 					font.italic = (bool)std::stoi(arg);
-				else if (var._Starts_with("padding="))
+				else if (SUtil::startsWith(var, "padding="))
 				{
 					std::vector<std::string> data;
-					NDUtil::splitString(arg, data, ",");
+					SUtil::splitString(arg, data, ",");
 					ASSERT(data.size() == 4, "Invalid font file");
 					for (int i = 0; i < 4; ++i)
 						font.padding[i] = std::stoi(data[i]);
 				}
-				else if (var._Starts_with("spacing="))
+				else if (SUtil::startsWith(var, "spacing="))
 				{
 					std::vector<std::string> data;
-					NDUtil::splitString(arg, data, ",");
+					SUtil::splitString(arg, data, ",");
 					ASSERT(data.size() == 2, "Invalid font file");
 					for (int i = 0; i < 2; ++i)
 						font.spacing[i] = std::stoi(data[i]);
@@ -194,13 +194,13 @@ bool FontParser::parse(Font& font, const std::string& filePath)
 				auto& var = words[i];
 				auto arg = var.substr(var.find_first_of('=') + 1);
 
-				if (var._Starts_with("lineHeight="))
+				if (SUtil::startsWith(var, "lineHeight="))
 					font.lineHeight = std::stoi(arg);
-				else if (var._Starts_with("base="))
+				else if (SUtil::startsWith(var, "base="))
 					font.base = std::stoi(arg);
-				else if (var._Starts_with("scaleW="))
+				else if (SUtil::startsWith(var, "scaleW="))
 					font.scaleW = std::stoi(arg);
-				else if (var._Starts_with("scaleH="))
+				else if (SUtil::startsWith(var, "scaleH="))
 					font.scaleH = std::stoi(arg);
 			}
 		}
@@ -211,7 +211,7 @@ bool FontParser::parse(Font& font, const std::string& filePath)
 				auto& var = words[i];
 				auto arg = var.substr(var.find_first_of('=') + 1);
 
-				if (var._Starts_with("file="))
+				if (SUtil::startsWith(var, "file="))
 					font.texturePath = arg.substr(1, arg.size() - 2);;
 			}
 		}
@@ -222,7 +222,7 @@ bool FontParser::parse(Font& font, const std::string& filePath)
 				auto& var = words[i];
 				auto arg = var.substr(var.find_first_of('=') + 1);
 
-				if (var._Starts_with("count="))
+				if (SUtil::startsWith(var, "count="))
 					charCount = std::stoi(arg);
 			}
 		}
@@ -234,21 +234,21 @@ bool FontParser::parse(Font& font, const std::string& filePath)
 				auto& var = words[i];
 				auto arg = var.substr(var.find_first_of('=') + 1);
 
-				if (var._Starts_with("id="))
+				if (SUtil::startsWith(var, "id="))
 					ch.id = std::stoi(arg);
-				else if (var._Starts_with("x="))
+				else if (SUtil::startsWith(var, "x="))
 					ch.u = std::stoi(arg);
-				else if (var._Starts_with("y="))
+				else if (SUtil::startsWith(var, "y="))
 					ch.v = std::stoi(arg);
-				else if (var._Starts_with("width="))
+				else if (SUtil::startsWith(var, "width="))
 					ch.width = std::stoi(arg);
-				else if (var._Starts_with("height="))
+				else if (SUtil::startsWith(var, "height="))
 					ch.height = std::stoi(arg);
-				else if (var._Starts_with("xoffset="))
+				else if (SUtil::startsWith(var, "xoffset="))
 					ch.xoffset = std::stoi(arg);
-				else if (var._Starts_with("yoffset="))
+				else if (SUtil::startsWith(var, "yoffset="))
 					ch.yoffset = std::stoi(arg);
-				else if (var._Starts_with("xadvance="))
+				else if (SUtil::startsWith(var, "xadvance="))
 					ch.xadvance = std::stoi(arg);
 			}
 			font.chars.push_back(ch);
@@ -260,7 +260,7 @@ bool FontParser::parse(Font& font, const std::string& filePath)
 				auto& var = words[i];
 				auto arg = var.substr(var.find_first_of('=') + 1);
 
-				if (var._Starts_with("count="))
+				if (SUtil::startsWith(var, "count="))
 					font.kerning.reserve(std::stoi(arg));
 			}
 		}
@@ -272,11 +272,11 @@ bool FontParser::parse(Font& font, const std::string& filePath)
 				auto& var = words[i];
 				auto arg = var.substr(var.find_first_of('=') + 1);
 
-				if (var._Starts_with("first="))
+				if (SUtil::startsWith(var, "first="))
 					first = std::stoi(arg);
-				else if (var._Starts_with("second="))
+				else if (SUtil::startsWith(var, "second="))
 					second = std::stoi(arg);
-				else if (var._Starts_with("amount="))
+				else if (SUtil::startsWith(var, "amount="))
 					amount = std::stoi(arg);
 			}
 			font.setKerning(first, second, amount);

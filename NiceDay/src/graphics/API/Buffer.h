@@ -46,6 +46,11 @@ public:
 		ND_WARN("Shit ....");
 		ASSERT(false,"fuk");
 	}
+	void pushElement(const VertexBufferElement& e)
+	{
+		m_elements.push_back(e);
+		m_stride += VertexBufferElement::getByteCount(e.type) * e.count;
+	}
 
 	template <>
 	void push<float>(unsigned int count)

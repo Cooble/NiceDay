@@ -60,14 +60,14 @@ void TextBuilder::convertToLines(const std::string& text, const Font& font, int 
                                  std::vector<std::string>& lines)
 {
 	std::vector<std::string> separatedLines;
-	NDUtil::splitString(Font::removeColorEntities(text), separatedLines, "\n");
+	SUtil::splitString(Font::removeColorEntities(text), separatedLines, "\n");
 
 	for (auto& sepLine : separatedLines)
 	{
 		int currentWidth = 0;
 		std::string currentLine;
 		std::vector<std::string> words;
-		NDUtil::splitString(sepLine, words);
+		SUtil::splitString(sepLine, words);
 		for (auto& word : words)
 		{
 			auto wordSize = font.getTextWidth(word);

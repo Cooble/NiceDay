@@ -2,26 +2,39 @@
 #include "ndpch.h"
 #include "glad/glad.h"
 
-enum class TextureWrapMode
+typedef glm::vec<2, uint32_t> TexDimensions;
+
+enum class TextureWrapMode :uint32_t
 {
 	REPEAT = GL_REPEAT,
 	CLAMP_TO_EDGE = GL_CLAMP_TO_EDGE,
 	CLAMP_TO_BORDER = GL_CLAMP_TO_BORDER,
 };
 
-enum class TextureFilterMode
+enum class TextureFilterMode :uint32_t
 {
 	NEAREST = GL_NEAREST,
 	LINEAR = GL_LINEAR
 };
 
-enum class TextureFormat
+enum class TextureFormat :uint32_t
 {
 	RGBA = GL_RGBA,
 	RGB = GL_RGB,
 	RED = GL_RED
 };
+enum class TextureType:uint32_t
+{
+	_2D = GL_TEXTURE_2D,
+	_CUBE_MAP = GL_TEXTURE_CUBE_MAP,
+	_3D = GL_TEXTURE_3D,
 
+
+};
+
+//if texture type is cubemap ->
+//		the path must be in form of '/blahblah/folder/some_prefix_name*.png'
+//		the '*' character will be automatically replaced with px,nx,py,ny,pz,nz									
 struct TextureInfo
 {
 	float border_color[4] = {0, 0, 0, 0}; //transparent color outside of image
@@ -29,9 +42,10 @@ struct TextureInfo
 	std::string file_path;
 	TextureFilterMode filter_mode_min = TextureFilterMode::LINEAR;
 	TextureFilterMode filter_mode_max = TextureFilterMode::LINEAR;
-
+	TextureType texture_type = TextureType::_2D;
 	TextureWrapMode wrap_mode_s = TextureWrapMode::REPEAT;
 	TextureWrapMode wrap_mode_t = TextureWrapMode::REPEAT;
+	TextureWrapMode wrap_mode_r = TextureWrapMode::REPEAT;
 	TextureFormat f_format = TextureFormat::RGBA;
 
 	inline TextureInfo& filterMode(TextureFilterMode mode)
@@ -45,6 +59,7 @@ struct TextureInfo
 	{
 		wrap_mode_s = mode;
 		wrap_mode_t = mode;
+		wrap_mode_r = mode;
 		return *this;
 	}
 
@@ -81,9 +96,14 @@ struct TextureInfo
 		border_color[3] = a;
 		return *this;
 	}
+	inline TextureInfo& type(TextureType type)
+	{
+		texture_type = type;
+	
+		return *this;
+	}
 
 	inline TextureInfo copy() const { return *this; }
-
 
 	TextureInfo()
 	{
@@ -94,11 +114,20 @@ struct TextureInfo
 	{
 		file_path = string;
 	}
-
-	TextureInfo(const char* string)
+	TextureInfo(TextureType type,const std::string& string)
 	{
+		texture_type = type;
+		if (type == TextureType::_CUBE_MAP) {
+			wrapMode(TextureWrapMode::CLAMP_TO_EDGE);
+			format(TextureFormat::RGB);
+		}
 		file_path = string;
 	}
+
+	/*TextureInfo(const char* string)
+	{
+		file_path = string;
+	}*/
 };
 
 class Texture
@@ -111,6 +140,7 @@ public:
 
 	virtual int getWidth() const = 0;
 	virtual int getHeight() const = 0;
+	TexDimensions getDimensions() const { return { getWidth(),getHeight() }; }
 	virtual unsigned int getID() const = 0;
 
 

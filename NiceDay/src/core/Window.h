@@ -1,55 +1,53 @@
 #pragma once
 #include "ndpch.h"
-#include "event/Event.h"
+#include "WindowTemplate.h"
+#include "Input.h"
 
 struct GLFWwindow;
+class FrameBuffer;
 
-class Window
+class Window:public WindowTemplate
 {
 private:
-	bool m_destroyed = false;
-	bool m_iconified = false;
 	GLFWwindow* m_window;
-	using EventCallbackFn = std::function<void(Event&)>;
-
-	struct WindowData
-	{
-		int width, height;
-		int lastWidth, lastHeight;
-		int x, y;
-		int lastX, lastY;
-		bool fullscreen=false;
-		std::string title;
-		EventCallbackFn eventCallback;
-	};
-	WindowData m_data;
-
-
+	FrameBuffer* m_window_fbo;
 public:
 	Window(int width, int height, const std::string& title,bool fullscreen=false);
 	~Window();
 
-	void setSize(int width, int height);
-	void setFullScreen(bool fullscreen);
-	void setTitle(const char* title);
-	void close();
-	void swapBuffers();
-	void pollEvents();
-	inline void setEventCallback(const EventCallbackFn& func) { m_data.eventCallback = func; }
-	inline glm::vec2 getDimensions() const { return glm::vec2(getWidth(), getHeight()); }
-	inline bool shouldClose();
+	glm::vec2 getPos() override;
+	void setSize(int width, int height) override;
+	void setFullScreen(bool fullscreen)override;
+	void setTitle(const char* title)override;
+	void setCursorPolicy(WindowCursor state)override;
+	void setCursorPos(glm::vec2 pos)override;
+	void setClipboard(const char* c)override;
+	void close()override;
+	void swapBuffers()override;
+	void pollEvents()override;
+	bool shouldClose()override;
+	
+	bool isFocused() const override { return m_data.focused; }
+	bool isHovered() const override { return m_data.hovered; }
 
-
-	inline GLFWwindow* getWindow() const { return m_window; }
-	inline unsigned int getWidth() const { return m_data.width; }
-	inline unsigned int getHeight() const { return m_data.height; }
-	inline const char* getTitle() const { return m_data.title.c_str(); }
-	constexpr bool isFullscreen() const { return m_data.fullscreen; }
-
-	//is window minimized?
-	constexpr bool isIconified() const { return m_iconified; }
-
+	void* getWindow() const override { return m_window; }
+	FrameBuffer* getFBO() override { return m_window_fbo; }
+	const char* getClipboard() const override;
+};
+class RealInput :public Input
+{
 private:
-	//void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+	std::vector<int8_t> m_keys;
+	int8_t& getKey(int button);
+	Window* m_window;
+public:
+	RealInput(Window* window);
+	~RealInput() = default;
+	void update() override;
+	bool isKeyPressed(int button) override;
+	bool isKeyFreshlyPressed(int button)override;
+	bool isKeyFreshlyReleased(int button)override;
+	bool isMousePressed(int button)override;
+	glm::vec2 getMouseLocation()override;
 };
 

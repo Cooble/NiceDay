@@ -18,18 +18,18 @@ public:
 	LuaLayer()=default;
 	~LuaLayer()=default;
 	
-	inline lua_State* getLuaState() { return m_L; }
-	inline void openConsole() { m_show_imgui_console = true; }
-	inline void closeConsole() { m_show_imgui_console = false; }
+	lua_State* getLuaState() { return m_L; }
+	void openConsole() { m_show_imgui_console = true; }
+	void closeConsole() { m_show_imgui_console = false; }
 	void printToLuaConsole(lua_State* L, const char* c);
 	void runScriptInConsole(lua_State* L, const char* c);
 	
 	void runScriptFromFile(lua_State* L, const nd::temp_string& filePath);
 	void onUpdate() override;
-	virtual void onAttach() override;
-	virtual void onDetach() override;
-	virtual void onImGuiRender() override;
-	virtual void onEvent(Event& e) override;
+	void onAttach() override;
+	void onDetach() override;
+	void onImGuiRender() override;
+	void onEvent(Event& e) override;
 	
 
 };

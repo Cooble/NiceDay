@@ -211,7 +211,7 @@ private:
 
 	// needs to be created outside world and set
 	ParticleManager* m_particle_manager = nullptr;
-	WorldIO::DynamicSaver m_nbt_saver;
+	DynamicSaver m_nbt_saver;
 
 	std::vector<EntityID> m_entity_array;
 	std::unordered_map<int64_t, EntityID> m_tile_entity_map;

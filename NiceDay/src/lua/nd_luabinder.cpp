@@ -22,7 +22,7 @@ static int playMusic(lua_State* L);
 
 static void bindNBT(sol::state& state);
 
-#ifdef BIND_LUA_GUI_HANDLESS
+#ifdef BIND_LUA_GUI_HANDLES
 static void bindGUIElements(sol::state& state);
 static void bindGUICast(sol::state& state);
 static void bindGUIContext(sol::state& state);
@@ -37,7 +37,7 @@ void nd_luabinder::bindEverything(sol::state& state)
 	bindSound(state);
 	bindNBT(state);
 
-#ifdef BIND_LUA_GUI_HANDLESS
+#ifdef BIND_LUA_GUI_HANDLES
 	bindGUIElements(state);
 	bindGUICast(state);
 	bindGUIContext(state);
@@ -53,95 +53,95 @@ static void bindGLM(sol::state& state)
 {
 	//glm::vec<2, float, Q> operator+(vec<2, T, Q> const& v1, vec<2, T, Q> const& v2)
 	state.new_usertype<half_int>("half_int",
-	                             sol::constructors<half_int(int), half_int(int, int)>(),
-	                             "x", &half_int::x,
-	                             "y", &half_int::y,
-	                             "i", &half_int::i,
-	                             sol::meta_function::addition, [](half_int& a, half_int& b) { return a + b; },
-	                             sol::meta_function::subtraction, [](half_int& a, half_int& b) { return a - b; },
-	                             sol::meta_function::multiplication, [](half_int& a, int b) { return a * b; },
-	                             sol::meta_function::subtraction, [](half_int& a, int b) { return a / b; }
+		sol::constructors<half_int(int), half_int(int, int)>(),
+		"x", &half_int::x,
+		"y", &half_int::y,
+		"i", &half_int::i,
+		sol::meta_function::addition, [](half_int& a, half_int& b) { return a + b; },
+		sol::meta_function::subtraction, [](half_int& a, half_int& b) { return a - b; },
+		sol::meta_function::multiplication, [](half_int& a, int b) { return a * b; },
+		sol::meta_function::subtraction, [](half_int& a, int b) { return a / b; }
 	);
 	state.new_usertype<glm::vec2>("glmvec2",
-	                              sol::constructors<glm::vec2(float, float)>(),
-	                              "x", &glm::vec2::x,
-	                              "y", &glm::vec2::y,
-	                              sol::meta_function::addition, [](glm::vec2& a, glm::vec2& b) { return a + b; },
-	                              sol::meta_function::subtraction, [](glm::vec2& a, glm::vec2& b) { return a - b; },
-	                              sol::meta_function::multiplication,
-	                              sol::overload([](glm::vec2& a, glm::vec2& b) { return a * b; },
-	                                            [](glm::vec2& a, float b) { return a * b; }),
-	                              sol::meta_function::division,
-	                              sol::overload([](glm::vec2& a, glm::vec2& b) { return a / b; },
-	                                            [](glm::vec2& a, float b) { return a / b; })
-	);
+		sol::constructors<glm::vec2(float, float)>(),
+		"x", &glm::vec2::x,
+		"y", &glm::vec2::y,
+		sol::meta_function::addition, [](glm::vec2& a, glm::vec2& b) { return a + b; },
+		sol::meta_function::subtraction, [](glm::vec2& a, glm::vec2& b) { return a - b; },
+		sol::meta_function::multiplication,
+		sol::overload([](glm::vec2& a, glm::vec2& b) { return a * b; },
+			[](glm::vec2& a, float b) { return a * b; }),
+		sol::meta_function::division,
+		sol::overload([](glm::vec2& a, glm::vec2& b) { return a / b; },
+			[](glm::vec2& a, float b) { return a / b; })
+		);
 	state.new_usertype<glm::vec3>("glmvec3",
-	                              sol::constructors<glm::vec3(float, float, float)>(),
-	                              "x", &glm::vec3::x,
-	                              "y", &glm::vec3::y,
-	                              "z", &glm::vec3::z,
-	                              sol::meta_function::addition, [](glm::vec3& a, glm::vec3& b) { return a + b; },
-	                              sol::meta_function::subtraction, [](glm::vec3& a, glm::vec3& b) { return a - b; },
-	                              sol::meta_function::multiplication,
-	                              sol::overload([](glm::vec3& a, glm::vec3& b) { return a * b; },
-	                                            [](glm::vec3& a, float b) { return a * b; }),
-	                              sol::meta_function::division,
-	                              sol::overload([](glm::vec3& a, glm::vec3& b) { return a / b; },
-	                                            [](glm::vec3& a, float b) { return a / b; })
-	);
+		sol::constructors<glm::vec3(float, float, float)>(),
+		"x", &glm::vec3::x,
+		"y", &glm::vec3::y,
+		"z", &glm::vec3::z,
+		sol::meta_function::addition, [](glm::vec3& a, glm::vec3& b) { return a + b; },
+		sol::meta_function::subtraction, [](glm::vec3& a, glm::vec3& b) { return a - b; },
+		sol::meta_function::multiplication,
+		sol::overload([](glm::vec3& a, glm::vec3& b) { return a * b; },
+			[](glm::vec3& a, float b) { return a * b; }),
+		sol::meta_function::division,
+		sol::overload([](glm::vec3& a, glm::vec3& b) { return a / b; },
+			[](glm::vec3& a, float b) { return a / b; })
+		);
 	state.new_usertype<glm::vec4>("glmvec4",
-	                              sol::constructors<glm::vec4(float, float, float, float)>(),
-	                              "x", &glm::vec4::x,
-	                              "y", &glm::vec4::y,
-	                              "z", &glm::vec4::z,
-	                              "w", &glm::vec4::w,
-	                              sol::meta_function::addition, [](glm::vec4& a, glm::vec4& b) { return a + b; },
-	                              sol::meta_function::subtraction, [](glm::vec4& a, glm::vec4& b) { return a - b; },
-	                              sol::meta_function::multiplication,
-	                              sol::overload([](glm::vec4& a, glm::vec4& b) { return a * b; },
-	                                            [](glm::vec4& a, float b) { return a * b; }),
-	                              sol::meta_function::division,
-	                              sol::overload([](glm::vec4& a, glm::vec4& b) { return a / b; },
-	                                            [](glm::vec4& a, float b) { return a / b; })
-	);
+		sol::constructors<glm::vec4(float, float, float, float)>(),
+		"x", &glm::vec4::x,
+		"y", &glm::vec4::y,
+		"z", &glm::vec4::z,
+		"w", &glm::vec4::w,
+		sol::meta_function::addition, [](glm::vec4& a, glm::vec4& b) { return a + b; },
+		sol::meta_function::subtraction, [](glm::vec4& a, glm::vec4& b) { return a - b; },
+		sol::meta_function::multiplication,
+		sol::overload([](glm::vec4& a, glm::vec4& b) { return a * b; },
+			[](glm::vec4& a, float b) { return a * b; }),
+		sol::meta_function::division,
+		sol::overload([](glm::vec4& a, glm::vec4& b) { return a / b; },
+			[](glm::vec4& a, float b) { return a / b; })
+		);
 }
 
 static void bindSound(sol::state& state)
 {
 	state.new_usertype<SoundHandle>("Sound",
-	                                "play", sol::overload(&SoundHandle::play, [](SoundHandle& h) { h.play(); }),
-	                                "stop", sol::overload(&SoundHandle::stop, [](SoundHandle& h) { h.stop(); }),
-	                                "setPitch", sol::overload(&SoundHandle::setPitch, [](SoundHandle& h, float p)
-	                                {
-		                                h.setPitch(p);
-	                                }),
-	                                "setVolume",
-	                                sol::overload(&SoundHandle::setVolume, [](SoundHandle& h, float p)
-	                                {
-		                                h.setVolume(p);
-	                                }),
-	                                "pause", &SoundHandle::pause,
-	                                "open", &SoundHandle::open,
-	                                "setLoop", &SoundHandle::setLoop,
-	                                "isPlaying", &SoundHandle::isPlaying
-	);
+		"play", sol::overload(&SoundHandle::play, [](SoundHandle& h) { h.play(); }),
+		"stop", sol::overload(&SoundHandle::stop, [](SoundHandle& h) { h.stop(); }),
+		"setPitch", sol::overload(&SoundHandle::setPitch, [](SoundHandle& h, float p)
+			{
+				h.setPitch(p);
+			}),
+		"setVolume",
+				sol::overload(&SoundHandle::setVolume, [](SoundHandle& h, float p)
+					{
+						h.setVolume(p);
+					}),
+				"pause", &SoundHandle::pause,
+						"open", &SoundHandle::open,
+						"setLoop", &SoundHandle::setLoop,
+						"isPlaying", &SoundHandle::isPlaying
+						);
 	state.new_usertype<MusicHandle>("Music",
-	                                "play", sol::overload(&MusicHandle::play, [](MusicHandle& h) { h.play(); }),
-	                                "stop", sol::overload(&MusicHandle::stop, [](MusicHandle& h) { h.stop(); }),
-	                                "setPitch", sol::overload(&MusicHandle::setPitch, [](MusicHandle& h, float p)
-	                                {
-		                                h.setPitch(p);
-	                                }),
-	                                "setVolume",
-	                                sol::overload(&MusicHandle::setVolume, [](MusicHandle& h, float p)
-	                                {
-		                                h.setVolume(p);
-	                                }),
-	                                "pause", &MusicHandle::pause,
-	                                "open", &MusicHandle::open,
-	                                "setLoop", &MusicHandle::setLoop,
-	                                "isPlaying", &MusicHandle::isPlaying
-	);
+		"play", sol::overload(&MusicHandle::play, [](MusicHandle& h) { h.play(); }),
+		"stop", sol::overload(&MusicHandle::stop, [](MusicHandle& h) { h.stop(); }),
+		"setPitch", sol::overload(&MusicHandle::setPitch, [](MusicHandle& h, float p)
+			{
+				h.setPitch(p);
+			}),
+		"setVolume",
+				sol::overload(&MusicHandle::setVolume, [](MusicHandle& h, float p)
+					{
+						h.setVolume(p);
+					}),
+				"pause", &MusicHandle::pause,
+						"open", &MusicHandle::open,
+						"setLoop", &MusicHandle::setLoop,
+						"isPlaying", &MusicHandle::isPlaying
+						);
 
 	lua_register(state.lua_state(), "playSound", playSound);
 	lua_register(state.lua_state(), "playMusic", playMusic);
@@ -209,29 +209,29 @@ static void bindNBT(sol::state& state)
 	namespac["T_NULL"] = NBT::NBTType::T_NULL;
 
 	state.new_usertype<NBT>("NBT",
-	                        sol::constructors<NBT()>(),
-	                        "isArray", &NBT::isArray,
-	                        "isMap", &NBT::isMap,
-	                        "isBool", &NBT::isBool,
-	                        "isContainer", &NBT::isContainer,
-	                        "isFloat", &NBT::isFloat,
-	                        "isInt", &NBT::isInt,
-	                        "isNull", &NBT::isNull,
-	                        "isNumber", &NBT::isNumber,
-	                        "isString", &NBT::isString,
-	                        "isUInt", &NBT::isUInt,
-	                        "toNumber", [](NBT& t) { return (double)t; },
-	                        "toString", [](NBT& t) { return t.string(); },
-	                        "toBool", [](NBT& t) { return (bool)t; },
-	                        "toVec2", [](NBT& t) { return (glm::vec2)t; },
-	                        "arrays", [](NBT& t) { return t.arrays(); },
-	                        "maps", [](NBT& t) { return t.maps(); },
-	                        sol::meta_method::new_index, &nbtNewIndex,
-	                        sol::meta_method::index, &nbtIndex,
-	                        "nbt", &nbtRetrieve,
-	                        "getValue", &nbtGetValue,
-	                        "setValue", &nbtSetValue	
-	);
+		sol::constructors<NBT()>(),
+		"isArray", &NBT::isArray,
+		"isMap", &NBT::isMap,
+		"isBool", &NBT::isBool,
+		"isContainer", &NBT::isContainer,
+		"isFloat", &NBT::isFloat,
+		"isInt", &NBT::isInt,
+		"isNull", &NBT::isNull,
+		"isNumber", &NBT::isNumber,
+		"isString", &NBT::isString,
+		"isUInt", &NBT::isUInt,
+		"toNumber", [](NBT& t) { return (double)t; },
+		"toString", [](NBT& t) { return t.string(); },
+		"toBool", [](NBT& t) { return (bool)t; },
+		"toVec2", [](NBT& t) { return (glm::vec2)t; },
+		"arrays", [](NBT& t) { return t.arrays(); },
+		"maps", [](NBT& t) { return t.maps(); },
+		sol::meta_method::new_index, &nbtNewIndex,
+		sol::meta_method::index, &nbtIndex,
+		"nbt", &nbtRetrieve,
+		"getValue", &nbtGetValue,
+		"setValue", &nbtSetValue
+		);
 }
 
 //sets current nbt's value (use nil to erase it to T_NULL)
@@ -422,29 +422,29 @@ static int nbtNewIndex(lua_State* L)
 			nbt[index] = lua_toboolean(L, INDEX);
 			break;
 		case LUA_TNIL:
-			{
-				if (index < nbt.size())
-					nbt[index] = NBT();
-			}
-			break;
+		{
+			if (index < nbt.size())
+				nbt[index] = NBT();
+		}
+		break;
 		case LUA_TUSERDATA:
+		{
+			if (sol::stack::check_usertype<NBT>(L, INDEX))
 			{
-				if (sol::stack::check_usertype<NBT>(L, INDEX))
-				{
-					nbt[index] = sol::stack::get_usertype<NBT>(L, INDEX);
-				}
-				else
-				{
-					return luaL_error(L, "LUA Invalid type passed to nbt");
-				}
+				nbt[index] = sol::stack::get_usertype<NBT>(L, INDEX);
 			}
-			break;
+			else
+			{
+				return luaL_error(L, "LUA Invalid type passed to nbt");
+			}
+		}
+		break;
 		default:
 			ND_WARN("LUA Invalid type passed to nbt");
 			break;
 		}
 	}
-		//map access
+	//map access
 	else if (type == LUA_TSTRING && lua_isstring(L, 2))
 	{
 		std::string key = lua_tostring(L, 2);
@@ -465,25 +465,25 @@ static int nbtNewIndex(lua_State* L)
 			nbt[key] = lua_toboolean(L, INDEX);
 			break;
 		case LUA_TNIL:
-			{
-				auto it = nbt.maps().find(key);
-				if (it != nbt.maps().end())
-					nbt.maps().erase(it);
-			}
-			break;
+		{
+			auto it = nbt.maps().find(key);
+			if (it != nbt.maps().end())
+				nbt.maps().erase(it);
+		}
+		break;
 		case LUA_TUSERDATA:
+		{
+			if (sol::stack::check_usertype<NBT>(L, INDEX))
 			{
-				if (sol::stack::check_usertype<NBT>(L, INDEX))
-				{
-					auto e  = sol::stack::get_usertype<NBT>(L, INDEX);
-					nbt[key] = e;
-				}
-				else
-				{
-					return luaL_error(L, "LUA Invalid type passed to nbt");
-				}
+				auto e = sol::stack::get_usertype<NBT>(L, INDEX);
+				nbt[key] = e;
 			}
-			break;
+			else
+			{
+				return luaL_error(L, "LUA Invalid type passed to nbt");
+			}
+		}
+		break;
 		default:
 			ND_WARN("LUA Invalid type passed to nbt");
 			break;
@@ -492,13 +492,13 @@ static int nbtNewIndex(lua_State* L)
 	return 0;
 }
 
-#ifdef BIND_LUA_GUI_HANDLESS
+#ifdef BIND_LUA_GUI_HANDLES
 template<typename T>
 static T* guiCaster(GUIElement* pointer) noexcept
 {
 	return dynamic_cast<T*>(pointer);
 }
-template<typename T,typename... Args>
+template<typename T, typename... Args>
 static T* nue(Args&&... args) noexcept
 {
 	return new T(std::forward<Args>(args)...);
@@ -507,7 +507,7 @@ static T* nue(Args&&... args) noexcept
 		state.set_function(#className, &nue<className, __VA_ARGS__>);
 #define ND_LUASOL_EXTERNAL_CON(className)\
 		state.set_function(#className, &nue<className>);
-	
+
 static void bindGUIElements(sol::state& state)
 {
 	{
@@ -562,7 +562,7 @@ static void bindGUIElements(sol::state& state)
 	}
 	{
 
-		
+
 
 		state["GUI_LEFT"] = GUI_LEFT;
 		state["GUI_RIGHT"] = GUI_RIGHT;
@@ -570,7 +570,7 @@ static void bindGUIElements(sol::state& state)
 		state["GUI_BOTTOM"] = GUI_BOTTOM;
 	}
 
-	
+
 	state.new_usertype<GUIElement>("GUIElementClass", sol::no_constructor,
 		"x", &GUIElement::x,
 		"y", &GUIElement::y,
@@ -585,7 +585,7 @@ static void bindGUIElements(sol::state& state)
 		"dimInherit", &GUIElement::dimInherit,
 		"color", &GUIElement::color,
 		"clas", &GUIElement::clas,
-		"id",sol::readonly(&GUIElement::id),//should be readonly so
+		"id", sol::readonly(&GUIElement::id),//should be readonly so
 		"color", &GUIElement::color,
 		"isEnabled", &GUIElement::isEnabled,
 		"renderAngle", &GUIElement::renderAngle,
@@ -593,7 +593,7 @@ static void bindGUIElements(sol::state& state)
 		"isNotSpatial", &GUIElement::isNotSpatial,
 		"isAlwaysPacked", &GUIElement::isAlwaysPacked,
 		"space", &GUIElement::space,
-		"type", sol::readonly(&GUIElement::type),	
+		"type", sol::readonly(&GUIElement::type),
 		"isDirty", &GUIElement::isDirty,
 		"setPadding", &GUIElement::setPadding,
 		"hasFocus", &GUIElement::hasFocus,
@@ -614,109 +614,109 @@ static void bindGUIElements(sol::state& state)
 		"hasChild", &GUIElement::hasChild,
 		"takeChild", &GUIElement::takeChild
 		);
-	
+
 	state.new_usertype<GUIBlank>("GUIBlankClass", sol::no_constructor, sol::base_classes, sol::bases<GUIElement>()
 		);
 	ND_LUASOL_EXTERNAL_CON(GUIBlank);
-	
+
 	state.new_usertype<GUIText>("GUITextClass", sol::no_constructor, sol::base_classes, sol::bases<GUIElement>(),
-		"text",sol::property(&GUIText::getText, &GUIText::setText),
+		"text", sol::property(&GUIText::getText, &GUIText::setText),
 		"fontMaterial", &GUIText::fontMaterial
 		);
 	ND_LUASOL_EXTERNAL_CONS(GUIText, FontMaterial*);
-	
+
 	state.new_usertype<GUIButton>("GUIButtonClass", sol::no_constructor, sol::base_classes, sol::bases<GUIElement>(),
 		"soundFocus", &GUIButton::soundFocus,
 		"soundVolume", &GUIButton::soundVolume,
 		"soundClick", &GUIButton::soundClick
 		);
 	ND_LUASOL_EXTERNAL_CON(GUIButton);
-	
+
 	state.new_usertype<GUIImage>("GUIImageClass", sol::no_constructor, sol::base_classes, sol::bases<GUIElement>(),
 		"image", &GUIImage::image,
 		"scale", &GUIImage::scale,
 		"setImage", &GUIImage::setImage
 		);
 	ND_LUASOL_EXTERNAL_CON(GUIImage);
-	
+
 	state.new_usertype<GUIWindow>("GUIWindowClass", sol::no_constructor, sol::base_classes, sol::bases<GUIElement>(),
 		"isMoveable", &GUIWindow::isMoveable,
 		"isResizable", &GUIWindow::isResizable
 		);
 	ND_LUASOL_EXTERNAL_CONS(GUIWindow);
-	
+
 	state.new_usertype<GUITextBox>("GUITextBoxClass", sol::no_constructor, sol::base_classes, sol::bases<GUIElement>(),
 		"fontMaterial", &GUITextBox::fontMaterial,
 		"setGainFocus", &GUITextBox::setGainFocus,
 		"text", sol::property(&GUITextBox::getValue, &GUITextBox::setValue)
 		);
 	ND_LUASOL_EXTERNAL_CON(GUITextBox);
-	
+
 	state.new_usertype<GUICheckBox>("GUICheckBoxClass", sol::no_constructor, sol::base_classes, sol::bases<GUIElement>(),
-		"value",sol::property(&GUICheckBox::getValue, &GUICheckBox::setValue),
+		"value", sol::property(&GUICheckBox::getValue, &GUICheckBox::setValue),
 		"setText", [](GUICheckBox& e, const std::string& trueText, const std::string& falseText) {e.setText(trueText, falseText); }
-		);
+	);
 	ND_LUASOL_EXTERNAL_CON(GUICheckBox);
-	
-	state.new_usertype<GUIColumn>("GUIColumnClass", 
+
+	state.new_usertype<GUIColumn>("GUIColumnClass",
 		sol::no_constructor,
 		sol::base_classes, sol::bases<GUIElement>()
 		);
-	state.set_function("GUIColumn", sol::overload(&nue<GUIColumn>, &nue<GUIColumn,GUIAlign>));
-	
-	state.new_usertype<GUIRow>("GUIRowClass", sol::no_constructor,sol::base_classes, sol::bases<GUIElement>()
+	state.set_function("GUIColumn", sol::overload(&nue<GUIColumn>, &nue<GUIColumn, GUIAlign>));
+
+	state.new_usertype<GUIRow>("GUIRowClass", sol::no_constructor, sol::base_classes, sol::bases<GUIElement>()
 		);
-	ND_LUASOL_EXTERNAL_CONS(GUIRow,GUIAlign);
-	
+	ND_LUASOL_EXTERNAL_CONS(GUIRow, GUIAlign);
+
 	state.new_usertype<GUIGrid>("GUIGridClass", sol::no_constructor, sol::base_classes, sol::bases<GUIElement>()
 		);
 	ND_LUASOL_EXTERNAL_CON(GUIGrid);
-	
+
 	state.new_usertype<GUIHorizontalSplit>("GUIHorizontalSplitClass", sol::no_constructor, sol::base_classes, sol::bases<GUIElement>(),
 		"getUpChild", &GUIHorizontalSplit::getUpChild,
 		"getDownChild", &GUIHorizontalSplit::getDownChild
 		);
 	ND_LUASOL_EXTERNAL_CONS(GUIHorizontalSplit, bool);
-	
+
 	state.new_usertype<GUIVerticalSplit>("GUIVerticalSplitClass", sol::no_constructor, sol::base_classes, sol::bases<GUIElement>(),
 		"getRightChild", &GUIVerticalSplit::getRightChild,
 		"getLeftChild", &GUIVerticalSplit::getLeftChild
 		);
 	ND_LUASOL_EXTERNAL_CONS(GUIVerticalSplit, bool);
-	
+
 	state.new_usertype<GUISlider>("GUISliderClass", sol::no_constructor, sol::base_classes, sol::bases<GUIElement>()
 		);
 	ND_LUASOL_EXTERNAL_CON(GUISlider);
-	
+
 	state.new_usertype<GUIVSlider>("GUIVSliderClass", sol::no_constructor, sol::base_classes, sol::bases<GUIElement>()
 		);
 	ND_LUASOL_EXTERNAL_CON(GUIVSlider);
-	
+
 	state.new_usertype<GUIHSlider>("GUIHSliderClass", sol::no_constructor, sol::base_classes, sol::bases<GUIElement>()
 		);
 	ND_LUASOL_EXTERNAL_CON(GUIHSlider);
-	
+
 	state.new_usertype<GUIView>("GUIViewClass", sol::no_constructor, sol::base_classes, sol::bases<GUIElement>()
 		);
 	ND_LUASOL_EXTERNAL_CON(GUIView);
-	
+
 	state.new_usertype<GUITextButton>("GUITextButtonClass", sol::no_constructor, sol::base_classes, sol::bases<GUIElement>()
 		);
 	ND_LUASOL_EXTERNAL_CONS(GUITextButton, const std::string&, FontMaterial*);
 
-	
+
 	state.new_usertype<GUIImageButton>("GUIImageButtonClass", sol::no_constructor, sol::base_classes, sol::bases<GUIElement>()
 
 		);
 	//ND_LUASOL_EXTERNAL_CONS(GUIImageButton,Sprite*);
-	
+
 	state.new_usertype<GUISpecialTextButton>("GUISpecialTextButtonClass", sol::no_constructor,
-		sol::base_classes, sol::bases<GUIElement,GUIButton,GUITextButton>(),
-	
-		"currentScale",&GUISpecialTextButton::currentScale,
-		"minScale",&GUISpecialTextButton::minScale,
-		"maxScale",&GUISpecialTextButton::maxScale,
-		"animationSpeed",&GUISpecialTextButton::animationSpeed
+		sol::base_classes, sol::bases<GUIElement, GUIButton, GUITextButton>(),
+
+		"currentScale", &GUISpecialTextButton::currentScale,
+		"minScale", &GUISpecialTextButton::minScale,
+		"maxScale", &GUISpecialTextButton::maxScale,
+		"animationSpeed", &GUISpecialTextButton::animationSpeed
 		);
 	ND_LUASOL_EXTERNAL_CONS(GUISpecialTextButton, const std::string&, FontMaterial*);
 }
@@ -746,7 +746,7 @@ static void bindGUICast(sol::state& state)
 
 static void bindGUIContext(sol::state& state)
 {
-	
+
 	auto namespac = state["GUIContext"].get_or_create<sol::table>();
 
 	namespac.set_function("openWindow", [](GUIWindow& window) {GUIContext::get().openWindow(&window); });
@@ -758,10 +758,10 @@ static void bindGUIContext(sol::state& state)
 static void bindFontMaterial(sol::state& state)
 {
 	state.new_usertype<FontMaterial>("FontMaterial",
-	                                 sol::no_constructor,
-	                                 "color", &FontMaterial::color,
-	                                 "border_color", &FontMaterial::border_color
-	);
+		sol::no_constructor,
+		"color", &FontMaterial::color,
+		"border_color", &FontMaterial::border_color
+		);
 	auto namespac = state["FontMatLib"].get_or_create<sol::table>();
 
 	namespac.set_function("getMaterial", &FontMatLib::getMaterial);

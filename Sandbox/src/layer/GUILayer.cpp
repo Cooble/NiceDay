@@ -193,9 +193,10 @@ void GUILayer::onUpdate()
 
 void GUILayer::onRender()
 {
-	m_renderer.begin();
+	m_renderer.begin(Renderer::getDefaultFBO());
+	Gcon.enableDepthTest(true);
 	if (m_background_enable)
-		m_renderer.submitTextureQuad({-1, -1.f, 0}, {2.f, 2}, UVQuad::elementary(), m_background);
+		m_renderer.submitTextureQuad({-1, -1.f, 0.9}, {2.f, 2}, UVQuad::elementary(), m_background);
 	m_renderer.push(
 		glm::translate(
 			glm::mat4(1.f),
@@ -204,6 +205,7 @@ void GUILayer::onRender()
 		glm::scale(
 			glm::mat4(1.f),
 			{2.f / App::get().getWindow()->getWidth(), 2.f / App::get().getWindow()->getHeight(), 1}));
+	//todo gui renderer does not need depth test possibly?
 	m_gui_renderer.render(m_renderer);
 	m_renderer.flush();
 	m_renderer.pop();

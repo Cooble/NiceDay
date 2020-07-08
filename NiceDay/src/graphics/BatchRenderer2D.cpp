@@ -2,6 +2,7 @@
 #include "BatchRenderer2D.h"
 #include "Renderable2D.h"
 #include "API/Texture.h"
+#include "API/FrameBuffer.h"
 #include "GContext.h"
 #include "font/TextBuilder.h"
 #include "FontMaterial.h"
@@ -145,8 +146,12 @@ int BatchRenderer2D::bindTexture(const Texture* t)
 }
 
 
-void BatchRenderer2D::begin()
+
+void BatchRenderer2D::begin(FrameBuffer* fbo)
 {
+	if(fbo)
+		m_fbo = fbo;
+	ASSERT(m_fbo, "Renderer Target must be specified");
 	beginQuad();
 	beginText();
 	
@@ -300,7 +305,7 @@ void BatchRenderer2D::submitTextureQuad(const glm::vec3& pos,const glm::vec2& si
 	if (m_indices_count == MAX_INDICES)
 	{
 		flush();
-		begin();
+		begin(m_fbo);
 	}
 
 
@@ -404,6 +409,7 @@ void BatchRenderer2D::submitText(const TextMesh& mesh, const FontMaterial* mater
 
 void BatchRenderer2D::flush()
 {
+	m_fbo->bind();
 	flushQuad();
 	flushText();
 }

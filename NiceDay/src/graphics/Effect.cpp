@@ -5,17 +5,18 @@
 #include "core/App.h"
 
 
-void Effect::renderDefault()
+void Effect::renderDefaultVAO()
 {
 	s_vao->bind();
 	GLCall(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
 }
 
-void Effect::renderToCurrentFBO(Texture* t)
+void Effect::render(const Texture* t, FrameBuffer* fbo)
 {
+	fbo->bind();
 	s_shader->bind();
 	t->bind(0);
-	renderDefault();
+	renderDefaultVAO();
 }
 
 FrameBufferTexturePair::FrameBufferTexturePair(Texture* t)
@@ -54,15 +55,25 @@ SingleTextureEffect::SingleTextureEffect(const TextureInfo& targetTexture)
 {
 	m_output_texture = Texture::create(targetTexture);
 	m_fbo = FrameBuffer::create();
-	m_fbo->bind();
 	m_fbo->attachTexture(m_output_texture->getID(), 0);
-	m_fbo->unbind();
 }
 
 SingleTextureEffect::~SingleTextureEffect()
 {
 	delete m_output_texture;
 	delete m_fbo;
+}
+
+void SingleTextureEffect::defaultBind()
+{
+	m_fbo->bind();
+	Gcon.setViewport(m_output_texture->getWidth(), m_output_texture->getHeight());
+}
+
+void SingleTextureEffect::defaultUnbind()
+{
+	m_fbo->unbind();
+	Gcon.setViewport(App::get().getWindow()->getWidth(), App::get().getWindow()->getHeight());
 }
 
 AlphaMaskEffect::AlphaMaskEffect(const TextureInfo& targetTexture)
@@ -77,15 +88,15 @@ void AlphaMaskEffect::render(const Texture* t, bool toFBO)
 
 	if (toFBO) {
 		m_fbo->bind();
-		Gcon.clear(COLOR_BUFFER_BIT);
+		Gcon.clear(BuffBit::COLOR);
 		Gcon.disableBlend();
 		Gcon.setViewport(m_output_texture->getWidth(), m_output_texture->getHeight());
-		Effect::renderDefault();
+		Effect::renderDefaultVAO();
 		m_fbo->unbind();
 		Gcon.setViewport(App::get().getWindow()->getWidth(), App::get().getWindow()->getHeight());
 	}
 	else
-		Effect::renderDefault();
+		Effect::renderDefaultVAO();
 }
 
 ScaleEdgesEffect::ScaleEdgesEffect(const TextureInfo& targetTexture)
@@ -101,15 +112,15 @@ void ScaleEdgesEffect::render(const Texture* t, float scale, bool toFBO)
 
 	if (toFBO) {
 		m_fbo->bind();
-		Gcon.clear(COLOR_BUFFER_BIT);
+		Gcon.clear(BuffBit::COLOR);
 		Gcon.disableBlend();
 		Gcon.setViewport(m_output_texture->getWidth(), m_output_texture->getHeight());
-		Effect::renderDefault();
+		Effect::renderDefaultVAO();
 		m_fbo->unbind();
 		Gcon.setViewport(App::get().getWindow()->getWidth(), App::get().getWindow()->getHeight());
 	}
 	else
-		Effect::renderDefault();
+		Effect::renderDefaultVAO();
 	getShader()->unbind();
 
 
@@ -128,15 +139,86 @@ void GreenFilter::render(const Texture* t, bool toFBO)
 	if (toFBO) {
 		m_fbo->bind();
 		Gcon.setViewport(m_output_texture->getWidth(), m_output_texture->getHeight());
-		Effect::renderDefault();
+		Effect::renderDefaultVAO();
 		m_fbo->unbind();
 		Gcon.setViewport(App::get().getWindow()->getWidth(), App::get().getWindow()->getHeight());
 	}
 	else
-		Effect::renderDefault();
+		Effect::renderDefaultVAO();
 	
 
 
+}
+
+FrameBufferPingPong::FrameBufferPingPong(const TextureInfo& info)
+{
+	for (int i = 0; i < 2; ++i)
+	{
+		m_textures[i] = Texture::create(info);
+		m_fbos[i] = FrameBuffer::create();
+		m_fbos[i]->bind();
+		m_fbos[i]->attachTexture(m_textures[i]->getID(), 0);
+		m_fbos[i]->unbind();
+		
+	}
+}
+
+Texture* FrameBufferPingPong::getOutputTexture()
+{
+	return m_textures[m_currentRenderTarget];
+}
+
+void FrameBufferPingPong::bind()
+{
+	m_fbos[m_currentRenderTarget]->bind();
+	Gcon.setViewport(m_textures[0]->getWidth(), m_textures[0]->getHeight());
+
+#ifdef ND_DEBUG
+	isBounded = true;
+#endif
+}
+
+void FrameBufferPingPong::flip()
+{
+#ifdef ND_DEBUG
+	ASSERT(isBounded, "Framebuffer Must be bounded!");
+#endif
+	m_currentRenderTarget = (m_currentRenderTarget + 1) & 1;
+	m_fbos[m_currentRenderTarget]->bind();
+	
+}
+
+void FrameBufferPingPong::unbind()
+{
+	m_fbos[m_currentRenderTarget]->unbind();
+	Gcon.setViewport(App::get().getWindow()->getWidth(), App::get().getWindow()->getHeight());
+
+#ifdef ND_DEBUG
+	isBounded = false;
+#endif
+}
+
+void Effecto::Blurer::blur(FrameBufferPingPong& fbos, Texture* input, int repeats)
+{
+	getShader()->bind();
+	dynamic_cast<GLShader*>(getShader())->setUniform2f("u_pixel_size", 1.f / input->getWidth(), 1.f / input->getHeight());
+	Effect::getDefaultVAO().bind();
+	fbos.bind();
+
+	for (int i = 0; i < repeats*2; ++i)
+	{
+		bool horizontal = i & 1;
+		dynamic_cast<GLShader*>(getShader())->setUniform1i("u_horizontal", (int)horizontal);
+
+		input->bind(0);
+		
+		Gcon.cmdDrawArrays(Topology::TRIANGLE_STRIP, 4);
+		input = fbos.getOutputTexture();
+
+		if(i!=repeats*2-1)
+			fbos.flip();
+	}
+	fbos.unbind();
 }
 
 HorizontalBlur::HorizontalBlur(const TextureInfo& targetTexture)
@@ -153,15 +235,15 @@ void HorizontalBlur::render(const Texture* t, bool toFBO)
 
 	if (toFBO) {
 		m_fbo->bind();
-		Gcon.clear(COLOR_BUFFER_BIT);
+		Gcon.clear(BuffBit::COLOR);
 		Gcon.setViewport(m_output_texture->getWidth(), m_output_texture->getHeight());
-		Effect::renderDefault();
+		Effect::renderDefaultVAO();
 		m_fbo->unbind();
 		Gcon.setViewport(App::get().getWindow()->getWidth(), App::get().getWindow()->getHeight());
 
 	}
 	else
-		Effect::renderDefault();
+		Effect::renderDefaultVAO();
 
 }
 
@@ -179,15 +261,13 @@ void VerticalBlur::render(const Texture* t, bool toFBO)
 
 	if (toFBO) {
 		m_fbo->bind();
-		Gcon.clear(COLOR_BUFFER_BIT);
+		Gcon.clear(BuffBit::COLOR);
 		Gcon.setViewport(m_output_texture->getWidth(), m_output_texture->getHeight());
-		Effect::renderDefault();
+		Effect::renderDefaultVAO();
 		m_fbo->unbind();
-		Gcon.setViewport(App::get().getWindow()->getWidth(), App::get().getWindow()->getHeight());
-
 	}
 	else
-		Effect::renderDefault();
+		Effect::renderDefaultVAO();
 }
 
 GaussianBlur::GaussianBlur(const TextureInfo& targetTexture)

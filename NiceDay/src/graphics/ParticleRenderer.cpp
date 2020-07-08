@@ -5,6 +5,7 @@
 #include "platform/OpenGL/GLRenderer.h"
 #include "API/Shader.h"
 #include "API/Buffer.h"
+#include "API/FrameBuffer.h"
 #include "API/VertexArray.h"
 #include "platform/OpenGL/GLShader.h"
 
@@ -108,8 +109,11 @@ int ParticleRenderer::bindTexture(const Texture* t)
 	return bindTexture(t);
 }
 
-void ParticleRenderer::begin()
+void ParticleRenderer::begin(FrameBuffer* fbo)
 {
+	if(fbo)
+		m_fbo = fbo;
+	ASSERT(m_fbo, "Renderer Target must be specified");
 	m_indices_count = 0;
 	m_textures.clear();
 #if USE_MAP_BUF
@@ -174,6 +178,8 @@ void ParticleRenderer::submit(const glm::vec3& pos,const glm::vec2& size,const U
 
 void ParticleRenderer::flush()
 {
+	m_fbo->bind();
+	
 #if USE_MAP_BUF
 	m_vbo->unMapPointer();
 #else

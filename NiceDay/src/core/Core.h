@@ -13,7 +13,7 @@
 #define BIT(x) (1 << (x))
 
 #define SET_BIT(val, index, value)\
-	(value?val | BIT(index):val & ~BIT(index))
+	((value)?(val) | BIT(index):(val) & ~BIT(index))
 
 class TimerStaper
 {
@@ -22,7 +22,7 @@ private:
 	std::string namee;
 	bool stop;
 public:
-	TimerStaper(std::string name);
+	TimerStaper(std::string&& name);
 
 	inline void time(const std::string& s = "");
 	inline long long getUS();
@@ -35,7 +35,7 @@ public:
 	}
 };
 
-inline TimerStaper::TimerStaper(std::string name): namee(std::move(name)),
+inline TimerStaper::TimerStaper(std::string&& name): namee(std::move(name)),
                                        stop(false)
 {
 	start = std::chrono::high_resolution_clock::now();
@@ -72,7 +72,7 @@ public:
 inline std::string ResourceMan::getResourceLoc(const std::string& resPath)
 {
 
-	if (resPath._Starts_with("res") || resPath._Starts_with("/res"))
+	if (SUtil::startsWith(resPath,"res") || SUtil::startsWith(resPath, "/res"))
 	{
 		auto currentDir = std::filesystem::current_path();
 		currentDir = currentDir.parent_path();
@@ -82,14 +82,7 @@ inline std::string ResourceMan::getResourceLoc(const std::string& resPath)
 }
 /*inline const char* ResourceMan::getResourceLoc(const char* resPath)
 {
-	std::string resPathh = resPath;
-	if (resPathh._Starts_with("res") || resPathh._Starts_with("/res"))
-	{
-		auto currentDir = std::filesystem::current_path();
-		currentDir = currentDir.parent_path();
-		return (currentDir.string() + "/" + resPathh).c_str();
-	}
-	return resPath;
+	
 }*/
 
 

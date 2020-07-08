@@ -6,10 +6,10 @@ class Event {
 public:
 	enum class EventType {
 		WindowClose,WindowResize,
-		MousePress, MouseRelease, MouseScroll,MouseMove, MouseFocusGain, MouseFocusLost, MouseDrag,
+		MousePress, MouseRelease, MouseScroll,MouseMove, MouseFocusGain, MouseFocusLost, MouseDrag, MouseEnter,
 		KeyPress,KeyRelease,KeyType,
-		Message
-		
+		Message,
+		Drop
 	};
 	enum EventCategory {
 		None = 0,

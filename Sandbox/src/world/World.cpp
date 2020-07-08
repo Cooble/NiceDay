@@ -1222,7 +1222,7 @@ nd::temp_vector<WorldEntity*> World::getEntitiesInRadius(const glm::vec2& pos, f
 		auto t = m_entity_manager.entity(entity);
 		if (t == nullptr)
 		{
-			ERROR("Invalid entity id in m_entity_array");
+			ND_ERROR("Invalid entity id in m_entity_array");
 		}
 		if (glm::distance2(t->getPosition(), pos) < (radius * radius))
 		{

@@ -88,7 +88,8 @@ static unsigned int compileShader(unsigned int type, const std::string& src)
 
 static unsigned int buildProgram(const Shader::ShaderProgramSources& src)
 {
-	GLCall(unsigned int program = glCreateProgram());
+	unsigned int program;
+	GLCall(program = glCreateProgram());
 	unsigned int vs = compileShader(GL_VERTEX_SHADER, src.vertexSrc);
 	unsigned int fs = compileShader(GL_FRAGMENT_SHADER, src.fragmentSrc);
 	unsigned int gs = 0;
@@ -157,6 +158,17 @@ void GLShader::setUniform4f(const std::string& name, float f0, float f1, float f
 void GLShader::setUniformVec4f(const std::string& name, const glm::vec4& vec)
 {
 	setUniform4f(name, vec[0], vec[1], vec[2], vec[3]);
+}
+
+void GLShader::setUniformVec3f(const std::string& name, const glm::vec3& vec)
+{
+	setUniform3f(name, vec[0], vec[1], vec[2]);
+}
+
+void GLShader::setUniform3f(const std::string& name, float f0, float f1, float f2)
+{
+	SHADER_CHECK_BOUNDIN;
+	GLCall(glUniform3f(getUniformLocation(name), f0, f1,f2));
 }
 
 

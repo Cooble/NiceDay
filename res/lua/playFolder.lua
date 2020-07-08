@@ -23,7 +23,7 @@ function playFolder(fileP)
                 s = Music()
                 s:open(value.path)
                 s:setVolume(0.5,0)             
-s:play(0)
+				s:play(0)
 				
                 ND_INFO("playing (" .. tostring(musicIndex) ..") ".. basename(value.path));
                 while(s:isPlaying()) do
@@ -34,6 +34,7 @@ s:play(0)
         end
      ::continue::
     end
+	ND_INFO("Done")
 end
 
 playFolder("D:/SteamLibrary/steamapps/common/Undertale/")

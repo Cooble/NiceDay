@@ -28,6 +28,7 @@
 
 //program specific
 #include "core/Log.h"
+#include "core/SUtil.h"
 #include "core/Core.h"
 #include "core/NDUtil.h"
 

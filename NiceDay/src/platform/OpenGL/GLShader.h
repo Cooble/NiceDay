@@ -34,9 +34,11 @@ public:
 	//Note you need to bind program first to be able to set uniforms
 	void setUniform4f(const std::string& name, float f0, float f1, float f2, float f3);
 	void setUniformVec4f(const std::string& name, const glm::vec4& vec);
+	void setUniformVec3f(const std::string& name, const glm::vec3& vec);
 	void setUniformMat4(const std::string& name, const glm::mat4& matrix);
 	void setUniform1f(const std::string& name, float f0);
 	void setUniform2f(const std::string& name, float f0, float f1);
+	void setUniform3f(const std::string& name, float f0, float f1,float f2);
 	void setUniform1i(const std::string& name, int v);
 	void setUniform1iv(const std::string& name, int count, int* v);
 	inline void setUniformVec2f(const std::string& name, const glm::vec2& v)

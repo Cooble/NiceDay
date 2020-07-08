@@ -1,17 +1,16 @@
 ﻿#pragma once
 #include "layer/Layer.h"
 
-
-class SoundLayer : public Layer
+class Scene;
+class SceneLayer:public Layer
 {
 private:
-	void* m_stream=nullptr;
+	Scene* m_scene;
 public:
-	SoundLayer();
-
 	void onAttach() override;
 	void onDetach() override;
 	void onUpdate() override;
+	void onRender() override;
 	void onImGuiRender() override;
-	
+	void onEvent(Event& e) override;
 };

@@ -44,3 +44,28 @@ public:
 };
 
 typedef std::function<void(MessageEvent&)> MessageConsumer;
+
+class DropFilesEvent:public Event
+{
+private:
+	int m_count;
+	const char** m_paths;
+public:
+	DropFilesEvent(int count, const char** paths) :
+		m_count(count), m_paths(paths)
+	{
+		
+	}
+	constexpr int count() const { return m_count; }
+	const char* getPath(int index) const
+	{
+		ASSERT(index < m_count, "Invalid index");
+		return m_paths[index];
+	}
+	
+
+	EVENT_TYPE_BUILD(Drop)
+	EVENT_CATEGORY_BUILD(Window)
+	EVENT_COPY(DropFilesEvent)
+
+};

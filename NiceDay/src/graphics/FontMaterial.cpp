@@ -21,7 +21,7 @@ FontMaterial* FontMatLib::getMaterial(const std::string& name)
 		s_fonts.emplace(name, FontMaterial());
 		FontMaterial& mat = s_fonts[name];
 		mat.font = font;
-		mat.texture = Texture::create(TextureInfo((name._Starts_with("res/fonts/")?"res/fonts/":"")+mat.font->texturePath).filterMode(TextureFilterMode::LINEAR));
+		mat.texture = Texture::create(TextureInfo((SUtil::startsWith(name,"res/fonts/")?"res/fonts/":"")+mat.font->texturePath).filterMode(TextureFilterMode::LINEAR));
 
 		mat.color = { 1, 1, 1, 1 };
 		mat.border_color = { 0, 0.1, 0.7, 1 };

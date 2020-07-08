@@ -51,7 +51,7 @@ public:
 
 	void setChar(int index, float x, float y, float x1, float y1,float u,float v,float u1,float v1 , uint32_t color, uint32_t borderColor, const Character& ch);
 	
-	inline int getVertexCount() const
+	int getVertexCount() const
 	{
 		return currentCharCount * 4;
 	}

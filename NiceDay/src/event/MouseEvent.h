@@ -24,6 +24,8 @@ public:
 	inline float getX() const { return m_x; }
 	inline float getY() const { return m_y; }
 	inline const glm::vec2& getPos() const { return m_pos; }
+	//for internal engine purposes (do not use)
+	void setPos(float x, float y) { m_x = x; m_y = y; }
 };
 
 class MouseScrollEvent : public MouseEvent
@@ -129,4 +131,20 @@ public:
 	EVENT_TYPE_BUILD(MouseRelease)
 	EVENT_CATEGORY_BUILD(Mouse | MouseKey)
 	EVENT_COPY(MouseReleaseEvent)
+};
+class MouseEnteredEvent : public MouseEvent
+{
+private:
+	bool m_entered;
+	int m_window_id;
+public:
+	MouseEnteredEvent(float x, float y, bool entered,int windowID = 0)
+	:MouseEvent(x,y),m_entered(entered),m_window_id(windowID){}
+	
+	constexpr bool hasEntered()const { return m_entered; }
+	constexpr int windowID()const { return m_window_id; }
+
+	EVENT_TYPE_BUILD(MouseEnter)
+	EVENT_CATEGORY_BUILD(Mouse)
+	EVENT_COPY(MouseEnteredEvent)
 };

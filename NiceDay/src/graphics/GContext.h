@@ -3,11 +3,13 @@
 
 #define Gcon GContext::get()
 
-enum BufferBit : unsigned int
-{
-	COLOR_BUFFER_BIT = GL_COLOR_BUFFER_BIT,
-	DEPTH_BUFFER_BIT = GL_DEPTH_BUFFER_BIT,
-};
+typedef unsigned int BufferBit;
+
+namespace BuffBit {
+	constexpr BufferBit COLOR = GL_COLOR_BUFFER_BIT;
+	constexpr BufferBit DEPTH = GL_DEPTH_BUFFER_BIT;
+}
+
 enum class Blend :unsigned int
 {
 	ZERO = GL_ZERO,
@@ -37,10 +39,11 @@ enum class BlendEquation :unsigned int
 };
 enum class Topology : unsigned int
 {
-	LINE=GL_LINE,
+	LINES=GL_LINES,
 	TRIANGLES = GL_TRIANGLES,
 	TRIANGLE_FAN = GL_TRIANGLE_FAN,
 	TRIANGLES_ADJACENCY = GL_TRIANGLES_ADJACENCY,
+	TRIANGLE_STRIP= GL_TRIANGLE_STRIP,
 };
 
 class GContext

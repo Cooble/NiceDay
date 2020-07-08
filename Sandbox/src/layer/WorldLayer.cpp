@@ -429,7 +429,7 @@ void WorldLayer::onUpdate()
 	float acc = 0.3f;
 	float moveThroughBlockSpeed = 6;
 
-	if (!ImGui::IsAnyItemActive()&&!GUIContext::isAnyItemActive())
+	if (!GUIContext::isAnyItemActive())
 	{
 		if (Stats::move_through_blocks_enable)
 		{
@@ -474,7 +474,7 @@ void WorldLayer::onCreativeUpdate()
 	bool tntenable = true;
 	constexpr int maxDeltaBum = 2;
 	static int deltaBum = 0;
-	if (!ImGui::IsMouseHoveringAnyWindow() && !ImGui::IsAnyItemActive() && !GUIContext::isAnyItemActive())
+	if (!GUIContext::isAnyItemActive())
 	{
 		if (App::get().getInput().isKeyPressed(Controls::SPAWN_TNT))
 		{
@@ -666,17 +666,18 @@ void WorldLayer::onRender()
 		m_render_manager->update();
 	}
 	//world
-	m_render_manager->render(*m_batch_renderer);
+	m_render_manager->render(*m_batch_renderer, Renderer::getDefaultFBO());
 	
 	//entities
-	m_render_manager->getEntityFBO()->bind();
-	Gcon.setClearColor(0, 0, 0, 0);
-	Gcon.clear(BufferBit::COLOR_BUFFER_BIT);
+	auto entityFbo = m_render_manager->getEntityFBO();
+	entityFbo->bind();
+	entityFbo->clear(BuffBit::COLOR, { 0,0,0,0 });
+	
 	Gcon.enableBlend();
 	Gcon.setBlendFunc(Blend::SRC_ALPHA, Blend::ONE_MINUS_SRC_ALPHA);
 	auto worldMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(-m_cam->getPosition().x, -m_cam->getPosition().y, 0));
 
-	m_batch_renderer->begin();
+	m_batch_renderer->begin(m_render_manager->getEntityFBO());
 	m_batch_renderer->push(m_render_manager->getProjMatrix() * worldMatrix);
 
 	for (auto it = m_world->beginEntities(); it != m_world->endEntities(); ++it)
@@ -689,19 +690,19 @@ void WorldLayer::onRender()
 
 	m_batch_renderer->pop();
 	m_batch_renderer->flush();
-	m_render_manager->applyLightMap(m_render_manager->getLightTextureBlur());
-	m_render_manager->getEntityFBO()->unbind();
-	
+	m_render_manager->applyLightMap(m_render_manager->getLightTextureBlur(),entityFbo);
+	entityFbo->unbind();
+
 	Gcon.enableBlend();
 	glDisable(GL_DEPTH_TEST);
 	Gcon.setBlendFunc(Blend::SRC_ALPHA, Blend::ONE_MINUS_SRC_ALPHA);
-	Effect::renderToCurrentFBO(m_render_manager->getEntityFBO()->getTexture());
+	Effect::render(m_render_manager->getEntityFBO()->getAttachment(),Renderer::getDefaultFBO());
 
 	{
 		ND_PROFILE_SCOPE("particle render");
 		//particles
 		//Gcon.enableDepthTest(true);
-		m_particle_renderer->begin();
+		m_particle_renderer->begin(Renderer::getDefaultFBO());
 		//m_particle_renderer->submit({ -1,-1,0 }, { 2,2 }, UVQuad::elementary(), UVQuad::elementary(), m_render_manager->getLightTextureSmooth(),0);
 		
 		m_particle_renderer->push(m_render_manager->getProjMatrix() * worldMatrix);
@@ -715,7 +716,6 @@ void WorldLayer::onRender()
 
 static bool showTelem = false;
 static bool showChunks = false;
-
 
 void WorldLayer::onImGuiRender()
 {

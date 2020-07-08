@@ -20,26 +20,43 @@ layout(location = 0) out vec4 color;
 in vec2 f_uv;
 
 uniform sampler2D u_attachment;
+uniform bool u_horizontal;
 uniform vec2 u_pixel_size;
 
-const vec2 gaussFilter[7] = vec2[]
+/*
+//this version was calculated by me
+const vec2 gaussFilter[5] = vec2[]
 (
-	vec2(-3.0,	0.015625),
-	vec2(-2.0,	0.09375),
-	vec2(-1.0,	0.234375),
-	vec2(0.0,	0.3125),
-	vec2(1.0,	0.234375),
-	vec2(2.0,	0.09375),
-	vec2(3.0,	0.015625)
-);
+	vec2(-3.111111, 0.03515625),
+	vec2(-1.333333, 0.328125),
+	vec2(0.0,		0.2734375),
+	vec2(1.333333,	0.328125),
+	vec2(3.111111, 0.03515625)
+	);*/
 
+const vec2 gaussFilter[5] = vec2[]
+(
+	vec2(-3.2307692308, 0.03515625),
+	vec2(-1.3846153846, 	0.328125),
+	vec2(0.0,		0.2734375),
+	vec2(1.3846153846, 	0.328125),
+	vec2(3.2307692308, 0.03515625)
+	);
+	
 void main()
 {
-	vec4 colorE = vec4(0,0,0,0);
-	for (int i = 0; i < 7; i++)
-	{
-		colorE += texture2D(u_attachment, vec2(f_uv.x + gaussFilter[i].x*u_pixel_size.x, f_uv.y + gaussFilter[i].x*u_pixel_size.y))*gaussFilter[i].y;
+	int size = 5;
+	color = vec4(0,0,0,1);
+	if (u_horizontal) {
+		for (int i = 0; i < size; i++)
+		{
+			color += texture2D(u_attachment, vec2(f_uv.x + gaussFilter[i].x * u_pixel_size.x, f_uv.y)) * gaussFilter[i].y;
+		}
 	}
-
-	color = colorE;
+	else{
+		for (int i = 0; i < size; i++)
+		{
+			color += texture2D(u_attachment, vec2(f_uv.x,f_uv.y + gaussFilter[i].x * u_pixel_size.y)) * gaussFilter[i].y;
+		}
+	}
 }
