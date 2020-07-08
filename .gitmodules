@@ -7,10 +7,6 @@
 [submodule "NiceDay/vendor/glm"]
 	path = NiceDay/vendor/glm
 	url = https://github.com/g-truc/glm.git
-[submodule "NiceDay/vendor/imgui"]
-	path = NiceDay/vendor/imgui
-	url = https://github.com/Cooble/imgui.git
-	branch = docking
 [submodule "NiceDay/vendor/luabind"]
 	path = NiceDay/vendor/luabind
 	url = https://github.com/Cooble/luabind.git
