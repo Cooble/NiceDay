@@ -81,7 +81,7 @@ public:
 		Gcon.setBlendEquation(BlendEquation::FUNC_ADD);
 		Gcon.setBlendFunc(Blend::SRC_ALPHA, Blend::ONE_MINUS_SRC_ALPHA);
 		
-		renderer2d->begin();
+		renderer2d->begin(Renderer::getDefaultFBO());
 		renderer2d->submitColorQuad(glm::vec3(0, 0, 0), glm::vec2(0.3f, 0.2f), glm::vec4(0, 1, 0, 1));
 		renderer2d->submit(m_sprite);
 		renderer2d->push(glm::scale(glm::mat4(1.f), glm::vec3(1.f / App::get().getWindow()->getWidth(), 1.f / App::get().getWindow()->getHeight(), 1)));

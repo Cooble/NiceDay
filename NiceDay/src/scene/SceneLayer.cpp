@@ -14,7 +14,7 @@ void SceneLayer::onAttach()
 {
 	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 	ImGuiIO& io = ImGui::GetIO();
-	io.Fonts->AddFontFromFileTTF(ND_RESLOC("res/fonts/OpenSans-Regular.ttf").c_str(), 20);
+	io.Fonts->AddFontFromFileTTF(ND_RESLOC("res/fonts/ignore/OpenSans-Regular.ttf").c_str(), 20);
 
 	//adding JP (merging with current font) -> nihongode ok kedo, mada nai to omou
 	/*ImFontConfig config;

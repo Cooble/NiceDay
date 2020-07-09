@@ -350,13 +350,13 @@ void ConsoleTestLayer::onRender()
 		fbos->flip();
 		//TimerStaper t("b");
 		Effecto::Blurer::blur(*fbos, outTex, blurAmount);
-		Effect::render(fbos->getOutputTexture());
+		//Effect::render(fbos->getOutputTexture(),);
 	}
 	else {
 		fbos->unbind();
 		Renderer::getDefaultFBO()->bind();
 		
-		Effect::render(outTex);
+		Effect::render(outTex, Renderer::getDefaultFBO());
 	}
 	Gcon.enableDepthTest(true);
 

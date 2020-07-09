@@ -98,7 +98,6 @@ project(NiceDay)
     # simple libs (no config needed and directory is same as target name)
     add_my_lib(glad)
     add_my_lib(imgui)
-    #add_my_lib(imguidocking)
     add_my_lib(lua)
 
     # == ogg
@@ -133,10 +132,12 @@ project(NiceDay)
     set(PA_DISABLE_INSTALL ON CACHE BOOL "" FORCE)
     add_my_lib(portaudio portaudio_static)
   
-    # == assimp
+    # == assimp    
     set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
     set(ASSIMP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+    set(ASSIMP_BUILD_ZLIB ON CACHE BOOL "" FORCE)
     set(ASSIMP_INSTALL OFF CACHE BOOL "" FORCE)
+    set(ASSIMP_BUILD_ASSIMP_TOOLS OFF CACHE BOOL "" FORCE)
     
     #enabling formats section:
     function(disableAssFormat)
@@ -160,8 +161,10 @@ project(NiceDay)
         OBJ
         )  
     add_my_lib(assimp)
+    #very important to change cxx_standard otherwise standard is 17 where certain things are deprecated and treated as error
+    set_property(TARGET assimp PROPERTY CXX_STANDARD 14) 
     set_target_properties(IrrXML PROPERTIES USE_FOLDERS ON FOLDER "vendor")
-    set_target_properties(assimp_cmd PROPERTIES USE_FOLDERS ON FOLDER "vendor")
+    #set_target_properties(assimp_cmd PROPERTIES USE_FOLDERS ON FOLDER "vendor")
     set_target_properties(UpdateAssimpLibsDebugSymbolsAndDLLs PROPERTIES USE_FOLDERS ON FOLDER "vendor")
     #set_target_properties(zlib PROPERTIES USE_FOLDERS ON FOLDER "vendor")
     set_target_properties(zlibstatic PROPERTIES USE_FOLDERS ON FOLDER "vendor")

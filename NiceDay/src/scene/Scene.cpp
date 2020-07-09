@@ -134,7 +134,6 @@ Scene::Scene()
 	}
 
 
-	return;
 	{
 		TimerStaper t("Loading of cubemap took");
 		//adding cube_map

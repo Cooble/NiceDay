@@ -163,7 +163,7 @@ public:
 		Gcon.setBlendEquation(BlendEquation::FUNC_ADD);
 		Gcon.setBlendFunc(Blend::SRC_ALPHA, Blend::ONE_MINUS_SRC_ALPHA);
 
-		g_batch_render->begin();
+		g_batch_render->begin(Renderer::getDefaultFBO());
 		g_batch_render->submit(*backSprite);
 		g_batch_render->push(
 			glm::translate(

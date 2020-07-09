@@ -17,7 +17,7 @@ App()
 {
 	AppInfo info;
 	info.title = s_title;
-	info.enableSCENE = false;
+	info.enableSCENE = true;
 	init(info);
 	Sprite2D::init();
 	Controls::init();
