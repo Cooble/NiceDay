@@ -97,8 +97,8 @@ project(NiceDay)
     
     # simple libs (no config needed and directory is same as target name)
     add_my_lib(glad)
-    #add_my_lib(imgui)
-    add_my_lib(imguidocking)
+    add_my_lib(imgui)
+    #add_my_lib(imguidocking)
     add_my_lib(lua)
 
     # == ogg
@@ -136,6 +136,7 @@ project(NiceDay)
     # == assimp
     set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
     set(ASSIMP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+    set(ASSIMP_INSTALL OFF CACHE BOOL "" FORCE)
     
     #enabling formats section:
     function(disableAssFormat)
@@ -162,7 +163,7 @@ project(NiceDay)
     set_target_properties(IrrXML PROPERTIES USE_FOLDERS ON FOLDER "vendor")
     set_target_properties(assimp_cmd PROPERTIES USE_FOLDERS ON FOLDER "vendor")
     set_target_properties(UpdateAssimpLibsDebugSymbolsAndDLLs PROPERTIES USE_FOLDERS ON FOLDER "vendor")
-    set_target_properties(zlib PROPERTIES USE_FOLDERS ON FOLDER "vendor")
+    #set_target_properties(zlib PROPERTIES USE_FOLDERS ON FOLDER "vendor")
     set_target_properties(zlibstatic PROPERTIES USE_FOLDERS ON FOLDER "vendor")
     set_target_properties(uninstall PROPERTIES USE_FOLDERS ON FOLDER "vendor")
     

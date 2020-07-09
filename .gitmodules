@@ -25,3 +25,10 @@
 [submodule "NiceDay/vendor/json"]
 	path = NiceDay/vendor/json
 	url = https://github.com/Cooble/Minimal_nlohmann_json.git
+[submodule "NiceDay/vendor/imgui"]
+	path = NiceDay/vendor/imgui
+	url = https://github.com/Cooble/imgui.git
+	branch = docking
+[submodule "NiceDay/vendor/assimp"]
+	path = NiceDay/vendor/assimp
+	url = https://github.com/Cooble/assimp.git
