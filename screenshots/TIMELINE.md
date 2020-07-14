@@ -9,41 +9,43 @@ Let's see how we're doing...
 - [Blocks, Walls, Background](#blocks-walls-background-26_05_2019)
 - [Colorful block corners, glass, procedural chunk generation](#colorful-block-corners-glass-procedural-chunk-generation-14_06_2019)
 - [Dynamic and Cached monochromatic lighting system](#dynamic-and-cached-monochromatic-lighting-system-19_06_2019)
-- [Multithreaded lights,  Inheritance Entity System](#multithreaded-lights--inheritance-entity-system-maybe-will-change-to-ecs-in-the-future22_07_2019)
+- [Multithreaded lights,  Inheritance Entity System](#multithreaded-lights--inheritance-entity-system-22_07_2019)
 - [Smooth wallLight vs edgy blockLight, Day/Night cycle](#smooth-walllight-vs-edgy-blocklight-daynight-cycle-12_08_2019)
 - [ParticleSystem, Trees, Flowers, PlayerSprite, Walking on steep floor, fullscreen](#particlesystem-trees-flowers-playersprite-walking-on-steep-floor-fullscreen-25_08_2019)  
 - [Basic GUI module in engine](#basic-gui-module-in-engine-13_11_2019)  
 - [Advanced GUI in engine](#advanced-gui-in-engine-23_11_2019)   
 - [Lua, Items and XMas](#lua-items-and-xmas-24_12_2019)  
 - [The Great Sound Update](#the-great-sound-update-28_04_2020)     
+- [JSONfication of Blocks, Docking](#jsonification-of-blocks-docking-14_07_2020)
 ## Pictured changelog:
 
-#### Basic tile render (03_05_2019)
+### Basic tile render (03_05_2019)
 ![Alt text](03_05_2019.png?raw=false "")
 
-#### Corner tile render (06_05_2019)
+### Corner tile render (06_05_2019)
 ![Alt text](06_05_2019.png?raw=false "")
 
-#### Lighting prototype with water-spill-algorithm (18_05_2019)
+### Lighting prototype with water-spill-algorithm (18_05_2019)
 ![Alt text](18_05_2019.png?raw=false "")
 
-#### Platforms, grass, sky (20_05_2019)
+### Platforms, grass, sky (20_05_2019)
 ![Alt text](20_05_2019.png?raw=false "")
 
-#### Blocks, Walls, Background (26_05_2019)
+### Blocks, Walls, Background (26_05_2019)
 ![Alt text](26_05_2019.png?raw=false "")
 
-#### Colorful block corners, glass, procedural chunk generation (14_06_2019)
+### Colorful block corners, glass, procedural chunk generation (14_06_2019)
 ![Alt text](14_06_2019.png?raw=false "")
 
-#### Dynamic and Cached monochromatic lighting system (19_06_2019)  
+### Dynamic and Cached monochromatic lighting system (19_06_2019)  
 - Cached lighting is only calculated onBlockChange  
 
 ![Alt text](19_06_2019.png?raw=false "")
 
-#### Multithreaded lights,  Inheritance Entity System (maybe will change to ECS in the future)(22_07_2019)  
+### Multithreaded lights,  Inheritance Entity System (22_07_2019)  
 - Added NBT to save and load entities. (No entity saving yet, though.)  
 - Added basic physics system with polygon collision detection.  
+- Maybe will change to ECS in the future
 
 In the pic: The first entity after Player was (who would have guessed...) TNT!  
 ![Alt Text](22_07_2019_00.gif?raw=false "")  
@@ -51,7 +53,7 @@ In the pic: The first entity after Player was (who would have guessed...) TNT!
 In the pic: red Zombie attacks black Player.  (and then mysteriously disappears up in the sky)  
 ![Alt Text](22_07_2019_01.gif?raw=false "")   
 
-#### Smooth wallLight vs edgy blockLight, Day/Night cycle (12_08_2019)  
+### Smooth wallLight vs edgy blockLight, Day/Night cycle (12_08_2019)  
 - Added dynamically created TextureAtlas.  
 - Added painting and multiblock structure support.  
 
@@ -59,7 +61,7 @@ In the pic: red Zombie attacks black Player.  (and then mysteriously disappears 
 Oh, shoot!   
 ![Alt Text](12_08_2019.gif?raw=false "") 
   
-#### ParticleSystem, Trees, Flowers, PlayerSprite, Walking on steep floor, fullscreen (25_08_2019)  
+### ParticleSystem, Trees, Flowers, PlayerSprite, Walking on steep floor, fullscreen (25_08_2019)  
 - Ability to walk on blocks which are 1high without jumping.     
 - Player has a walk animation.     
 - Added entity health bar.  
@@ -69,7 +71,7 @@ Oh, shoot!
 
 ![Alt text](25_08_2019.png?raw=false "")    
   
-#### Basic GUI module in engine (13_11_2019)  
+### Basic GUI module in engine (13_11_2019)  
 - in order to start with inventory, one must create some sort of GUI before...   
 - currently contains Windows (which can overlap), Label, Button, CheckBox, TextBox, HorizontalSlider and Image + layouts: (Column, Row, Grid)  
 - There is one GUIContext which cares about parent-child structure and events of GUIElements and GUIRenderer, which renders those elements  
@@ -79,7 +81,7 @@ Oh, shoot!
 
 ![Alt text](13_11_2019.png?raw=false "")  
 
-#### Advanced GUI in engine (23_11_2019)  
+### Advanced GUI in engine (23_11_2019)  
 - Added view, (which is rendered to another texture before being rendered on the screen)  
 - Better text render, added kerning!  
 - Vertical Slider  
@@ -89,7 +91,7 @@ Oh, shoot!
 
 ![Alt text](23_11_2019.gif?raw=false "")    
 
-#### Lua, Items and XMas (24_12_2019)  
+### Lua, Items and XMas (24_12_2019)  
 - Even though adding scripting language to the engine was in DEEP FUTURE plans, once I realized how easy it would be to just rewrite one text line, hit enter and spawn particles with slightly tweaked velocities instead of recompiling the whole game again I finally decided that that time had come. Ladies and gentlemen, Brace yourself for...
   ##### The Story of adding Lua:
   Adding lua itself was the easiest thing, simply add statically native lua lib and that was it, then I used ConsoleWindow template found in imgui_demo.cpp and suddenly I could use Lua console within the game itself :D
@@ -110,10 +112,10 @@ Oh, shoot!
 In the pic: ItemEntities circling around the player. You wouldn't have guessed how easy it is to get to the stable orbital position :D  
 ![Alt text](23_12_2019.gif?raw=false "ItemEntities circling around the player")  
   
-![Alt text](24_12_2019.png?raw=false "") 
+![Alt text](24_12_2019.png?raw=false "Player Inventory, Snowman") 
 
 
-#### The Great Sound Update (28_04_2020)  
+### The Great Sound Update (28_04_2020)  
 Well, it has been 5 months since last TIMELINE entry, but that doesn't mean that I haven't done anything, not even close!
 As it's obvious from the title Engine now finally has full Sound support. There are three main parts to this madness:
 1. **libogg** (for loading sound streams)
@@ -156,10 +158,10 @@ end
 playFolder("D:/SteamLibrary/steamapps/common/Undertale/") --quality content
 ```
 But wait! There's more!
-#### Sun, Moon and Stars
+### Sun, Moon and Stars
 It's unhealthy to stare directly into the sun. 
 
-![Alt text](28_04_2020_dayNight.gif?raw=false "") 
+![Alt text](28_04_2020_dayNight.gif?raw=false "Day Night Cycle") 
 
 And last but not least: The Whole project got ported from **premake** (which is awesome but nobody uses it) to **CMake** (with horrifying syntax but it works very well). To build the whole project only 2 commands need to be run:
 ```
@@ -169,4 +171,76 @@ And last but not least: The Whole project got ported from **premake** (which is 
 Also the project is finally checked by Travis to ensure that each commit is working. (that was actually the reason why I transfered to CMake in the first place)
 
 Listening to the **STATIC ON THE RADIO**
-![Alt text](28_04_2020.gif?raw=false "") 
+![Alt text](28_04_2020.gif?raw=false "Listening to the static on the radio") 
+
+### JSONification of Blocks, Docking (14_07_2020)
+The amount of data in blocks.cpp has become impossible to maintain.
+I decided to outsource the data to json files located in
+res/registry. There is no space in cpp code for that!
+To add new block, one no longer needs to write an entry in header file as
+well as cpp files.
+To add a new block:
+	1. add entry to blocks.ids (choose unique id for the block)
+	2. add json map object to blocks.json
+	3. fill the object with desired attributes (hardness,
+	lightSrc...)
+	4. CPP version can be still used nevertheless alongside with
+	json: just specify blank constructor with string block_id, all
+	of the attributes get copied from json file so one can focus solely
+	on overriding functions.
+  
+- Note:
+	CMake script automaticaly creates a special header file (from blocks.ids) that contains all
+	block ids as constexpr int constants like BLOCK_DIRT so it's
+	easy to use it in the code.
+  
+A block entry might look something like this:
+```
+ //note: added comment support even though JSON specs "forbid" it
+ "stone": {
+    "hardness": 2,
+    "hasBigTexture": true,
+    "connectGroups": "dirt",
+    "corners": "dirt"
+  },
+ "radio": {
+    "opacity": "air",
+    "collision": false,
+    "cannotFloat": true,
+    "multiBlock": {
+      "width": 2,
+      "height": 2
+    },
+    "tileEntity": "TileEntityRadio",
+    "flags": [ "burnable" ]
+  },
+  /* 
+  Multiliners are also OK, Yay!
+  */
+```  
+#### ImGui Docking
+Finally I've switched to docking branch of imgui which makes docking as well as multiple viewports possible.
+The imgui windows can be easily docked into the main window or can stay outside of it independently.
+I had to change `App::getWindow()` to return not neccessarily the physical glfw window but also a "fake" one which is just proxy for another imgui window.
+It depends on the app settings and can be switched off. (no docking no multi-viewports) 
+Also since the default OPENGL FBO doesn't have to be the default render target anymore, -> 
+##### (GL)FrameBuffer was completely redone:
+- No longer is just a shell for textures (attachments)
+- FrameBuffer has 3 modes: 
+    - `WINDOW_TARGET` (render directly to physical application window)
+    - `NORMAL_TARGET` with textures (has its own set of attachments which are created in the constructor)
+    - `NORMAL_TARGET_EXTERNAL_TEXTURES` (one needs to manually attach textures = same as before this change)
+ 
+When using FBOs the current approach is not to bind them but every
+time something is renderered simply pass them to renderer, This helps with
+troubleshooting to find which damned FBO I am rendering to right now. ('cause God bless OPENGL state machine)
+##### Also...
+- Added very crude scene support (which will be probably redone using ECS in the future) 
+- Added assimp for 3D model loading
+- Simple 3D lighting
+- 3D Cameras (Player and Editor)
+- Added Mandelbrot shader, just for fun (also Mandelbulb (though only slices can be viewed))
+
+
+![Alt text](09_07_2020_scene_layout.png?raw=false "Scene Layout") 
+

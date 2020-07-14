@@ -55,7 +55,7 @@ void ImGuiLayer::renderViewWindows()
 			ImGui::SetNextWindowSize(ImVec2(box.scale* view_size,box.scale* view_size),ImGuiCond_Always);
 		}
 		else {
-			ImGui::SetNextWindowSize({ view_size,view_size }, ImGuiCond_Once);
+			ImGui::SetNextWindowSize({ (float)view_size,(float)view_size }, ImGuiCond_Once);
 		}
 		ImGui::Begin(view.name.c_str(), &view.opened, ImGuiWindowFlags_NoDecoration);
 		ImGui::PopStyleVar(2);
