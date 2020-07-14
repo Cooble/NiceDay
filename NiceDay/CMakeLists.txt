@@ -22,14 +22,8 @@ project(NiceDay)
         "src/*.hpp" 
         "src/*.h" 
         #"vendor/glm/**.hpp"
-        "vendor/json/include/**.hpp"
-        "vendor/sol2/**.hpp"
-        "vendor/luabridge/**"
-        "vendor/stb_image/*.h"
-        "vendor/stb_image/*.cpp"
-        "vendor/imguifiledialog/*.h"
-        "vendor/imguifiledialog/*.cpp"
-
+        "vendor/stb_image/include/*.cpp"
+        "vendor/imguifiledialog/include/*.cpp"
         #This is not required, imgui_build.cpp builds these
         #"vendor/imguidocking/examples/imgui_impl_glfw.cpp"
         #"vendor/imguidocking/examples/imgui_impl_opengl3.cpp"
@@ -43,10 +37,10 @@ project(NiceDay)
 # Include files
     target_include_directories(NiceDay PUBLIC 
         "src"
-        "vendor/stb_image"
-        "vendor/imguifiledialog"
-        "vendor/luabridge"
-        "vendor/sol2"
+        "vendor/stb_image/include"
+        "vendor/imguifiledialog/include"
+        "vendor/sol2/include"
+        "vendor/json/include"
 
     )
 
