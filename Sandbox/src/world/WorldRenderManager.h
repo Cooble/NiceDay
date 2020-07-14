@@ -104,7 +104,10 @@ public:
 	const glm::mat4& getProjMatrix() { return m_proj_matrix; }
 
 	//const Texture* getLightTextureSmooth() { return m_light_smooth_fbo->getAttachment(0); }
-	Texture* getLightTextureBlur() { return m_blur->getTexture(); }
+	//Texture* getLightTextureBlur() { return m_blur->getTexture(); }
+	
+	const Texture* getLightTextureBlur() { return m_light_fbo->getAttachment(1); }
+	
 	const Texture* getLightTextureHard() { return m_light_fbo->getAttachment(0); }
 	auto* getEntityFBO() { return m_entity_fbo; }
 };

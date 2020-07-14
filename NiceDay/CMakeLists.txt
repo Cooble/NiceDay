@@ -180,7 +180,6 @@ project(NiceDay)
     # set(JSON_BuildTests OFF CACHE BOOL "" FORCE)
     # add_subdirectory("vendor/nlohmann_json")
     target_include_directories(NiceDay PUBLIC
-       "vendor/json/include"
        "vendor/json/single_include"
     )
     target_compile_definitions(NiceDay PUBLIC GLFW_INCLUDE_NONE)

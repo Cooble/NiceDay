@@ -37,6 +37,9 @@ public:
 	void drawTelemetry();
 	void renderBaseImGui();
 
+	void updateViewAnimation();
+	void animateView();
+
 	//must be submitted each frame to show imgui window with the texture
 	void renderView(const std::string& name, const Texture* t);
 	// same as renderView but the texture is immediately copied to another texture, so the base can change after

@@ -22,9 +22,6 @@
 [submodule "NiceDay/vendor/portaudio"]
 	path = NiceDay/vendor/portaudio
 	url = https://git.assembla.com/portaudio.git
-[submodule "NiceDay/vendor/json"]
-	path = NiceDay/vendor/json
-	url = https://github.com/Cooble/Minimal_nlohmann_json.git
 [submodule "NiceDay/vendor/imgui"]
 	path = NiceDay/vendor/imgui
 	url = https://github.com/Cooble/imgui.git

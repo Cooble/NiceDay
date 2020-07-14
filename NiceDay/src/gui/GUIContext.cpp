@@ -1,6 +1,7 @@
 ﻿#include "ndpch.h"
 #include "GUIContext.h"
 #include "event/WindowEvent.h"
+#include "core/App.h"
 
 
 void GUIContext::setFocusedElement(GUIElement* e)
@@ -8,6 +9,27 @@ void GUIContext::setFocusedElement(GUIElement* e)
 	m_focused_element = e;
 	isAnyItemActive() = (bool)m_focused_element;
 	bool b = isAnyItemActive();
+}
+
+void GUIContext::openWindow(GUIWindow* win)
+{
+	auto dims = App::get().getWindow()->getDimensions();
+	switch (win->dimInherit)
+	{
+	case GUIDimensionInherit::WIDTH:
+		win->width =dims.x;
+		break;
+	case GUIDimensionInherit::HEIGHT:
+		win->height = dims.y;
+		break;
+	case
+	GUIDimensionInherit::WIDTH_HEIGHT:
+		win->width = dims.x;
+		win->height = dims.y;
+		break;
+	}
+	win->onDimensionChange();
+	getWindows().push_back(win);
 }
 
 void GUIContext::onUpdate()

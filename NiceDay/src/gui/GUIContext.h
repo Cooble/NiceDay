@@ -156,10 +156,7 @@ public:
 		m_toclose_wins.clear();
 	}
 
-	inline void openWindow(GUIWindow* win)
-	{
-		getWindows().push_back(win);
-	}
+	void openWindow(GUIWindow* win);
 
 	void onUpdate();
 	void onEvent(Event& e);

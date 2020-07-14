@@ -171,9 +171,7 @@ void WorldRenderManager::onScreenResize()
 
 	m_chunks.reserve(getChunksSize());
 	for (auto chunk : m_chunks.getChunks())
-	{
 		chunk->enabled = false;
-	}
 
 	
 

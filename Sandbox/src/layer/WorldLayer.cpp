@@ -671,7 +671,7 @@ void WorldLayer::onRender()
 	//entities
 	auto entityFbo = m_render_manager->getEntityFBO();
 	entityFbo->bind();
-	entityFbo->clear(BuffBit::COLOR, { 0,0,0,0 });
+	entityFbo->clear(BuffBit::COLOR);
 	
 	Gcon.enableBlend();
 	Gcon.setBlendFunc(Blend::SRC_ALPHA, Blend::ONE_MINUS_SRC_ALPHA);
@@ -694,14 +694,13 @@ void WorldLayer::onRender()
 	entityFbo->unbind();
 
 	Gcon.enableBlend();
-	glDisable(GL_DEPTH_TEST);
+	Gcon.enableDepthTest(false);
 	Gcon.setBlendFunc(Blend::SRC_ALPHA, Blend::ONE_MINUS_SRC_ALPHA);
 	Effect::render(m_render_manager->getEntityFBO()->getAttachment(),Renderer::getDefaultFBO());
 
 	{
 		ND_PROFILE_SCOPE("particle render");
 		//particles
-		//Gcon.enableDepthTest(true);
 		m_particle_renderer->begin(Renderer::getDefaultFBO());
 		//m_particle_renderer->submit({ -1,-1,0 }, { 2,2 }, UVQuad::elementary(), UVQuad::elementary(), m_render_manager->getLightTextureSmooth(),0);
 		
@@ -709,9 +708,7 @@ void WorldLayer::onRender()
 		(*m_world->particleManager())->render(*m_particle_renderer);
 		m_particle_renderer->pop();
 		m_particle_renderer->flush();
-		
-		//Gcon.enableDepthTest(false);
-	}
+		}
 }
 
 static bool showTelem = false;

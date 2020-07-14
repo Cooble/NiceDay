@@ -12,6 +12,22 @@
 #include "graphics/API/FrameBuffer.h"
 #include "graphics/Effect.h"
 
+
+struct MovingBox
+{
+	int index;
+	glm::vec2 srcPos;
+	glm::vec2 targetPos;
+	glm::vec2 speed;
+	float scaleSpeed;
+	float scale = 0;
+
+};
+static bool s_is_animaiting = false;
+static std::vector<MovingBox> s_boxes;
+static const int view_size = 256;
+
+
 void ImGuiLayer::renderViewWindows()
 {
 	for (int i = m_views.size()-1; i >= 0; --i)
@@ -22,7 +38,7 @@ void ImGuiLayer::renderViewWindows()
 			if (view.owner)
 				delete view.texture;
 			m_views.erase(m_views.begin() + i);
-
+			continue;
 		}
 		view.refreshed = false;
 
@@ -32,7 +48,15 @@ void ImGuiLayer::renderViewWindows()
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
 		//ImGui::SetNextWindowDockID(dock_left_id, ImGuiCond_Once);
-		ImGui::SetNextWindowSize({ 256,256 }, ImGuiCond_Once);
+		if(s_is_animaiting)
+		{
+			auto& box = s_boxes[i];
+			ImGui::SetNextWindowPos(ImVec2(box.srcPos.x,box.srcPos.y),ImGuiCond_Always);
+			ImGui::SetNextWindowSize(ImVec2(box.scale* view_size,box.scale* view_size),ImGuiCond_Always);
+		}
+		else {
+			ImGui::SetNextWindowSize({ view_size,view_size }, ImGuiCond_Once);
+		}
 		ImGui::Begin(view.name.c_str(), &view.opened, ImGuiWindowFlags_NoDecoration);
 		ImGui::PopStyleVar(2);
 		auto size = ImGui::GetWindowSize();
@@ -150,6 +174,7 @@ T max(T a, T b)
 void ImGuiLayer::onUpdate()
 {
 	updateTelemetry();
+	updateViewAnimation();
 }
 
 void ImGuiLayer::onEvent(Event& e)
@@ -252,7 +277,22 @@ void ImGuiLayer::renderBaseImGui()
 		if (ImGui::BeginMenu("Views"))
 		{
 			for (auto& view : m_views)
-				if (ImGui::MenuItem(view.name.c_str(), "", view.opened))                 view.opened = !view.opened;
+				if (ImGui::MenuItem(view.name.c_str(), "", view.opened))	view.opened = !view.opened;
+			ImGui::Separator();
+			
+			if (ImGui::MenuItem("Enable All", "", false)) {
+				for (auto& view : m_views) view.opened = true;
+			}
+			if (ImGui::MenuItem("Disable All", "", false))
+				for (auto& view : m_views) view.opened = false;
+
+
+			ImGui::PushStyleColor(ImGuiCol_Text, {0.3f,0.3f,0.3f,1.f});
+			if (ImGui::MenuItem("Enable All (EasterEgg)", "", false)) {
+				for (auto& view : m_views) view.opened = true;
+				animateView();
+			}
+			ImGui::PopStyleColor();
 			ImGui::EndMenu();
 		}
 
@@ -261,6 +301,79 @@ void ImGuiLayer::renderBaseImGui()
 
 	ImGui::End();
 }
+
+
+int current_index_idx;
+
+void ImGuiLayer::animateView()
+{
+	current_index_idx = 0;
+	const int padding = 25;
+	const float speed = 0.08;
+	s_is_animaiting = true;
+	s_boxes.clear();
+	auto realDim = App::get().getPhysicalWindow()->getDimensions();
+	auto realPos= App::get().getPhysicalWindow()->getPos();
+
+	int currentX = padding;
+	int currentY= padding;
+	
+	for (int i = 0; i < m_views.size(); ++i)
+	{
+		auto from = realPos + glm::vec2(2, 2);
+		auto to = realPos + glm::vec2(currentX, currentY);
+		//auto sp = glm::normalize(to - from) * speed;
+		auto sp = (to - from) * speed;
+		s_boxes.push_back({i,from,to,sp,speed,0.01 });
+		currentX += view_size + padding;
+		if (currentX+view_size >= realDim.x)
+		{
+			currentX = padding;
+			currentY += view_size + padding;
+		}
+
+		
+	}
+	
+	
+}
+
+void ImGuiLayer::updateViewAnimation()
+{
+	static int will_die_in = 0;
+	if (will_die_in>0)
+	{
+		if (--will_die_in == 0)
+			s_is_animaiting = false;
+	}
+	if(s_is_animaiting&&will_die_in==0)
+	{
+		auto& box = s_boxes[current_index_idx];
+		box.srcPos += box.speed;
+		box.scale += box.scaleSpeed;
+		if (box.index >= m_views.size()) {
+			s_is_animaiting = false;
+			return;
+		}
+		if(
+			box.srcPos.x + box.speed.x > box.targetPos.x &&
+			box.srcPos.y + box.speed.y > box.targetPos.y)
+		{
+			box.scale = 1;
+			box.srcPos = box.targetPos;
+			if(++current_index_idx==s_boxes.size())
+			{
+				will_die_in = 5;//done
+			}
+		}
+	
+	
+		
+
+	}
+}
+
+
 
 void ImGuiLayer::renderView(const std::string& name,const  Texture* t)
 {
