@@ -19,7 +19,7 @@ std::string getRandomStringName()
 	
 
 	//return std::string(buff,size);
-	return "kareljeposuk";
+	return "kbj";
 }
 
 
@@ -89,6 +89,7 @@ int main()
 	
 	ND_PROFILE_BEGIN_SESSION("start", "start.json");
 	Log::init();
+	ResourceMan::init();
 	Sandbox game;
 
 	/*NBT n;

@@ -1,6 +1,7 @@
 #pragma once
 #include "ndpch.h"
 #include <utility>
+#include "ResourceMan.h"
 
 //#ifdef ND_DEBUG
 #define ASSERT(cond,...) if(!(cond))\
@@ -55,7 +56,6 @@ inline long long TimerStaper::getUS()
 	return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count();
 }
 
-
 inline TimerStaper::~TimerStaper()
 {
 	if (!stop)
@@ -63,27 +63,7 @@ inline TimerStaper::~TimerStaper()
 }
 #define ND_RESLOC(x)\
 	ResourceMan::getResourceLoc(x)
-class ResourceMan
-{
-public:
-	static std::string getResourceLoc(const std::string& resPath);
-	//static const char* getResourceLoc(const char* resPath);
-};
-inline std::string ResourceMan::getResourceLoc(const std::string& resPath)
-{
 
-	if (SUtil::startsWith(resPath,"res") || SUtil::startsWith(resPath, "/res"))
-	{
-		auto currentDir = std::filesystem::current_path();
-		currentDir = currentDir.parent_path();
-		return currentDir.string()+"/"+resPath;
-	}
-	return resPath;
-}
-/*inline const char* ResourceMan::getResourceLoc(const char* resPath)
-{
-	
-}*/
 
 
 
