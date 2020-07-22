@@ -30,7 +30,7 @@ public:
 
 	~TimerStaper();
 
-	static inline uint64_t getNowMicros()
+	static uint64_t getNowMicros()
 	{
 		return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 	}

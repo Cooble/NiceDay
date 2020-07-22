@@ -14,6 +14,7 @@
 #include "event/MessageEvent.h"
 #include "audio/SoundLayer.h"
 #include "ImGuiLayer.h"
+#include "script/MonoLayer.h"
 
 
 #define BIND_EVENT_FN(x) std::bind(&App::x, &App::get(), std::placeholders::_1)
@@ -46,13 +47,18 @@ void App::init(const AppInfo& info)
 	m_io.enableSCENE = info.enableSCENE;
 	m_io.enableIMGUI = info.enableIMGUI;
 	m_io.enableSOUND = info.enableSOUND;
+	m_settings = new NBT();
+	NBT::loadFromFile("settings.json", *m_settings);
+	if (m_settings->type == NBT::T_NULL) {
+		m_settings->access_map("INFO") = "Application temporary file";
+	}
 	ControlMap::init();
 	Log::init();
 	m_Window = new Window(info.width, info.height, info.title);
 	m_Input = new RealInput(m_Window);
 	if (m_io.enableSCENE) {
-		m_fakeWindow = new FakeWindow(m_Window,100, 100, "FakeWindow");
-		m_FakeInput = new FakeInput(m_fakeWindow,m_Input);
+		m_fakeWindow = new FakeWindow(m_Window, 100, 100, "FakeWindow");
+		m_FakeInput = new FakeInput(m_fakeWindow, m_Input);
 		m_defaultWindow = m_fakeWindow;
 		m_defaultInput = m_FakeInput;
 	}
@@ -63,9 +69,11 @@ void App::init(const AppInfo& info)
 	fakeWindow = m_fakeWindow;
 	GContext::init(Renderer::getAPI());
 	Effect::init();
-	m_Window->setEventCallback(m_io.enableSCENE?physicalWindowCallback:eventCallback);
+	m_Window->setEventCallback(m_io.enableSCENE ? physicalWindowCallback : eventCallback);
 	m_lua_layer = new LuaLayer();
 	m_LayerStack.pushLayer(m_lua_layer);
+	m_mono_layer = new MonoLayer();
+	m_LayerStack.pushLayer(m_mono_layer);
 	if (m_io.enableSOUND)
 		m_LayerStack.pushLayer(new SoundLayer());
 	if (m_io.enableIMGUI)
@@ -73,10 +81,13 @@ void App::init(const AppInfo& info)
 		m_ImGuiLayer = new ImGuiLayer();
 		m_LayerStack.pushOverlay(m_ImGuiLayer);
 	}
+
 }
 
 App::~App()
 {
+
+	delete m_settings;
 	delete m_Window;
 }
 
@@ -179,6 +190,8 @@ void App::start()
 		l->onDetach();
 
 	m_Window->close();
+	ND_TRACE("Saving settings.json");
+	NBT::saveToFile("settings.json", *m_settings);
 	ND_TRACE("Game quitted");
 	ND_PROFILE_END_SESSION();
 }

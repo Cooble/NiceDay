@@ -21,6 +21,7 @@ class NBT;
 class WindowTemplate;
 class FakeWindow;
 class FakeInput;
+class MonoLayer;
 
 struct AppInfo
 {
@@ -63,6 +64,7 @@ public:
 	DoubleBuffStackAllocator& getBufferedAllocator() { return m_dbuff_stackalloc; }
 	LuaLayer* getLua() { return m_lua_layer; }
 	ImGuiLayer* getImGui() { return m_ImGuiLayer; }
+	NBT& getSettings() { return *m_settings; }
 
 	// return target ticks per second (not actual)
 	int getTPS() const{ return m_target_tps; }
@@ -85,6 +87,7 @@ private:
 	void render();
 	int m_tel_updates_per_frame;
 protected:
+	NBT* m_settings;
 	void init(const AppInfo& info);
 	int current_fps=0;
 	long long lastFPSMillis;
@@ -107,9 +110,13 @@ protected:
 	LayerStack m_LayerStack;
 	ImGuiLayer* m_ImGuiLayer=nullptr;
 	LuaLayer* m_lua_layer=nullptr;
+	MonoLayer* m_mono_layer=nullptr;
 	Scheduler m_scheduler;
 	DoubleBuffStackAllocator m_dbuff_stackalloc;
 	bool m_running=false;
 	
 };
+
+//Debug settings variables -> loaded and saved to app.json
+
 

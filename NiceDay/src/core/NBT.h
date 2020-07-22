@@ -1,10 +1,12 @@
 ﻿#pragma once
 #include "core/json_fwd.h"
 #include "IBinaryStream.h"
+
+typedef std::string Stringo;
 class NBT;
-typedef std::unordered_map<std::string, NBT> NBTMap;
+typedef std::unordered_map<Stringo, NBT> NBTMap;
 typedef std::vector<NBT> NBTVector;
-static std::string NBT_INVALID_STRING = "invalidstring";
+static Stringo NBT_INVALID_STRING = "invalidstring";
 
 class NBT
 {
@@ -29,7 +31,7 @@ private:
 		uint64_t val_uint;
 		NBTVector* val_array;
 		NBTMap* val_map;
-		std::string* val_string;
+		Stringo* val_string;
 	};
 
 
@@ -139,7 +141,7 @@ public:
 	{
 		return c - '0';
 	}
-	uint64_t toUint64(const std::string& s)
+	uint64_t toUint64(const Stringo& s)
 	{
 		uint64_t out = 0;
 		uint64_t tens = 1;
@@ -151,7 +153,7 @@ public:
 		}
 		return out;
 	}
-	bool isNumeric(const std::string& string)
+	bool isNumeric(const Stringo& string)
 	{
 		std::size_t pos;
 		long double value = 0.0;
@@ -165,7 +167,7 @@ public:
 		}
 		return pos == string.size() && !std::isnan(value);
 	}
-	NBT(const std::string& i)
+	NBT(const Stringo& i)
 	{
 		if(SUtil::startsWith(i,'#')&&isNumeric(i.substr(1)))
 		{
@@ -173,10 +175,10 @@ public:
 			type = T_NUMBER_UINT;
 			return;
 		}
-		val_string = new std::string(i);
+		val_string = new Stringo(i);
 		type = T_STRING;
 	}
-	NBT(std::string&& i)
+	NBT(Stringo&& i)
 	{
 		if (SUtil::startsWith(i, '#') && isNumeric(i.substr(1)))
 		{
@@ -184,10 +186,10 @@ public:
 			type = T_NUMBER_UINT;
 			return;
 		}
-		val_string = new std::string(std::move(i));
+		val_string = new Stringo(std::move(i));
 		type = T_STRING;
 	}
-	NBT(const char* i):NBT(std::string(i)){}
+	NBT(const char* i):NBT(Stringo(i)){}
 
 	NBT& operator=(bool i)
 	{
@@ -273,33 +275,33 @@ public:
 		type = T_NUMBER_FLOAT;
 		return *this;
 	}
-	NBT& operator=(const std::string& i)
+	NBT& operator=(const Stringo& i)
 	{
 		if (type == T_STRING)
 			*val_string = i;
 		else {
 			destruct();
-			val_string = new std::string(i);
+			val_string = new Stringo(i);
 			type = T_STRING;
 		}
 		return *this;
 	}
-	NBT& operator=(std::string&& i)
+	NBT& operator=(Stringo&& i)
 	{
 		if (type == T_STRING)
 			*val_string = std::move(i);
 		else {
 			destruct();
-			val_string = new std::string(std::move(i));
+			val_string = new Stringo(std::move(i));
 			type = T_STRING;
 		}
 		return *this;
 	}
-	inline int invalidCast() const { /*ASSERT(false, "invalid nbt type cast");*/ return 0; }
-	inline glm::vec2 invalidCastGLM() const { ASSERT(false, "invalid nbt type cast"); return glm::vec2(0,0); }
+	 int invalidCast() const { /*ASSERT(false, "invalid nbt type cast");*/ return 0; }
+	 glm::vec2 invalidCastGLM() const { ASSERT(false, "invalid nbt type cast"); return glm::vec2(0,0); }
 	NBT& operator=(const char* i)
 	{
-		return this->operator=(std::string(i));
+		return this->operator=(Stringo(i));
 	}
 	operator bool() const { return isBool() ? (bool)val_int : false; }
 	operator char() const { return isInt() ? (char)val_int : 0; }
@@ -350,12 +352,12 @@ public:
 			return val_float;
 		return 0;
 	}
-	std::string& string() { return isString() ? *val_string : NBT_INVALID_STRING; }
-	const std::string& string() const { return isString() ? *val_string : NBT_INVALID_STRING; }
+	Stringo& string() { return isString() ? *val_string : NBT_INVALID_STRING; }
+	const Stringo& string() const { return isString() ? *val_string : NBT_INVALID_STRING; }
 
 
 	//move
-	inline NBT(NBT&& o) noexcept : type(o.type)
+	NBT(NBT&& o) noexcept : type(o.type)
 	{
 		val_int = o.val_int;
 		o.val_int = 0;
@@ -363,7 +365,7 @@ public:
 	}
 
 	//copy
-	inline NBT(const NBT& o) : type(o.type)
+	NBT(const NBT& o) : type(o.type)
 	{
 		val_int = o.val_int;
 		type = o.type;
@@ -372,7 +374,7 @@ public:
 		else if (o.type == T_ARRAY)
 			val_array = new NBTVector(*o.val_array);
 		else if (o.type == T_STRING)
-			val_string = new std::string(*o.val_string);
+			val_string = new Stringo(*o.val_string);
 	}
 
 	//copy
@@ -385,7 +387,7 @@ public:
 		else if (o.type == T_ARRAY)
 			val_array = new NBTVector(*o.val_array);
 		else if (o.type == T_STRING)
-			val_string = new std::string(*o.val_string);
+			val_string = new Stringo(*o.val_string);
 		return *this;
 	}
 
@@ -429,7 +431,7 @@ public:
 		val_map->try_emplace(name, std::forward<Arg>(arg));
 	}
 	template <typename Arg>
-	void emplace_map(const std::string& name, Arg&& arg)
+	void emplace_map(const Stringo& name, Arg&& arg)
 	{
 		if (!checkForMap())
 			return;
@@ -437,7 +439,7 @@ public:
 	}
 
 	//map access
-	inline NBT& access_map(const std::string& name)
+	NBT& access_map(const Stringo& name)
 	{
 		if (!checkForMap())
 		{
@@ -449,37 +451,37 @@ public:
 			return val_map->insert_or_assign(name, NBT()).first->second;
 		return it->second;
 	}
-	inline const NBT& access_map_const(const std::string& name) const
+	 const NBT& access_map_const(const Stringo& name) const
 	{
 		if (!isMap())
 		{
 			ASSERT(false, "");
 			return nullVal();
 		}
-		return val_map->operator[](std::forward<const std::string>(name));
+		return val_map->operator[](std::forward<const Stringo>(name));
 	}
 
-	NBT& operator[](const std::string& name)
+	NBT& operator[](const Stringo& name)
 	{
 		return access_map(name);
 	}
 	NBT& operator[](const char* name)
 	{
-		return access_map(std::string(name));
+		return access_map(Stringo(name));
 	}
-	const NBT& operator[](const std::string& name) const
+	const NBT& operator[](const Stringo& name) const
 	{
 		return access_map_const(name);
 	}
 	const NBT& operator[](const char* name) const
 	{
-		return access_map_const(std::string(name));
+		return access_map_const(Stringo(name));
 	}
 
 
 	void reserve(int size) { if (checkForArray())val_array->reserve(size); }
 	void resize(size_t size){ if (checkForArray())val_array->resize(size); }
-	bool exists(const std::string& key) const
+	bool exists(const Stringo& key) const
 	{
 		return isMap() && (val_map->find(key) != val_map->end());
 	}
@@ -506,12 +508,12 @@ public:
 		return val_array->operator[](index);
 	}
 
-	inline NBT& operator[](int index)
+	NBT& operator[](int index)
 	{
 		return access_array(index);
 	}
 	
-	inline const NBT& operator[](int index) const
+	const NBT& operator[](int index) const
 	{
 		return access_array_const(index);
 	}
@@ -538,30 +540,33 @@ public:
 		return *val_map;
 	}
 
-	std::string dump() const
+	Stringo dump() const
 	{
 		return dump(0);
 	}
 
-	std::string dump(int depth) const;
+	Stringo dump(int depth) const;
 
 	json toJson() const;
 	static NBT fromJson(const json& j);
 	
-	static void saveToFile(const std::string& filePath, const NBT& nbt);
+	static void saveToFile(const Stringo& filePath, const NBT& nbt);
 	// loads nbt from json file (comments in file are allowed, ignored)
-	static bool loadFromFile(const std::string& filePath, NBT& nbt);
+	static bool loadFromFile(const Stringo& filePath, NBT& nbt);
 
 	template <typename Arg>
-	void save(const std::string& name,const Arg& val)
+	void save(const Stringo& name,const Arg& val)
 	{
 		if (!checkForMap())
 			return;
 		operator[](name) = val;
 	}
-
+	// Loads val and ensures proper state of NBT
+	// if exists -> val=data
+	// if does not exist -> val=default_val and !! data=default_val !!
+	// !Use only if you need to modify nbt!
 	template <typename Arg>
-	bool load(const std::string& key, Arg& val, Arg defaultVal) const
+	bool loadSet(const Stringo& key, Arg& val, Arg defaultVal)
 	{
 		if (!isMap()) {
 			val = defaultVal;
@@ -571,11 +576,14 @@ public:
 		bool found = it != val_map->end();
 		if (found)
 			val = Arg(it->second);
-		else val = defaultVal;
+		else {
+			val = defaultVal;
+			operator[](key) = val;
+		}
 		return found;
 	}
 	template <>
-	bool load(const std::string& key, std::string& val, std::string defaultVal) const
+	bool loadSet(const Stringo& key, Stringo& val, Stringo defaultVal)
 	{
 		if (!isMap()) {
 			val = defaultVal;
@@ -585,44 +593,49 @@ public:
 		bool found = it != val_map->end();
 		if (found)
 			val = it->second.string();
-		else val = defaultVal;
-		return found;
-	}
-	template <typename Arg>
-	bool loadIfExists(const std::string& key, Arg& val) const
-	{
-		if (!isMap()) {
-			return false;
+		else {
+			val = defaultVal;
+			operator[](key) = val;
 		}
-		auto& it = val_map->find(key);
-		bool found = it != val_map->end();
-		if (found)
-			val = Arg(it->second);
 		return found;
 	}
-	template <>
-	bool loadIfExists(const std::string& key, std::string& val) const
-	{
-		if (!isMap()) {
-			return false;
-		}
-		auto& it = val_map->find(key);
-		bool found = it != val_map->end();
-		if (found)
-			val = it->second.string();
-		return found;
-	}
-	/*
-	bool load(const std::string& key, std::string& val, const char* defaultVal) const
-	{
-		return load(key, val, std::string(defaultVal));
-	}*/
 
+	// If data exists, val=data, if not, val=default_val
+	// if exists -> loads data to val
+	// if does not exist -> sets val to default
 	template <typename Arg>
-	bool load(const std::string& key, Arg& val) const
+	bool load(const Stringo& key, Arg& val, Arg defaultVal) const
 	{
-		if (!isMap())
+		if (!isMap()) {
+			val = defaultVal;
 			return false;
+		}
+		auto& it = val_map->find(key);
+		bool found = it != val_map->end();
+		val = found?Arg(it->second):defaultVal;
+		return found;
+	}
+	template <>
+	bool load(const Stringo& key, Stringo& val, Stringo defaultVal) const
+	{
+		if (!isMap()) {
+			val = defaultVal;
+			return false;
+		}
+		auto& it = val_map->find(key);
+		bool found = it != val_map->end();
+		val = found ? it->second.string(): defaultVal;
+		return found;
+	}
+
+	
+	// If data exists -> val=data
+	template <typename Arg>
+	bool load(const Stringo& key, Arg& val) const
+	{
+		if (!isMap()) {
+			return false;
+		}
 		auto& it = val_map->find(key);
 		bool found = it != val_map->end();
 		if (found)
@@ -630,13 +643,14 @@ public:
 		return found;
 	}
 	template <>
-	bool load(const std::string& key, std::string& val) const
+	bool load(const Stringo& key, Stringo& val) const
 	{
-		if (!isMap())
+		if (!isMap()) {
 			return false;
+		}
 		auto& it = val_map->find(key);
 		bool found = it != val_map->end();
-		if (found&&it->second.isString())
+		if (found)
 			val = it->second.string();
 		return found;
 	}

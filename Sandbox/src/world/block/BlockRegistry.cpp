@@ -148,7 +148,7 @@ void BlockRegistry::createBlockFromJSON(const std::string& id, NBT& nbt)
 void BlockRegistry::updateBlockFromJSON(const std::string& id, NBT& nbt)
 {
 	Block* block = m_blocks[m_blockIDs[id]];
-	nbt.loadIfExists("hardness", block->m_hardness);
+	nbt.load("hardness", block->m_hardness);
 	//nbt.loadIfExists("maxStackSize", block->m_ma);
 	if(nbt.exists("opacity"))
 	{
@@ -162,8 +162,8 @@ void BlockRegistry::updateBlockFromJSON(const std::string& id, NBT& nbt)
 		}
 		else block->m_opacity = t;
 	}
-	nbt.loadIfExists("lightSrc", block->m_light_src);
-	nbt.loadIfExists("maxMeta", block->m_max_metadata);
+	nbt.load("lightSrc", block->m_light_src);
+	nbt.load("maxMeta", block->m_max_metadata);
 
 	auto& hasBigTexture = nbt["hasBigTexture"];
 	if (hasBigTexture.isBool())
@@ -200,8 +200,8 @@ void BlockRegistry::updateBlockFromJSON(const std::string& id, NBT& nbt)
 	{
 		auto& mltNBT = nbt["multiBlock"];
 		MultiBlock* multi = dynamic_cast<MultiBlock*>(block);
-		mltNBT.loadIfExists("width", multi->m_width);
-		mltNBT.loadIfExists("height", multi->m_height);
+		mltNBT.load("width", multi->m_width);
+		mltNBT.load("height", multi->m_height);
 	}
 	//group index
 	auto& groups = block->m_block_connect_group;
@@ -287,7 +287,7 @@ void BlockRegistry::createWallFromJSON(const std::string& id, NBT& nbt)
 void BlockRegistry::updateWallFromJSON(const std::string& id, NBT& nbt)
 {
 	Wall* wall = m_walls[m_wallIDs[id]];
-	nbt.loadIfExists("isTransparent", wall->m_transparent);
+	nbt.load("isTransparent", wall->m_transparent);
 
 	//corners it can id of corners or 'false' or '0' to not use anything
 	if (nbt.exists("corners") && nbt["corners"].isString())

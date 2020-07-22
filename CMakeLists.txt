@@ -4,6 +4,10 @@ project("NiceDaySolution")
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
+LIST( APPEND CMAKE_MODULE_PATH
+  ${CMAKE_SOURCE_DIR}/cmake/modules
+)
+
 set_property(GLOBAL PROPERTY CTEST_TARGETS_ADDED 1) # hack to prevent CTest added targets
 
 MARK_AS_ADVANCED(MULTITHREADED_BUILD)
@@ -55,5 +59,6 @@ add_compile_definitions(
 #set(CMAKE_SYSTEM_PREFIX_PATH ${CMAKE_SYSTEM_PREFIX_PATH} "./")
 # Subdirs
 add_subdirectory(NiceDay)
+add_subdirectory(Managed)
 add_subdirectory(Sandbox)
 add_subdirectory(SandboxTest)

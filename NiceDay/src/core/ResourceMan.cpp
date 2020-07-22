@@ -1,5 +1,4 @@
 #include "ResourceMan.h"
-
 std::string ResourceMan::s_resPath;
 
 void  ResourceMan::init()
