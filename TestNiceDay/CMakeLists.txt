@@ -10,9 +10,15 @@ project(TestNiceDay)
 
 
 # Target creation
-    add_executable(TestNiceDay ${SOURCES})
-    add_test(MainTest TestNiceDay)
     #set_tests_properties(MainTest PROPERTIES WILL_FAIL FALSE)
+    add_executable(TestNiceDay ${SOURCES})
+    macro(add_my_test TESTO)
+      add_test(${TESTO} TestNiceDay ${TESTO})
+    endmacro()
+
+    add_my_test(NDUtilTest)
+    add_my_test(monoTest)
+ 
 
 
 # Include files

@@ -9,6 +9,15 @@ namespace NDT
 	inline bool errorExists() { return !error_stack.empty(); }
 	inline auto& errorStack() { return error_stack; }
 	inline void pushError(const std::string& e) { error_stack.push_back(e); }
+
+	typedef int (*TestFunction)();
+	struct Func
+	{
+		std::string name;
+		TestFunction callback;
+	};
+	void registerTestFunction(const std::string& name, TestFunction t);
+
 }
 #ifdef __GNUC__
 #define NDT_FUNCTION_NAME __PRETTY_FUNCTION__
@@ -28,9 +37,13 @@ namespace NDT
 	if((value)==(target)){throw std::string("Assert failed at: " NDT_FILE_LINE);}
 
 #define NDT_TRY(call)\
-	 try{call;}catch(const std::string& s){NDT::pushError(s);std::cout << s << std::endl;}
+	 try{call;}catch(const std::string& s){NDT::pushError(s);/*std::cout << s << std::endl;return 1;*/}
 #define NDT_TRY_RET(call)\
-	 try{call;}catch(const std::string& s){NDT::pushError(s);std::cout << s << std::endl;return 1;}
+	 try{call;}catch(const std::string& s){NDT::pushError(s);/*std::cout << s << std::endl;return 1;*/}
+
+#define NDT_REGISTER_TEST(func)\
+	extern int func ();\
+	NDT::registerTestFunction(#func,func);
 
 	
    

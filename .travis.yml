@@ -19,4 +19,4 @@ jobs:
         - echo "Building & Running Tests"
         - cmake --build . --config Release --target TestNiceDay
         - cmake -DTT_TARGET_DIR="$TRAVIS_BUILD_DIR/TestNiceDay/Release" -P CopyMonoDll.cmake
-        - ctest
+        - ctest --output-on-failure

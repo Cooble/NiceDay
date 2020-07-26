@@ -1,20 +1,15 @@
-#include "ndpch.h"
-#include "core/NBT.h"
 #include "NDTests.h"
-
+#include "core/SUtil.h"
+#include "core/NBT.h"
 static void testNBT();
 static void testSUtil();
 
-int tests(int argc, char** args)
+int NDUtilTest()
 {
-
-    NDT_TRY(testNBT());
-    NDT_TRY(testSUtil());
-
-    return 0;
-
+	NDT_TRY(testNBT());
+	NDT_TRY(testSUtil());
+	return 0;
 }
-
 static void testNBT()
 {
     NBT n;
