@@ -27,6 +27,73 @@
 #
 # Sid notes: Can we get BSD licensing permission? Especially given that we've put in way more than the code originally had?
 #
+#
+# This version is modified for NICEDAY
+#
+#
+cmake_minimum_required (VERSION 3.1)
+
+# equivalent to "ls" but recursive
+# example usage: PrintDir("${YOUR_FOLDER_PATH}" " " 3)
+function(PrintDir PATH OFFSET MAX_DEEP)
+
+set(DEEPNES ${MAX_DEEP})
+MATH(EXPR DEEPNES "${DEEPNES}-1")
+
+if("${DEEPNES}" STREQUAL "0")
+message("${OFFSET}${PATH}/**")
+return()
+endif()
+message("${OFFSET}${PATH}")
+file(GLOB SUBDIRSS "${PATH}/*")
+FOREACH(subdir ${SUBDIRSS})
+            if(IS_DIRECTORY ${subdir})
+              PrintDir(${subdir} "${OFFSET}     " ${DEEPNES})
+            else()
+                message("${OFFSET}     ${subdir}")
+            endif() 
+ENDFOREACH()
+
+endfunction()
+
+
+if(NOT MONO_ROOT OR NOT EXISTS ${MONO_ROOT})
+    message("Finding mono installation path")
+    set(PATHETIC_PATHS $ENV{PATH})
+    LIST(APPEND PATHETIC_PATHS "C:\\Program Files")
+    LIST(APPEND PATHETIC_PATHS "C:\\Program Files (x86)")
+    set(FOUND OFF)
+    foreach(pathe IN ITEMS ${PATHETIC_PATHS})
+        #message("Searching for mono ${pathe}")
+         if("${pathe}" MATCHES "Mono(\\|/|)$")
+            message("Found mono ${pathe}")
+            set(MONO_ROOT "${pathe}")
+            break()
+        endif()
+        
+        #check children
+        file(GLOB SUBDIRSS "${pathe}/*")
+        FOREACH(subdir ${SUBDIRSS})
+            if(IS_DIRECTORY ${subdir})
+                #message(" ---> ${subdir}")
+               if("${subdir}" MATCHES "Mono(\\|/|)$")
+                    message("Found mono ${subdir}")
+                    set(MONO_ROOT "${subdir}")
+                    set(FOUND ON)
+                    break()
+                endif()
+            endif() 
+        ENDFOREACH()
+        if(FOUND)
+           break()
+        endif()
+    endforeach()
+endif()
+
+#if(EXISTS "${MONO_ROOT}")
+#message("MonoRoot:")
+#PrintDir("${MONO_ROOT}" " " "2")
+#endif()
 
 SET(MONO_LOOK_FOR_LIBRARIES FALSE)
 
@@ -91,6 +158,7 @@ IF(MONO_LOOK_FOR_LIBRARIES)
     IF(MONO_ROOT AND EXISTS ${MONO_ROOT})
       SET(MONO_INCLUDE_DIRS
           ${MONO_ROOT}/include/mono-1.0
+          ${MONO_ROOT}/include/mono-2.0
           ${MONO_ROOT}/include/glib-2.0
           ${MONO_ROOT}/lib/glib-2.0/include)
       SET(MONO_LIBRARY_DIRS ${MONO_ROOT}/lib)

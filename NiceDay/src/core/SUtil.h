@@ -1,6 +1,7 @@
 #pragma once
 #include "ndpch.h"
 
+
 typedef std::string Stringo;
 
 namespace SUtil
@@ -8,6 +9,12 @@ namespace SUtil
 	inline bool startsWith(const Stringo& s, const Stringo& prefix)
 	{
 		return strncmp(prefix.c_str(), s.c_str(), prefix.size()) == 0;
+	}
+	inline bool startsWithView(const std::string_view& s, const char* prefix)
+	{
+		auto prefSize = strlen(prefix);
+		
+		return prefSize<s.size()&&(strncmp(prefix, s.data(),prefSize) == 0);
 	}
 
 	inline bool startsWith(const Stringo& s, char prefix)
@@ -35,6 +42,10 @@ namespace SUtil
 	{
 		return !s.empty() && s[s.size() - 1] == suffix;
 	}
+	inline bool endsWith(const std::string_view& s, char suffix)
+	{
+		return !s.empty() && s[s.size() - 1] == suffix;
+	}
 
 	inline bool endsWith(const char* s, const char* suffix)
 	{
@@ -43,6 +54,14 @@ namespace SUtil
 
 		return sizeSuf <= sizeS && strncmp(suffix, s + sizeS - sizeSuf, sizeSuf) == 0;
 	}
+	inline bool endsWith(const std::string_view&  s, const char* suffix)
+	{
+		auto sizeS = s.size();
+		auto sizeSuf = strlen(suffix);
+
+		return sizeSuf <= sizeS && strncmp(suffix, s.data() + sizeS - sizeSuf, sizeSuf) == 0;
+	}
+
 
 	inline bool endsWith(const char* s, char suffix)
 	{
@@ -50,7 +69,16 @@ namespace SUtil
 
 		return sizeS && s[sizeS - 1] == suffix;
 	}
-
+	inline bool replaceWith(char* src, char what, char with)
+	{
+		for (int i = 0; true; ++i)
+		{
+			auto& id = src[i];
+			if (id == '\0') return true;
+			bool isWhat = id == what;
+			id = isWhat * with + src[i] * (!isWhat);
+		}
+	}
 	inline bool replaceWith(Stringo& src, char what, char with)
 	{
 		for (int i = 0; i < src.size(); ++i)
@@ -158,14 +186,15 @@ namespace SUtil
 	//			"\n\nBoo\n" -> "","","Boo",""
 	//		else
 	//			"\n\nBoo\n" -> "Boo"
-	template <bool ignoreBlanks = false>
+	template <bool ignoreBlanks = false, typename DividerType = const char*>
 	class SplitIterator
 	{
+		static_assert(std::is_same<DividerType, const char*>::value || std::is_same<DividerType, char>::value);
 	private:
 		std::string_view m_source;
 		std::string_view m_pointer;
-		const char* m_divider;
 		// this fixes 1 edge case when m_source end with m_divider
+		DividerType m_divider;
 		bool m_ending = false;
 
 
@@ -228,7 +257,7 @@ namespace SUtil
 		}
 
 	public:
-		SplitIterator(std::string_view src, const char* divider)
+		SplitIterator(std::string_view src, DividerType divider)
 			: m_source(src), m_divider(divider)
 		{
 			auto div = m_source.find_first_of(m_divider, 0);
@@ -239,6 +268,7 @@ namespace SUtil
 					step();
 			}
 		}
+
 
 		SplitIterator(const SplitIterator& s) = default;
 

@@ -17,6 +17,8 @@ project(SandboxTest)
     target_include_directories(SandboxTest PUBLIC 
         "src"
     )
+    enable_testing()
+    add_test(NAME MainTest COMMAND SandboxTest)
 
 # Precompiled Header
 #    target_precompile_headers(NiceDay PRIVATE 

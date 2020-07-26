@@ -1,0 +1,97 @@
+float dstToSphere(vec3 srcPoint,vec3 sphereCenter,float radius){
+ 	return distance(srcPoint,sphereCenter)-radius;   
+
+}
+vec3 normalSphere(vec3 srcPoint,vec3 sphereCenter){
+ 	return normalize(srcPoint-sphereCenter);
+}
+float sgn(float f){
+    if(f>0.0)
+        return 1.0;
+    if(f<0.0)
+        return -1.;
+        return 0.0;
+}
+float smin(float a, float b, float k) {
+  float h = clamp(0.5 + 0.5*(a-b)/k, 0.0, 1.0);
+  return mix(a, b, h) - k*h*(1.0-h);
+}
+
+
+float disti(vec3 point){
+ 	const float SPHERE_RADIUS_0 = 4.0;
+    const float SPHERE_RADIUS_1 = 3.0;
+    vec3 SPHERE_CENTER_0 = vec3(0,0,10);
+    vec3 SPHERE_CENTER_1 = vec3(-4.0+iMouse.xy/iResolution.x*20.0,8.3);
+    float d0 = dstToSphere(point,SPHERE_CENTER_0,SPHERE_RADIUS_0);
+    float d1 = dstToSphere(point,SPHERE_CENTER_1,SPHERE_RADIUS_1);
+    return smin(d0,d1,1.);
+}
+#define SMOOTHNESS 0.1
+
+
+vec3 getNormal(vec3 point){
+    
+ 	vec2 ee = vec2(SMOOTHNESS,0.0);
+    float d = disti(point);
+    float x = disti(point+ee.xyy);
+    float y = disti(point+ee.yxy);
+    float z = disti(point+ee.yyx);
+    return normalize(vec3(x,y,z)-d);
+}
+ #define MIN_STEP 0.01
+vec4 march(vec3 camPos,vec3 dir){
+    const int ITERATIONS  = 65;
+   
+    int i=0;
+    float lastDis = 0.0;
+    for(;i<ITERATIONS;i++){
+        float dis = disti(camPos);
+        if(dis<MIN_STEP)
+            break;
+        lastDis = dis;
+        camPos = camPos+dir*lastDis;
+    }
+    float valid = 0.;
+    if(i != ITERATIONS)
+        valid=1.0;
+  
+    return vec4(camPos,valid);  
+}
+
+void mainImage( out vec4 fragColor, in vec2 fragCoord )
+{
+    // Normalized pixel coordinates (from 0 to 1)
+    vec2 uv = (fragCoord-(iResolution.xy/vec2(2.0)))/vec2(iResolution.y);
+	vec3 camPos = vec3(0,0,-1);
+    vec3 look = normalize(vec3(uv.xy,1));
+
+    vec3 col = vec3(0.0);
+  
+    const vec3 LIGHT_POS = vec3(3,3,5);
+    vec4 currentPoint = march(camPos,look);
+    if(currentPoint.w==0.0){
+        col=vec3(0,0,0.5);
+    }else{
+        //col = vec3(1.0);
+        vec3 norm = getNormal(currentPoint.xyz);
+        
+    	//col = norm;
+        vec3 toLight = normalize(LIGHT_POS-currentPoint.xyz);
+        col = vec3(1.0)*max(dot(toLight, norm),0.0);
+        
+        float dis = distance(currentPoint.xyz,LIGHT_POS);
+        vec4 lastPoint = currentPoint;
+        currentPoint = march(currentPoint.xyz+norm*MIN_STEP*2.0,toLight);
+        if(distance(currentPoint.xyz,lastPoint.xyz)<dis){
+         	  col*=0.5; 
+        }
+        
+        //lighting
+        
+        
+    }
+
+    // Output to screen
+    fragColor = vec4(col,1.0);
+}

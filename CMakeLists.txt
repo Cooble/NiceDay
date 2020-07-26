@@ -62,3 +62,5 @@ add_subdirectory(NiceDay)
 add_subdirectory(Managed)
 add_subdirectory(Sandbox)
 add_subdirectory(SandboxTest)
+add_subdirectory(TestNiceDay)
+
