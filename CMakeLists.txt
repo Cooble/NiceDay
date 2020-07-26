@@ -63,6 +63,6 @@ add_subdirectory(NiceDay)
 add_subdirectory(Managed)
 add_subdirectory(Sandbox)
 add_subdirectory(SandboxTest)
-include(CTest)
+enable_testing()
 add_subdirectory(TestNiceDay)
 

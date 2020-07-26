@@ -10,10 +10,14 @@ namespace NDT
 	inline auto& errorStack() { return error_stack; }
 	inline void pushError(const std::string& e) { error_stack.push_back(e); }
 }
-
+#ifdef __GNUC__
+#define NDT_FUNCTION_NAME __PRETTY_FUNCTION__
+#else 
+#define NDT_FUNCTION_NAME __FUNCTION__ 
+#endif
 #define NDT_STRINGIFY(x) #x
 #define NDT_TOSTRING(x) NDT_STRINGIFY(x)
-#define NDT_FILE_LINE NDT_TOSTRING(__FILE__) ":" NDT_TOSTRING(__LINE__)
+#define NDT_FILE_LINE NDT_TOSTRING(__FILE__) ":(" NDT_TOSTRING(__LINE__) ") in " NDT_FUNCTION_NAME
 
 #define NDT_ASSERT(cond)\
 	if(!(cond)){throw std::string("Assert failed at: " NDT_FILE_LINE);}

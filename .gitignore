@@ -23,6 +23,7 @@ res/models
 # Files
 *.user
 *.world
+*.nbt
 *.world.entity
 *imgui.ini
 *lua_editor_settings.json
