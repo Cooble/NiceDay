@@ -107,8 +107,10 @@ LIST( APPEND CMAKE_MODULE_PATH
 
     # == ogg
     set(INSTALL_CMAKE_PACKAGE_MODULE OFF CACHE BOOL "" FORCE)
+    
     set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
     add_my_lib(ogg)
+    set(BUILD_TESTING ON CACHE BOOL "" FORCE)
     #add_custom_target(Ogg::ogg DEPENDS ogg)
 
     # == glm (no need to subdir (header-only))

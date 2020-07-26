@@ -408,3 +408,5 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 /Sandbox/settings.json
+*.tcl
+*.csproj

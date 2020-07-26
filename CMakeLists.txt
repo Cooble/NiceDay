@@ -1,6 +1,7 @@
 #Base CMAKE
 cmake_minimum_required(VERSION 3.16.1)
 project("NiceDaySolution")
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
@@ -62,5 +63,6 @@ add_subdirectory(NiceDay)
 add_subdirectory(Managed)
 add_subdirectory(Sandbox)
 add_subdirectory(SandboxTest)
+include(CTest)
 add_subdirectory(TestNiceDay)
 

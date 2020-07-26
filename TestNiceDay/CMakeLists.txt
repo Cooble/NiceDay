@@ -11,8 +11,9 @@ project(TestNiceDay)
 
 # Target creation
     add_executable(TestNiceDay ${SOURCES})
-    enable_testing()
     add_test(MainTest TestNiceDay)
+    #set_tests_properties(MainTest PROPERTIES WILL_FAIL FALSE)
+
 
 # Include files
     target_include_directories(TestNiceDay PUBLIC 
