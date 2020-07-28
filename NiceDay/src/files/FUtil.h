@@ -1,5 +1,5 @@
 #include "ndpch.h"
-namespace FileUtil
+namespace FUtil
 {
 	// folder path of current executable
 	const std::string& getExecutableFolderPath();

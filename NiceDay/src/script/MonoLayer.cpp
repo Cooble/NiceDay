@@ -6,7 +6,7 @@
 #include <mono/metadata/object.h>
 #include "core/App.h"
 #include "core/NBT.h"
-#include "files/FileUtil.h"
+#include "files/FUtil.h"
 //#pragma comment(lib, "C:/Program Files/Mono/lib/mono-2.0-sgen.lib")
 /*	types for args in internal calls
  *
@@ -38,61 +38,124 @@ static void l_info(MonoString* s)
 {
 	auto c = mono_string_to_utf8(s);
 	ND_INFO(c);
+	mono_free(c);
 }
 static void l_warn(MonoString* s)
 {
 	auto c = mono_string_to_utf8(s);
 	ND_WARN(c);
+	mono_free(c);
 }
 static void l_error(MonoString* s)
 {
 	auto c = mono_string_to_utf8(s);
 	ND_ERROR(c);
+	mono_free(c);
+
 }
 static void l_trace(MonoString* s)
 {
 	auto c = mono_string_to_utf8(s);
 	ND_TRACE(c);
+	mono_free(c);
+}
+static void nd_copy_file(MonoString* from, MonoString* to)
+{
+	auto f = mono_string_to_utf8(from);
+	auto t = mono_string_to_utf8(to);
+	bool suk = false;
+	try {
+		 suk = std::filesystem::copy_file(f, t,std::filesystem::copy_options::overwrite_existing);
+	}catch (std::exception& e)
+	{
+		std::cerr << e.what();
+	}
+	//ND_TRACE("Copying file from {} to {} and {}",f,t,suk);
+	mono_free(f);
+	mono_free(t);
 }
 static MonoDomain* domain;
 static MonoImage* image;
 static MonoAssembly* assembly;
+static MonoObject* entryInstance;
 
-static bool callCSMethod(const char* methodName,MonoObject** ex=nullptr)
+static MonoObject* callCSMethod(const char* methodName,void* obj=nullptr,void** params=nullptr, MonoObject** ex=nullptr)
 {
-	//Build a method description object
-	MonoMethodDesc* TypeMethodDesc;
-	TypeMethodDesc = mono_method_desc_new(methodName, NULL);
+	MonoMethodDesc* TypeMethodDesc = mono_method_desc_new(methodName, NULL);
 	if (!TypeMethodDesc)
-		return false;
+		return nullptr;
 
 	//Search the method in the image
-	MonoMethod* method;
-	method = mono_method_desc_search_in_image(TypeMethodDesc, image);
+	MonoMethod* method = mono_method_desc_search_in_image(TypeMethodDesc, image);
 	if (!method) {
 		ASSERT(false, "C# method not found: {}", methodName);
-		return false;
+		return nullptr;
 	}
 
-	mono_runtime_invoke(method, nullptr, nullptr, ex);
+	auto b = mono_runtime_invoke(method, obj, params, ex);
 	if (ex && *ex)
-		return false;
+		return nullptr;
 
-	return true;
+	return b;
 }
+static std::string hotSwapLoc = "ND.EntryHotSwap:";
+static std::string coldLoc = "ND.EntryCold:";
+static bool happyLoad = false;
+MonoObject* MonoLayer::callEntryMethod(const char* methodName, void* obj, void** params, MonoObject** ex)
+{
+	std::string s = hotSwapEnable ? hotSwapLoc : coldLoc;
+	return callCSMethod((s + methodName).c_str(), obj, params, ex);
+
+}
+
 static void initInternalCalls()
 {
-	mono_add_internal_call("Log::nd_trace(string)", l_trace);
-	mono_add_internal_call("Log::nd_info(string)", l_info);
-	mono_add_internal_call("Log::nd_warn(string)", l_warn);
-	mono_add_internal_call("Log::nd_error(string)", l_error);
+	mono_add_internal_call("ND.Log::nd_trace(string)", l_trace);
+	mono_add_internal_call("ND.Log::nd_info(string)", l_info);
+	mono_add_internal_call("ND.Log::nd_warn(string)", l_warn);
+	mono_add_internal_call("ND.Log::nd_error(string)", l_error);
+	mono_add_internal_call("ND.Log::ND_COPY_FILE(string,string)", nd_copy_file);
 }
+
+static std::string getMonoInstallationDirectory()
+{
+	auto path = std::getenv("PATH");
+	SUtil::replaceWith(path, '\\', '/');
+
+	if (path)
+		for (auto splitter = SUtil::SplitIterator<true, char>(path, ';'); splitter; ++splitter) {
+			std::string_view vi = *splitter;
+			if (vi[vi.size() - 1] == '/')
+				vi = std::string_view(vi.data(), vi.size() - 1);
+			if (SUtil::endsWith(vi, "Mono"))
+				return std::string(vi);
+
+		}
+	auto s = "C:/Program Files/Mono";
+	if (std::filesystem::exists(s))
+		return s;
+	s = "C:/Program Files (x86)/Mono";
+	if (std::filesystem::exists(s))
+		return s;
+
+
+	return "";
+}
+
+
+
 
 void MonoLayer::onAttach()
 {
 	std::string monoPath;
-	App::get().getSettings().loadSet("MonoInstallationPath (with folders /lib and /etc)", monoPath, std::string("C:/Program Files/Mono"));
-	mono_set_dirs((monoPath + "/lib").c_str(), (monoPath + "/etc").c_str());
+	
+	auto monoDir = getMonoInstallationDirectory();
+	if(monoDir.empty())
+	{
+		ND_ERROR("Cannot find mono installation dir");
+		return;
+	}
+	mono_set_dirs((monoDir + "/lib").c_str(), (monoDir + "/etc").c_str());
 	//Init a domain
 	domain = mono_jit_init("MonoScripter");
 	if (!domain)
@@ -104,9 +167,9 @@ void MonoLayer::onAttach()
 	initInternalCalls();
 
 	//Open a assembly in the domain
-	std::string assPath;
-	App::get().getSettings().loadSet("ManagedDLL_FileName",assPath,std::string("Managedd.dll"));
-	assPath = FileUtil::getAbsolutePath(assPath.c_str());
+	std::string assPath="ManagedCored.dll";
+	//App::get().getSettings().loadSet("ManagedDLL_FileName",assPath,std::string("Managedd.dll"));
+	assPath = FUtil::getAbsolutePath(assPath.c_str());
 	assembly = mono_domain_assembly_open(domain, assPath.c_str());
 	if (!assembly)
 	{
@@ -121,7 +184,17 @@ void MonoLayer::onAttach()
 		ND_ERROR("mono_assembly_get_image failed");
 		return;
 	}
-
+	MonoClass* entryClass = mono_class_from_name(image, "ND", "Entry");
+	if (!entryClass)
+	{
+		ND_ERROR("Cannot load Entry.cs");
+	}
+	MonoBoolean b=hotSwapEnable;
+	void* array = { &b };
+	entryInstance=callCSMethod("ND.Entry:Init", nullptr, &array);
+	if (!entryInstance)
+		return;
+	
 	/*
 		{
 			//Get the class
@@ -187,19 +260,34 @@ void MonoLayer::onAttach()
 			}
 
 		}*/
-	callCSMethod("Entry:onAttach()");
+	callEntryMethod("OnAttach",entryInstance);
+
+	MonoObject* e;
+	
+	int size = *(int*)mono_object_unbox(callCSMethod("ND.Entry:GetLayersSize", entryInstance));
+	happyLoad = size;
 }
 
 void MonoLayer::onDetach()
 {
-	callCSMethod("Entry:onDetach()");
+	callEntryMethod("OnDetach", entryInstance);
 }
 
 void MonoLayer::onUpdate()
 {
-	callCSMethod("Entry:onUpdate()");
+	callEntryMethod("OnUpdate", entryInstance);
 }
 
 void MonoLayer::onImGuiRender()
 {
+}
+
+void MonoLayer::reloadAssembly()
+{
+	callEntryMethod("ReloadAssembly", entryInstance);
+}
+
+bool MonoLayer::isMonoLoaded()
+{
+	return happyLoad;
 }

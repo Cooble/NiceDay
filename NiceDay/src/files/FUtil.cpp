@@ -1,4 +1,4 @@
-#include "FileUtil.h"
+#include "FUtil.h"
 #include <codecvt>
 //current implementation works only on windows
 
@@ -10,19 +10,19 @@ static std::string ws2s(const std::wstring& wstr)
 
 	return converterX.to_bytes(wstr);
 }
-void FileUtil::cleanPathString(std::string& s)
+void FUtil::cleanPathString(std::string& s)
 {
 	SUtil::replaceWith(s, "\\", "/");
 	SUtil::replaceWith(s, "//", "/", 2);
 }
 
-std::string FileUtil::getAbsolutePath(const char* fileName)
+std::string FUtil::getAbsolutePath(const char* fileName)
 {
 	std::string out = getExecutableFolderPath() + fileName;
 	return std::filesystem::exists(out) ? out : "";
 }
 
-const std::string& FileUtil::getExecutableFolderPath()
+const std::string& FUtil::getExecutableFolderPath()
 {
 	static std::string out;
 	if (out.empty()) {
@@ -31,7 +31,7 @@ const std::string& FileUtil::getExecutableFolderPath()
 	return out;
 }
 
-const std::string& FileUtil::getExecutablePath()
+const std::string& FUtil::getExecutablePath()
 {
 	static std::string out;
 	if (out.empty()) {

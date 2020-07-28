@@ -60,6 +60,7 @@ add_compile_definitions(
 #set(CMAKE_SYSTEM_PREFIX_PATH ${CMAKE_SYSTEM_PREFIX_PATH} "./")
 # Subdirs
 add_subdirectory(NiceDay)
+add_subdirectory(ManagedCore)
 add_subdirectory(Managed)
 add_subdirectory(Sandbox)
 add_subdirectory(SandboxTest)

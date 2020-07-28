@@ -1,13 +1,13 @@
 #include "ndpch.h"
 #include "NDTests.h"
-#include "core/App.h"
+#include "script/MonoLayer.h"
 
 int monoTest()
 {
-	
-
-
-	
-	//NDT_ASSERT(false);
+	MonoLayer l;
+	l.hotSwapEnable = false;
+	l.onAttach();
+	NDT_ASSERT(l.isMonoLoaded());
+	l.onDetach();
     return 0;
 }

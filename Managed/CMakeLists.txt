@@ -9,12 +9,15 @@ LIST( APPEND CMAKE_MODULE_PATH
     file(GLOB_RECURSE SOURCES 
         "src/*.cs" 
         )
-	
+   
 
 # Target creation
     add_library(Managed SHARED ${SOURCES})
-set_property(TARGET Managed PROPERTY VS_DOTNET_TARGET_FRAMEWORK_VERSION "v4.5")
-target_compile_options(Managed PRIVATE "/langversion:4")
+    #target_include_directories(Managed "../ManagedCore/src")
+
+    set_property(TARGET Managed PROPERTY VS_DOTNET_TARGET_FRAMEWORK_VERSION "v4.5")
+    target_compile_options(Managed PRIVATE "/langversion:6")
+    target_link_libraries(Managed ManagedCore)
 
 # Include files
 #   target_include_directories(NiceDay PUBLIC 
