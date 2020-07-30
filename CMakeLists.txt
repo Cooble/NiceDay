@@ -26,7 +26,8 @@ endif()
 if(CMAKE_CONFIGURATION_TYPES)
    list(APPEND CMAKE_CONFIGURATION_TYPES Dist)
    list(REMOVE_DUPLICATES CMAKE_CONFIGURATION_TYPES)
-   list(REMOVE_ITEM CMAKE_CONFIGURATION_TYPES MinSizeRel RelWithDebInfo)
+   list(REMOVE_ITEM CMAKE_CONFIGURATION_TYPES MinSizeRel)
+   #list(REMOVE_ITEM CMAKE_CONFIGURATION_TYPES MinSizeRel RelWithDebInfo)
    message("    Available build types: ${CMAKE_CONFIGURATION_TYPES}")
    
    #add flags to config dist
@@ -42,20 +43,24 @@ endif()
 #Global DEFINES based on Config
 set(DEBUG_COMP_DEFINITIONS 
     ND_DEBUG
+    ND_CONFIG="ND_DEBUG"
 )
 
 set(RELEASE_COMP_DEFINITIONS 
     ND_RELEASE
+    ND_CONFIG="ND_RELEASE"
 )
 
 set(DIST_COMP_DEFINITIONS 
     ND_DIST
+    ND_CONFIG="ND_DIST"
 )
 
 add_compile_definitions(
-    "$<$<CONFIG:debug>:${DEBUG_COMP_DEFINITIONS}>" 
-    "$<$<CONFIG:dist>:${DIST_COMP_DEFINITIONS}>" 
-    "$<$<CONFIG:release>:${RELEASE_COMP_DEFINITIONS}>")
+    "$<$<CONFIG:Debug>:${DEBUG_COMP_DEFINITIONS}>" 
+    "$<$<CONFIG:Dist>:${DIST_COMP_DEFINITIONS}>" 
+    "$<$<CONFIG:RelWithDebInfo>:${RELEASE_COMP_DEFINITIONS}>" 
+    "$<$<CONFIG:Release>:${RELEASE_COMP_DEFINITIONS}>")
 
 #set(CMAKE_SYSTEM_PREFIX_PATH ${CMAKE_SYSTEM_PREFIX_PATH} "./")
 # Subdirs

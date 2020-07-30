@@ -14,7 +14,7 @@ void Log::init()
 	noInit = false;
 	spdlog::set_level(spdlog::level::trace);
 	//spdlog::set_pattern("[%@] %^[%T] %n: %v%$");
-	spdlog::set_pattern("[%@] %^ %n: %v%$");
+	spdlog::set_pattern("[%@\t] %^ %n: %v%$");
 	s_CoreLogger = spdlog::stdout_color_mt("ND");
 	s_CoreLogger->set_level(spdlog::level::trace);
 	ND_INFO("Logger running");

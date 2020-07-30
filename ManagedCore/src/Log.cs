@@ -11,7 +11,14 @@ namespace ND
         public static bool Shortened = true;
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        public static extern void ND_COPY_FILE(string from,string to);
+        public static extern bool ND_COPY_FILE(string from,string to);
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        public static extern void ND_PROFILE_BEGIN_SESSION(string name, string path);
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        public static extern string ND_CURRENT_CONFIG();
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        public static extern void ND_PROFILE_END_SESSION();
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         private static extern void nd_trace(string message);

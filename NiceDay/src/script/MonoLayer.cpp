@@ -7,6 +7,12 @@
 #include "core/App.h"
 #include "core/NBT.h"
 #include "files/FUtil.h"
+
+#ifdef ND_DEBUG
+#define ASS_NAME "ManagedCored.dll"
+#else
+#define ASS_NAME "ManagedCore.dll"
+#endif
 //#pragma comment(lib, "C:/Program Files/Mono/lib/mono-2.0-sgen.lib")
 /*	types for args in internal calls
  *
@@ -59,7 +65,7 @@ static void l_trace(MonoString* s)
 	ND_TRACE(c);
 	mono_free(c);
 }
-static void nd_copy_file(MonoString* from, MonoString* to)
+static mono_bool nd_copy_file(MonoString* from, MonoString* to)
 {
 	auto f = mono_string_to_utf8(from);
 	auto t = mono_string_to_utf8(to);
@@ -68,11 +74,30 @@ static void nd_copy_file(MonoString* from, MonoString* to)
 		 suk = std::filesystem::copy_file(f, t,std::filesystem::copy_options::overwrite_existing);
 	}catch (std::exception& e)
 	{
-		std::cerr << e.what();
+		ND_ERROR("Cannot copy {} to {}\n{}", f, t,e.what());
 	}
 	//ND_TRACE("Copying file from {} to {} and {}",f,t,suk);
 	mono_free(f);
 	mono_free(t);
+
+	return suk;
+}
+static void nd_profile_begin_session(MonoString* name,MonoString* path)
+{
+	auto n = mono_string_to_utf8(name);
+	auto p = mono_string_to_utf8(path);
+	ND_PROFILE_BEGIN_SESSION(n, p);
+	mono_free(n);
+	mono_free(p);
+}
+static void nd_profile_end_session()
+{
+	ND_PROFILE_END_SESSION();
+}
+
+static MonoString* nd_current_config()
+{
+	return mono_string_new(mono_domain_get(), ND_CONFIG);
 }
 static MonoDomain* domain;
 static MonoImage* image;
@@ -110,11 +135,15 @@ MonoObject* MonoLayer::callEntryMethod(const char* methodName, void* obj, void**
 
 static void initInternalCalls()
 {
+
 	mono_add_internal_call("ND.Log::nd_trace(string)", l_trace);
 	mono_add_internal_call("ND.Log::nd_info(string)", l_info);
 	mono_add_internal_call("ND.Log::nd_warn(string)", l_warn);
 	mono_add_internal_call("ND.Log::nd_error(string)", l_error);
 	mono_add_internal_call("ND.Log::ND_COPY_FILE(string,string)", nd_copy_file);
+	mono_add_internal_call("ND.Log::ND_PROFILE_BEGIN_SESSION(string,string)", nd_profile_begin_session);
+	mono_add_internal_call("ND.Log::ND_PROFILE_END_SESSION()", nd_profile_end_session);
+	mono_add_internal_call("ND.Log::ND_CURRENT_CONFIG()", nd_current_config);
 }
 
 static std::string getMonoInstallationDirectory()
@@ -167,7 +196,7 @@ void MonoLayer::onAttach()
 	initInternalCalls();
 
 	//Open a assembly in the domain
-	std::string assPath="ManagedCored.dll";
+	std::string assPath= ASS_NAME;
 	//App::get().getSettings().loadSet("ManagedDLL_FileName",assPath,std::string("Managedd.dll"));
 	assPath = FUtil::getAbsolutePath(assPath.c_str());
 	assembly = mono_domain_assembly_open(domain, assPath.c_str());
@@ -263,9 +292,15 @@ void MonoLayer::onAttach()
 	callEntryMethod("OnAttach",entryInstance);
 
 	MonoObject* e;
-	
-	int size = *(int*)mono_object_unbox(callCSMethod("ND.Entry:GetLayersSize", entryInstance));
-	happyLoad = size;
+	int size = 0;
+	try {
+		size = *(int*)mono_object_unbox(callCSMethod("ND.Entry:GetLayersSize", entryInstance));
+	}catch(...)
+	{
+		ND_ERROR("Cannot load mono GetLayersSize");
+		happyLoad = false;
+	}
+	happyLoad = size || hotSwapEnable;
 }
 
 void MonoLayer::onDetach()

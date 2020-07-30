@@ -33,7 +33,7 @@ App::App()
 	s_Instance = this;
 }
 
-App::App(const AppInfo& info):App()
+App::App(const App::AppInfo& info):App()
 {
 	init(info);
 }
@@ -44,9 +44,7 @@ static void physicalWindowCallback(Event& e);
 void App::init(const AppInfo& info)
 {
 	m_info = info;
-	m_io.enableSCENE = info.enableSCENE;
-	m_io.enableIMGUI = info.enableIMGUI;
-	m_io.enableSOUND = info.enableSOUND;
+	m_io = info.io;
 	m_settings = new NBT();
 	NBT::loadFromFile("settings.json", *m_settings);
 	if (m_settings->type == NBT::T_NULL) {
@@ -72,8 +70,10 @@ void App::init(const AppInfo& info)
 	m_Window->setEventCallback(m_io.enableSCENE ? physicalWindowCallback : eventCallback);
 	m_lua_layer = new LuaLayer();
 	m_LayerStack.pushLayer(m_lua_layer);
-	m_mono_layer = new MonoLayer();
-	m_LayerStack.pushLayer(m_mono_layer);
+	if (m_io.enableMONO) {
+		m_mono_layer = new MonoLayer();
+		m_LayerStack.pushLayer(m_mono_layer);
+	}
 	if (m_io.enableSOUND)
 		m_LayerStack.pushLayer(new SoundLayer());
 	if (m_io.enableIMGUI)
@@ -219,15 +219,15 @@ void App::render()
 		l->onRender();
 
 	m_Window->getFBO()->bind();
-	if (m_info.enableSCENE)
+	if (m_io.enableSCENE)
 		m_Window->getFBO()->clear(BuffBit::COLOR | BuffBit::DEPTH);
-	if (m_info.enableIMGUI)
+	if (m_io.enableIMGUI)
 	{
 		ND_PROFILE_SCOPE("imgui app render");
 		m_ImGuiLayer->begin();
 
 		//render the first main imguiwindow
-		if(m_info.enableSCENE)
+		if(m_io.enableSCENE)
 			m_fakeWindow->renderView();
 		
 		for (Layer* l : m_LayerStack)
@@ -235,7 +235,7 @@ void App::render()
 		m_ImGuiLayer->end();
 
 		//prepare window for next
-		if (m_info.enableSCENE)
+		if (m_io.enableSCENE)
 			m_fakeWindow->swapBuffers();
 	}
 }

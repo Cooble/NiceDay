@@ -7,17 +7,19 @@
 #include "layer/PriorGenLayer.h"
 
 #ifdef ND_DEBUG
-static std::string s_title = "Niceday - Debug";
+constexpr char* title = "Niceday - Debug";
 #else
-static std::string s_title = "Niceday - Release";
+constexpr char* title = "Niceday - Release";
 #endif
+
 
 Sandbox::Sandbox():
 App()
 {
 	AppInfo info;
-	info.title = s_title;
-	info.enableSCENE = true;
+	info.title = title;
+	info.io.enableSCENE = true;
+	info.io.enableMONO = true;
 	init(info);
 	Sprite2D::init();
 	Controls::init();

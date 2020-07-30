@@ -23,15 +23,8 @@ class FakeWindow;
 class FakeInput;
 class MonoLayer;
 
-struct AppInfo
-{
-	int width=1280, height=720;
-	std::string title = "ND_ENGINE";
 
-	bool enableIMGUI = true;
-	bool enableSOUND = true;
-	bool enableSCENE = false;
-};
+
 class App
 {
 
@@ -43,8 +36,15 @@ public:
 		bool enableIMGUI = true;
 		bool enableSOUND = true;
 		bool enableSCENE = false;
+		bool enableMONO = false;
 	};
-	App(const AppInfo& info);
+	struct AppInfo
+	{
+		int width = 1280, height = 720;
+		std::string title = "ND_ENGINE";
+		IO io;
+	};
+	App(const App::AppInfo& info);
 	virtual ~App();
 
 	void start();
@@ -79,6 +79,7 @@ public:
 	std::thread::id getMainThreadID() { return m_thread_id; }
 
 	const IO& getIO() const { return m_io; }
+	
 private:
 	IO m_io;
 	static App* s_Instance;
