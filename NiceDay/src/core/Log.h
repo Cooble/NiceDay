@@ -7,6 +7,7 @@
 class Log {
 public:
 	static void init();
+	static void flush();
 
 	inline static std::shared_ptr<spdlog::logger>& GetCoreLogger()
 	{
@@ -16,6 +17,7 @@ public:
 private:
 	static std::shared_ptr<spdlog::logger> s_CoreLogger;
 };
+#define ND_BUG(...)    SPDLOG_LOGGER_DEBUG(Log::GetCoreLogger(), __VA_ARGS__)
 #define ND_TRACE(...)    SPDLOG_LOGGER_TRACE(Log::GetCoreLogger(), __VA_ARGS__)
 #define ND_INFO(...)     SPDLOG_LOGGER_INFO(Log::GetCoreLogger(), __VA_ARGS__)
 #define ND_WARN(...)     SPDLOG_LOGGER_WARN(Log::GetCoreLogger(), __VA_ARGS__)

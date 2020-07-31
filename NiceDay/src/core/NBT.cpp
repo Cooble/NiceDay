@@ -338,6 +338,7 @@ bool BinarySerializer::read(NBT& n, const IBinaryStream::ReadFunc& read)
 	{
 	case BB_STRING:
 	{
+		{
 			Stringo s;
 			uint32_t size;
 			read((char*)&size, 4);
@@ -351,7 +352,6 @@ bool BinarySerializer::read(NBT& n, const IBinaryStream::ReadFunc& read)
 			}
 			n = s;
 		}
-		n = s;
 	}
 	break;
 	case BB_INT:

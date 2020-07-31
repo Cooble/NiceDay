@@ -1,13 +1,16 @@
 #include "NDTests.h"
 #include "core/SUtil.h"
 #include "core/NBT.h"
+#include <nlohmann/json.hpp>
 static void testNBT();
 static void testSUtil();
+static void testNBTSerialization();
 
 int NDUtilTest()
 {
 	NDT_TRY(testNBT());
 	NDT_TRY(testSUtil());
+    NDT_TRY(testNBTSerialization());
 	return 0;
 }
 static void testNBT()
@@ -95,5 +98,57 @@ static void testSUtil()
             NDT_ASSERT_EQUAL(strings, targetStringsNoBlanksSemicolonsOnly);
         }
     }
+}
+static void testNBTSerialization()
+{
+    NBT n;
+    n = 12;
+    NBT mapka;
+    mapka["twelfe"] = n;
+    mapka["something else"] = n;
+    int twe;
+    std::string twe1="hhheeee";
+    mapka.save("blemc", twe);
+    mapka.save("blemc", twe1);
+    mapka.load("blemc", twe1, std::string("hohhoo"));
+    mapka.load("blemc2", twe1, std::string("hohhoo"));
+
+    NBT listik;
+    listik[0] = 1;
+    listik[2] = 2.5;
+    listik[2] = 3;
+    mapka["listik"] = listik;
+	
+    NBT lis;
+    for (int i = 0; i < 5; ++i)
+    {
+        lis.push_back("Help " + std::to_string(i));
+    }
+    lis.push_back(3.0f);
+    lis.push_back(true);
+    lis.push_back(std::numeric_limits<uint64_t>::max());
+    lis.push_back(lis);
+    lis.emplace_back("emplaced stringooo hhoho");
+    lis.push_back(mapka);
+
+
+    NBT::saveToFile("hayaku.json", lis);
+    NBT newlIs;
+    NBT::loadFromFile("hayaku.json", newlIs);
+    NDT_ASSERT(newlIs == lis);
+    NDT_ASSERT(NBT::fromJson(lis.toJson()) == lis);
+    NBT cop = lis;
+
+    std::fstream stream;
+    stream.open("cruci.dat", std::ios::binary | std::ios::out);
+    BinarySerializer::write(lis, std::bind(&std::fstream::write, &stream, std::placeholders::_1, std::placeholders::_2));
+    stream.flush();
+    stream.close();
+    NBT newLis;
+    std::fstream stream2;
+    stream2.open("cruci.dat", std::ios::binary | std::ios::in);
+    BinarySerializer::read(newLis, std::bind(&std::fstream::read, &stream2, std::placeholders::_1, std::placeholders::_2));
+    stream2.close();
+    NDT_ASSERT(newlIs == lis);
 }
 

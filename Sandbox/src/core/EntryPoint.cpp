@@ -92,74 +92,12 @@ int main()
 	ResourceMan::init();
 	Sandbox game;
 
-	/*NBT n;
-	n = 12;
-	NBT mapka;
-	mapka["twelfe"] = n;
-	mapka["something else"] = n;
-	int twe;
-	std::string twe1="hhheeee";
-	mapka.save("blemc", twe);
-	mapka.save("blemc", twe1);
-	mapka.load("blemc", twe1, std::string("hohhoo"));
-	mapka.load("blemc2", twe1, std::string("hohhoo"));
-
-	NBT listik;
-	listik[0] = 1;
-	listik[2] = 2.5;
-	listik[2] = 3;
-	mapka["listik"] = listik;
-	ND_INFO("\n"+mapka.dump());
-
-	int twelfe = int(listik[0]);
-	double d0 = int(listik[0]);
-	double d1 = double(listik[2]);
-	double d2 = (double)listik[2];
-	NBT ssss = "whatever";
-	ssss.string() += " blemc ";
-	ssss = "nwever";
-	NBT lis;
-	for (int i = 0; i < 5; ++i)
-	{
-		lis.push_back("Help " + std::to_string(i));
-	}
-	lis.push_back(3.0f);
-	lis.push_back(true);
-	lis.push_back(std::numeric_limits<uint64_t>::max());
-	lis.push_back(lis);
-	lis.emplace_back("emplaced stringooo hhoho");
-	lis.push_back(mapka);
-	
-	
-	ND_INFO("\n" + lis.dump());
-	NBT::saveToFile("hayaku.json", lis);
-	NBT newlIs;
-	NBT::loadFromFile("hayaku.json", newlIs);
-	bool equ = newlIs==lis;
-	
-	ND_INFO("nbt2 through json\n" + NBT::fromJson(lis.toJson()).dump());
-
-	bool eq = NBT::fromJson(lis.toJson()) == lis;
-	NBT cop = lis;
-	//cop.push_back(5);
-	bool eqne = NBT::fromJson(cop.toJson()) == lis;
-
-	std::fstream stream;
-	stream.open("cruci.dat", std::ios::binary | std::ios::out);
-	BinarySerializer::write(lis, std::bind(&std::fstream::write, &stream, std::placeholders::_1, std::placeholders::_2));
-	stream.flush();
-	stream.close();
-	NBT newLis;
-	std::fstream stream2;
-	stream2.open("cruci.dat", std::ios::binary | std::ios::in);
-	BinarySerializer::read(newLis, std::bind(&std::fstream::read, &stream2, std::placeholders::_1, std::placeholders::_2));
-	stream2.close();
-	ASSERT(newlIs == lis, "shit");*/
 	ND_PROFILE_END_SESSION();
 	game.start();
 
-	std::cin.get();
+	//std::cin.get();
 
+	Log::flush();
 	return 0;
 }
 #endif
