@@ -906,7 +906,6 @@ static void saveConsoleState()
 void LuaLayer::onDetach()
 {
 	saveConsoleState();
-	lua_close(m_L);
 	delete m_console;
 }
 

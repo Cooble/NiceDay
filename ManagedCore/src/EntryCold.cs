@@ -14,16 +14,21 @@ namespace ND
      */
     public class EntryCold : Entry
     {
-        private static string ROOT_PATH = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)+"\\";
-        private static string DOMAIN_NAME = "Managedd.dll";
-        private static string DOMAIN_PATH = ROOT_PATH + DOMAIN_NAME;
         private static ProxyAssLoader loader;
        
         public override void OnAttach() {
 
             Log.ND_TRACE("C# scripting attached: Cold\n -> Loading assembly");
+            AssemblyLocator.InitPaths();
+            AssemblyLocator.CheckForModification();
+            AssemblyLocator.CopyAssembly();
+            if (!File.Exists(AssemblyLocator.DOMAIN_PATH))
+            {
+                Log.ND_ERROR("Cannot load dll: " + AssemblyLocator.DOMAIN_PATH);
+                return;
+            }
             loader = new ProxyAssLoader();
-            loader.LoadFrom(DOMAIN_PATH);
+            loader.LoadFrom(AssemblyLocator.DOMAIN_PATH);
             loader.LoadLayers();
             loader.AttachLayers();
         }
@@ -48,8 +53,5 @@ namespace ND
                 listOut.Add(layer.GetType().Name);
             return listOut;
         }
-
-
-
     }
 }

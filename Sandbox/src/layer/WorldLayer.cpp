@@ -180,10 +180,6 @@ bool WorldLayer::isPaused() const
 void WorldLayer::onAttach()
 {
 	m_paused = false;
-
-	//prepare lua world interface
-	LuaLayer& lua = *App::get().getLua();
-	auto L = lua.getLuaState();
 }
 
 

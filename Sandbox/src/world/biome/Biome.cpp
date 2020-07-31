@@ -25,7 +25,7 @@ Biome::~Biome()
 	}
 	for (int i = 0; i < m_sky_sprites_size; i++)
 	{
-		delete m_sprites[i];
+		delete m_sky_sprites[i];
 	}
 }
 
