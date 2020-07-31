@@ -33,6 +33,7 @@ Well, if there is a hell in the world... I think I've found it.
 - PORT_AUDIO https://git.assembla.com/portaudio.git
 
 ##### ==Other langs==
+- MONO https://github.com/mono/mono
 - LUA https://www.lua.org/download.html
 - SOL2 https://github.com/ThePhD/sol2
 - NLOHMANN_JSON https://github.com/nlohmann/json
