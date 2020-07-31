@@ -22,7 +22,7 @@ void Log::init()
 	sinks[1]->set_level(spdlog::level::trace);
 
 	sinks[0]->set_pattern("[%=26@]%^  %v%$");
-	sinks[1]->set_pattern("[%-7l|%=26@] %v%$");
+	sinks[1]->set_pattern("[%-7l|%-26@] %v%$");
 	
 	s_CoreLogger = std::make_shared<spdlog::logger>("ND", begin(sinks), end(sinks));
 	s_CoreLogger->set_level(spdlog::level::trace);
