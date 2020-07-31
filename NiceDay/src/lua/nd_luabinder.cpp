@@ -62,7 +62,7 @@ static void bindGLM(sol::state& state)
 		sol::meta_function::multiplication, [](half_int& a, int b) { return a * b; },
 		sol::meta_function::subtraction, [](half_int& a, int b) { return a / b; }
 	);
-	state.new_usertype<glm::vec2>("glmvec2",
+	state.new_usertype<glm::vec2>("vec2",
 		sol::constructors<glm::vec2(float, float)>(),
 		"x", &glm::vec2::x,
 		"y", &glm::vec2::y,
@@ -70,12 +70,13 @@ static void bindGLM(sol::state& state)
 		sol::meta_function::subtraction, [](glm::vec2& a, glm::vec2& b) { return a - b; },
 		sol::meta_function::multiplication,
 		sol::overload([](glm::vec2& a, glm::vec2& b) { return a * b; },
-			[](glm::vec2& a, float b) { return a * b; }),
+			[](glm::vec2& a, float b) { return a * b; }, [](float a, glm::vec2& b) { return a * b; }),
 		sol::meta_function::division,
 		sol::overload([](glm::vec2& a, glm::vec2& b) { return a / b; },
 			[](glm::vec2& a, float b) { return a / b; })
 		);
-	state.new_usertype<glm::vec3>("glmvec3",
+	state.set_function("Vec2", sol::overload([](float x, float y) {return glm::vec2(x, y); }, [](float v) {return glm::vec2(v); }));
+	state.new_usertype<glm::vec3>("vec3",
 		sol::constructors<glm::vec3(float, float, float)>(),
 		"x", &glm::vec3::x,
 		"y", &glm::vec3::y,
@@ -89,7 +90,8 @@ static void bindGLM(sol::state& state)
 		sol::overload([](glm::vec3& a, glm::vec3& b) { return a / b; },
 			[](glm::vec3& a, float b) { return a / b; })
 		);
-	state.new_usertype<glm::vec4>("glmvec4",
+	state.set_function("Vec3", sol::overload([](float x, float y,float z) {return glm::vec3(x, y,z); }, [](float v) {return glm::vec3(v); }));
+	state.new_usertype<glm::vec4>("vec4",
 		sol::constructors<glm::vec4(float, float, float, float)>(),
 		"x", &glm::vec4::x,
 		"y", &glm::vec4::y,
@@ -104,6 +106,12 @@ static void bindGLM(sol::state& state)
 		sol::overload([](glm::vec4& a, glm::vec4& b) { return a / b; },
 			[](glm::vec4& a, float b) { return a / b; })
 		);
+	state.set_function("Vec4", sol::overload([](float x, float y, float z,float w) {return glm::vec4(x, y, z, w); }, [](float v) {return glm::vec4(v); }));
+	state.set_function("normalize", sol::overload(
+		[](glm::vec2 v) {return glm::normalize(v); },
+		[](glm::vec3 v) {return glm::normalize(v); },
+		[](glm::vec4 v) {return glm::normalize(v); }));
+
 }
 
 static void bindSound(sol::state& state)

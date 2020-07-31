@@ -36,6 +36,7 @@ struct FileOpen
 static std::vector<FileOpen> s_files;
 static int s_currentFileIndex = 0;
 
+static void saveConsoleState();
 
 static char text[1024 * 32];
 static const char* textExample =
@@ -884,8 +885,7 @@ void LuaLayer::onAttach()
 	s_couroutineFileSrc = readStringFromFile(ND_RESLOC("res/lua/coroutines.lua").c_str());
 	runScriptFromFile(m_L, "res/lua/startup.lua");
 }
-
-void LuaLayer::onDetach()
+static void saveConsoleState()
 {
 	s_settings = NBT();
 	s_settings["current_file_index"] = s_currentFileIndex;
@@ -902,7 +902,10 @@ void LuaLayer::onDetach()
 	s_settings["list"] = std::move(list);
 	NBT::saveToFile(s_settings_file, s_settings);
 
-
+}
+void LuaLayer::onDetach()
+{
+	saveConsoleState();
 	lua_close(m_L);
 	delete m_console;
 }
@@ -923,6 +926,11 @@ void LuaLayer::onEvent(Event& e)
 			m_show_imgui_console = !m_show_imgui_console;
 		}
 	}
+}
+
+sol::state* LuaLayer::getSolState()
+{
+	return &s_lua;
 }
 
 void LuaLayer::printToLuaConsole(lua_State* L, const char* c)
@@ -968,8 +976,15 @@ static int byteCodeWriterCallback(lua_State* L, const void* p, size_t sz, void* 
 	memcpy(coroutinesByteCode, p, sz);
 }*/
 
+constexpr int saveEveryNTicks = 60 * 15;
+static int timeToSave = saveEveryNTicks;
 void LuaLayer::onUpdate()
 {
+	if(--timeToSave==0)
+	{
+		timeToSave = saveEveryNTicks;
+		saveConsoleState();
+	}
 	if (m_console->hasNewCommandPending)
 	{
 		auto command = m_console->retrieveLastCommand();

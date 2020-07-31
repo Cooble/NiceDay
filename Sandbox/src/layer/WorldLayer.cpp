@@ -40,6 +40,7 @@
 #include "audio/player.h"
 #include "world/nd_registry.h"
 #include "gui/GUIContext.h"
+#include "world/particle/luabinder_particles.h"
 
 const char* WORLD_FILE_PATH;
 int CHUNKS_LOADED;
@@ -268,8 +269,8 @@ static WorldEntity& luaGetPlayerRef()
 
 void WorldLayer::loadLuaWorldLibs()
 {
-	auto L = App::get().getLua()->getLuaState();
-
+	auto L = App::get().getLua()->getSolState();
+	lua_binder_particles::bindEverything(*L,m_world,&getPlayer());
 
 	/*luabridge::getGlobalNamespace(L)
 		.beginNamespace("Particle")
@@ -416,7 +417,8 @@ void WorldLayer::onUpdate()
 	}
 
 	bool istsunderBlock = !m_world->isAir(m_cam->getPosition().x, m_cam->getPosition().y - 1);
-
+	if (!App::get().getWindow()->isFocused())
+		return;
 	if (getPlayer().hasCreative())
 		onCreativeUpdate();
 	else onSurvivalUpdate();
@@ -429,7 +431,7 @@ void WorldLayer::onUpdate()
 	float acc = 0.3f;
 	float moveThroughBlockSpeed = 6;
 
-	if (!GUIContext::isAnyItemActive())
+	if (!GUIContext::isAnyItemActive()&&App::get().getWindow()->isFocused())
 	{
 		if (Stats::move_through_blocks_enable)
 		{

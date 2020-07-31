@@ -105,6 +105,7 @@ void FakeWindow::renderView()
 	ImGui::Begin("FakeWindow", &opened, ImGuiWindowFlags_NoDecoration);
 	m_is_hovered = ImGui::IsWindowHovered();
 	m_is_focused = ImGui::IsWindowFocused();
+	ND_TRACE("Focused {}", m_is_focused);
 	
 	
 	ImGui::PopStyleVar(2);

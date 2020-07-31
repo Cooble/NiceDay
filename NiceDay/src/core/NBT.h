@@ -80,9 +80,17 @@ private:
 			type = T_NULL;
 		}
 	}
+	template<int vecSize>
+	void buildVec(const glm::vec<vecSize, float>& v)
+	{
+		ASSERT(type == T_NULL || type == T_ARRAY, "");
+		checkForArray();
+		for (int i = 0; i < vecSize; ++i)
+			access_array(i) = glm::value_ptr(v)[i];
+	}
 public:
 	const char* c_str() const { return val_string->c_str(); }
-	constexpr bool isContainer() const { return isMap()||isArray(); }
+	constexpr bool isContainer() const { return isMap() || isArray(); }
 	constexpr bool isMap() const { return type == T_MAP; }
 	constexpr bool isArray() const { return type == T_ARRAY; }
 	constexpr bool isNumber() const { return (type & T_NUMBER) != 0; }
@@ -92,11 +100,13 @@ public:
 	constexpr bool isString() const { return type == T_STRING; }
 	constexpr bool isBool() const { return type == T_BOOL; }
 	constexpr bool isNull() const { return type == T_NULL; }
-	constexpr size_t size() const { return isMap() ? val_map->size() : (isArray() ? val_array->size() : (isString()?string().size():0)); }
+	template<int vecSize>
+	constexpr bool isVec() const { return isArray() && size() == vecSize; }
+	constexpr size_t size() const { return isMap() ? val_map->size() : (isArray() ? val_array->size() : (isString() ? string().size() : 0)); }
 	NBTType types() const { return type; }
 	NBT() = default;
 
-	~NBT() noexcept{
+	~NBT() noexcept {
 		destruct();
 	}
 
@@ -104,12 +114,6 @@ public:
 	{
 		val_int = i;
 		type = T_NUMBER_INT;
-	}
-	
-	NBT(const glm::vec2& i)
-	{
-		val_uint = *(uint64_t*)&i;
-		type = T_NUMBER_UINT;
 	}
 	NBT(uint64_t i)
 	{
@@ -136,7 +140,11 @@ public:
 		val_int = i;
 		type = T_BOOL;
 	}
-
+	template <int vecSize>
+	NBT(const glm::vec<vecSize, float>& v)
+	{
+		buildVec(v);
+	}
 	int getDigit(char c)
 	{
 		return c - '0';
@@ -145,8 +153,8 @@ public:
 	{
 		uint64_t out = 0;
 		uint64_t tens = 1;
-		
-		for (int i = s.size()-1; i>=0; --i)
+
+		for (int i = s.size() - 1; i >= 0; --i)
 		{
 			out += tens * getDigit(s[i]);
 			tens *= 10;
@@ -169,7 +177,7 @@ public:
 	}
 	NBT(const Stringo& i)
 	{
-		if(SUtil::startsWith(i,'#')&&isNumeric(i.substr(1)))
+		if (SUtil::startsWith(i, '#') && isNumeric(i.substr(1)))
 		{
 			val_uint = toUint64(i.substr(1));
 			type = T_NUMBER_UINT;
@@ -190,7 +198,6 @@ public:
 		type = T_STRING;
 	}
 	NBT(const char* i):NBT(Stringo(i)){}
-
 	NBT& operator=(bool i)
 	{
 		destruct();
@@ -254,13 +261,6 @@ public:
 		type = T_NUMBER_UINT;
 		return *this;
 	}
-	NBT& operator=(const glm::vec2& i)
-	{
-		destruct();
-		val_uint = *(uint64_t*)&i;
-		type = T_NUMBER_UINT;
-		return *this;
-	}
 	NBT& operator=(double i)
 	{
 		destruct();
@@ -273,6 +273,15 @@ public:
 		destruct();
 		val_float = (double)i;
 		type = T_NUMBER_FLOAT;
+		return *this;
+	}
+  template <int vecSize>
+	NBT& operator=(const glm::vec<vecSize, float>& i)
+	{
+		if (isVec<vecSize>())
+			destruct();
+
+		buildVec(i);
 		return *this;
 	}
 	NBT& operator=(const Stringo& i)
@@ -297,8 +306,8 @@ public:
 		}
 		return *this;
 	}
-	 int invalidCast() const { /*ASSERT(false, "invalid nbt type cast");*/ return 0; }
-	 glm::vec2 invalidCastGLM() const { ASSERT(false, "invalid nbt type cast"); return glm::vec2(0,0); }
+
+	int invalidCast() const { /*ASSERT(false, "invalid nbt type cast");*/ return 0; }
 	NBT& operator=(const char* i)
 	{
 		return this->operator=(Stringo(i));
@@ -331,14 +340,26 @@ public:
 	}
 	operator uint64_t() const
 	{
-		return isUInt() ? val_uint : (isInt()?val_int:invalidCast());
-	}
-	operator glm::vec2() const
-	{
-		return isUInt() ? (*(glm::vec2*)&val_uint): invalidCastGLM();
+		return isUInt() ? val_uint : (isInt() ? val_int : invalidCast());
 	}
 
-	operator float() const { return isFloat()  ? val_float : (isInt()?val_int:invalidCast()); }
+	operator glm::vec2() const
+	{
+		ASSERT(isVec<2>(), "invalid cast");
+		return glm::vec2(this[0], this[1]);
+	}
+	operator glm::vec3() const
+	{
+		ASSERT(isVec<3>(), "invalid cast");
+		return glm::vec3(this[0], this[1], this[2]);
+	}
+	operator glm::vec4() const
+	{
+		ASSERT(isVec<4>(), "invalid cast");
+		return glm::vec4(this[0], this[1], this[2], this[3]);
+	}
+
+	operator float() const { return isFloat() ? val_float : (isInt() ? val_int : invalidCast()); }
 	operator double() const { return isFloat() ? val_float : (isInt() ? val_int : invalidCast()); }
 
 	//will try to return number, if not number -> zero
@@ -485,7 +506,7 @@ public:
 	{
 		return isMap() && (val_map->find(key) != val_map->end());
 	}
-	
+
 	//array access
 	NBT& access_array(int index)
 	{
@@ -512,7 +533,6 @@ public:
 	{
 		return access_array(index);
 	}
-	
 	const NBT& operator[](int index) const
 	{
 		return access_array_const(index);
@@ -549,7 +569,7 @@ public:
 
 	json toJson() const;
 	static NBT fromJson(const json& j);
-	
+  
 	static void saveToFile(const Stringo& filePath, const NBT& nbt);
 	// loads nbt from json file (comments in file are allowed, ignored)
 	static bool loadFromFile(const Stringo& filePath, NBT& nbt);
@@ -559,14 +579,73 @@ public:
 	{
 		if (!checkForMap())
 			return;
-		operator[](name) = val;
+		access_map(name) = val;
 	}
-	// Loads val and ensures proper state of NBT
-	// if exists -> val=data
-	// if does not exist -> val=default_val and !! data=default_val !!
-	// !Use only if you need to modify nbt!
+	//=================Load new================================
+	template <typename Arg0, typename Arg1>
+	bool load(const Stringo& key, Arg0& val, Arg1 defaultVal) const
+	{
+		if (!isMap()) {
+			val = defaultVal;
+			return false;
+		}
+		auto& it = val_map->find(key);
+		bool found = it != val_map->end();
+		if (found)
+			val = (Arg0)it->second;
+		else val = defaultVal;
+		return found;
+	}
+	template <typename Arg1>
+	bool load(const Stringo& key, Stringo& val, Arg1 defaultVal) const
+	{
+		if (!isMap()) {
+			val = defaultVal;
+			return false;
+		}
+		auto& it = val_map->find(key);
+		bool found = it != val_map->end();
+		if (found)
+			val = it->second.string();
+		else val = defaultVal;
+		return found;
+	}
+	//specialization for same types
 	template <typename Arg>
 	bool loadSet(const Stringo& key, Arg& val, Arg defaultVal)
+	{
+		if (!isMap()) {
+			val = defaultVal;
+			return false;
+		}
+		auto& it = val_map->find(key);
+		bool found = it != val_map->end();
+		if (found)
+			val = (Arg)it->second;
+		else {
+      val = defaultVal;
+      val_map[key]=defaultVal;
+    }
+		return found;
+	}
+	/*template <>
+	bool loadNew(const& key, Stringo& val, const char* defaultVal) const
+	{
+		if (!isMap()) {
+			val = defaultVal;
+			return false;
+		}
+		auto& it = val_map->find(key);
+		bool found = it != val_map->end();
+		if (found)
+			val = it->second.string();
+		else val = defaultVal;
+		return found;
+	}*/
+	//=================Load new==end===========================
+
+	/*template <typename Arg>
+	bool load(const Stringo& key, Arg& val, Arg defaultVal) const
 	{
 		if (!isMap()) {
 			val = defaultVal;
@@ -582,6 +661,8 @@ public:
 		}
 		return found;
 	}
+
+
 	template <>
 	bool loadSet(const Stringo& key, Stringo& val, Stringo defaultVal)
 	{
@@ -600,6 +681,7 @@ public:
 		return found;
 	}
 
+
 	// If data exists, val=data, if not, val=default_val
 	// if exists -> loads data to val
 	// if does not exist -> sets val to default
@@ -610,6 +692,13 @@ public:
 			val = defaultVal;
 			return false;
 		}
+
+	*/
+	/*template <typename Arg>
+	bool loadIfExists(const Stringo& key, Arg& val) const
+	{
+		if (!isMap()) return false;
+
 		auto& it = val_map->find(key);
 		bool found = it != val_map->end();
 		val = found?Arg(it->second):defaultVal;
@@ -626,6 +715,28 @@ public:
 		bool found = it != val_map->end();
 		val = found ? it->second.string(): defaultVal;
 		return found;
+	}*/
+	template <typename Arg>
+	bool loadIfExists(const Stringo& key, Arg& val) const
+	{
+		if (!isMap()) return false;
+
+		auto& it = val_map->find(key);
+		bool found = it != val_map->end();
+		if (found)
+			val = (Arg)it->second;
+		return found;
+	}
+	template <>
+	bool loadIfExists(const Stringo& key, Stringo& val) const
+	{
+		if (!isMap()) return false;
+
+		auto& it = val_map->find(key);
+		bool found = it != val_map->end();
+		if (found)
+			val = it->second.string();
+		return found;
 	}
 
 	
@@ -639,7 +750,7 @@ public:
 		auto& it = val_map->find(key);
 		bool found = it != val_map->end();
 		if (found)
-			val = Arg(it->second);
+			val = (Arg)it->second;
 		return found;
 	}
 	template <>
@@ -650,7 +761,7 @@ public:
 		}
 		auto& it = val_map->find(key);
 		bool found = it != val_map->end();
-		if (found)
+		if (found && it->second.isString())
 			val = it->second.string();
 		return found;
 	}
