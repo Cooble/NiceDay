@@ -78,9 +78,17 @@ private:
 			type = T_NULL;
 		}
 	}
+	template<int vecSize>
+	void buildVec(const glm::vec<vecSize, float>& v)
+	{
+		ASSERT(type == T_NULL || type == T_ARRAY, "");
+		checkForArray();
+		for (int i = 0; i < vecSize; ++i)
+			access_array(i) = glm::value_ptr(v)[i];
+	}
 public:
 	const char* c_str() const { return val_string->c_str(); }
-	constexpr bool isContainer() const { return isMap()||isArray(); }
+	constexpr bool isContainer() const { return isMap() || isArray(); }
 	constexpr bool isMap() const { return type == T_MAP; }
 	constexpr bool isArray() const { return type == T_ARRAY; }
 	constexpr bool isNumber() const { return (type & T_NUMBER) != 0; }
@@ -90,11 +98,13 @@ public:
 	constexpr bool isString() const { return type == T_STRING; }
 	constexpr bool isBool() const { return type == T_BOOL; }
 	constexpr bool isNull() const { return type == T_NULL; }
-	constexpr size_t size() const { return isMap() ? val_map->size() : (isArray() ? val_array->size() : (isString()?string().size():0)); }
+	template<int vecSize>
+	constexpr bool isVec() const { return isArray() && size() == vecSize; }
+	constexpr size_t size() const { return isMap() ? val_map->size() : (isArray() ? val_array->size() : (isString() ? string().size() : 0)); }
 	NBTType types() const { return type; }
 	NBT() = default;
 
-	~NBT() noexcept{
+	~NBT() noexcept {
 		destruct();
 	}
 
@@ -102,12 +112,6 @@ public:
 	{
 		val_int = i;
 		type = T_NUMBER_INT;
-	}
-	
-	NBT(const glm::vec2& i)
-	{
-		val_uint = *(uint64_t*)&i;
-		type = T_NUMBER_UINT;
 	}
 	NBT(uint64_t i)
 	{
@@ -134,7 +138,11 @@ public:
 		val_int = i;
 		type = T_BOOL;
 	}
-
+	template <int vecSize>
+	NBT(const glm::vec<vecSize, float>& v)
+	{
+		buildVec(v);
+	}
 	int getDigit(char c)
 	{
 		return c - '0';
@@ -143,8 +151,8 @@ public:
 	{
 		uint64_t out = 0;
 		uint64_t tens = 1;
-		
-		for (int i = s.size()-1; i>=0; --i)
+
+		for (int i = s.size() - 1; i >= 0; --i)
 		{
 			out += tens * getDigit(s[i]);
 			tens *= 10;
@@ -167,7 +175,7 @@ public:
 	}
 	NBT(const std::string& i)
 	{
-		if(SUtil::startsWith(i,'#')&&isNumeric(i.substr(1)))
+		if (SUtil::startsWith(i, '#') && isNumeric(i.substr(1)))
 		{
 			val_uint = toUint64(i.substr(1));
 			type = T_NUMBER_UINT;
@@ -187,7 +195,7 @@ public:
 		val_string = new std::string(std::move(i));
 		type = T_STRING;
 	}
-	NBT(const char* i):NBT(std::string(i)){}
+	NBT(const char* i) :NBT(std::string(i)) {}
 
 	NBT& operator=(bool i)
 	{
@@ -252,13 +260,6 @@ public:
 		type = T_NUMBER_UINT;
 		return *this;
 	}
-	NBT& operator=(const glm::vec2& i)
-	{
-		destruct();
-		val_uint = *(uint64_t*)&i;
-		type = T_NUMBER_UINT;
-		return *this;
-	}
 	NBT& operator=(double i)
 	{
 		destruct();
@@ -271,6 +272,15 @@ public:
 		destruct();
 		val_float = (double)i;
 		type = T_NUMBER_FLOAT;
+		return *this;
+	}
+	template <int vecSize>
+	NBT& operator=(const glm::vec<vecSize, float>& i)
+	{
+		if (isVec<vecSize>())
+			destruct();
+
+		buildVec(i);
 		return *this;
 	}
 	NBT& operator=(const std::string& i)
@@ -295,8 +305,7 @@ public:
 		}
 		return *this;
 	}
-	inline int invalidCast() const { /*ASSERT(false, "invalid nbt type cast");*/ return 0; }
-	inline glm::vec2 invalidCastGLM() const { ASSERT(false, "invalid nbt type cast"); return glm::vec2(0,0); }
+	int invalidCast() const { /*ASSERT(false, "invalid nbt type cast");*/ return 0; }
 	NBT& operator=(const char* i)
 	{
 		return this->operator=(std::string(i));
@@ -329,14 +338,26 @@ public:
 	}
 	operator uint64_t() const
 	{
-		return isUInt() ? val_uint : (isInt()?val_int:invalidCast());
-	}
-	operator glm::vec2() const
-	{
-		return isUInt() ? (*(glm::vec2*)&val_uint): invalidCastGLM();
+		return isUInt() ? val_uint : (isInt() ? val_int : invalidCast());
 	}
 
-	operator float() const { return isFloat()  ? val_float : (isInt()?val_int:invalidCast()); }
+	operator glm::vec2() const
+	{
+		ASSERT(isVec<2>(), "invalid cast");
+		return glm::vec2(this[0], this[1]);
+	}
+	operator glm::vec3() const
+	{
+		ASSERT(isVec<3>(), "invalid cast");
+		return glm::vec3(this[0], this[1], this[2]);
+	}
+	operator glm::vec4() const
+	{
+		ASSERT(isVec<4>(), "invalid cast");
+		return glm::vec4(this[0], this[1], this[2], this[3]);
+	}
+
+	operator float() const { return isFloat() ? val_float : (isInt() ? val_int : invalidCast()); }
 	operator double() const { return isFloat() ? val_float : (isInt() ? val_int : invalidCast()); }
 
 	//will try to return number, if not number -> zero
@@ -478,12 +499,12 @@ public:
 
 
 	void reserve(int size) { if (checkForArray())val_array->reserve(size); }
-	void resize(size_t size){ if (checkForArray())val_array->resize(size); }
+	void resize(size_t size) { if (checkForArray())val_array->resize(size); }
 	bool exists(const std::string& key) const
 	{
 		return isMap() && (val_map->find(key) != val_map->end());
 	}
-	
+
 	//array access
 	NBT& access_array(int index)
 	{
@@ -506,12 +527,12 @@ public:
 		return val_array->operator[](index);
 	}
 
-	inline NBT& operator[](int index)
+	NBT& operator[](int index)
 	{
 		return access_array(index);
 	}
-	
-	inline const NBT& operator[](int index) const
+
+	const NBT& operator[](int index) const
 	{
 		return access_array_const(index);
 	}
@@ -547,20 +568,80 @@ public:
 
 	json toJson() const;
 	static NBT fromJson(const json& j);
-	
+
 	static void saveToFile(const std::string& filePath, const NBT& nbt);
 	// loads nbt from json file (comments in file are allowed, ignored)
 	static bool loadFromFile(const std::string& filePath, NBT& nbt);
 
 	template <typename Arg>
-	void save(const std::string& name,const Arg& val)
+	void save(const std::string& name, const Arg& val)
 	{
 		if (!checkForMap())
 			return;
-		operator[](name) = val;
+		access_map(name) = val;
 	}
 
+	//=================Load new================================
+	template <typename Arg0, typename Arg1>
+	bool load(const std::string& key, Arg0& val, Arg1 defaultVal) const
+	{
+		if (!isMap()) {
+			val = defaultVal;
+			return false;
+		}
+		auto& it = val_map->find(key);
+		bool found = it != val_map->end();
+		if (found)
+			val = (Arg0)it->second;
+		else val = defaultVal;
+		return found;
+	}
+	template <typename Arg1>
+	bool load(const std::string& key, std::string& val, Arg1 defaultVal) const
+	{
+		if (!isMap()) {
+			val = defaultVal;
+			return false;
+		}
+		auto& it = val_map->find(key);
+		bool found = it != val_map->end();
+		if (found)
+			val = it->second.string();
+		else val = defaultVal;
+		return found;
+	}
+	//specialization for same types
 	template <typename Arg>
+	bool load(const std::string& key, Arg& val, Arg defaultVal) const
+	{
+		if (!isMap()) {
+			val = defaultVal;
+			return false;
+		}
+		auto& it = val_map->find(key);
+		bool found = it != val_map->end();
+		if (found)
+			val = (Arg)it->second;
+		else val = defaultVal;
+		return found;
+	}
+	/*template <>
+	bool loadNew(const std::string& key, std::string& val, const char* defaultVal) const
+	{
+		if (!isMap()) {
+			val = defaultVal;
+			return false;
+		}
+		auto& it = val_map->find(key);
+		bool found = it != val_map->end();
+		if (found)
+			val = it->second.string();
+		else val = defaultVal;
+		return found;
+	}*/
+	//=================Load new==end===========================
+
+	/*template <typename Arg>
 	bool load(const std::string& key, Arg& val, Arg defaultVal) const
 	{
 		if (!isMap()) {
@@ -574,6 +655,8 @@ public:
 		else val = defaultVal;
 		return found;
 	}
+
+
 	template <>
 	bool load(const std::string& key, std::string& val, std::string defaultVal) const
 	{
@@ -588,12 +671,12 @@ public:
 		else val = defaultVal;
 		return found;
 	}
-	template <typename Arg>
+	*/
+	/*template <typename Arg>
 	bool loadIfExists(const std::string& key, Arg& val) const
 	{
-		if (!isMap()) {
-			return false;
-		}
+		if (!isMap()) return false;
+
 		auto& it = val_map->find(key);
 		bool found = it != val_map->end();
 		if (found)
@@ -606,6 +689,28 @@ public:
 		if (!isMap()) {
 			return false;
 		}
+		auto& it = val_map->find(key);
+		bool found = it != val_map->end();
+		if (found)
+			val = it->second.string();
+		return found;
+	}*/
+	template <typename Arg>
+	bool loadIfExists(const std::string& key, Arg& val) const
+	{
+		if (!isMap()) return false;
+
+		auto& it = val_map->find(key);
+		bool found = it != val_map->end();
+		if (found)
+			val = (Arg)it->second;
+		return found;
+	}
+	template <>
+	bool loadIfExists(const std::string& key, std::string& val) const
+	{
+		if (!isMap()) return false;
+
 		auto& it = val_map->find(key);
 		bool found = it != val_map->end();
 		if (found)
@@ -626,7 +731,7 @@ public:
 		auto& it = val_map->find(key);
 		bool found = it != val_map->end();
 		if (found)
-			val = Arg(it->second);
+			val = (Arg)it->second;
 		return found;
 	}
 	template <>
@@ -636,7 +741,7 @@ public:
 			return false;
 		auto& it = val_map->find(key);
 		bool found = it != val_map->end();
-		if (found&&it->second.isString())
+		if (found && it->second.isString())
 			val = it->second.string();
 		return found;
 	}

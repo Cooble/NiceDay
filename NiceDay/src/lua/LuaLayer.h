@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "layer/Layer.h"
 #include "memory/stack_allocator.h"
+#include <sol/forward.hpp>
 
 
 struct LuaConsole;
@@ -19,6 +20,7 @@ public:
 	~LuaLayer()=default;
 	
 	lua_State* getLuaState() { return m_L; }
+	sol::state* getSolState();
 	void openConsole() { m_show_imgui_console = true; }
 	void closeConsole() { m_show_imgui_console = false; }
 	void printToLuaConsole(lua_State* L, const char* c);

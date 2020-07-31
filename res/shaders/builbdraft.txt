@@ -1,0 +1,106 @@
+float dstToSphere(vec3 srcPoint,vec3 sphereCenter,float radius){
+ 	return distance(srcPoint,sphereCenter)-radius;   
+
+}
+float sgn(float f){
+    if(f>0.0)
+        return 1.0;
+    if(f<0.0)
+        return -1.;
+        return 0.0;
+}
+float smin(float a, float b, float k) {
+  float h = clamp(0.5 + 0.5*(a-b)/k, 0.0, 1.0);
+  return mix(a, b, h) - k*h*(1.0-h);
+}
+vec3 getNormal(vec3 point){
+    
+ 	/*vec2 ee = vec2(SMOOTHNESS,0.0);
+    float d = disti(point);
+    float x = disti(point+ee.xyy);
+    float y = disti(point+ee.yxy);
+    float z = disti(point+ee.yyx);
+    return normalize(vec3(x,y,z)-d);*/
+    return vec3(0.);
+}
+vec4 multipBulb(vec4 a, vec4 b) {
+
+	return vec4(
+		a.x * b.x - a.y * b.y - a.z * b.z - a.w * b.w,
+		a.x * b.y + a.y * b.x - a.z * b.w + a.w * b.z,
+		a.x * b.z + a.y * b.w + a.z * b.x - a.w * b.y,
+		a.x * b.w - a.y * b.z + a.z * b.y + a.w * b.x
+		);
+}
+#define MAX_BULB_ITS 9
+int computeBulb(vec4 c){
+    vec4 z= vec4(0.);
+	for (int i = 0; i < MAX_BULB_ITS; i++) {
+        //vec4 zz = multipBulb(z, z);
+		z = multipBulb(z, z)+ c;
+		if (dot(z,z)> 4.)
+			return i;
+	}
+    return 10000;
+}
+#define MAX_STEPS 500
+#define STOP_ITERATION 8
+vec4 marchBulb(vec3 src,vec3 dir){
+    src+= (dot(src,src)-8.)*dir;
+    int currentBulb = 0;
+    float len = 0.;
+    vec3 cur = src;
+    for(int i = 0;i<MAX_STEPS;i++){
+     	currentBulb=computeBulb(vec4(cur,0));
+        if(currentBulb>=STOP_ITERATION)
+        	return vec4(cur,float(currentBulb));
+        len+=0.01;
+        cur=src + dir*len;   
+    }
+    return vec4(0.,0.,0.,-1.);
+}
+mat2 rota2(float amount){
+    float ss = sin(amount);
+    float c = cos(amount);
+ 	return mat2(c,-ss,
+                ss,c);
+    
+}
+float modOnFloat(float f,float divider){
+ 	int i = int(f/divider);
+    
+    return f-float(i)*divider;
+}
+void mainImage( out vec4 fragColor, in vec2 fragCoord )
+{
+    // Normalized pixel coordinates (from 0 to 1)
+    vec2 uv = (fragCoord-(iResolution.xy/vec2(2.0)))/vec2(iResolution.y);
+	vec3 camPos = vec3(0,0,-2);
+    float timee = iTime * -0.4;
+    vec2 camTable = vec2(cos(timee),sin(timee))*2.5;
+    camPos=vec3(camTable.x,0.,camTable.y);
+    vec3 look = normalize(vec3(uv.yx,1));
+    look.xz = look.xz*rota2(timee+3.14159/2.);
+    
+
+    vec3 col = vec3(0.0);
+  
+    const vec3 LIGHT_POS = vec3(3,3,5);
+    
+    vec4 point = marchBulb(camPos,look);
+           
+    if(point.w==-1.)
+        col = vec3(0.);
+    
+    else{ 
+        float colo = point.w/float(MAX_BULB_ITS);
+        col = vec3(1.0,0.4,colo-0.5);
+        }//col = norm;
+    //vec3 toLight = normalize(LIGHT_POS-currentPoint.xyz);
+    //col = vec3(1.0)*max(dot(toLight, norm),0.0);  
+    
+    
+
+    // Output to screen
+    fragColor = vec4(col,1.0);
+}

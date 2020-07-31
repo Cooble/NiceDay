@@ -1,0 +1,42 @@
+{
+  /*
+  "example_name": {
+    "size": [1,1],
+    "frameCount": 4,
+    "ticksPerFrame": 20,
+    "rotationSpeed":2,
+  },*/
+  
+  
+  "line": {
+    "size": [2,1],
+    "frameCount": 1,
+    "ticksPerFrame": 0
+  },
+  "torch_smoke": {
+    "frameCount": 5,
+    "ticksPerFrame": 60
+  },
+  "torch_fire": {
+    "frameCount": 4,
+    "ticksPerFrame": 30
+  },
+  "bulletShatter": {
+    "frameCount": 2,
+    "ticksPerFrame": 60
+  },
+  "block": {
+    "frameCount": 2,
+    "ticksPerFrame": 35
+  },
+  "note": {
+    "frameCount": 4,
+    "ticksPerFrame": 100000
+  },
+  "fire": {
+    "size": [1,1],
+    "frameCount": 4,
+    "ticksPerFrame": 60,
+    "rotationSpeed": -1
+  }
+}

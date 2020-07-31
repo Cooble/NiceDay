@@ -56,7 +56,7 @@ json NBT::toJson() const
 	if (isInt())
 		return json(val_int);
 	if (isUInt())
-		return json("#"+std::to_string(val_uint));
+		return json("#" + std::to_string(val_uint));
 	if (isBool())
 		return json((bool)val_int);
 	if (isMap())
@@ -95,7 +95,7 @@ NBT NBT::fromJson(const json& j)
 			out[map.key()] = NBT::fromJson(map.value());
 		return out;
 	}
-	if(j.is_array())
+	if (j.is_array())
 	{
 		NBT out;
 		out.resize(j.size());
@@ -130,20 +130,21 @@ static void removeComments(int length)
 		if (val == '\0') {
 			if (startIndex != -1)
 			{
-				memset(&BIG_JSON_BUFFER[startIndex], ' ', i-startIndex);
+				memset(&BIG_JSON_BUFFER[startIndex], ' ', i - startIndex);
 			}
 			return;
 		}
-		if(startIndex==-1)
+		if (startIndex == -1)
 		{
 			if (val == '/') {
-				if(lastChar=='/')
+				if (lastChar == '/')
 				{
 					startIndex = i - 1;
 					bigLiner = false;
 
 				}
-			}else if(val == '*')
+			}
+			else if (val == '*')
 			{
 				if (lastChar == '/')
 				{
@@ -153,16 +154,16 @@ static void removeComments(int length)
 			}
 		}
 		else
-			if(val == '\n' && !bigLiner)
+			if (val == '\n' && !bigLiner)
 			{
 				memset(&BIG_JSON_BUFFER[startIndex], ' ', i - startIndex);
 				startIndex = -1;
 			}
 			else if (val == '/' && lastChar == '*' && bigLiner) {
-				memset(&BIG_JSON_BUFFER[startIndex], ' ', i - startIndex+1);
+				memset(&BIG_JSON_BUFFER[startIndex], ' ', i - startIndex + 1);
 				startIndex = -1;
 			}
-		
+
 		lastChar = val;
 	}
 }
@@ -172,7 +173,7 @@ bool NBT::loadFromFile(const std::string& filePath, NBT& nbt)
 	std::ifstream o(ND_RESLOC(filePath));
 	if (!o.is_open())
 		return false;
-	
+
 	o.read(BIG_JSON_BUFFER, BIG_JSON_BUFF_SIZE);
 	if (o.eof())
 	{
@@ -180,8 +181,17 @@ bool NBT::loadFromFile(const std::string& filePath, NBT& nbt)
 		removeComments(o.gcount());
 		int red = o.gcount();
 		BIG_JSON_BUFFER[red] = '\0';
-		BIG_JSON_BUFFER[red+1] = '\0';
-		auto j = json::parse(BIG_JSON_BUFFER);
+		BIG_JSON_BUFFER[red + 1] = '\0';
+		json j;
+		try {
+			j = json::parse(BIG_JSON_BUFFER);
+		}
+		catch (...)
+		{
+			ND_ERROR("JSON Error when parsing: {}", filePath);
+			o.close();
+			return false;
+		}
 		o.close();
 		nbt = NBT::fromJson(j);
 		return true;
@@ -207,46 +217,46 @@ bool operator==(const NBT& a, const NBT& b)
 		return a.string() == b.string();
 	if (a.isFloat() && b.isFloat())
 		return double(a) == double(b);
-	if (a.isInt()&&b.isInt())
+	if (a.isInt() && b.isInt())
 		return int64_t(a) == int64_t(b);
-	if (a.isUInt()&&b.isUInt())
+	if (a.isUInt() && b.isUInt())
 		return uint64_t(a) == uint64_t(b);
-	if (a.isBool()&&b.isBool())
+	if (a.isBool() && b.isBool())
 		return bool(a) == bool(b);
 	if (a.isNull() && b.isNull())
 		return true;
-	
+
 	if (a.size() != b.size())
 		return false;
-	
-	if (a.isMap()&&b.isMap())
+
+	if (a.isMap() && b.isMap())
 	{
 		for (auto& map : a.maps())
 			if (!b.exists(map.first) || !operator==(b.access_map_const(map.first), map.second))
 				return false;
 		return true;
 	}
-	if (a.isArray()&&b.isArray())
+	if (a.isArray() && b.isArray())
 	{
 		for (int i = 0; i < a.size(); ++i)
-			if (!operator==(b[i],a[i]))
+			if (!operator==(b[i], a[i]))
 				return false;
 		return true;
 	}
 	return false;
 }
 
-constexpr uint8_t BB_ARRAY_OPEN		=0xf0;
-constexpr uint8_t BB_ARRAY_CLOSE	=0xf1;
-constexpr uint8_t BB_MAP_OPEN		=0xf2;
-constexpr uint8_t BB_MAP_CLOSE		=0xf3;
+constexpr uint8_t BB_ARRAY_OPEN = 0xf0;
+constexpr uint8_t BB_ARRAY_CLOSE = 0xf1;
+constexpr uint8_t BB_MAP_OPEN = 0xf2;
+constexpr uint8_t BB_MAP_CLOSE = 0xf3;
 
-constexpr uint8_t BB_INT			=0xf4;
-constexpr uint8_t BB_UINT			=0xf5;
-constexpr uint8_t BB_FLOAT			=0xf6;
-constexpr uint8_t BB_BOOL			=0xf7;
-constexpr uint8_t BB_STRING			=0xf8;
-constexpr uint8_t BB_NULL			=0xf9;
+constexpr uint8_t BB_INT = 0xf4;
+constexpr uint8_t BB_UINT = 0xf5;
+constexpr uint8_t BB_FLOAT = 0xf6;
+constexpr uint8_t BB_BOOL = 0xf7;
+constexpr uint8_t BB_STRING = 0xf8;
+constexpr uint8_t BB_NULL = 0xf9;
 
 void BinarySerializer::write(const NBT& a, const IBinaryStream::WriteFunc& write)
 {
@@ -288,8 +298,8 @@ void BinarySerializer::write(const NBT& a, const IBinaryStream::WriteFunc& write
 		write(bu, 1);
 		for (auto& map : a.maps())
 		{
-			ASSERT(map.first.size() < 256,"The key is too long (over 255): {}", map.first.size());
-			
+			ASSERT(map.first.size() < 256, "The key is too long (over 255): {}", map.first.size());
+
 			*(uint8_t*)&bu[0] = BB_STRING;
 			*(uint8_t*)&bu[1] = (uint8_t)map.first.size();
 			write(bu, 2);
@@ -317,7 +327,7 @@ void BinarySerializer::write(const NBT& a, const IBinaryStream::WriteFunc& write
 	}
 }
 
-constexpr uint32_t buffSize=4096;
+constexpr uint32_t buffSize = 4096;
 char buffer[buffSize];
 bool BinarySerializer::read(NBT& n, const IBinaryStream::ReadFunc& read)
 {
@@ -328,19 +338,19 @@ bool BinarySerializer::read(NBT& n, const IBinaryStream::ReadFunc& read)
 	{
 	case BB_STRING:
 	{
-			std::string s;
-			uint32_t size;
-			read((char*)&size, 4);
-			uint32_t tempSize=size;
-			while(tempSize!=0)
-			{
-				uint32_t toread = std::min(buffSize, tempSize);
-				tempSize -= toread;
-				read((char*)&buffer, toread);
-				s += std::string(buffer, toread);
-			}
-			n = s;
+		std::string s;
+		uint32_t size;
+		read((char*)&size, 4);
+		uint32_t tempSize = size;
+		while (tempSize != 0)
+		{
+			uint32_t toread = std::min(buffSize, tempSize);
+			tempSize -= toread;
+			read((char*)&buffer, toread);
+			s += std::string(buffer, toread);
 		}
+		n = s;
+	}
 	break;
 	case BB_INT:
 	{
@@ -372,7 +382,7 @@ bool BinarySerializer::read(NBT& n, const IBinaryStream::ReadFunc& read)
 	break;
 	case BB_MAP_OPEN:
 	{
-		while(true)
+		while (true)
 		{
 			read((char*)&type, 1);
 			if (type == BB_MAP_CLOSE)
@@ -380,7 +390,7 @@ bool BinarySerializer::read(NBT& n, const IBinaryStream::ReadFunc& read)
 			//read size of key string
 			uint8_t size;
 			read((char*)&size, 1);
-			read(buffer,size);
+			read(buffer, size);
 			auto s = std::string(buffer, size);
 			NBT val;
 			BinarySerializer::read(val, read);
@@ -405,5 +415,5 @@ bool BinarySerializer::read(NBT& n, const IBinaryStream::ReadFunc& read)
 		return true;
 	}
 	return false;
-	
+
 }
