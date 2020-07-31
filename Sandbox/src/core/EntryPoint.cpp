@@ -87,8 +87,8 @@ void testUnorderedMap()
 int main()
 {
 	
-	ND_PROFILE_BEGIN_SESSION("start", "start.json");
 	Log::init();
+	ND_PROFILE_BEGIN_SESSION("start", "start.json");
 	ResourceMan::init();
 	Sandbox game;
 

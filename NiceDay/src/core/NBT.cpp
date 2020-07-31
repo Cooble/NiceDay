@@ -3,13 +3,13 @@
 #include <nlohmann/json.hpp>
 
 
-std::string NBT::dump(int depth) const
+Stringo NBT::dump(int depth) const
 {
-	std::string tabs;
+	Stringo tabs;
 	tabs.reserve(depth);
 	for (int i = 0; i < depth; ++i)
 		tabs += "\t";
-	std::string s;
+	Stringo s;
 	if (isString())
 		s = "\"" + *val_string + "\"";
 	else if (isFloat())
@@ -79,7 +79,7 @@ json NBT::toJson() const
 NBT NBT::fromJson(const json& j)
 {
 	if (j.is_string())
-		return NBT(std::string(j));
+		return NBT(Stringo(j));
 	if (j.is_number_float())
 		return NBT(double(j));
 	if (j.is_number_integer())
@@ -106,7 +106,7 @@ NBT NBT::fromJson(const json& j)
 	return NBT();
 }
 
-void NBT::saveToFile(const std::string& filePath, const NBT& nbt)
+void NBT::saveToFile(const Stringo& filePath, const NBT& nbt)
 {
 	std::ofstream o(ND_RESLOC(filePath));
 	o << std::setw(4) << nbt.toJson() << std::endl;
@@ -168,7 +168,7 @@ static void removeComments(int length)
 	}
 }
 
-bool NBT::loadFromFile(const std::string& filePath, NBT& nbt)
+bool NBT::loadFromFile(const Stringo& filePath, NBT& nbt)
 {
 	std::ifstream o(ND_RESLOC(filePath));
 	if (!o.is_open())
@@ -338,16 +338,18 @@ bool BinarySerializer::read(NBT& n, const IBinaryStream::ReadFunc& read)
 	{
 	case BB_STRING:
 	{
-		std::string s;
-		uint32_t size;
-		read((char*)&size, 4);
-		uint32_t tempSize = size;
-		while (tempSize != 0)
-		{
-			uint32_t toread = std::min(buffSize, tempSize);
-			tempSize -= toread;
-			read((char*)&buffer, toread);
-			s += std::string(buffer, toread);
+			Stringo s;
+			uint32_t size;
+			read((char*)&size, 4);
+			uint32_t tempSize=size;
+			while(tempSize!=0)
+			{
+				uint32_t toread = std::min(buffSize, tempSize);
+				tempSize -= toread;
+				read((char*)&buffer, toread);
+				s += Stringo(buffer, toread);
+			}
+			n = s;
 		}
 		n = s;
 	}
@@ -390,8 +392,8 @@ bool BinarySerializer::read(NBT& n, const IBinaryStream::ReadFunc& read)
 			//read size of key string
 			uint8_t size;
 			read((char*)&size, 1);
-			read(buffer, size);
-			auto s = std::string(buffer, size);
+			read(buffer,size);
+			auto s = Stringo(buffer, size);
 			NBT val;
 			BinarySerializer::read(val, read);
 			n[s] = std::move(val);

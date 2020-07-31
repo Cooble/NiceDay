@@ -3,7 +3,20 @@ language: cpp
 
 git:
     depth: 1
-script:
-    - cmake .
-    - cmake --build . --config Debug --target Sandbox
-    - cmake --build . --config Release --target Sandbox
+    
+jobs:
+  include:    
+     install:
+        - echo "Downloading MONO_INSTALLER"
+        - wget -q https://download.mono-project.com/archive/6.10.0/windows-installer/mono-6.10.0.104-x64-0.msi
+        - echo "Installing MONO"
+        - msiexec -i "mono-6.10.0.104-x64-0.msi" -passive -qn -norestart       
+     script:
+        - echo "Building project"
+        - cmake . -DCMAKE_GENERATOR_PLATFORM=x64
+        - cmake --build . --config Release --target Sandbox
+        
+        - echo "Building & Running Tests"
+        - cmake --build . --config Release --target TestNiceDay
+        - cmake -DTT_TARGET_DIR="$TRAVIS_BUILD_DIR/TestNiceDay/Release" -P CopyMonoDll.cmake
+        - ctest --output-on-failure

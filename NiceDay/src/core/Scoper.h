@@ -33,49 +33,13 @@ public:
 
 	void beginSession(const std::string& name, const std::string& filepath = "results.json");
 
-	void endSession()
-	{
-		writeFooter();
-		m_outputStream.close();
-		delete m_currentSession;
-		m_currentSession = nullptr;
-		m_profileCount = 0;
-	}
+	void endSession();
 
-	void writeProfile(const ProfileResult& result)
-	{
-		if (!m_currentSession)
-			return;//no session
-		if (m_profileCount++ > 0)
-			m_outputStream << ",";
+	void writeProfile(const ProfileResult& result);
 
-		std::string name = result.name;
-		std::replace(name.begin(), name.end(), '"', '\'');
+	void writeHeader();
 
-		m_outputStream << "{";
-		m_outputStream << "\"cat\":\"function\",";
-		m_outputStream << "\"dur\":" << (result.end - result.start) << ',';
-		m_outputStream << "\"name\":\"" << name << "\",";
-		m_outputStream << "\"ph\":\"X\",";
-		m_outputStream << "\"pid\":0,";
-		m_outputStream << "\"tid\":" << result.threadID << ",";
-		m_outputStream << "\"ts\":" << result.start;
-		m_outputStream << "}";
-
-		m_outputStream.flush();
-	}
-
-	void writeHeader()
-	{
-		m_outputStream << "{\"otherData\": {},\"traceEvents\":[";
-		m_outputStream.flush();
-	}
-
-	void writeFooter()
-	{
-		m_outputStream << "]}";
-		m_outputStream.flush();
-	}
+	void writeFooter();
 
 	static Scoper& get()
 	{
@@ -116,21 +80,7 @@ public:
 			stop();
 	}
 
-	void stop()
-	{
-		auto endTimepoint = std::chrono::high_resolution_clock::now();
-
-	
-		long long end = std::chrono::time_point_cast<std::chrono::microseconds>(endTimepoint)
-		                .time_since_epoch().count();
-
-		uint32_t threadID = std::hash<std::thread::id>{}(std::this_thread::get_id());
-		Scoper::get().writeProfile({m_name, m_startTimepoint, end, threadID});
-
-		m_stopped = true;
-	}
-
-
+	void stop();
 };
 
 
@@ -154,7 +104,7 @@ public:
 #elif defined(__cplusplus) && (__cplusplus >= 201103)
 #define ND_FUNC_SIG __func__
 #else
-#define ND_FUNC_SIG "HZ_FUNC_SIG unknown!"
+#define ND_FUNC_SIG "ND_FUNC_SIG unknown!"
 #endif
 
 

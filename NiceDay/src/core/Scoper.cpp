@@ -1,5 +1,6 @@
 ﻿#include "ndpch.h"
 #include "Scoper.h"
+#include "files/FUtil.h"
 
 void Scoper::beginSession(const std::string& name, const std::string& filepath)
 {
@@ -8,7 +9,8 @@ void Scoper::beginSession(const std::string& name, const std::string& filepath)
 		ND_WARN("Replacing current profiling session: {} with: {}", m_currentSession->name, name);
 		endSession();
 	}
-	auto filep = "profiles/" + filepath;
+	
+	auto filep = FUtil::getExecutableFolderPath()+"/profiles/" + filepath;
 	if (filep.find_last_of('/') != std::string::npos)
 	{
 		auto s = filep.substr(0, filep.find_last_of('/'));
@@ -17,5 +19,70 @@ void Scoper::beginSession(const std::string& name, const std::string& filepath)
 	}
 	m_outputStream.open(filep);
 	writeHeader();
+
 	m_currentSession = new ScopeSession{name};
+	ND_TRACE("Begging profiling session: {}", m_currentSession->name);
+}
+
+void Scoper::endSession()
+{
+	
+	if (m_currentSession) {
+		writeFooter();
+		m_outputStream.close();
+		ND_TRACE("Ending profiling session: {}", m_currentSession->name);
+		delete m_currentSession;
+		m_currentSession = nullptr;
+		m_profileCount = 0;
+	}
+	else { ND_WARN("Calling end session, but none is opened"); }
+}
+
+void Scoper::writeProfile(const ProfileResult& result)
+{
+	if (!m_currentSession)
+		return; //no session
+	if (m_profileCount++ > 0)
+		m_outputStream << ",";
+
+	std::string name = result.name;
+	std::replace(name.begin(), name.end(), '"', '\'');
+
+	m_outputStream << "{";
+	m_outputStream << "\"cat\":\"function\",";
+	m_outputStream << "\"dur\":" << (result.end - result.start) << ',';
+	m_outputStream << "\"name\":\"" << name << "\",";
+	m_outputStream << "\"ph\":\"X\",";
+	m_outputStream << "\"pid\":0,";
+	m_outputStream << "\"tid\":" << result.threadID << ",";
+	m_outputStream << "\"ts\":" << result.start;
+	m_outputStream << "}";
+
+	m_outputStream.flush();
+}
+
+void Scoper::writeHeader()
+{
+	m_outputStream << "{\"otherData\": {},\"traceEvents\":[";
+	m_outputStream.flush();
+}
+
+void Scoper::writeFooter()
+{
+	m_outputStream << "]}";
+	m_outputStream.flush();
+}
+
+void ScoperTimer::stop()
+{
+	auto endTimepoint = std::chrono::high_resolution_clock::now();
+
+
+	long long end = std::chrono::time_point_cast<std::chrono::microseconds>(endTimepoint)
+	                .time_since_epoch().count();
+
+	uint32_t threadID = std::hash<std::thread::id>{}(std::this_thread::get_id());
+	Scoper::get().writeProfile({m_name, m_startTimepoint, end, threadID});
+
+	m_stopped = true;
 }

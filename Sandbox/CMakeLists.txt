@@ -38,6 +38,7 @@ project(Sandbox)
 
 # Dependencies
     target_link_libraries(Sandbox PUBLIC NiceDay)
+    target_link_libraries(Sandbox PUBLIC Managed)
 #   macro(add_my_lib name)
 #       add_subdirectory("vendor/${name}")
 #       list(APPEND EXTRA_LIBS ${name})

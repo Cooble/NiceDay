@@ -1,6 +1,14 @@
 cmake_minimum_required(VERSION 3.16.1)
 project(NiceDay)
 
+LIST( APPEND CMAKE_MODULE_PATH
+  ${CMAKE_SOURCE_DIR}/cmake/modules
+)
+
+
+
+
+
 
 #this macro will disable package finding
     macro (nd_disable_find_package)
@@ -41,6 +49,9 @@ project(NiceDay)
         "vendor/imguifiledialog/include"
         "vendor/sol2/include"
         "vendor/json/include"
+
+        #MONO_BRANCH
+        "C:/Program Files/Mono/include/mono-2.0"
 
     )
 
@@ -96,8 +107,10 @@ project(NiceDay)
 
     # == ogg
     set(INSTALL_CMAKE_PACKAGE_MODULE OFF CACHE BOOL "" FORCE)
+    
     set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
     add_my_lib(ogg)
+    set(BUILD_TESTING ON CACHE BOOL "" FORCE)
     #add_custom_target(Ogg::ogg DEPENDS ogg)
 
     # == glm (no need to subdir (header-only))
@@ -178,4 +191,14 @@ project(NiceDay)
     )
     target_compile_definitions(NiceDay PUBLIC GLFW_INCLUDE_NONE)
     target_compile_options(NiceDay PUBLIC /bigobj)
+
+
+    #obtain mono installation
+    SET(MONO_FIND_REQUIRED ON CACHE BOOL "" FORCE)
+    SET(MONO_FIND_QUIETLY OFF CACHE BOOL "" FORCE)
+    SET(MONO_ONLY_LIBRARIES_REQUIRED ON CACHE BOOL "" FORCE)
+    SET(MONO_ROOT "C:/Program Files/Mono")
+    FIND_PACKAGE( Mono )
+    target_link_directories(NiceDay PUBLIC ${MONO_LIBRARY_DIRS})
+    TARGET_LINK_LIBRARIES(NiceDay PUBLIC ${MONO_LIBRARIES})
 

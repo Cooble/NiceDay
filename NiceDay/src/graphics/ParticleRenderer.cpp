@@ -79,19 +79,6 @@ ParticleRenderer::~ParticleRenderer()
 #endif
 }
 
-void ParticleRenderer::push(const mat4& trans)
-{
-	m_transformation_stack.push_back(m_back * trans);
-	m_back = m_transformation_stack[m_transformation_stack.size() - 1];
-}
-
-void ParticleRenderer::pop()
-{
-	if (m_transformation_stack.size() > 1)
-		m_transformation_stack.pop_back();
-	m_back = m_transformation_stack[m_transformation_stack.size() - 1];
-}
-
 int ParticleRenderer::bindTexture(const Texture* t)
 {
 	for (int i = 0; i < m_textures.size(); ++i)
@@ -137,7 +124,7 @@ static glm::vec3 operator*(const glm::mat4& m, const glm::vec3& v)
 void ParticleRenderer::submit(const glm::vec3& pos,const glm::vec2& size,const UVQuad& uv0, const UVQuad& uv1,Texture* t,float mix)
 {
 	int textureSlot = bindTexture(t);
-
+	
 	m_vertex_data->position = (m_back) * pos;
 	m_vertex_data->uv0 = uv0.uv[0];
 	m_vertex_data->uv1 = uv1.uv[0];

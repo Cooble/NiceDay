@@ -7,11 +7,13 @@ class ParticleRenderer;
 class Texture;
 
 constexpr int particleBlockDivision = 4;
-
+constexpr uint8_t isBlockBit = (1 << 0);
+constexpr uint8_t isLightedBit = (1 << 1);
 class ParticleManager
 {
 
 private:
+	
 	struct Particle
 	{
 		glm::vec2 acceleration;
@@ -23,15 +25,15 @@ private:
 		ParticleID id;
 		half_int textureIndex;
 		half_int textureSize;
-		uint8_t isBlock;
-		uint8_t isLighted;
+		uint8_t bits;
 		uint8_t frameCount;
 		uint8_t currentFrame;
 		uint8_t nextFrame;
 		uint8_t frameAge;
 		// ticks per frame
 		uint8_t  tpf;
-
+		constexpr bool isBlock() { return bits & isBlockBit; }
+		constexpr bool isLighted() { return bits & isLightedBit; }
 	};
 	Particle* m_list= nullptr;
 	int m_list_size;

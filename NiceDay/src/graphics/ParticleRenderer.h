@@ -47,8 +47,15 @@ public:
 	ParticleRenderer();
 	~ParticleRenderer();
 
-	void push(const mat4& trans);
-	void pop();
+	void push(const mat4& trans){
+		m_transformation_stack.push_back(m_back * trans);
+		m_back = m_transformation_stack[m_transformation_stack.size() - 1];
+	}
+	void pop(){
+		if (m_transformation_stack.size() > 1)
+			m_transformation_stack.pop_back();
+		m_back = m_transformation_stack[m_transformation_stack.size() - 1];
+	}
 
 	void begin(FrameBuffer* fbo=nullptr);
 	void submit(const glm::vec3& pos, const glm::vec2& size, const UVQuad& uv0, const UVQuad& uv1, Texture* t, float mix);

@@ -23,6 +23,7 @@ res/models
 # Files
 *.user
 *.world
+*.nbt
 *.world.entity
 *imgui.ini
 *lua_editor_settings.json
@@ -407,3 +408,6 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+/Sandbox/settings.json
+*.tcl
+*.csproj
