@@ -43,6 +43,7 @@ static void physicalWindowCallback(Event& e);
 
 void App::init(const AppInfo& info)
 {
+	ResourceMan::init();//init location of /res
 	m_info = info;
 	m_io = info.io;
 	m_settings = new NBT();

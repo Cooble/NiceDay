@@ -340,6 +340,8 @@ void ImGuiLayer::animateView()
 
 void ImGuiLayer::updateViewAnimation()
 {
+	if (s_boxes.size() == 0)
+		return;
 	static int will_die_in = 0;
 	if (will_die_in>0)
 	{

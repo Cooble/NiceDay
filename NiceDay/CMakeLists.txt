@@ -49,6 +49,7 @@ LIST( APPEND CMAKE_MODULE_PATH
         "vendor/imguifiledialog/include"
         "vendor/sol2/include"
         "vendor/json/include"
+        "vendor/entt/include"
 
         #MONO_BRANCH
         "C:/Program Files/Mono/include/mono-2.0"
