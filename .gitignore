@@ -27,6 +27,9 @@ res/models
 *.world.entity
 *imgui.ini
 *lua_editor_settings.json
+*settings.json
+*log.*.txt
+*log.txt
 
 # CMake
 CMakeLists.txt.user

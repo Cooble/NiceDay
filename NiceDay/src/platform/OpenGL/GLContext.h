@@ -1,5 +1,31 @@
 ﻿#pragma once
 #include "graphics/GContext.h"
+#include <glad/glad.h>
+
+inline uint32_t toGL(g_typ type)
+{
+	switch(type)
+	{
+	case g_typ::UNSIGNED_INT:	return GL_UNSIGNED_INT;
+	case g_typ::FLOAT:			return GL_FLOAT;
+	case g_typ::INT:			return GL_INT;
+	case g_typ::VEC2:			return GL_FLOAT_VEC2;
+	case g_typ::VEC3:			return GL_FLOAT_VEC3;
+	case g_typ::VEC4:			return GL_FLOAT_VEC4;
+	case g_typ::MAT3:			return GL_FLOAT_MAT3;
+	case g_typ::MAT4:			return GL_FLOAT_MAT4;
+
+	case g_typ::IVEC2:			return GL_INT_VEC2;
+	case g_typ::IVEC3:			return GL_INT_VEC3;
+	case g_typ::IVEC4:			return GL_INT_VEC4;
+	case g_typ::TEXTURE:		return GL_TEXTURE;
+	case g_typ::BYTE:			return GL_BYTE;
+	case g_typ::UNSIGNED_BYTE:	return GL_UNSIGNED_BYTE;
+	case g_typ::SHORT:			return GL_SHORT;
+	case g_typ::UNSIGNED_SHORT:	return GL_UNSIGNED_SHORT;
+	default: return GL_INVALID_ENUM;
+	}
+}
 
 class GLContext:public GContext
 {

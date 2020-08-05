@@ -3,6 +3,13 @@
 #include <utility>
 #include "ResourceMan.h"
 
+template<class T>
+using Ref = std::shared_ptr<T>;
+template <class _Ty, class... _Types>
+Ref<_Ty> MakeRef(_Types&&... _Args) { // make a shared_ptr
+	return std::make_shared<_Ty>(std::forward<_Types>(_Args)...);
+}
+
 //#ifdef ND_DEBUG
 #define ASSERT(cond,...) if(!(cond))\
 	{ND_ERROR("Assertion Failed: {}",#cond);\

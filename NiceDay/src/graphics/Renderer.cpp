@@ -1,5 +1,8 @@
 #include "ndpch.h"
 #include "Renderer.h"
+#include "API/Buffer.h"
+#include "API/VertexArray.h"
+#include "API/Shader.h"
 
 #include <glad/glad.h>
 #include "platform/OpenGL/GLRenderer.h"

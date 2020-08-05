@@ -117,12 +117,14 @@ static unsigned int buildProgram(const Shader::ShaderProgramSources& src)
 
 GLShader::GLShader(const Shader::ShaderProgramSources& src) : m_id(0)
 {
+	m_layout = Shader::extractLayout(src);
 	m_id = buildProgram(src);
 }
 
 GLShader::GLShader(const std::string& file_path) : m_id(0)
 {
 	Shader::ShaderProgramSources& s = parseShader(ND_RESLOC(file_path));
+	m_layout = Shader::extractLayout(s);
 	m_id = buildProgram(s);
 }
 
@@ -145,9 +147,24 @@ void GLShader::unbind() const
 
 void GLShader::setUniformMat4(const std::string& name, const glm::mat4& matrix)
 {
+	
 	SHADER_CHECK_BOUNDIN;
 	GLCall(glUniformMatrix4fv(getUniformLocation(name), 1, false, glm::value_ptr(matrix)));
 }
+
+void GLShader::setUniformMat4v(const std::string& name, int count, const glm::mat4* matrix)
+{
+	SHADER_CHECK_BOUNDIN;
+	GLCall(glUniformMatrix4fv(getUniformLocation(name), count, false, glm::value_ptr(*matrix)));
+}
+
+void GLShader::setUniformMat3v(const std::string& name, int count, const glm::mat3* matrix)
+{
+	SHADER_CHECK_BOUNDIN;
+	GLCall(glUniformMatrix3fv(getUniformLocation(name), count, false, glm::value_ptr(*matrix)));
+}
+
+
 
 void GLShader::setUniform4f(const std::string& name, float f0, float f1, float f2, float f3)
 {
@@ -194,6 +211,80 @@ void GLShader::setUniform1iv(const std::string& name, int count, int* v)
 {
 	SHADER_CHECK_BOUNDIN;
 	GLCall(glUniform1iv(getUniformLocation(name), count, v));
+}
+
+void GLShader::setUniform1fv(const std::string& name, int count, float* v)
+{
+	glUniform1fv(getUniformLocation(name), count, v);
+}
+
+void GLShader::setUniformiv(const std::string& name, int count, int arraySize, int* v)
+{
+	SHADER_CHECK_BOUNDIN;
+	auto loc = getUniformLocation(name);
+	switch (count)
+	{
+	case 1:
+		glUniform1iv(loc, arraySize, v);
+		break;
+	case 2:
+		glUniform2iv(loc, arraySize, v);
+		break;
+	case 3:
+		glUniform3iv(loc, arraySize, v);
+		break;
+	case 4:
+		glUniform3iv(loc, arraySize, v);
+		break;
+	default:
+		ASSERT(false, "Nonexistent type");
+	}
+}
+
+void GLShader::setUniformfv(const std::string& name, int count, int arraySize, float* v)
+{
+	SHADER_CHECK_BOUNDIN;
+	auto loc = getUniformLocation(name);
+	switch (count)
+	{
+	case 1:
+		glUniform1fv(loc, arraySize, v);
+		break;		 
+	case 2:			 
+		glUniform2fv(loc, arraySize, v);
+		break;		
+	case 3:			
+		glUniform3fv(loc, arraySize, v);
+		break;		
+	case 4:			 
+		glUniform3fv(loc, arraySize, v);
+		break;
+	default:
+		ASSERT(false, "Nonexistent type");
+	}
+}
+
+void GLShader::setUniformuiv(const std::string& name, int count, int arraySize, uint32_t* v)
+{
+	SHADER_CHECK_BOUNDIN;
+	auto loc = getUniformLocation(name);
+	switch (count)
+	{
+	case 1:
+		glUniform1uiv(loc, arraySize, v);
+		break;		  
+	case 2:			  
+		glUniform2uiv(loc, arraySize, v);
+		break;		  
+	case 3:			  
+		glUniform3uiv(loc, arraySize, v);
+		break;		 
+	case 4:			 
+		glUniform4uiv(loc, arraySize, v);
+		break;
+	default:
+		ASSERT(false, "Nonexistent type");
+	}
 }
 
 

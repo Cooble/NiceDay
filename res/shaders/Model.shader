@@ -7,18 +7,37 @@ layout(location=1) in vec3 normal;
 layout(location=2) in vec2 uv;
 
 
-uniform mat4 u_worldMat;
-uniform mat4 u_viewMat;
-uniform mat4 u_projMat;
+struct GLO {
+
+	mat4 view;
+	mat4 proj;
+
+	vec3 sunPos;
+
+	vec3 ambient;
+	vec3 diffuse;
+	vec3 specular;
+	vec3 camera_pos;
+	//attenuation
+	float constant;
+	float linear;
+	float quadratic;
+};
+uniform GLO glo;
+
+uniform mat4 world;
+
+
+
 
 out vec3 v_normal;
 out vec3 v_world_pos;
 out vec2 v_uv;
 
 void main(){
-	gl_Position = u_projMat * u_viewMat * u_worldMat * position;
-	v_normal = (u_worldMat * vec4(normal,0)).xyz;
-	v_world_pos = (u_worldMat * position).xyz;
+	gl_Position = glo.proj * glo.view * world * position;
+	v_normal = (world * vec4(normal,0)).xyz;
+	v_world_pos = (world * position).xyz;
 	v_uv = uv;
 }
 
@@ -32,56 +51,60 @@ in vec2 v_uv;
 
 layout(location=0) out vec4 color;
 
-struct Material {
+struct MAT {
+	vec4 color;
 	sampler2D diffuse;
 	sampler2D specular;
 	float shines;
-	vec4 color;
 };
-uniform Material u_material;
+uniform MAT mat;
 
-struct Light {
-	vec3 pos;
+struct GLO {
+	
+	mat4 view;
+	mat4 proj;
+
+	vec3 sunPos;
 
 	vec3 ambient;
 	vec3 diffuse;
 	vec3 specular;
-
+	vec3 camera_pos;
 	//attenuation
 	float constant;
 	float linear;
 	float quadratic;
 };
-uniform Light u_light;
-
-uniform vec3 u_camera_pos;
+uniform GLO glo;
 
 void main(){
-	vec3 diffuseColor = u_material.color.rgb;
+	//color = vec4(v_normal, 1);
+	//return;
+	vec3 diffuseColor = mat.color.rgb;
 	vec3 specularColor = vec3(1.0);
 	
-	if (u_material.color.a == 0.0) {
-		diffuseColor = texture2D(u_material.diffuse, v_uv).rgb;
-		specularColor = texture2D(u_material.specular, v_uv).rgb;
+	if (mat.color.a == 0.0) {
+		diffuseColor = texture2D(mat.diffuse, v_uv).rgb;
+		specularColor = texture2D(mat.specular, v_uv).rgb;
 	}
 	vec3 normalNormal = normalize(v_normal);
 	//AMBIENT
-	vec3 ambientLight = u_light.ambient * diffuseColor;
+	vec3 ambientLight = glo.ambient * diffuseColor;
 
 	//DIFFUSE
-	vec3 toSun = normalize(u_light.pos - v_world_pos);
-	vec3 diffuseLight = u_light.diffuse * max(dot(toSun, normalNormal),0.0) * diffuseColor;
+	vec3 toSun = normalize(glo.sunPos - v_world_pos);
+	vec3 diffuseLight = glo.diffuse * max(dot(toSun, normalNormal),0.0) * diffuseColor;
 	
 	//SPECULAR
-	vec3 toCamera = normalize(u_camera_pos - v_world_pos);
+	vec3 toCamera = normalize(glo.camera_pos - v_world_pos);
 	vec3 reflection = reflect(-toCamera, normalNormal);
 	vec3 reflectiveLight = vec3(0.0);
-	if(u_material.shines!=0)
-		reflectiveLight = u_light.specular * specularColor * pow(max(dot(reflection, toSun), 0.0), u_material.shines);
+	if(mat.shines!=0)
+		reflectiveLight = glo.specular * specularColor * pow(max(dot(reflection, toSun), 0.0), mat.shines);
 
 	//ATTENUATION
-	float dist = length(u_light.pos - v_world_pos);
-	float atten = 1.0 / (u_light.constant + dist * u_light.linear + pow(dist, 2) * u_light.quadratic);
+	float dist = length(glo.sunPos - v_world_pos);
+	float atten = 1.0 / (glo.constant + dist * glo.linear + pow(dist, 2) * glo.quadratic);
 
 
 	color = vec4((ambientLight + diffuseLight + reflectiveLight)* atten,1);

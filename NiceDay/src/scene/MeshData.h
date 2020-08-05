@@ -2,7 +2,7 @@
 #include "ndpch.h"
 #include "graphics/API/Buffer.h"
 
-class Mesh
+class MeshData
 {
 private:
 	char* m_vertices=nullptr;
@@ -18,9 +18,10 @@ private:
 	VertexBufferLayout m_layout;
 	
 public:
-	Mesh(size_t maxVertexCount, size_t vertexSize, size_t maxIndexCount, const VertexBufferLayout& layout);
-	Mesh();
-	~Mesh();
+	Topology m_topology=Topology::TRIANGLE_STRIP;
+	MeshData(size_t maxVertexCount, size_t vertexSize, size_t maxIndexCount, const VertexBufferLayout& layout);
+	MeshData();
+	~MeshData();
 	
 	// clears all data
 	void allocate(size_t maxVertexCount, size_t vertexSize, size_t maxIndexCount, const VertexBufferLayout& layout);
@@ -59,17 +60,18 @@ public:
 		m_vertex_count = vertexCount;
 		m_index_count = indexCount;
 	}
+	Topology getTopology() const { return m_topology; }
 	
 };
 namespace MeshFactory
 {
 	// builds mesh from obj file at path, (will contain vertices and indices)
 	// usePosNormUv whether will the layout be forced to pos,norm,uv or make it smaller if obj is not full
-	Mesh* buildFromObj(const std::string& path, bool usePosNormUv=true);
+	MeshData* buildFromObj(const std::string& path, bool usePosNormUv=true);
 
-	Mesh* buildWirePlane(int x, int z);
-	Mesh* buildCube();
+	MeshData* buildWirePlane(int x, int z);
+	MeshData* buildCube();
 
-	void writeBinaryFile(const std::string& filePath, Mesh& mesh);
-	Mesh* readBinaryFile(const std::string& filePath);
+	void writeBinaryFile(const std::string& filePath, MeshData& mesh);
+	MeshData* readBinaryFile(const std::string& filePath);
 };

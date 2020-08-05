@@ -10,11 +10,12 @@ namespace SUtil
 	{
 		return strncmp(prefix.c_str(), s.c_str(), prefix.size()) == 0;
 	}
+
 	inline bool startsWithView(const std::string_view& s, const char* prefix)
 	{
 		auto prefSize = strlen(prefix);
-		
-		return prefSize<s.size()&&(strncmp(prefix, s.data(),prefSize) == 0);
+
+		return prefSize < s.size() && (strncmp(prefix, s.data(), prefSize) == 0);
 	}
 
 	inline bool startsWith(const Stringo& s, char prefix)
@@ -42,6 +43,7 @@ namespace SUtil
 	{
 		return !s.empty() && s[s.size() - 1] == suffix;
 	}
+
 	inline bool endsWith(const std::string_view& s, char suffix)
 	{
 		return !s.empty() && s[s.size() - 1] == suffix;
@@ -54,7 +56,8 @@ namespace SUtil
 
 		return sizeSuf <= sizeS && strncmp(suffix, s + sizeS - sizeSuf, sizeSuf) == 0;
 	}
-	inline bool endsWith(const std::string_view&  s, const char* suffix)
+
+	inline bool endsWith(const std::string_view& s, const char* suffix)
 	{
 		auto sizeS = s.size();
 		auto sizeSuf = strlen(suffix);
@@ -69,6 +72,7 @@ namespace SUtil
 
 		return sizeS && s[sizeS - 1] == suffix;
 	}
+
 	inline bool replaceWith(char* src, char what, char with)
 	{
 		for (int i = 0; true; ++i)
@@ -79,6 +83,7 @@ namespace SUtil
 			id = isWhat * with + src[i] * (!isWhat);
 		}
 	}
+
 	inline bool replaceWith(Stringo& src, char what, char with)
 	{
 		for (int i = 0; i < src.size(); ++i)
@@ -120,6 +125,7 @@ namespace SUtil
 			replaceWith(src, what, with);
 		return true;
 	}
+
 
 	//populates words with words that were crated by splitting line with one char of dividers
 	//NOTE!: when using views
@@ -179,14 +185,19 @@ namespace SUtil
 			}
 		}
 	}*/
-
-	// iterates over a string_view divided by "divider"
+	// iterates over a string_view divided by "divider" (any chars in const char*)
 	// Example:
 	//		if(!ignoreBlanks)
 	//			"\n\nBoo\n" -> "","","Boo",""
 	//		else
 	//			"\n\nBoo\n" -> "Boo"
-	template <bool ignoreBlanks = false, typename DividerType = const char*>
+	//
+	//
+	//	enable throwException to throw std::string("No Word Left") 
+	//	if(operator bool()==false)
+	//		-> on calling operator*() or operator->()
+	//
+	template <bool ignoreBlanks = false, typename DividerType = const char*, bool throwException = false>
 	class SplitIterator
 	{
 		static_assert(std::is_same<DividerType, const char*>::value || std::is_same<DividerType, char>::value);
@@ -200,6 +211,9 @@ namespace SUtil
 
 		void step()
 		{
+			if (!operator bool())
+				return;
+
 			if (ignoreBlanks)
 			{
 				bool first = true;
@@ -231,8 +245,6 @@ namespace SUtil
 			}
 			else
 			{
-				if (!operator bool())
-					return;
 				//check if this is ending
 				//the next one will be false
 				if (m_source.size() == m_pointer.size())
@@ -289,7 +301,8 @@ namespace SUtil
 
 		SplitIterator& operator++()
 		{
-			step();
+			if (this->operator bool())
+				step();
 			return (*this);
 		}
 
@@ -300,7 +313,75 @@ namespace SUtil
 			return temp;
 		}
 
-		const std::string_view& operator*() { return m_pointer; }
-		const std::string_view* operator->() { return &m_pointer; }
+		const std::string_view& operator*()
+		{
+			if (throwException && !operator bool()) //Attempt to access* it or it->when no word is left in the iterator
+				throw std::string("No Word Left");
+			return m_pointer;
+		}
+
+		const std::string_view* operator->()
+		{
+			if (throwException && !operator bool()) //Attempt to access *it or it-> when no word is left in the iterator
+				throw std::string("No Word Left");
+			return &m_pointer;
+		}
 	};
+
+	//removes comments: (replaces with ' ')
+	//	1. one liner starting with "//"
+	//	2. block comment bounded by "/*" and "*/"
+	inline void removeComments(Stringo& src)
+	{
+		size_t offset = 0;
+		bool opened = false; //multiliner opened
+		size_t openedStart = 0;
+		while (true)	{
+			auto slash = src.find_first_of('/', offset);
+			if (slash != Stringo::npos)
+			{
+				std::string s = src.substr(slash);
+				if (!opened)
+				{
+					if (src.size() == slash - 1)
+						return;
+
+					char next = src[slash + 1];
+					if (next == '/') //one liner
+					{
+						auto end = src.find_first_of('\n', slash + 1);
+						if (end == Stringo::npos)
+						{
+							memset(src.data() + slash, ' ', src.size() - 1 - slash);
+							return;
+						}
+						memset(src.data() + slash, ' ', end - slash);
+						offset = end;
+					}
+					else if (next == '*')
+					{
+						opened = true;
+						offset = slash + 1;
+						openedStart = slash;
+					}
+					else offset = slash + 1;
+				}
+				else {
+					if (src[slash - 1] == '*') {
+						opened = false;
+						memset(src.data() + openedStart, ' ', slash - openedStart);
+						offset = slash + 1;
+					}
+					offset = slash + 1;
+				}
+			}
+			else if (opened) {
+				memset(src.data() + openedStart, ' ', src.size()-1 - openedStart);
+				return;
+			}
+			else return;
+		}
+	}
 }
+
+

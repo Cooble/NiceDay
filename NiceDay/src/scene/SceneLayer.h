@@ -1,11 +1,11 @@
 ﻿#pragma once
 #include "layer/Layer.h"
 
-class Scene;
+class NewScene;
 class SceneLayer:public Layer
 {
 private:
-	Scene* m_scene;
+	NewScene* m_scene;
 public:
 	void onAttach() override;
 	void onDetach() override;

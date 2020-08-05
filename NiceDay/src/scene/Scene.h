@@ -1,11 +1,11 @@
 ﻿#pragma once
 #include "ndpch.h"
-#include "Mesh.h"
+#include "MeshData.h"
 #include "graphics/API/VertexArray.h"
 #include "graphics/API/Texture.h"
 #include "graphics/GContext.h"
 
-
+/*
 enum SceneShader
 {
 	MODEL_SHADER,
@@ -77,8 +77,8 @@ class Scene
 {
 private:
 	std::vector<SceneObject*> m_scene_objects;
-	std::vector<GModel*> m_modelos;
-	std::vector<Model*> m_models;
+	//std::vector<GModel*> m_modelos;
+	//std::vector<Model*> m_models;
 	std::vector<Light*> m_lights;
 	std::vector<Cam*> m_cameras;
 	
@@ -107,4 +107,4 @@ public:
 	Cam* getEventCam() { return m_cameras[ m_cam_event_idx]; }
 	
 };
-
+*/

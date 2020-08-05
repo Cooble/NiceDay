@@ -149,3 +149,4 @@ public:
 public:
 	static Texture* create(const TextureInfo&);
 };
+typedef Ref<Texture> TexturePtr;

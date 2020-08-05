@@ -1,6 +1,8 @@
 ﻿#include "ndpch.h"
 #include "GLVertexArray.h"
 #include "GLRenderer.h"
+#include "graphics/GContext.h"
+#include "GLContext.h"
 
 GLVertexArray::GLVertexArray()
 	:m_atrib_point_index(0)
@@ -18,19 +20,19 @@ void GLVertexArray::addBuffer(const VertexBuffer& vbo)
 	bind();
 	vbo.bind();
 	unsigned int offset = 0;
-	std::vector<VertexBufferElement> ray = vbo.getLayout().getElements();
+	auto& ray = vbo.getLayout().getElements();
 
 	for (unsigned int i = 0; i < ray.size(); i++) {
 		auto& e = ray[i];
 		GLCall(glEnableVertexAttribArray(m_atrib_point_index + i));
-		if (e.isIType()) {
-			GLCall(glVertexAttribIPointer(m_atrib_point_index + i, e.count, e.type, vbo.getLayout().getStride(), (const void*)offset));
+		if (GTypes::isIType(e.typ)) {
+			GLCall(glVertexAttribIPointer(m_atrib_point_index + i, e.count, toGL(e.typ), vbo.getLayout().getStride(), (const void*)offset));
 		}
 		else {
-			GLCall(glVertexAttribPointer(m_atrib_point_index + i, e.count, e.type, e.normalized, vbo.getLayout().getStride(), (const void*)offset));
+			GLCall(glVertexAttribPointer(m_atrib_point_index + i, e.count, toGL(e.typ), e.normalized, vbo.getLayout().getStride(), (const void*)offset));
 		}
 
-		offset += e.count*VertexBufferElement::getByteCount(e.type);
+		offset += e.count*GTypes::getSize(e.typ);
 	}
 	m_atrib_point_index += ray.size();
 }

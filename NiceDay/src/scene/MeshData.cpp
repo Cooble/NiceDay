@@ -1,15 +1,15 @@
-﻿#include "Mesh.h"
+﻿#include "MeshData.h"
 
-Mesh::Mesh(size_t maxVertexCount, size_t vertexSize, size_t maxIndexCount, const VertexBufferLayout& layout)
+MeshData::MeshData(size_t maxVertexCount, size_t vertexSize, size_t maxIndexCount, const VertexBufferLayout& layout)
 {
 	allocate(maxVertexCount, vertexSize, maxIndexCount, layout);
 }
 
-Mesh::Mesh()
+MeshData::MeshData()
 {
 }
 
-Mesh::~Mesh()
+MeshData::~MeshData()
 {
 	if (m_vertices)
 		free(m_vertices);
@@ -17,7 +17,7 @@ Mesh::~Mesh()
 		free(m_indices);
 }
 
-void Mesh::allocate(size_t maxVertexCount, size_t vertexSize, size_t maxIndexCount, const VertexBufferLayout& layout)
+void MeshData::allocate(size_t maxVertexCount, size_t vertexSize, size_t maxIndexCount, const VertexBufferLayout& layout)
 {
 	if (m_vertices)
 		free(m_vertices);
@@ -90,7 +90,7 @@ namespace MeshFactory
 		return res;
 	}
 
-	Mesh* buildFromObj(const std::string& path, bool usePosNormUv)
+	MeshData* buildFromObj(const std::string& path, bool usePosNormUv)
 	{
 		size_t vSize = 0;
 		size_t vnSize = 0;
@@ -182,7 +182,7 @@ namespace MeshFactory
 			infile.close();
 			//now we have filled bigVertices and indices_data
 		}
-		auto model = new Mesh;
+		auto model = new MeshData;
 
 		VertexBufferLayout layout;
 
@@ -240,9 +240,9 @@ namespace MeshFactory
 		return model;
 	}
 
-	Mesh* buildWirePlane(int x, int z)
+	MeshData* buildWirePlane(int x, int z)
 	{
-		auto mesh = new Mesh;
+		auto mesh = new MeshData;
 		auto size = (x + z) * 2;
 
 		VertexBufferLayout l;
@@ -265,7 +265,7 @@ namespace MeshFactory
 	}
 	
 	
-	Mesh* buildCube()
+	MeshData* buildCube()
 	{
 		static const float cubeVertices[] = {
 	-1.0f,-1.0f,-1.0f,
@@ -306,7 +306,7 @@ namespace MeshFactory
 	1.0f,-1.0f, 1.0f
 		};
 		
-		Mesh* mesh = new Mesh;
+		MeshData* mesh = new MeshData;
 		VertexBufferLayout l;
 		l.push<float>(3);
 		mesh->allocate(36, sizeof(glm::vec3), 0, l);
@@ -324,7 +324,7 @@ namespace MeshFactory
 		int elements = 0;
 	};
 	
-	void writeBinaryFile(const std::string& filePath, Mesh& mesh)
+	void writeBinaryFile(const std::string& filePath, MeshData& mesh)
 	{
 		BigHead h;
 		h.m_vertex_size = mesh.getOneVertexSize();
@@ -344,7 +344,7 @@ namespace MeshFactory
 		fclose(file);
 	}
 
-	Mesh* readBinaryFile(const std::string& filePath)
+	MeshData* readBinaryFile(const std::string& filePath)
 	{
 		FILE* file = fopen(filePath.c_str(), "rb");
 		if (!file)
@@ -359,7 +359,7 @@ namespace MeshFactory
 			fread(&e, sizeof(VertexBufferElement), 1, file);
 			layout.pushElement(e);
 		}
-		Mesh& mesh = *new Mesh;
+		MeshData& mesh = *new MeshData;
 		mesh.allocate(h.m_vertex_count_max, h.m_vertex_size, h.m_index_count_max, layout);
 		fread(mesh.getVertices(), mesh.getVerticesSize(), 1, file);
 		if (mesh.getIndicesCountMax())

@@ -1,19 +1,21 @@
 #include "Camm.h"
 #include "event/KeyEvent.h"
+#include "event/MouseEvent.h"
 #include "GLFW/glfw3.h"
 #include "core/App.h"
 #include "imgui.h"
 
-Cam::Cam(std::string name): SceneObject(ObjectType::CAM, std::move(name)), pitch(0), yaw(0), roll(0)
+
+Cam::Cam(Entity e):entity(e),position(nullptr),angles(nullptr)
 {
 }
 
 
-void Cam::imGuiPropsRender()
+/*void Cam::imGuiPropsRender()
 {
 	SceneObject::imGuiPropsRender();
 	float angle = glm::degrees(fov);
-	glm::vec3 angs = glm::degrees(angles);
+	glm::vec3 angs = glm::degrees((*angles));
 
 	ImGui::Checkbox("LookingThrough", &lookingThrough);
 	ImGui::Spacing();
@@ -24,21 +26,28 @@ void Cam::imGuiPropsRender()
 	ImGui::SliderFloat("TurnSpeed", &turnSpeed, 0.001f, 0.01f);
 	ImGui::SliderFloat("Speed", (float*)&speed, 0.1f, 0.8f);
 
-	angles = glm::radians(angs);
+	(*angles) = glm::radians(angs);
 	fov= glm::radians(angle);
 
-}
+}*/
 
-PlayerCam::PlayerCam(std::string name):Cam(std::move(name))
+PlayerCam::PlayerCam(Entity e):Cam(e)
 {
 }
 
-EditorCam::EditorCam(std::string name):Cam(std::move(name))
+EditorCam::EditorCam(Entity e):Cam(e)
 {
 }
 
+
+void Cam::refreshData()
+{
+	angles = reinterpret_cast<Angles*>(&entity.get<TransformComponent>().rot);
+	position = &entity.get<TransformComponent>().pos;
+}
 void PlayerCam::onEvent(Event& e)
 {
+	refreshData();
 	auto press = dynamic_cast<KeyPressEvent*>(&e);
 	if (press)
 	{
@@ -52,7 +61,7 @@ void PlayerCam::onEvent(Event& e)
 				App::get().getWindow()->setCursorPolicy(Window::CURSOR_DISABLED);
 				App::get().getWindow()->setCursorPos(center);
 				currentMouseCoords = center;
-				camRot = angles;
+				camRot = (*angles);
 			}
 			else
 			{
@@ -68,33 +77,34 @@ void PlayerCam::onEvent(Event& e)
 		{
 			auto m = dynamic_cast<MouseMoveEvent*>(&e);
 			auto delta = m->getPos() - currentMouseCoords;
-			pitch = camRot.x - delta.y / App::get().getWindow()->getWidth() * mouseSensitivity;
-			yaw = camRot.y - delta.x / App::get().getWindow()->getWidth() * mouseSensitivity;
+			(*angles).pitch = camRot.x - delta.y / App::get().getWindow()->getWidth() * mouseSensitivity;
+			(*angles).yaw = camRot.y - delta.x / App::get().getWindow()->getWidth() * mouseSensitivity;
 
-			if (pitch < -3.14159f / 2 || pitch > 3.14159f / 2)
+			if ((*angles).pitch < -3.14159f / 2 || (*angles).pitch > 3.14159f / 2)
 			{
 				//reset cursor loc when got to border angle
 				currentMouseCoords.y = m->getY();
-				pitch = glm::clamp(pitch, -3.14159f / 2, 3.14159f / 2); //limit rot from -90 to 90
-				camRot.x = pitch;
+				(*angles).pitch = glm::clamp((*angles).pitch, -3.14159f / 2, 3.14159f / 2); //limit rot from -90 to 90
+				camRot.x = (*angles).pitch;
 			}
 
-			pitch = glm::clamp(pitch, -3.14159f / 2, 3.14159f / 2); //limit rot from -90 to 90
+			(*angles).pitch = glm::clamp((*angles).pitch, -3.14159f / 2, 3.14159f / 2); //limit rot from -90 to 90
 			//modulo from -180 to 180
-			if (yaw > 3.14159f)
-				yaw -= 2 * 3.14159f;
-			else if (yaw < -3.14159f)
-				yaw += 2 * 3.14159f;
-			if (roll > 3.14159f)
-				roll -= 2 * 3.14159f;
-			else if (roll < -3.14159f)
-				roll += 2 * 3.14159f;
+			if ((*angles).yaw > 3.14159f)
+				(*angles).yaw -= 2 * 3.14159f;
+			else if ((*angles).yaw < -3.14159f)
+				(*angles).yaw += 2 * 3.14159f;
+			if ((*angles).roll > 3.14159f)
+				(*angles).roll -= 2 * 3.14159f;
+			else if ((*angles).roll < -3.14159f)
+				(*angles).roll += 2 * 3.14159f;
 		}
 	}
 }
 
 void PlayerCam::onUpdate()
 {
+	refreshData();
 	glm::vec3 go(0, 0, 0);
 
 	if (App::get().getInput().isKeyPressed(GLFW_KEY_RIGHT))
@@ -123,17 +133,19 @@ void PlayerCam::go(const glm::vec3& relativeDirection)
 	auto rel = relativeDirection;
 	float yy = rel.y;
 	rel.y = 0;
-	glm::quat q(angles);
+	glm::quat q((*angles));
 	auto mm = glm::toMat4(q);
 
 	glm::vec4 v = glm::vec4(rel, 0);
 	auto t = mm * v;
 	t.y = yy;
-	pos += glm::vec3(t);
+	(*position) += glm::vec3(t);
 }
 
 void EditorCam::onEvent(Event& e)
 {
+	refreshData();
+	
 	auto press = dynamic_cast<KeyPressEvent*>(&e);
 	if (press)
 	{
@@ -144,7 +156,7 @@ void EditorCam::onEvent(Event& e)
 			App::get().getWindow()->setCursorPolicy(Window::CURSOR_DISABLED);
 			App::get().getWindow()->setCursorPos(center);
 			currentMouseCoords = center;
-			camRot = angles;
+			camRot = (*angles);
 			fullRotation = true;
 		}
 		else if (press->getKey() == GLFW_KEY_LEFT_SHIFT && !fullRotation && !fullMove)
@@ -154,7 +166,7 @@ void EditorCam::onEvent(Event& e)
 			App::get().getWindow()->setCursorPolicy(Window::CURSOR_DISABLED);
 			App::get().getWindow()->setCursorPos(center);
 			currentMouseCoords = center;
-			camPos = pos;
+			camPos = (*position);
 			fullMove = true;
 		}
 		else if (press->getKey() == GLFW_KEY_LEFT_ALT && !fullRotation && !fullMove && !fullRotRelative)
@@ -164,8 +176,8 @@ void EditorCam::onEvent(Event& e)
 			App::get().getWindow()->setCursorPolicy(Window::CURSOR_DISABLED);
 			App::get().getWindow()->setCursorPos(center);
 			currentMouseCoords = center;
-			camRot = angles;
-			farPoint = pos + facingDirection() * pointDistance;
+			camRot = (*angles);
+			farPoint = (*position) + facingDirection() * pointDistance;
 			fullRotRelative = true;
 		}
 	}
@@ -195,62 +207,62 @@ void EditorCam::onEvent(Event& e)
 	{
 		auto m = dynamic_cast<MouseMoveEvent*>(&e);
 		auto delta = m->getPos() - currentMouseCoords;
-		pitch = camRot.x - delta.y / App::get().getWindow()->getWidth() * mouseSensitivity;
-		yaw = camRot.y - delta.x / App::get().getWindow()->getWidth() * mouseSensitivity;
+		(*angles).pitch = camRot.x - delta.y / App::get().getWindow()->getWidth() * mouseSensitivity;
+		(*angles).yaw = camRot.y - delta.x / App::get().getWindow()->getWidth() * mouseSensitivity;
 
-		if (pitch < -3.14159f / 2 || pitch > 3.14159f / 2)
+		if ((*angles).pitch < -3.14159f / 2 || (*angles).pitch > 3.14159f / 2)
 		{
 			//reset cursor loc when got to border angle
 			currentMouseCoords.y = m->getY();
-			pitch = glm::clamp(pitch, -3.14159f / 2, 3.14159f / 2); //limit rot from -90 to 90
-			camRot.x = pitch;
+			(*angles).pitch = glm::clamp((*angles).pitch, -3.14159f / 2, 3.14159f / 2); //limit rot from -90 to 90
+			camRot.x = (*angles).pitch;
 		}
 
-		pitch = glm::clamp(pitch, -3.14159f / 2, 3.14159f / 2); //limit rot from -90 to 90
+		(*angles).pitch = glm::clamp((*angles).pitch, -3.14159f / 2, 3.14159f / 2); //limit rot from -90 to 90
 		//modulo from -180 to 180
-		if (yaw > 3.14159f)
-			yaw -= 2 * 3.14159f;
-		else if (yaw < -3.14159f)
-			yaw += 2 * 3.14159f;
-		if (roll > 3.14159f)
-			roll -= 2 * 3.14159f;
-		else if (roll < -3.14159f)
-			roll += 2 * 3.14159f;
+		if ((*angles).yaw > 3.14159f)
+			(*angles).yaw -= 2 * 3.14159f;
+		else if ((*angles).yaw < -3.14159f)
+			(*angles).yaw += 2 * 3.14159f;
+		if ((*angles).roll > 3.14159f)
+			(*angles).roll -= 2 * 3.14159f;
+		else if ((*angles).roll < -3.14159f)
+			(*angles).roll += 2 * 3.14159f;
 	}
 	else if (e.getEventType() == Event::EventType::MouseMove && fullMove)
 	{
 		auto m = dynamic_cast<MouseMoveEvent*>(&e);
 		auto delta = (m->getPos() - currentMouseCoords) / 50.f;
-		pos = camPos;
+		(*position)= camPos;
 		go({-delta.x * speed, delta.y * speed, 0});
 	}
 	else if (e.getEventType() == Event::EventType::MouseMove && fullRotRelative)
 	{
 		auto m = dynamic_cast<MouseMoveEvent*>(&e);
 		auto delta = m->getPos() - currentMouseCoords;
-		pitch = camRot.x - delta.y / App::get().getWindow()->getWidth() * mouseSensitivity;
-		yaw = camRot.y - delta.x / App::get().getWindow()->getWidth() * mouseSensitivity;
+		(*angles).pitch = camRot.x - delta.y / App::get().getWindow()->getWidth() * mouseSensitivity;
+		(*angles).yaw = camRot.y - delta.x / App::get().getWindow()->getWidth() * mouseSensitivity;
 
-		if (pitch < -3.14159f / 2 || pitch > 3.14159f / 2)
+		if ((*angles).pitch < -3.14159f / 2 || (*angles).pitch > 3.14159f / 2)
 		{
 			//reset cursor loc when got to border angle
 			currentMouseCoords.y = m->getY();
-			pitch = glm::clamp(pitch, -3.14159f / 2, 3.14159f / 2); //limit rot from -90 to 90
-			camRot.x = pitch;
+			(*angles).pitch = glm::clamp((*angles).pitch, -3.14159f / 2, 3.14159f / 2); //limit rot from -90 to 90
+			camRot.x = (*angles).pitch;
 		}
 
-		pitch = glm::clamp(pitch, -3.14159f / 2, 3.14159f / 2); //limit rot from -90 to 90
+		(*angles).pitch = glm::clamp((*angles).pitch, -3.14159f / 2, 3.14159f / 2); //limit rot from -90 to 90
 		//modulo from -180 to 180
-		if (yaw > 3.14159f)
-			yaw -= 2 * 3.14159f;
-		else if (yaw < -3.14159f)
-			yaw += 2 * 3.14159f;
-		if (roll > 3.14159f)
-			roll -= 2 * 3.14159f;
-		else if (roll < -3.14159f)
-			roll += 2 * 3.14159f;
+		if ((*angles).yaw > 3.14159f)
+			(*angles).yaw -= 2 * 3.14159f;
+		else if ((*angles).yaw < -3.14159f)
+			(*angles).yaw += 2 * 3.14159f;
+		if ((*angles).roll > 3.14159f)
+			(*angles).roll -= 2 * 3.14159f;
+		else if ((*angles).roll < -3.14159f)
+			(*angles).roll += 2 * 3.14159f;
 
-		pos = farPoint - pointDistance * facingDirection();
+		(*position) = farPoint - pointDistance * facingDirection();
 	}
 	else if (e.getEventType() == Event::EventType::MouseScroll)
 	{
@@ -261,6 +273,8 @@ void EditorCam::onEvent(Event& e)
 
 void EditorCam::onUpdate()
 {
+	refreshData();
+	
 	glm::vec3 go(0, 0, 0);
 
 	if (App::get().getInput().isKeyPressed(GLFW_KEY_RIGHT))
@@ -286,10 +300,10 @@ void EditorCam::onUpdate()
 
 void EditorCam::go(const glm::vec3& relativeDirection)
 {
-	glm::quat q(angles);
+	glm::quat q((*angles));
 	auto mm = glm::toMat4(q);
 
 	glm::vec4 v = glm::vec4(relativeDirection, 0);
 	auto t = mm * v;
-	pos += glm::vec3(t);
+	(*position) += glm::vec3(t);
 }

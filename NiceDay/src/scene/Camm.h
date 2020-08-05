@@ -1,52 +1,53 @@
 #pragma once
 #include "ndpch.h"
-#include "Scene.h"
+#include "NewScene.h"
+
+struct CameraComponent;
 class Event;
-struct Cam :SceneObject
+struct Cam 
 {
-	bool lookingThrough=false;
 	float speed = 0.4f;
 	float turnSpeed = 0.01;
-	glm::vec3 pos = glm::vec3(0, 0, 0);
-	float fov=glm::quarter_pi<float>();
+	Entity entity;
 
-	union
+	struct Angles
 	{
-		struct
-		{
-			float pitch;
-			float yaw;
-			float roll;
+		union{
+			struct
+			{
+				float pitch;
+				float yaw;
+				float roll;
+			};
+			glm::vec3 rot;
 		};
-
-		glm::vec3 angles;
+		Angles() = default;
+		Angles(glm::vec3 rot):rot(rot){}
+		operator glm::vec3() { return rot; }
 	};
-
-	constexpr glm::vec3& getPos() { return pos; }
-	constexpr glm::vec3& getRotation() { return angles; }
-
-
-	Cam(std::string name);
+	Angles* angles;
+	glm::vec3* position;
+	void refreshData();
+	Cam(Entity e);
 	virtual ~Cam() = default;
-	void imGuiPropsRender() override;
 
 	glm::mat4 getLookingMat()
 	{
-		glm::quat q(angles);
+		glm::quat q(*angles);
 		return  glm::toMat4(q);
 	}
 	glm::vec3 facingDirection()
 	{
-		glm::quat q(angles);
+		glm::quat q(*angles);
 		return  glm::vec3(glm::toMat4(q) * glm::vec4(0, 0, -1, 0));
 	}
 	virtual glm::mat4 getViewMatrix()
 	{
-		auto out = glm::rotate(glm::mat4(1.f), -pitch, { 1, 0, 0 });
-		out = glm::rotate(out, -yaw, { 0, 1, 0 });
-		out = glm::rotate(out, -roll, { 0, 0, 1 });
+		auto out = glm::rotate(glm::mat4(1.f), -(*angles).pitch, { 1, 0, 0 });
+		out = glm::rotate(out, -(*angles).yaw, { 0, 1, 0 });
+		out = glm::rotate(out, -(*angles).roll, { 0, 0, 1 });
 
-		return glm::translate(out, -pos);
+		return glm::translate(out, -(*position));
 	}
 
 	virtual void go(const glm::vec3& relativeDirection) {}
@@ -63,7 +64,7 @@ struct PlayerCam : Cam
 	glm::vec3 camRot;
 
 	bool fullRotation = false;
-	PlayerCam(std::string name);
+	PlayerCam(Entity e);
 	void onEvent(Event& e) override;
 
 
@@ -86,11 +87,10 @@ struct EditorCam : Cam
 	bool fullMove = false;
 	bool fullRotRelative = false;
 
-	EditorCam(std::string name);
+	EditorCam(Entity e);
 	void onEvent(Event& e) override;
 
 	void onUpdate() override;
 
 	void go(const glm::vec3& relativeDirection) override;
 };
-

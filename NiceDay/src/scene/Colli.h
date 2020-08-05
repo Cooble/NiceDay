@@ -1,10 +1,10 @@
 ﻿#pragma once
 #include "ndpch.h"
 
-class Mesh;
+class MeshData;
 namespace Colli
 {
 
-	Mesh* buildMesh(const std::string& path,float scale=1);
+	MeshData* buildMesh(const std::string& path,float scale=1);
 	
 };

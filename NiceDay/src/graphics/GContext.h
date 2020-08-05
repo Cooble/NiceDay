@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "Renderer.h"
+#include "glad/glad.h"
 
 #define Gcon GContext::get()
 
@@ -10,7 +11,7 @@ namespace BuffBit {
 	constexpr BufferBit DEPTH = GL_DEPTH_BUFFER_BIT;
 }
 
-enum class Blend :unsigned int
+enum class Blend : uint32_t
 {
 	ZERO = GL_ZERO,
 	ONE = GL_ONE,
@@ -28,7 +29,7 @@ enum class Blend :unsigned int
 	ONE_MINUS_CONSTANT_ALPHA = GL_ONE_MINUS_CONSTANT_ALPHA,
 	NONE
 };
-enum class BlendEquation :unsigned int
+enum class BlendEquation : uint32_t
 {
 	FUNC_ADD = GL_FUNC_ADD,
 	FUNC_REVERSE_SUBTRACT = GL_FUNC_REVERSE_SUBTRACT,
@@ -37,7 +38,7 @@ enum class BlendEquation :unsigned int
 	MAX = GL_MAX,
 	NONE
 };
-enum class Topology : unsigned int
+enum class Topology : uint32_t
 {
 	LINES=GL_LINES,
 	TRIANGLES = GL_TRIANGLES,
@@ -45,6 +46,153 @@ enum class Topology : unsigned int
 	TRIANGLES_ADJACENCY = GL_TRIANGLES_ADJACENCY,
 	TRIANGLE_STRIP= GL_TRIANGLE_STRIP,
 };
+enum class RenderStage : uint32_t
+{
+	VERTEX = 1,
+	FRAGMENT = 2,
+	GEOMETRY = 4
+};
+enum class g_typ : uint32_t
+{
+	BYTE,
+	UNSIGNED_BYTE,
+	SHORT,
+	UNSIGNED_SHORT,
+	UNSIGNED_INT,
+	FLOAT,
+	VEC2,
+	VEC3,
+	VEC4,
+	INT,
+	IVEC2,
+	IVEC3,
+	IVEC4,
+	MAT3,
+	MAT4,
+	TEXTURE,
+
+	INVALID
+};
+
+enum class VertexType : uint32_t
+{
+	POS,
+	NORMAL,
+	UV,
+
+	INVALID
+};
+
+namespace GTypes {
+	constexpr bool isIType(g_typ type)
+	{
+		switch (type) {
+		case g_typ::UNSIGNED_INT:
+		case g_typ::INT:
+		case g_typ::IVEC2:
+		case g_typ::IVEC3:
+		case g_typ::IVEC4:
+		case g_typ::UNSIGNED_BYTE:
+		case g_typ::SHORT:
+		case g_typ::UNSIGNED_SHORT:
+			return true;
+
+		default:return false;
+		}
+	}
+	constexpr int getCount(g_typ type)
+	{
+		switch(type)
+		{
+		case g_typ::BYTE:
+		case g_typ::UNSIGNED_BYTE:
+		case g_typ::SHORT:
+		case g_typ::UNSIGNED_SHORT:
+		case g_typ::UNSIGNED_INT:
+		case g_typ::FLOAT:
+		case g_typ::INT: 
+		case g_typ::MAT3:
+		case g_typ::MAT4:
+		case g_typ::TEXTURE:
+			return 1;
+		case g_typ::IVEC2:
+		case g_typ::VEC2:
+			return 2;
+		case g_typ::VEC3:
+		case g_typ::IVEC3:
+			return 3;
+		case g_typ::VEC4:
+		case g_typ::IVEC4:
+			return 4;
+		default: return 0;
+		}
+	}
+	constexpr g_typ getType(std::string_view view)
+	{
+		if (view == "float")
+			return g_typ::FLOAT;
+		if (view == "vec2")
+			return g_typ::VEC2;
+		if (view == "vec3")
+			return g_typ::VEC3;
+		if (view == "vec4")
+			return g_typ::VEC4;
+		if (view == "mat3")
+			return g_typ::MAT3;
+		if (view == "mat4")
+			return g_typ::MAT4;
+
+		if (view == "int")
+			return g_typ::INT;
+		if (view == "ivec2")
+			return g_typ::IVEC2;
+		if (view == "ivec3")
+			return g_typ::IVEC3;
+		if (view == "ivec4")
+			return g_typ::IVEC4;
+		if (view == "uint")
+			return g_typ::UNSIGNED_INT;
+		if (view == "sampler2D")
+			return g_typ::TEXTURE;
+		return g_typ::INVALID;
+	}
+	constexpr static int GTYPE_SIZES[]
+	{
+				1,		//	BYTE,
+				1,		//UNSIGNED_BYTE,
+				2,		//SHORT,
+				2,		//UNSIGNED_SHORT,
+				4,		//UNSIGNED_INT,
+				4,		//FLOAT,
+				4 * 2,	//VEC2,
+				4 * 3,	//VEC3,
+				4 * 4,	//VEC4,
+				4,		//INT,
+				4 * 2,	//IVEC2,
+				4 * 3,	//IVEC3,
+				4 * 4,	//IVEC4,
+				4 * 3 * 3,	//MAT3,
+				4 * 4 * 4,	//MAT4,
+				4,		//TEXTURE,
+				0		//INVALID
+	};
+	constexpr int getSize(g_typ type)
+	{
+		return GTYPE_SIZES[(int)type];
+	}
+	constexpr g_typ setCount(g_typ base,int count)
+	{
+		switch (base) {
+		case g_typ::FLOAT:
+			return (g_typ)((uint32_t)base + count-1);
+		case g_typ::INT:
+			return (g_typ)((uint32_t)base + count - 1);
+		default:
+			ASSERT(false,"invalid base type");
+			return g_typ::INVALID;
+		}
+	}
+}
 
 class GContext
 {

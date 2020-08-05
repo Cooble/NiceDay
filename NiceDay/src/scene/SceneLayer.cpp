@@ -2,14 +2,46 @@
 #include "graphics/API/Texture.h"
 #include "imgui.h"
 #include "imgui_internal.h"
-#include "Mesh.h"
+#include "MeshData.h"
 #include "Colli.h"
-#include "Scene.h"
+#include "graphics/API/VertexArray.h"
+#include "graphics/GContext.h"
+#include "NewScene.h"
+#include "components.h"
+#include "scene/NewMesh.h"
+#include "platform/OpenGL/GLShader.h"
+#include "graphics/API/FrameBuffer.h"
+#include "core/App.h"
 #include "Camm.h"
+#include "platform/OpenGL/GLRenderer.h"
 
 
-static Model* dragon;
+struct Env
+{
+	glm::mat4 view;
+	glm::mat4 proj;
+	
+	glm::vec3 sunPos;
+	
+	glm::vec3 ambient;
+	glm::vec3 diffuse;
+	glm::vec3 specular;
+	glm::vec3 camera_pos;
 
+	float constant;
+	float linear;
+	float quadratic;
+} env;
+UniformLayout envLayout;
+static MaterialPtr enviroment;
+static Entity currentCamera;
+EditorCam* editCam;
+static void onPointerComponentDestroyed(entt::registry& reg, entt::entity ent)
+{
+	auto& t = reg.get<PointerComponent>(ent);
+	if (t.ptr)
+		free(t.ptr);
+}
 void SceneLayer::onAttach()
 {
 	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
@@ -22,30 +54,84 @@ void SceneLayer::onAttach()
 	io.Fonts->AddFontFromFileTTF(ND_RESLOC("res/fonts/NotoSansCJKjp-Medium.otf").c_str(), 20, &config, io.Fonts->GetGlyphRangesJapanese());
 	io.Fonts->Build();*/
 
-	m_scene = new Scene;
+	m_scene = new NewScene;
+	m_scene->reg().on_destroy<PointerComponent>().connect<&onPointerComponentDestroyed>();
 
+
+	envLayout.name = "GLO";
+	envLayout.prefixName = "glo";
+	envLayout.emplaceElement(g_typ::MAT4,1,"glo.view");
+	envLayout.emplaceElement(g_typ::MAT4,1,"glo.proj");
+
+	envLayout.emplaceElement(g_typ::VEC3,1,"glo.sunPos");
+	envLayout.emplaceElement(g_typ::VEC3,1,"glo.ambient");
+	envLayout.emplaceElement(g_typ::VEC3,1,"glo.diffuse");
+	envLayout.emplaceElement(g_typ::VEC3,1,"glo.specular");
+	envLayout.emplaceElement(g_typ::VEC3,1,"glo.camera_pos");
+
+	envLayout.emplaceElement(g_typ::FLOAT,1,"glo.constant");
+	envLayout.emplaceElement(g_typ::FLOAT,1,"glo.linear");
+	envLayout.emplaceElement(g_typ::FLOAT,1,"glo.quadratic");
+
+
+	auto modelMat = Material::create({ std::shared_ptr<Shader>(ShaderLib::loadOrGetShader(ND_RESLOC("res/shaders/Model.shader"))),"MAT","modelMaterial" });
+	modelMat->setValue("color", glm::vec4(1.0, 1.0, 0, 1));
+	modelMat->setValue("shines", 64.f);
+	
+	enviroment = Material::create({ nullptr,"GLO","Enviroment",&envLayout });
 	//adding crate
 	{
-		auto crateTexture = Texture::create(TextureInfo(ND_RESLOC("res/models/crate.png")));
-		auto crateSpecular = Texture::create(TextureInfo(ND_RESLOC("res/models/crate_specular.png")));
-		auto crate = new GModel;
-		crate->set(Colli::buildMesh(ND_RESLOC("res/models/cube.fbx")));
-		crate->textures.push_back(crateTexture);
-		crate->textures.push_back(crateSpecular);
-		auto mo = new Model("crate");
-		mo->model = crate;
-		mo->pos = { 1,2,1 };
-		m_scene->addObject(mo);
+		auto diffuse = Texture::create(TextureInfo(ND_RESLOC("res/models/crate.png")));
+		auto specular = Texture::create(TextureInfo(ND_RESLOC("res/models/crate_specular.png")));
+		
+		auto mesh = NewMeshFactory::buildNewMesh(Colli::buildMesh(ND_RESLOC("res/models/cube.dae")));
+		mesh->topology = Topology::TRIANGLES;
+
+		auto mat = modelMat->copy("crateMaterial");
+		mat->setValue("diffuse", std::shared_ptr<Texture>(diffuse));
+		mat->setValue("specular", std::shared_ptr<Texture>(specular));
+		mat->setValue("color", glm::vec4(1.0, 1.0, 0, 0));
+
+		auto ent = m_scene->createEntity("Crate");
+		ent.emplaceOrReplace<TransformComponent>(glm::vec3(0.f), glm::vec3(100.f), glm::vec3(0.f));
+		ent.emplaceOrReplace<ModelComponent>( mesh,mat );
 	}
 	//adding dragoon
 	{
-		auto d = new GModel;
-		d->set(Colli::buildMesh(ND_RESLOC("res/models/dragon.obj")));
-		dragon = new Model("dragon");
-		dragon->color = { 0,0,0,1 };
-		dragon->model = d;
-		m_scene->addObject(dragon);
+
+		MeshData* data = nullptr;
+		if(!std::filesystem::exists(ND_RESLOC("res/models/dragon.bin")))
+		{
+			ND_INFO("Building dragon binary mesh");
+			data = Colli::buildMesh(ND_RESLOC("res/models/dragon.obj"));
+			MeshFactory::writeBinaryFile(ND_RESLOC("res/models/dragon.bin"), *data);
+		}else data = MeshFactory::readBinaryFile(ND_RESLOC("res/models/dragon.bin"));
+		
+		auto mesh = NewMeshFactory::buildNewMesh(data);
+		mesh->topology = Topology::TRIANGLES;
+		auto mat = modelMat->copy("dragoonMat");
+		mat->setValue("color", glm::vec4(0, 1.0, 0, 1));
+
+		auto ent = m_scene->createEntity("Dragoon");
+		ent.emplaceOrReplace<TransformComponent>(glm::vec3(0.f), glm::vec3(1.f), glm::vec3(0.f));
+		ent.emplaceOrReplace<ModelComponent>(mesh,mat);
 	}
+	//adding light
+	{
+		auto ent = m_scene->createEntity("Light");
+		ent.emplaceOrReplace<TransformComponent>(glm::vec3(0.f), glm::vec3(1.f), glm::vec3(0.f));
+		ent.emplaceOrReplace<LightComponent>();
+	}
+	//adding camera
+	{
+		auto ent = m_scene->createEntity("Cam");
+		ent.emplaceOrReplace<TransformComponent>(glm::vec3(0.f), glm::vec3(1.f), glm::vec3(0.f));
+		ent.emplaceOrReplace<CameraComponent>(glm::mat4(1.f),glm::quarter_pi<float>(),1.f,100.f);
+		editCam = (EditorCam*)malloc(sizeof(EditorCam));
+		ent.emplaceOrReplace<PointerComponent>(new (editCam)EditorCam(ent));
+		currentCamera = ent;
+	}
+
 
 }
 
@@ -55,28 +141,111 @@ void SceneLayer::onDetach()
 
 void SceneLayer::onUpdate()
 {
-	m_scene->update();
+	editCam->onUpdate();
 }
 
 void SceneLayer::onRender()
 {
-	m_scene->render();
+	GLCall(glEnable(GL_CULL_FACE));
+	Gcon.enableDepthTest(true);
+	//Renderer::getDefaultFBO()->clear(BuffBit::COLOR, { 0,1,0,1 });
+	auto& camCom = currentCamera.get<CameraComponent>();
+	auto& transCom = currentCamera.get<TransformComponent>();
+	env.camera_pos = transCom.pos;
+	
+	env.view = editCam->getViewMatrix();
+	env.proj = glm::perspective(camCom.fov,
+		(GLfloat)App::get().getWindow()->getWidth() / (GLfloat)App::get()
+		.getWindow()->getHeight(),
+		camCom.Near, camCom.Far);
+	
+	auto lights = m_scene->view<LightComponent>();
+	for (auto light : lights)
+	{
+		auto& l = lights.get(light);
+		env.ambient = l.ambient;
+		env.diffuse = l.diffuse;
+		env.specular = l.specular;
+		env.constant = l.constant;
+		env.linear = l.linear;
+		env.quadratic = l.quadratic;
+		env.sunPos = m_scene->wrap(light).get<TransformComponent>().pos;
+	}
+	auto models = m_scene->group<TransformComponent,ModelComponent>();
+	for (auto model : models)
+	{
+		//auto& [trans, mod] = models.get<TransformComponent,ModelComponent>(model);
+		auto& trans= models.get<TransformComponent>(model);
+		trans.recomputeMatrix();
+		auto& mod= models.get<ModelComponent>(model);
+
+		//bind mat vars
+		mod.material->bind();
+		
+		//bind enviroment vars
+		enviroment->setRaw(env);
+		enviroment->bind(0, mod.material->getShader());
+		mod.mesh->vao_temp->bind();
+
+		//bind other vars
+		auto s = std::static_pointer_cast<GLShader>(mod.material->getShader());
+		//s->setUniformMat4("world", trans.trans);
+		s->setUniformMat4("world", trans.trans);
+		
+		if (mod.mesh->indexData.exists())
+			Gcon.cmdDrawElements(mod.mesh->topology, mod.mesh->indexData.count);
+		else
+			Gcon.cmdDrawArrays(mod.mesh->topology, mod.mesh->vertexData.binding.count);
+	}
+	
 }
 
 
 void SceneLayer::onImGuiRender()
 {
-	m_scene->imGuiRender();
 	static bool open = true;
+	auto sci = &m_scene;
 	if (ImGui::Begin("ConsoleTest", &open))
 	{
+		m_scene->reg().each([sci](const entt::entity ent)
+		{
+
+				auto entity = (*sci)->wrap(ent);
+				auto& tag = entity.get<TagComponent>();
+				ImGui::PushID(tag.operator()());
+				ImGui::TextColored({ 0.f,1.f,0.f,1.f }, tag.operator()());
+				if(entity.has<TransformComponent>())
+				{
+					ImGui::LabelText("Position","");
+					auto& trans = entity.get<TransformComponent>();
+					ImGui::DragFloat3("pos", (float*)&trans.pos,0.05f);
+					ImGui::DragFloat3("scale", (float*)&trans.scale, 0.05f);
+					ImGui::DragFloat3("rotation", (float*)&trans.rot, 0.05f,-glm::two_pi<float>(),glm::two_pi<float>());
+					trans.recomputeMatrix();
+					ImGui::Spacing();
+				}
+				if (entity.has<LightComponent>())
+				{
+					ImGui::LabelText("Light","");
+					auto& l = entity.get<LightComponent>();
+					ImGui::ColorEdit3("ambient", (float*)&l.ambient);
+					ImGui::ColorEdit3("diffuse", (float*)&l.diffuse);
+					ImGui::ColorEdit3("specular", (float*)&l.specular);
+					ImGui::Spacing();
+					ImGui::SliderFloat("constant", &l.constant,0.01,1);
+					ImGui::SliderFloat("linear", &l.linear,0.01,1);
+					ImGui::SliderFloat("quadratic", &l.quadratic,0.01,1);
+					ImGui::Spacing();
+				}
+				ImGui::PopID();
+		});
 		//ImGui::Checkbox("Look editor", &lookEditor);
 		//ImGui::Checkbox("event editor", &eventEditor);
 		//ImGui::SliderInt("blur", &blurAmount, 0, 20);
 		//ImGui::SliderFloat3("pos", (float*)&editorCam->pos, -10, 10);
 		//ImGui::SliderFloat3("angle", (float*)&editorCam->angles, -3.14159f, 3.14159f);
 		//ImGui::SliderFloat3("lightPos", (float*)&lightPos, 0, 50);
-		ImGui::ColorPicker3("Dragon color", (float*)&dragon->color);
+		//ImGui::ColorPicker3("Dragon color", (float*)&dragon->color);
 
 	}
 	ImGui::End();
@@ -84,7 +253,8 @@ void SceneLayer::onImGuiRender()
 
 void SceneLayer::onEvent(Event& e)
 {
-	m_scene->onEvent(e);
-
+	editCam->onEvent(e);
+	//auto& com = currentCamera.get<EventConsumerComponent>().consumer;
+	//com(currentCamera,e);
 }
 

@@ -6,7 +6,7 @@
 #include "imgui.h"
 #include "graphics/API/FrameBuffer.h"
 #include "platform/OpenGL/GLRenderer.h"
-
+/*
 void GModel::set(Mesh* mesh)
 {
 	this->mesh = mesh;
@@ -384,3 +384,4 @@ void Scene::clearDisplay()
 	GLCall(glEnable(GL_CULL_FACE));
 	Renderer::getDefaultFBO()->clear(BuffBit::DEPTH | BuffBit::COLOR, {0.2f, 0.2f, 0.2f, 1.f});
 }
+*/

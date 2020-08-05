@@ -2,10 +2,10 @@
 #include <assimp/Importer.hpp>      // C++ importer interface
 #include <assimp/scene.h>           // Output data structure
 #include <assimp/postprocess.h>     // Post processing flags
-#include "Mesh.h"
+#include "MeshData.h"
 namespace Colli
 {
-	Mesh* buildMesh(const std::string& path,float scale)
+	MeshData* buildMesh(const std::string& path,float scale)
 	{
 		Assimp::Importer importer;
 
@@ -37,14 +37,13 @@ namespace Colli
 		if (scene->mNumMeshes == 0)
 			return nullptr;
 		auto m = scene->mMeshes[0];
-
 		VertexBufferLayout layout;
 		layout.push<float>(3);
 		if (m->mNormals)
 			layout.push<float>(3);
 		if (m->mTextureCoords[0])
 			layout.push<float>(2);
-		Mesh* mesh = new Mesh;
+		MeshData* mesh = new MeshData;
 		mesh->allocate(m->mNumVertices, layout.getStride(),
 			m->mNumFaces * 3, layout);
 		auto vertices = (float*)mesh->getVertices();
