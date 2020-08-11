@@ -100,9 +100,9 @@ Scene::Scene()
 {
 	modelShader = ShaderLib::loadOrGetShader(ND_RESLOC("res/shaders/Model.shader"));
 	modelShader->bind();
-	dynamic_cast<GLShader*>(modelShader)->setUniform1i("u_material.diffuse", 0);
-	dynamic_cast<GLShader*>(modelShader)->setUniform1i("u_material.specular", 1);
-	dynamic_cast<GLShader*>(modelShader)->setUniform1f("u_material.shines", 64);
+	std::static_pointer_cast<GLShader>(modelShader)->setUniform1i("u_material.diffuse", 0);
+	std::static_pointer_cast<GLShader>(modelShader)->setUniform1i("u_material.specular", 1);
+	std::static_pointer_cast<GLShader>(modelShader)->setUniform1f("u_material.shines", 64);
 
 	modelShader->unbind();
 	cubeMapShader = ShaderLib::loadOrGetShader(ND_RESLOC("res/shaders/CubeMap.shader"));
@@ -227,22 +227,22 @@ void Scene::render()
 	modelShader->bind();
 	//cam stuff
 	{
-		dynamic_cast<GLShader*>(modelShader)->setUniformVec3f("u_camera_pos", getLookCam()->pos);
-		dynamic_cast<GLShader*>(modelShader)->setUniformMat4("u_viewMat", view);
-		dynamic_cast<GLShader*>(modelShader)->setUniformMat4("u_projMat", proj);
+		std::static_pointer_cast<GLShader>(modelShader)->setUniformVec3f("u_camera_pos", getLookCam()->pos);
+		std::static_pointer_cast<GLShader>(modelShader)->setUniformMat4("u_viewMat", view);
+		std::static_pointer_cast<GLShader>(modelShader)->setUniformMat4("u_projMat", proj);
 	}
 
 
 	//light stuff
 	{
 		auto& licht = *m_lights[0];
-		dynamic_cast<GLShader*>(modelShader)->setUniformVec3f("u_light.pos", licht.pos);
-		dynamic_cast<GLShader*>(modelShader)->setUniformVec3f("u_light.ambient", licht.ambient);
-		dynamic_cast<GLShader*>(modelShader)->setUniformVec3f("u_light.diffuse", licht.diffuse);
-		dynamic_cast<GLShader*>(modelShader)->setUniformVec3f("u_light.specular", licht.specular);
-		dynamic_cast<GLShader*>(modelShader)->setUniform1f("u_light.constant", licht.constant);
-		dynamic_cast<GLShader*>(modelShader)->setUniform1f("u_light.linear", licht.linear);
-		dynamic_cast<GLShader*>(modelShader)->setUniform1f("u_light.quadratic", licht.quadratic);
+		std::static_pointer_cast<GLShader>(modelShader)->setUniformVec3f("u_light.pos", licht.pos);
+		std::static_pointer_cast<GLShader>(modelShader)->setUniformVec3f("u_light.ambient", licht.ambient);
+		std::static_pointer_cast<GLShader>(modelShader)->setUniformVec3f("u_light.diffuse", licht.diffuse);
+		std::static_pointer_cast<GLShader>(modelShader)->setUniformVec3f("u_light.specular", licht.specular);
+		std::static_pointer_cast<GLShader>(modelShader)->setUniform1f("u_light.constant", licht.constant);
+		std::static_pointer_cast<GLShader>(modelShader)->setUniform1f("u_light.linear", licht.linear);
+		std::static_pointer_cast<GLShader>(modelShader)->setUniform1f("u_light.quadratic", licht.quadratic);
 	}
 
 
@@ -254,9 +254,9 @@ void Scene::render()
 			continue;
 		if (model.model->shader != MODEL_SHADER)
 			continue;
-		dynamic_cast<GLShader*>(modelShader)->setUniformMat4("u_worldMat", model.createWorldMatrix());
-		dynamic_cast<GLShader*>(modelShader)->setUniform1f("u_material.shines", model.shines);
-		dynamic_cast<GLShader*>(modelShader)->setUniformVec4f("u_material.color", model.color);
+		std::static_pointer_cast<GLShader>(modelShader)->setUniformMat4("u_worldMat", model.createWorldMatrix());
+		std::static_pointer_cast<GLShader>(modelShader)->setUniform1f("u_material.shines", model.shines);
+		std::static_pointer_cast<GLShader>(modelShader)->setUniformVec4f("u_material.color", model.color);
 		model.model->vao->bind();
 		int i = 0;
 		for (auto texture : model.model->textures)
@@ -273,7 +273,7 @@ void Scene::render()
 void Scene::renderSkyBox(const glm::mat4& proj, const glm::mat4 view)
 {
 	cubeMapShader->bind();
-	dynamic_cast<GLShader*>(cubeMapShader)->setUniformMat4("u_projMat", proj);
+	std::static_pointer_cast<GLShader>(cubeMapShader)->setUniformMat4("u_projMat", proj);
 
 	Gcon.enableDepthTest(false);
 	GLCall(glDepthMask(GL_FALSE));
@@ -288,7 +288,7 @@ void Scene::renderSkyBox(const glm::mat4& proj, const glm::mat4 view)
 			continue;
 
 		//draw sky
-		dynamic_cast<GLShader*>(cubeMapShader)->setUniformMat4("u_viewMat",
+		std::static_pointer_cast<GLShader>(cubeMapShader)->setUniformMat4("u_viewMat",
 		                                                       glm::mat4(glm::mat3(view)) * glm::scale(
 			                                                       glm::mat4(1.f), model.scale));
 		gModel.vao->bind();

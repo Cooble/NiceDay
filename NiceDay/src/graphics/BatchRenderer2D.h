@@ -44,12 +44,12 @@ private:
 	};
 	defaultable_map_other<const FontMaterial*,std::vector<TextIBOView>> m_fonts;
 	mat4 m_back;
-	Shader* m_shader;
+	ShaderPtr m_shader;
 	VertexArray* m_vao;
 	VertexBuffer* m_vbo;
 	IndexBuffer* m_ibo;
 
-	Shader* m_text_shader;
+	ShaderPtr m_text_shader;
 	VertexArray* m_text_vao;
 	VertexBuffer* m_text_vbo;
 	FrameBuffer* m_fbo=nullptr;

@@ -33,8 +33,8 @@ ParticleRenderer::ParticleRenderer()
 	}
 	m_shader = ShaderLib::loadOrGetShader("res/shaders/ParticleSprite.shader");
 	m_shader->bind();
-	dynamic_cast<GLShader*>(m_shader)->setUniform1iv("u_textures", MAX_TEXTURES, uniforms);
-	dynamic_cast<GLShader*>(m_shader)->setUniformMat4("u_projectionMatrix", mat4(1.0f));
+	std::static_pointer_cast<GLShader>(m_shader)->setUniform1iv("u_textures", MAX_TEXTURES, uniforms);
+	std::static_pointer_cast<GLShader>(m_shader)->setUniformMat4("u_projectionMatrix", mat4(1.0f));
 	m_shader->unbind();
 	delete[] uniforms;
 

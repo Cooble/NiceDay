@@ -30,7 +30,7 @@ private:
 	std::vector<mat4> m_transformation_stack;
 	std::vector<const Texture*> m_textures;
 	mat4 m_back;
-	Shader* m_shader;
+	ShaderPtr m_shader;
 	VertexArray* m_vao;
 	VertexBuffer* m_vbo;
 	IndexBuffer* m_ibo;

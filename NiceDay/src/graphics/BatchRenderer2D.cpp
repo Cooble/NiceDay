@@ -36,8 +36,8 @@ void BatchRenderer2D::prepareQuad()
 	}
 	m_shader = ShaderLib::loadOrGetShader("res/shaders/Sprite.shader");
 	m_shader->bind();
-	dynamic_cast<GLShader*>(m_shader)->setUniform1iv("u_textures", MAX_TEXTURES, uniforms);
-	dynamic_cast<GLShader*>(m_shader)->setUniformMat4("u_projectionMatrix", mat4(1.0f));
+	std::static_pointer_cast<GLShader>(m_shader)->setUniform1iv("u_textures", MAX_TEXTURES, uniforms);
+	std::static_pointer_cast<GLShader>(m_shader)->setUniformMat4("u_projectionMatrix", mat4(1.0f));
 	m_shader->unbind();
 	delete[] uniforms;
 
@@ -79,8 +79,8 @@ void BatchRenderer2D::prepareText()
 
 	m_text_shader = ShaderLib::loadOrGetShader("res/shaders/Font.shader");
 	m_text_shader->bind();
-	dynamic_cast<GLShader*>(m_text_shader)->setUniform1i("u_texture", 0);
-	dynamic_cast<GLShader*>(m_text_shader)->setUniformMat4("u_transform", mat4(1.0f));
+	std::static_pointer_cast<GLShader>(m_text_shader)->setUniform1i("u_texture", 0);
+	std::static_pointer_cast<GLShader>(m_text_shader)->setUniformMat4("u_transform", mat4(1.0f));
 	m_text_shader->unbind();
 
 	VertexBufferLayout l;
@@ -195,8 +195,8 @@ void BatchRenderer2D::flushText()
 		if(fontMat.second.empty())
 			continue;
 		fontMat.first->texture->bind(0);
-		//dynamic_cast<GLShader*>(m_text_shader)->setUniformVec4f("u_textColor", fontMat.first->color);
-		//dynamic_cast<GLShader*>(m_text_shader)->setUniformVec4f("u_borderColor", fontMat.first->border_color);
+		//std::static_pointer_cast<GLShader>(m_text_shader)->setUniformVec4f("u_textColor", fontMat.first->color);
+		//std::static_pointer_cast<GLShader>(m_text_shader)->setUniformVec4f("u_borderColor", fontMat.first->border_color);
 
 		if(fontMat.second.size()> BUF_S)
 		{

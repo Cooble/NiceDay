@@ -276,7 +276,6 @@ void EditorCam::onUpdate()
 	refreshData();
 	
 	glm::vec3 go(0, 0, 0);
-
 	if (App::get().getInput().isKeyPressed(GLFW_KEY_RIGHT))
 		go.x += 1;
 	if (App::get().getInput().isKeyPressed(GLFW_KEY_LEFT))

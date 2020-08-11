@@ -1,22 +1,23 @@
-﻿#include "NewMesh.h"
+﻿#include "Mesh.h"
 #include "MeshData.h"
 #include "graphics/API/VertexArray.h"
+#include "scene/Colli.h"
 
-namespace NewMeshFactory
+namespace MeshFactory
 {
-	VertexArray* buildVAO(NewMesh* mesh)
+	VertexArray* buildVAO(Mesh* mesh)
 	{
 		auto vao = VertexArray::create();
 		vao->addBuffer(*mesh->vertexData.binding.bindings[0].buffer);
-		vao->addBuffer(*mesh->indexData.indexBuffer);
+		if(mesh->indexData.exists())
+			vao->addBuffer(*mesh->indexData.indexBuffer);
 		return vao;
 	}
 
-	NewMesh* buildNewMesh(MeshData* data)
+	MeshPtr buildNewMesh(MeshData* data)
 	{
-		auto mesh = new NewMesh;
-		
-		mesh->topology = data->getTopology();
+		auto mesh = MakeRef<Mesh>();
+		mesh->data = data;
 		if(data->getIndicesCount())
 		{
 			mesh->indexData.count = data->getIndicesCount();
@@ -33,7 +34,28 @@ namespace NewMeshFactory
 			mesh->vertexData.declaration.addElement(index, GTypes::setCount(e.typ,e.count), VertexType::POS);
 			mesh->vertexData.binding.setBinding(index++, vbo);
 		}
-		mesh->vao_temp = buildVAO(mesh);
+		mesh->vao_temp = buildVAO(mesh.get());
 		return mesh;
+	}
+
+	static std::unordered_map<Strid, MeshPtr> s_meshes;
+	MeshPtr loadOrGet(const std::string& filePath)
+	{
+		auto it = s_meshes.find(SID(filePath));
+		if (it != s_meshes.end())
+			return it->second;
+		auto t = buildNewMesh(Colli::buildMesh(filePath));
+		s_meshes[SID(filePath)]=t;
+		return t;
+	}
+
+	std::unordered_map<Strid, MeshPtr>& getList()
+	{
+		return s_meshes;
+	}
+
+	MeshPtr& get(Strid id)
+	{
+		return s_meshes[id];
 	}
 }

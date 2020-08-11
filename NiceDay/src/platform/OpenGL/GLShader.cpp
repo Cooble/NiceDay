@@ -1,6 +1,9 @@
 ﻿#include "ndpch.h"
 #include "GLShader.h"
 #include "GLRenderer.h"
+#define IGNORE_UNIFORM_DOESNT_EXIST 1
+#define THROW_PARSING 1
+#define BREAK_IF_SHADER_COMPILE_ERROR 0
 
 static void shaderTypeToString(unsigned int t)
 {
@@ -78,6 +81,7 @@ static unsigned int compileShader(unsigned int type, const std::string& src)
 		GLCall(glGetShaderInfoLog(id, length, &length, message));
 		ND_ERROR(message);
 		free(message);
+		glDeleteShader(id);
 #if BREAK_IF_SHADER_COMPILE_ERROR == 1
 		ASSERT(false, "Shader compile error");
 #endif
@@ -91,13 +95,28 @@ static unsigned int buildProgram(const Shader::ShaderProgramSources& src)
 	unsigned int program;
 	GLCall(program = glCreateProgram());
 	unsigned int vs = compileShader(GL_VERTEX_SHADER, src.vertexSrc);
+	if(vs==0)
+	{
+		glDeleteProgram(program);
+		return 0;
+	}
 	unsigned int fs = compileShader(GL_FRAGMENT_SHADER, src.fragmentSrc);
+	if (fs == 0)
+	{
+		glDeleteProgram(program);
+		return 0;
+	}
 	unsigned int gs = 0;
 	bool geometry = !src.geometrySrc.empty();
 
 	if (geometry)
 	{
 		gs = compileShader(GL_GEOMETRY_SHADER, src.geometrySrc);
+		if (gs == 0)
+		{
+			glDeleteProgram(program);
+			return 0;
+		}
 		GLCall(glAttachShader(program, gs));
 	}
 	GLCall(glAttachShader(program, vs));
@@ -119,13 +138,21 @@ GLShader::GLShader(const Shader::ShaderProgramSources& src) : m_id(0)
 {
 	m_layout = Shader::extractLayout(src);
 	m_id = buildProgram(src);
+#if THROW_PARSING
+	if (!m_id)
+		throw std::string("Error parsing shader");
+#endif
 }
 
-GLShader::GLShader(const std::string& file_path) : m_id(0)
+GLShader::GLShader(const std::string& file_path) : m_id(0),m_file_path(file_path)
 {
 	Shader::ShaderProgramSources& s = parseShader(ND_RESLOC(file_path));
 	m_layout = Shader::extractLayout(s);
 	m_id = buildProgram(s);
+#if THROW_PARSING
+	if (!m_id)
+		throw std::string("Error parsing shader: ")+file_path;
+#endif
 }
 
 
@@ -215,26 +242,34 @@ void GLShader::setUniform1iv(const std::string& name, int count, int* v)
 
 void GLShader::setUniform1fv(const std::string& name, int count, float* v)
 {
-	glUniform1fv(getUniformLocation(name), count, v);
+	GLCall(glUniform1fv(getUniformLocation(name), count, v));
 }
 
 void GLShader::setUniformiv(const std::string& name, int count, int arraySize, int* v)
 {
 	SHADER_CHECK_BOUNDIN;
 	auto loc = getUniformLocation(name);
+	if (loc == -1) return;
 	switch (count)
 	{
 	case 1:
+		//GLCall(glUniform1iv(loc, arraySize, v));
 		glUniform1iv(loc, arraySize, v);
 		break;
 	case 2:
+		//GLCall(glUniform2iv(loc, arraySize, v));
 		glUniform2iv(loc, arraySize, v);
+
 		break;
 	case 3:
+		//GLCall(glUniform3iv(loc, arraySize, v));
 		glUniform3iv(loc, arraySize, v);
+
 		break;
 	case 4:
-		glUniform3iv(loc, arraySize, v);
+		//GLCall(glUniform4iv(loc, arraySize, v));
+		glUniform4iv(loc, arraySize, v);
+
 		break;
 	default:
 		ASSERT(false, "Nonexistent type");
@@ -245,19 +280,25 @@ void GLShader::setUniformfv(const std::string& name, int count, int arraySize, f
 {
 	SHADER_CHECK_BOUNDIN;
 	auto loc = getUniformLocation(name);
+	if (loc == -1) return;
+
 	switch (count)
 	{
 	case 1:
+		//GLCall(glUniform1fv(loc, arraySize, v));
 		glUniform1fv(loc, arraySize, v);
 		break;		 
 	case 2:			 
+		//GLCall(glUniform2fv(loc, arraySize, v));
 		glUniform2fv(loc, arraySize, v);
 		break;		
 	case 3:			
+		//GLCall(glUniform3fv(loc, arraySize, v));
 		glUniform3fv(loc, arraySize, v);
 		break;		
 	case 4:			 
-		glUniform3fv(loc, arraySize, v);
+	//	GLCall(glUniform4fv(loc, arraySize, v));
+		glUniform4fv(loc, arraySize, v);
 		break;
 	default:
 		ASSERT(false, "Nonexistent type");
@@ -268,18 +309,23 @@ void GLShader::setUniformuiv(const std::string& name, int count, int arraySize, 
 {
 	SHADER_CHECK_BOUNDIN;
 	auto loc = getUniformLocation(name);
+	if (loc == -1) return;
 	switch (count)
 	{
 	case 1:
+		//GLCall(glUniform1uiv(loc, arraySize, v));
 		glUniform1uiv(loc, arraySize, v);
 		break;		  
 	case 2:			  
+		//GLCall(glUniform2uiv(loc, arraySize, v));
 		glUniform2uiv(loc, arraySize, v);
 		break;		  
 	case 3:			  
+		//GLCall(glUniform3uiv(loc, arraySize, v));
 		glUniform3uiv(loc, arraySize, v);
 		break;		 
 	case 4:			 
+		//GLCall(glUniform4uiv(loc, arraySize, v));
 		glUniform4uiv(loc, arraySize, v);
 		break;
 	default:
@@ -297,7 +343,10 @@ int GLShader::getUniformLocation(const std::string& name)
 	int out = glGetUniformLocation(m_id, name.c_str());
 	if (out == -1)
 	{
+#if !IGNORE_UNIFORM_DOESNT_EXIST
 		ND_WARN("[Shader: {}], Uniform doesn't exist: {}", m_id, name);
+#endif
+
 		return -1;
 	}
 
@@ -307,5 +356,6 @@ int GLShader::getUniformLocation(const std::string& name)
 
 GLShader::~GLShader()
 {
-	GLCall(glDeleteProgram(m_id));
+	if(m_id)
+		GLCall(glDeleteProgram(m_id));
 }

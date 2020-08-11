@@ -39,6 +39,10 @@ struct FrameBufferInfo
 	//FBAttachment::COLOR cannot be used
 	FBAttachment specialAttachment=FBAttachment::NONE;
 
+	// sampling of depth buffer
+	// 1 means no multisample
+	uint32_t multiSampleLevel = 1;
+
 private:
 	//just for syntactic sugar
 	//is completely ignored by FrameBuffer
@@ -51,6 +55,8 @@ public:
 	// you just need to call resize() (which will implicitly create attachments)
 	FrameBufferInfo(uint32_t width, uint32_t height, TextureFormat format) { defaultTarget(width, height, format); }
 	FrameBufferInfo() { externalTarget(); }
+
+	FrameBufferInfo& multiSample(uint32_t sampleLevel) { multiSampleLevel=sampleLevel; return *this; }
 
 	FrameBufferInfo& special(FBAttachment special) { specialAttachment = special; return *this; }
 	FrameBufferInfo& windowTarget() { type = FBType::WINDOW_TARGET; return *this; }
@@ -85,7 +91,10 @@ public:
 	virtual ~FrameBuffer() = default;
 	virtual void bind() = 0;
 	virtual void unbind() = 0;
+	virtual void createBindSpecialAttachment(FBAttachment attachment, TexDimensions dim) = 0;
+
 	virtual void attachTexture(uint32_t textureId, uint32_t attachmentNumber) = 0;
+	virtual void attachTexture(Texture* t, uint32_t attachmentNumber) = 0;
 	virtual void resize(uint32_t width, uint32_t height)=0;
 	virtual TexDimensions getSize() const = 0;
 	virtual void clear(BufferBit bits, const glm::vec4& color={0,0,0,0}) = 0;

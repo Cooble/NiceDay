@@ -5,7 +5,7 @@
 #include "MeshData.h"
 namespace Colli
 {
-	MeshData* buildMesh(const std::string& path,float scale)
+	static MeshData* loadWithAssimp(const std::string& path, float scale, bool buildTangent)
 	{
 		Assimp::Importer importer;
 
@@ -13,13 +13,14 @@ namespace Colli
 		// Usually - if speed is not the most important aspect for you - you'll
 		// probably to request more postprocessing than we do in this example.
 	//	importer.re
-		auto scene = importer.ReadFile(path,
-			aiProcess_CalcTangentSpace |
+		auto scene = importer.ReadFile(ND_RESLOC(path),
 			aiProcess_Triangulate |
+			aiProcess_GenBoundingBoxes |
 			aiProcess_JoinIdenticalVertices |
-			aiProcess_SortByPType| aiProcess_GlobalScale);
+			(buildTangent ? aiProcess_CalcTangentSpace : 0) |
+			aiProcess_SortByPType | aiProcess_GlobalScale);
 
-		
+
 		/*aiSetImportPropertyFloat(aiprops, AI_CONFIG_GLOBAL_SCALE_FACTOR_KEY, GlobalScale);
 		flags |= aiProcess_GlobalScale;
 		 aiReleaseImport( scene);
@@ -31,27 +32,30 @@ namespace Colli
 			ND_ERROR(importer.GetErrorString());
 			return nullptr;
 		}
-		
+
 
 		// Now we can access the file's contents.
 		if (scene->mNumMeshes == 0)
 			return nullptr;
 		auto m = scene->mMeshes[0];
+
 		VertexBufferLayout layout;
 		layout.push<float>(3);
 		if (m->mNormals)
 			layout.push<float>(3);
 		if (m->mTextureCoords[0])
 			layout.push<float>(2);
+		if (m->mTangents && buildTangent)
+			layout.push<float>(3);
 		MeshData* mesh = new MeshData;
 		mesh->allocate(m->mNumVertices, layout.getStride(),
 			m->mNumFaces * 3, layout);
 		auto vertices = (float*)mesh->getVertices();
 		for (int vIdx = 0; vIdx < m->mNumVertices; ++vIdx)
 		{
-			*vertices++ = m->mVertices[vIdx].x*scale;
-			*vertices++ = m->mVertices[vIdx].y*scale;
-			*vertices++ = m->mVertices[vIdx].z*scale;
+			*vertices++ = m->mVertices[vIdx].x * scale;
+			*vertices++ = m->mVertices[vIdx].y * scale;
+			*vertices++ = m->mVertices[vIdx].z * scale;
 
 			if (m->mNormals)
 			{
@@ -64,6 +68,12 @@ namespace Colli
 				*vertices++ = m->mTextureCoords[0][vIdx].x;
 				*vertices++ = m->mTextureCoords[0][vIdx].y;
 			}
+			if (m->mTangents && buildTangent)
+			{
+				*vertices++ = m->mTangents[vIdx].x;
+				*vertices++ = m->mTangents[vIdx].y;
+				*vertices++ = m->mTangents[vIdx].z;
+			}
 		}
 		auto indices = (uint32_t*)mesh->getIndices();
 		for (int i = 0; i < mesh->getIndicesCount() / 3; ++i)
@@ -73,7 +83,16 @@ namespace Colli
 			*indices++ = m->mFaces[i].mIndices[2];
 		}
 		// We're done. Everything will be cleaned up by the importer destructor
-		//return true;
+		mesh->m_topology = Topology::TRIANGLES;
+		mesh->setID(path.c_str());
+		mesh->setAABB({ glm::vec3(m->mAABB.mMin.x,m->mAABB.mMin.y,m->mAABB.mMin.z),glm::vec3(m->mAABB.mMax.x,m->mAABB.mMax.y,m->mAABB.mMax.z) });
 		return mesh;
+	}
+	MeshData* buildMesh(const std::string& path,float scale,bool buildTangent)
+	{
+		if(SUtil::endsWith(path,".bin"))
+			return MeshDataFactory::readBinaryFile(path);
+		return loadWithAssimp(path, scale, buildTangent);
+		
 	}
 }

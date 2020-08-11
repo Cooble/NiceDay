@@ -80,8 +80,8 @@ private:
 			type = T_NULL;
 		}
 	}
-	template<int vecSize>
-	void buildVec(const glm::vec<vecSize, float>& v)
+	template<int vecSize,typename Type>
+	void buildVec(const glm::vec<vecSize, Type>& v)
 	{
 		ASSERT(type == T_NULL || type == T_ARRAY, "");
 		checkForArray();
@@ -140,8 +140,8 @@ public:
 		val_int = i;
 		type = T_BOOL;
 	}
-	template <int vecSize>
-	NBT(const glm::vec<vecSize, float>& v)
+	template <int vecSize, typename Type>
+	NBT(const glm::vec<vecSize, Type>& v)
 	{
 		buildVec(v);
 	}
@@ -275,9 +275,10 @@ public:
 		type = T_NUMBER_FLOAT;
 		return *this;
 	}
-  template <int vecSize>
-	NBT& operator=(const glm::vec<vecSize, float>& i)
+  template <int vecSize, typename Type>
+	NBT& operator=(const glm::vec<vecSize, Type>& i)
 	{
+		//todo this should probably be inverted
 		if (isVec<vecSize>())
 			destruct();
 
@@ -346,18 +347,37 @@ public:
 	operator glm::vec2() const
 	{
 		ASSERT(isVec<2>(), "invalid cast");
-		return glm::vec2(this[0], this[1]);
+		return glm::vec2((*this)[0], (*this)[1]);
 	}
 	operator glm::vec3() const
 	{
 		ASSERT(isVec<3>(), "invalid cast");
-		return glm::vec3(this[0], this[1], this[2]);
+		return glm::vec3((*this)[0], (*this)[1], (*this)[2]);
 	}
 	operator glm::vec4() const
 	{
 		ASSERT(isVec<4>(), "invalid cast");
-		return glm::vec4(this[0], this[1], this[2], this[3]);
+		return glm::vec4((*this)[0], (*this)[1], (*this)[2], (*this)[3]);
 	}
+	operator glm::ivec2() const
+	{
+		ASSERT(isVec<2>(), "invalid cast");
+		return glm::ivec2((*this)[0], (*this)[1]);
+	}
+	operator glm::ivec3() const
+	{
+		ASSERT(isVec<3>(), "invalid cast");
+		return glm::ivec3((*this)[0], (*this)[1], (*this)[2]);
+	}
+	operator glm::ivec4() const
+	{
+		ASSERT(isVec<4>(), "invalid cast");
+		return glm::ivec4((*this)[0], (*this)[1], (*this)[2], (*this)[3]);
+	}
+	
+	
+
+	
 
 	operator float() const { return isFloat() ? val_float : (isInt() ? val_int : invalidCast()); }
 	operator double() const { return isFloat() ? val_float : (isInt() ? val_int : invalidCast()); }

@@ -7,12 +7,15 @@
 
 void Effect::renderDefaultVAO()
 {
+	//Gcon.enableCullFace(false);
+
 	s_vao->bind();
 	GLCall(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
 }
 
 void Effect::render(const Texture* t, FrameBuffer* fbo)
 {
+
 	fbo->bind();
 	s_shader->bind();
 	t->bind(0);
@@ -107,7 +110,7 @@ ScaleEdgesEffect::ScaleEdgesEffect(const TextureInfo& targetTexture)
 void ScaleEdgesEffect::render(const Texture* t, float scale, bool toFBO)
 {
 	getShader()->bind();
-	dynamic_cast<GLShader*>(getShader())->setUniform1f("u_scale", scale);
+	std::static_pointer_cast<GLShader>(getShader())->setUniform1f("u_scale", scale);
 	t->bind(0);
 
 	if (toFBO) {
@@ -201,14 +204,14 @@ void FrameBufferPingPong::unbind()
 void Effecto::Blurer::blur(FrameBufferPingPong& fbos, Texture* input, int repeats)
 {
 	getShader()->bind();
-	dynamic_cast<GLShader*>(getShader())->setUniform2f("u_pixel_size", 1.f / input->getWidth(), 1.f / input->getHeight());
+	std::static_pointer_cast<GLShader>(getShader())->setUniform2f("u_pixel_size", 1.f / input->getWidth(), 1.f / input->getHeight());
 	Effect::getDefaultVAO().bind();
 	fbos.bind();
 
 	for (int i = 0; i < repeats*2; ++i)
 	{
 		bool horizontal = i & 1;
-		dynamic_cast<GLShader*>(getShader())->setUniform1i("u_horizontal", (int)horizontal);
+		std::static_pointer_cast<GLShader>(getShader())->setUniform1i("u_horizontal", (int)horizontal);
 
 		input->bind(0);
 		
@@ -229,7 +232,7 @@ HorizontalBlur::HorizontalBlur(const TextureInfo& targetTexture)
 void HorizontalBlur::render(const Texture* t, bool toFBO)
 {
 	getShader()->bind();
-	dynamic_cast<GLShader*>(getShader())->setUniform2f("u_pixel_size", 1.f / m_output_texture->getWidth(), 0);
+	std::static_pointer_cast<GLShader>(getShader())->setUniform2f("u_pixel_size", 1.f / m_output_texture->getWidth(), 0);
 	t->bind(0);
 
 
@@ -255,7 +258,7 @@ VerticalBlur::VerticalBlur(const TextureInfo& targetTexture)
 void VerticalBlur::render(const Texture* t, bool toFBO)
 {
 	getShader()->bind();
-	dynamic_cast<GLShader*>(getShader())->setUniform2f("u_pixel_size",0, 1.f / m_output_texture->getHeight());
+	std::static_pointer_cast<GLShader>(getShader())->setUniform2f("u_pixel_size",0, 1.f / m_output_texture->getHeight());
 	t->bind(0);
 
 

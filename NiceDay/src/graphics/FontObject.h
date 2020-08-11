@@ -9,7 +9,7 @@ typedef int FontResourceID;
 struct FontResource
 {
 	FontResourceID id;
-	Shader* shader;
+	ShaderPtr shader;
 	Texture* texture;
 	Font* font;
 };

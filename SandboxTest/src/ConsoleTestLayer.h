@@ -19,7 +19,7 @@ private:
 	FontMaterial* fontMat;
 	BatchRenderer2D renderer;
 	CursorProp* cursor;
-	Shader* deformationShader;
+	ShaderPtr deformationShader;
 	SingleTextureEffect* deformationEffect;
 	FrameBufferPingPong* fbos;
 	float m_on_screen_float=2;

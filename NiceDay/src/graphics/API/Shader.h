@@ -21,6 +21,21 @@ struct UniformLayout
 	std::string prefixName;
 	std::vector<UniformElement> elements;
 
+	UniformElement* getElementByName(const std::string& name)
+	{
+		for (auto& element : elements)
+			if (element.name == name)
+				return &element;
+		return nullptr;
+	}
+	const UniformElement* getElementByName(const std::string& name) const
+	{
+		for (auto& element : elements)
+			if (element.name == name)
+				return &element;
+		return nullptr;
+	}
+
 	//stores bits of RenderStage
 	uint32_t stages=0;
 
@@ -33,6 +48,12 @@ public:
 		size += GTypes::getSize(type);
 	}
 };
+
+inline bool operator==(UniformElement* const& lhs, const UniformElement& rhs)
+{
+	return lhs->type == rhs.type && lhs->name == rhs.name && lhs->arraySize == rhs.arraySize;
+}
+
 struct ShaderLayout
 {
 	std::vector<UniformLayout> structs;
@@ -49,6 +70,7 @@ struct ShaderLayout
 class Shader
 {
 public:
+	typedef Ref<Shader> ShaderPtr;
 	struct ShaderProgramSources
 	{
 		std::string vertexSrc;
@@ -64,8 +86,8 @@ public:
 	 *	name of elements will contain prefix e.g. "myUBO.lightPos" instead of just "lightPos"
 	 */
 	static ShaderLayout extractLayout(const ShaderProgramSources& res,bool expandPath=true);
-	static Shader* create(const ShaderProgramSources& res);
-	static Shader* create(const std::string& filePath);
+	static ShaderPtr create(const ShaderProgramSources& res);
+	static ShaderPtr create(const std::string& filePath);
 	
 	virtual ~Shader()=default;
 
@@ -73,7 +95,7 @@ public:
 	virtual void unbind() const=0;
 	virtual const ShaderLayout& getLayout() const = 0;
 
-
+	virtual const std::string& getFilePath() const = 0;
 };
 
 typedef Ref<Shader> ShaderPtr;
@@ -82,21 +104,21 @@ typedef Ref<Shader> ShaderPtr;
 class ShaderLib
 {
 private:
-	inline static std::unordered_map<std::string, Shader*> m_shaders;
+	inline static std::unordered_map<std::string, ShaderPtr> m_shaders;
 public:
 	// if neccessary, loads shader, otherwise retrives already loaded
-	inline static Shader* loadOrGetShader(const std::string& path)
+	static ShaderPtr loadOrGetShader(const std::string& path)
 	{
-		if(m_shaders.find(path)==m_shaders.end())
-		{
-			m_shaders[path] = Shader::create(path);
+		auto it = m_shaders.find(path);
+		if (it == m_shaders.end()) {
+			auto t = Shader::create(path);
+			m_shaders[path] = t;
+			return t;
 		}
-		return m_shaders[path];
+		return it->second;
 	}
-	inline static void unloadAll()
+	static void unloadAll()
 	{
-		for(auto& s:m_shaders)
-			delete s.second;
 		m_shaders.clear();
 	}
 };

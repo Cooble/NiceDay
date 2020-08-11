@@ -62,7 +62,7 @@ void FlatCam::imGuiPropsRender()
 
 static bool quats=false;
 static FlatCam flatCam;
-static Shader* mandelShader;
+static ShaderPtr mandelShader;
 static int mandelSteps = 20;
 static int wrapAfter = 20;
 static glm::vec2 dimensions = {};
@@ -71,7 +71,6 @@ static NBT settings;
 
 void MandelBrotLayer::onAttach()
 {
-	mandelShader = Shader::create(ND_RESLOC("res/shaders/MandelBrot.shader"));
 	NBT::loadFromFile("mandelbrot.settings", settings);
 	settings.loadIfExists("x", flatCam.pos.x);
 	settings.loadIfExists("y", flatCam.pos.y);
@@ -83,9 +82,9 @@ void MandelBrotLayer::onAttach()
 	settings.loadIfExists("quats",quats);
 	if(quats)
 	{
-		delete mandelShader;
-		mandelShader = Shader::create(ND_RESLOC("res/shaders/MandelBulb.shader"));
-	}
+		mandelShader = ShaderLib::loadOrGetShader(ND_RESLOC("res/shaders/MandelBulb.shader"));
+	}else 
+		mandelShader = ShaderLib::loadOrGetShader(ND_RESLOC("res/shaders/MandelBrot.shader"));
 
 }
 
@@ -120,12 +119,10 @@ void MandelBrotLayer::onImGuiRender()
 		{
 			if(quats)
 			{
-				delete mandelShader;
 				mandelShader = Shader::create(ND_RESLOC("res/shaders/MandelBulb.shader"));
 				
 			}else
 			{
-				delete mandelShader;
 				mandelShader = Shader::create(ND_RESLOC("res/shaders/MandelBrot.shader"));
 			}
 		}
@@ -138,11 +135,11 @@ void MandelBrotLayer::onRender()
 	//MandelBrot PIe
 	mandelShader->bind();
 
-	dynamic_cast<GLShader*>(mandelShader)->setUniformMat4("u_uv_trans", flatCam.getProjMatrix());
-	dynamic_cast<GLShader*>(mandelShader)->setUniform1i("u_steps", mandelSteps);
-	dynamic_cast<GLShader*>(mandelShader)->setUniform1i("u_wrapAfter", wrapAfter);
+	std::static_pointer_cast<GLShader>(mandelShader)->setUniformMat4("u_uv_trans", flatCam.getProjMatrix());
+	std::static_pointer_cast<GLShader>(mandelShader)->setUniform1i("u_steps", mandelSteps);
+	std::static_pointer_cast<GLShader>(mandelShader)->setUniform1i("u_wrapAfter", wrapAfter);
 	if(quats)
-		dynamic_cast<GLShader*>(mandelShader)->setUniformVec2f("u_dimensions", dimensions);
+		std::static_pointer_cast<GLShader>(mandelShader)->setUniformVec2f("u_dimensions", dimensions);
 
 	Effect::getDefaultVAO().bind();
 	Effect::renderDefaultVAO();

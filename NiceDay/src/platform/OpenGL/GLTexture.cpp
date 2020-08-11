@@ -41,7 +41,7 @@ GLTexture::GLTexture(const TextureInfo& info)
 		
 		stbi_set_flip_vertically_on_load(true);
 		if (info.texture_type == TextureType::_2D) {
-			m_buffer = stbi_load(ND_RESLOC(m_filePath).c_str(), &m_width, &m_height, &m_BPP, 4);
+			m_buffer = stbi_load(m_filePath.c_str(), &m_width, &m_height, &m_BPP, 4);
 			GLCall(glTexImage2D(GL_TEXTURE_2D, 0, (int)m_format, m_width, m_height, 0, (int)m_format, GL_UNSIGNED_BYTE, m_buffer));
 			if (m_buffer)
 				stbi_image_free(m_buffer);
@@ -55,7 +55,7 @@ GLTexture::GLTexture(const TextureInfo& info)
 
 			for (GLuint i = 0; i < 6; i++)
 			{
-				std::string realPath = replace(ND_RESLOC(m_filePath), "*", facesNames.substr(i * 2, 2));
+				std::string realPath = replace(m_filePath, "*", facesNames.substr(i * 2, 2));
 				m_buffer = stbi_load(realPath.c_str(), &m_width, &m_height, &m_BPP, 3);
 				GLCall(glTexImage2D(
 					GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,

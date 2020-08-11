@@ -15,14 +15,30 @@ private:
 	size_t m_vertex_count_max=0;
 	size_t m_index_count_max=0;
 
+	Strid m_id=0;
+	std::string m_name;
 	VertexBufferLayout m_layout;
 	
 public:
-	Topology m_topology=Topology::TRIANGLE_STRIP;
+	struct AABB
+	{
+		glm::vec3 min{0.f};
+		glm::vec3 max{0.f};
+
+		glm::vec3 getDim() { return max - min; }
+		glm::vec3 getCenter() { return (max + min) / 2.f; }
+	};
+private:
+	AABB m_aabb;
+public:
+	Topology m_topology=Topology::TRIANGLES;
 	MeshData(size_t maxVertexCount, size_t vertexSize, size_t maxIndexCount, const VertexBufferLayout& layout);
 	MeshData();
 	~MeshData();
-	
+
+	void setID(const char* id) { m_id = SID(id); m_name = id; }
+	void setAABB(AABB box) { m_aabb = box; }
+	const auto& getAABB()const { return m_aabb; }
 	// clears all data
 	void allocate(size_t maxVertexCount, size_t vertexSize, size_t maxIndexCount, const VertexBufferLayout& layout);
 	
@@ -61,16 +77,17 @@ public:
 		m_index_count = indexCount;
 	}
 	Topology getTopology() const { return m_topology; }
-	
+	Strid getID() { return m_id; }
+	const std::string& getName() const { return m_name; }
 };
-namespace MeshFactory
+namespace MeshDataFactory
 {
 	// builds mesh from obj file at path, (will contain vertices and indices)
 	// usePosNormUv whether will the layout be forced to pos,norm,uv or make it smaller if obj is not full
 	MeshData* buildFromObj(const std::string& path, bool usePosNormUv=true);
 
 	MeshData* buildWirePlane(int x, int z);
-	MeshData* buildCube();
+	MeshData* buildCube(float scale = 1);
 
 	void writeBinaryFile(const std::string& filePath, MeshData& mesh);
 	MeshData* readBinaryFile(const std::string& filePath);

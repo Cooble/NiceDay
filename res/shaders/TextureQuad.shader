@@ -23,5 +23,6 @@ uniform sampler2D u_attachment;
 
 void main() {
 	color = texture2D(u_attachment, f_uv);
+    //color = vec4(1,1,1,1);
 }
 

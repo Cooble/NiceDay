@@ -5,6 +5,7 @@
 layout(location=0) in vec4 position;
 layout(location=1) in vec3 normal;
 layout(location=2) in vec2 uv;
+layout(location=3) in vec3 tangent;
 
 
 struct GLO {
@@ -36,7 +37,6 @@ out vec2 v_uv;
 
 void main(){
 	gl_Position = glo.proj * glo.view * world * position;
-	//v_normal = normal.xyz;
 	v_normal = (world * vec4(normal,0)).xyz;
 	v_world_pos = (world * position).xyz;
 	v_uv = uv;

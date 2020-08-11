@@ -22,6 +22,10 @@ Ref<_Ty> MakeRef(_Types&&... _Args) { // make a shared_ptr
 
 #define SET_BIT(val, index, value)\
 	((value)?(val) | BIT(index):(val) & ~BIT(index))
+#define CLEAR_BIT_WITH_MASK(val,mask)\
+	(val)&(~(mask))
+#define SET_BIT_WITH_MASK(val,mask)\
+	(val)|(mask))
 
 class TimerStaper
 {

@@ -5,7 +5,7 @@
 
 VertexBuffer* Sprite2D::s_vbo=nullptr;
 VertexArray* Sprite2D::s_vao;
-Shader* Sprite2D::s_program;
+ShaderPtr Sprite2D::s_program;
 
 void Sprite2D::init()
 {
@@ -26,8 +26,8 @@ void Sprite2D::init()
 
 	s_program = ShaderLib::loadOrGetShader("res/shaders/Sprite2D.shader");
 	s_program->bind();
-	dynamic_cast<GLShader*>(s_program)->setUniform1i("u_texture", 0);
-	dynamic_cast<GLShader*>(s_program)->setUniform1f("u_alpha", 1);
+	std::static_pointer_cast<GLShader>(s_program)->setUniform1i("u_texture", 0);
+	std::static_pointer_cast<GLShader>(s_program)->setUniform1f("u_alpha", 1);
 	s_program->unbind();
 }
 

@@ -4,6 +4,8 @@
 #include "GLTexture.h"
 #include "core/App.h"
 
+//todo add possibility to add depth buffer when using external textures
+
 void GLFrameBuffer::bindColorAttachments()
 {
 	unsigned int id_offset = 0;
@@ -54,7 +56,10 @@ void GLFrameBuffer::createBindSpecialAttachment()
 	case FBAttachment::DEPTH_STENCIL:
 		glGenRenderbuffers(1, &m_special_attachment_id);
 		glBindRenderbuffer(GL_RENDERBUFFER, m_special_attachment_id);
-		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, m_dimensions.x, m_dimensions.y);
+		if(multiSampleLevel>1)
+			glRenderbufferStorageMultisample(GL_RENDERBUFFER, multiSampleLevel, GL_DEPTH24_STENCIL8, m_dimensions.x, m_dimensions.y);
+		else
+			glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, m_dimensions.x, m_dimensions.y);
 
 		GLCall(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER,
 		                          m_special_attachment_id));
@@ -96,7 +101,7 @@ void GLFrameBuffer::clearAttachments()
 	}
 }
 
-GLFrameBuffer::GLFrameBuffer(const FrameBufferInfo& info)
+GLFrameBuffer::GLFrameBuffer(const FrameBufferInfo& info):m_special_attachment(FBAttachment::NONE)
 {
 	m_id = 0;
 	m_type = info.type;
@@ -139,10 +144,23 @@ GLFrameBuffer::GLFrameBuffer(const FrameBufferInfo& info)
 
 GLFrameBuffer::~GLFrameBuffer()
 {
-	if (m_type != FBType::NORMAL_TARGET)
+	if (m_type == FBType::WINDOW_TARGET)
 		return;
 	GLCall(glDeleteFramebuffers(1, &m_id));
 	clearAttachments();
+}
+
+void GLFrameBuffer::createBindSpecialAttachment(FBAttachment attachment, TexDimensions dim)
+{
+	if (m_type == FBType::NORMAL_TARGET_EXTERNAL_TEXTURES) {
+		if (m_special_attachment== FBAttachment::NONE)
+		{
+			m_dimensions = dim;
+			m_special_attachment = attachment;
+			bind();
+			createBindSpecialAttachment();
+		}
+	}
 }
 
 void GLFrameBuffer::bind()
@@ -202,9 +220,17 @@ void GLFrameBuffer::clear(BufferBit bits, const glm::vec4& color)
 
 void GLFrameBuffer::attachTexture(uint32_t textureId, uint32_t attachmentNumber)
 {
-	ASSERT(m_type == FBType::NORMAL_TARGET_EXTERNAL_TEXTURES, "Cannot attach texture to window target");
+	ASSERT(m_type != FBType::WINDOW_TARGET, "Cannot attach texture to window target");
 	bind();
 	GLCall(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + attachmentNumber, GL_TEXTURE_2D, textureId, 0));
+}
+
+void GLFrameBuffer::attachTexture(Texture* t, uint32_t attachmentNumber)
+{
+	ASSERT(m_type != FBType::WINDOW_TARGET, "Cannot attach texture to window target");
+	bind();
+	glViewport(0, 0, t->getWidth(), t->getHeight());
+	GLCall(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + attachmentNumber, GL_TEXTURE_2D, t->getID(), 0));
 }
 
 uint32_t GLFrameBuffer::getAttachmentID(uint32_t attachmentIndex, FBAttachment type) const

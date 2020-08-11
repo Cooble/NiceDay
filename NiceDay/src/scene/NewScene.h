@@ -12,6 +12,7 @@ private:
 	entt::registry* m_reg = nullptr;
 	Entity(entt::entity e, entt::registry* r) :m_entity(e), m_reg(r) {}
 public:
+	static const Entity null;
 	Entity() = default;
 	friend NewScene;
 	template <typename ComponentType, typename... Args>
@@ -64,7 +65,11 @@ public:
 	{
 		return m_reg->valid(m_entity);
 	}
+	bool operator==(Entity a) const{ return m_entity == a.m_entity; }
+	bool operator!=(Entity a) const{ return m_entity != a.m_entity; }
+	operator bool() const{ return m_entity != entt::null; }
 };
+
 
 
 class NewScene

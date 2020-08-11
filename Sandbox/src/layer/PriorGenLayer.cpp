@@ -75,8 +75,8 @@ void PriorGenLayer::onRender()
 		           {m_tex->getWidth() * textureZoom, m_tex->getHeight() * textureZoom, 1});
 
 
-	Effect::getDefaultShader().bind();
-	auto sh = dynamic_cast<GLShader*>(&Effect::getDefaultShader());
+	Effect::getDefaultShader()->bind();
+	auto sh = std::static_pointer_cast<GLShader>(Effect::getDefaultShader());
 	sh->bind();
 	sh->setUniformMat4("transform", trans);
 

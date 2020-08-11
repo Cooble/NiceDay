@@ -11,7 +11,7 @@ class Sprite2D
 private:
 	static VertexBuffer* s_vbo;
 	static VertexArray* s_vao;
-	static Shader* s_program;
+	static ShaderPtr s_program;
 
 public:
 

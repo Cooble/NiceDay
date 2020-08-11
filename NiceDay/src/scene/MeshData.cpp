@@ -38,7 +38,7 @@ void MeshData::allocate(size_t maxVertexCount, size_t vertexSize, size_t maxInde
 }
 
 
-namespace MeshFactory
+namespace MeshDataFactory
 {
 	std::hash<std::string> hasher;
 
@@ -237,6 +237,7 @@ namespace MeshFactory
 			}
 		}
 
+		model->setID(path.c_str());
 		return model;
 	}
 
@@ -261,11 +262,12 @@ namespace MeshFactory
 			*point++ = { 0,0,zz };
 			*point++ = { x,0,zz };
 		}
+		mesh->setID(("BuildWire" + std::to_string(64871*x + z * 123456)).c_str());
 		return mesh;
 	}
 	
 	
-	MeshData* buildCube()
+	MeshData* buildCube(float scale)
 	{
 		static const float cubeVertices[] = {
 	-1.0f,-1.0f,-1.0f,
@@ -306,12 +308,16 @@ namespace MeshFactory
 	1.0f,-1.0f, 1.0f
 		};
 		
+		
 		MeshData* mesh = new MeshData;
 		VertexBufferLayout l;
 		l.push<float>(3);
 		mesh->allocate(36, sizeof(glm::vec3), 0, l);
 		auto point = (glm::vec3*)mesh->getVertices();
 		memcpy(point, (char*)cubeVertices, mesh->getVerticesSize());
+		for (int i = 0; i < mesh->getVerticesCount(); ++i)
+			*mesh->vertex<glm::vec3>(i) *= scale;
+		mesh->setID(("BuildCube" + std::to_string(scale)).c_str());
 		return mesh;
 	}
 
@@ -322,6 +328,7 @@ namespace MeshFactory
 		size_t m_vertex_count_max = 0;
 		size_t m_index_count_max = 0;
 		int elements = 0;
+		MeshData::AABB box;
 	};
 	
 	void writeBinaryFile(const std::string& filePath, MeshData& mesh)
@@ -331,8 +338,9 @@ namespace MeshFactory
 		h.m_vertex_count_max = mesh.getVerticesCountMax();
 		h.m_index_count_max = mesh.getIndicesCountMax();
 		h.elements = mesh.getLayout().getElements().size();
+		h.box = mesh.getAABB();
 		
-		FILE* file = fopen(filePath.c_str(), "wb");
+		FILE* file = fopen(ND_RESLOC(filePath).c_str(), "wb");
 
 		fwrite(&h, sizeof(BigHead), 1, file);
 		fwrite(&mesh.getLayout().getElements()[0], sizeof(VertexBufferElement), mesh.getLayout().getElements().size(), file);
@@ -346,7 +354,7 @@ namespace MeshFactory
 
 	MeshData* readBinaryFile(const std::string& filePath)
 	{
-		FILE* file = fopen(filePath.c_str(), "rb");
+		FILE* file = fopen(ND_RESLOC(filePath).c_str(), "rb");
 		if (!file)
 			return nullptr;
 		BigHead h;
@@ -366,6 +374,8 @@ namespace MeshFactory
 			fread(mesh.getIndices(), mesh.getIndicesSize(), 1, file);
 
 		fclose(file);
+		mesh.setID(filePath.c_str());
+		mesh.setAABB(h.box);
 		return &mesh;
 	}
 }

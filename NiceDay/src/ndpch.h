@@ -34,4 +34,6 @@
 
 //profiling
 #include "core/Scoper.h"
+#include "core/sids.h"
+
 

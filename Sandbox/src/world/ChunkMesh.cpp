@@ -9,7 +9,7 @@
 
 VertexBufferLayout ChunkMesh::s_layout;
 
-Shader* ChunkMesh::s_program;
+ShaderPtr ChunkMesh::s_program;
 Texture* ChunkMesh::s_texture;
 Texture* ChunkMesh::s_texture_corners;
 
@@ -29,12 +29,12 @@ void ChunkMesh::init()
 
 		s_program = ShaderLib::loadOrGetShader("res/shaders/ChunkNew.shader");
 		s_program->bind();
-		dynamic_cast<GLShader*>(s_program)->setUniform1i("u_texture", 0);
-		dynamic_cast<GLShader*>(s_program)->setUniform1i("u_corners", 1);
-		dynamic_cast<GLShader*>(s_program)->setUniform1i("u_texture_atlas_pixel_width_corner", EDGE_COLOR_TRANSFORMATION_FACTOR);//scale factor of determining color of corner border (4 means divide pixel pos by 4 to get to the border color)
+		std::static_pointer_cast<GLShader>(s_program)->setUniform1i("u_texture", 0);
+		std::static_pointer_cast<GLShader>(s_program)->setUniform1i("u_corners", 1);
+		std::static_pointer_cast<GLShader>(s_program)->setUniform1i("u_texture_atlas_pixel_width_corner", EDGE_COLOR_TRANSFORMATION_FACTOR);//scale factor of determining color of corner border (4 means divide pixel pos by 4 to get to the border color)
 
 		//todo when changing blockpixels size this wont work you need to specify pixel size of texture
-		dynamic_cast<GLShader*>(s_program)->setUniform1i("u_texture_atlas_pixel_width", BLOCK_ATLAS_PIXEL_WIDTH);//for every block we have 8 pixels in texture
+		std::static_pointer_cast<GLShader>(s_program)->setUniform1i("u_texture_atlas_pixel_width", BLOCK_ATLAS_PIXEL_WIDTH);//for every block we have 8 pixels in texture
 		s_program->unbind();
 
 		s_layout.push<float>(2);//pos

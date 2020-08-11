@@ -1,7 +1,9 @@
 ﻿#pragma once
 #include "graphics/API/Buffer.h"
 #include <ndpch.h>
+#include <core/sids.h>
 #include "graphics/GContext.h"
+#include "MeshData.h"
 
 class MeshData;
 
@@ -57,20 +59,31 @@ struct IndexData
 	size_t count=0;
 	constexpr bool exists() const { return indexBuffer; }
 };
-class NewMesh
+// graphical wrapper around meshdata
+class Mesh
 {
 public:
 	VertexData vertexData;
 	IndexData indexData;
-
-	Topology topology;
-	
 	//this will not be here
 	VertexArray* vao_temp;
 	
+	MeshData* data;
+
+	Strid getID() const { return data->getID(); }
+	const std::string& getName() const { return data->getName(); }
+
 };
-namespace NewMeshFactory
+typedef Ref<Mesh> MeshPtr;
+namespace MeshFactory
 {
-	static VertexArray* buildVAO(NewMesh* mesh);
-	NewMesh* buildNewMesh(MeshData* data);
+	static VertexArray* buildVAO(Mesh* mesh);
+	MeshPtr buildNewMesh(MeshData* data);
+
+	MeshPtr loadOrGet(const std::string& filePath);
+	std::unordered_map<Strid, MeshPtr>& getList();
+
+
+	MeshPtr& get(Strid id);
+	inline void remove(Strid id) { getList().erase(getList().find(id)); }
 }

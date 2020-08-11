@@ -3,6 +3,7 @@
 #include "glm/gtx/euler_angles.hpp"
 #include "scene/Material.h"
 #include "event/Event.h"
+#include "Mesh.h"
 
 struct TransformComponent
 {
@@ -13,9 +14,9 @@ struct TransformComponent
 
 	void recomputeMatrix()
 	{
-		trans = glm::eulerAngleYXZ(rot.x, rot.y, rot.z);
-		trans = glm::translate(trans, pos);
+		trans = glm::translate(glm::mat4(1.f), pos);
 		trans = glm::scale(trans, scale);
+		trans = trans* glm::eulerAngleYXZ(rot.x, rot.y, rot.z);
 	}
 	
 	TransformComponent() = default;
@@ -27,6 +28,7 @@ struct TagComponent
 {
 	const static int MAX_LENGTH = 30;
 	char name[MAX_LENGTH];
+	bool enabled = true;
 
 	TagComponent() :name("UNSPECIFIED"){}
 	TagComponent(const char* n)
@@ -37,13 +39,12 @@ struct TagComponent
 	}
 	const char* operator()() const { return name; }
 };
-struct NewMesh;
 struct ModelComponent
 {
-	NewMesh* mesh;
+	MeshPtr mesh;
 	MaterialPtr material;
 	ModelComponent() = default;
-	ModelComponent(NewMesh* mesh, MaterialPtr ptr) :mesh(mesh), material(ptr){}
+	ModelComponent(MeshPtr mesh, MaterialPtr ptr) :mesh(mesh), material(ptr){}
 
 };
 
@@ -84,6 +85,7 @@ struct CameraComponent
 struct PointerComponent
 {
 	void* ptr=nullptr;
+	PointerComponent() = default;
 	PointerComponent(void* ptr):ptr(ptr){}
 };
 

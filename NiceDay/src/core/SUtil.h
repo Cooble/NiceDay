@@ -3,74 +3,38 @@
 
 
 typedef std::string Stringo;
+typedef std::string_view Viewo;
 
 namespace SUtil
 {
-	inline bool startsWith(const Stringo& s, const Stringo& prefix)
+	inline bool startsWith(Viewo s,Viewo prefix)
 	{
-		return strncmp(prefix.c_str(), s.c_str(), prefix.size()) == 0;
+		return prefix.size() <= s.size() && (strncmp(prefix.data(), s.data(), prefix.size()) == 0);
 	}
-
-	inline bool startsWithView(const std::string_view& s, const char* prefix)
-	{
-		auto prefSize = strlen(prefix);
-
-		return prefSize < s.size() && (strncmp(prefix, s.data(), prefSize) == 0);
-	}
-
-	inline bool startsWith(const Stringo& s, char prefix)
+	inline bool startsWith(Viewo s, char prefix)
 	{
 		return !s.empty() && s[0] == prefix;
 	}
-
 	inline bool startsWith(const char* s, const char* prefix)
 	{
 		return strncmp(s, prefix, strlen(prefix)) == 0;
 	}
 
-	inline bool startsWith(const char* s, char prefix)
-	{
-		return strlen(s) && s[0] == prefix;
-	}
 
-	inline bool endsWith(const Stringo& s, const Stringo& suffix)
+	inline bool endsWith(Viewo s, Viewo suffix)
 	{
-		return suffix.size() <= s.size() && strncmp(suffix.c_str(), s.c_str() + s.size() - suffix.size(), suffix.size())
-			== 0;
+		return suffix.size() <= s.size() && strncmp(suffix.data(), s.data() + s.size() - suffix.size(), suffix.size())== 0;
 	}
-
-	inline bool endsWith(const Stringo& s, char suffix)
+	inline bool endsWith(Viewo s, char suffix)
 	{
-		return !s.empty() && s[s.size() - 1] == suffix;
+		return !s.empty() && s[s.size()-1] == suffix;
 	}
-
-	inline bool endsWith(const std::string_view& s, char suffix)
-	{
-		return !s.empty() && s[s.size() - 1] == suffix;
-	}
-
 	inline bool endsWith(const char* s, const char* suffix)
 	{
 		auto sizeS = strlen(s);
 		auto sizeSuf = strlen(suffix);
 
 		return sizeSuf <= sizeS && strncmp(suffix, s + sizeS - sizeSuf, sizeSuf) == 0;
-	}
-
-	inline bool endsWith(const std::string_view& s, const char* suffix)
-	{
-		auto sizeS = s.size();
-		auto sizeSuf = strlen(suffix);
-
-		return sizeSuf <= sizeS && strncmp(suffix, s.data() + sizeS - sizeSuf, sizeSuf) == 0;
-	}
-
-
-	inline bool endsWith(const char* s, char suffix)
-	{
-		auto sizeS = strlen(s);
-
-		return sizeS && s[sizeS - 1] == suffix;
 	}
 
 	inline bool replaceWith(char* src, char what, char with)

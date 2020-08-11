@@ -9,8 +9,7 @@
 /******************************************************************************/
 
 #include <cinttypes>
-#include <iostream>     // std::cout, std::ostream, std::ios
-#include <fstream>      // std::filebuf
+
 
 /*
 	Makes possible to lookup strings from ids
@@ -53,6 +52,7 @@ public:
 	StringId() : StringId(static_cast<Strid>(0)) { }
 	StringId(Strid data) : m_data(data) { }
 	StringId(const char* str) : m_data(stringIdHash(str)) { }
+	StringId(const std::string& str) : m_data(stringIdHash(str.c_str())) { }
 
 	static StringId concat(const StringId& sid, const char* str)
 	{

@@ -82,8 +82,8 @@ private:
 	std::vector<Light*> m_lights;
 	std::vector<Cam*> m_cameras;
 	
-	Shader* modelShader;
-	Shader* cubeMapShader;
+	ShaderPtr modelShader;
+	ShaderPtr cubeMapShader;
 	int m_cam_look_idx;
 	int m_cam_event_idx;
 	Model* m_wire;

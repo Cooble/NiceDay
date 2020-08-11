@@ -11,7 +11,7 @@ class Effect
 private:
 	inline static VertexBuffer* s_vbo = nullptr;
 	inline static VertexArray* s_vao = nullptr;
-	inline static Shader* s_shader = nullptr;
+	inline static ShaderPtr s_shader = nullptr;
 
 public:
 	inline static void init()
@@ -21,11 +21,19 @@ public:
 
 		float f[]
 		{
-			//   x,y   u,v
-			1, -1, 1, 0,
+			//this is clockwise
+			/*1, -1, 1, 0,
 			-1, -1, 0, 0,
 			1, 1, 1, 1,
+			-1, 1, 0, 1,*/
+
+			//this is counterclockwise
+			//   x,y   u,v
 			-1, 1, 0, 1,
+			-1, -1, 0, 0,
+			1, 1, 1, 1,
+			1, -1, 1, 0,
+
 		};
 		s_vbo = VertexBuffer::create(f, sizeof(f));
 		VertexBufferLayout layout;
@@ -36,7 +44,7 @@ public:
 		s_vao->addBuffer(*s_vbo);
 
 		s_shader = ShaderLib::loadOrGetShader("res/shaders/TextureQuad.shader");
-		auto sh = dynamic_cast<GLShader*>(s_shader);
+		auto sh = std::static_pointer_cast<GLShader>(s_shader);
 		sh->bind();
 		sh->setUniformMat4("transform",glm::mat4(1.0f));
 		sh->unbind();
@@ -46,7 +54,7 @@ public:
 
 	// simple fullscreen quad with simple uv (location=0)=pos, (location=1)=uv,
 	static const VertexArray& getDefaultVAO() { return *s_vao; }
-	static Shader& getDefaultShader() { return *s_shader; }
+	static ShaderPtr& getDefaultShader() { return s_shader; }
 
 	// draws default vao (shader, textures etc has to be bound at this point)
 	static void renderDefaultVAO();
@@ -108,14 +116,14 @@ public:
 class AlphaMaskEffect:public SingleTextureEffect
 {
 private:
-	Shader* getShader()
+	ShaderPtr getShader()
 	{
-		static Shader* s = nullptr;
+		static ShaderPtr s = nullptr;
 		if (s == nullptr)
 		{
 			s = ShaderLib::loadOrGetShader("res/shaders/AlphaMask.shader");
 			s->bind();
-			dynamic_cast<GLShader*>(s)->setUniform1i("u_attachment", 0); //txture input
+			std::static_pointer_cast<GLShader>(s)->setUniform1i("u_attachment", 0); //txture input
 			s->unbind();
 		}
 		return s;
@@ -131,14 +139,14 @@ public:
 class ScaleEdgesEffect:public SingleTextureEffect
 {
 private:
-	Shader* getShader()
+	ShaderPtr getShader()
 	{
-		static Shader* s = nullptr;
+		static ShaderPtr s = nullptr;
 		if (s == nullptr)
 		{
 			s = ShaderLib::loadOrGetShader("res/shaders/ScaleEdge.shader");
 			s->bind();
-			dynamic_cast<GLShader*>(s)->setUniform1i("u_attachment", 0); //txture input
+			std::static_pointer_cast<GLShader>(s)->setUniform1i("u_attachment", 0); //txture input
 			s->unbind();
 		}
 		return s;
@@ -155,9 +163,9 @@ public:
 class GreenFilter :public SingleTextureEffect
 {
 private:
-	Shader* getShader()
+	ShaderPtr getShader()
 	{
-		/*static Shader* s = nullptr;
+		/*static ShaderPtr s = nullptr;
 		if (s == nullptr)
 		{
 			s = new Shader("res/shaders/GreenFilter.shader");
@@ -179,14 +187,14 @@ public:
 class GaussBlurShader
 {
 protected:
-	Shader* getShader()
+	ShaderPtr getShader()
 	{
-		static Shader* s = nullptr;
+		static ShaderPtr s = nullptr;
 		if (s == nullptr)
 		{
 			s = ShaderLib::loadOrGetShader("res/shaders/Blur.shader");
 			s->bind();
-			dynamic_cast<GLShader*>(s)->setUniform1i("u_attachment", 0); //txture input
+			std::static_pointer_cast<GLShader>(s)->setUniform1i("u_attachment", 0); //txture input
 			s->unbind();
 		}
 		return s;
@@ -220,14 +228,14 @@ namespace Effecto {
 	private:
 		
 	public:
-		static Shader* getShader()
+		static ShaderPtr getShader()
 		{
-			static Shader* s = nullptr;
+			static ShaderPtr s = nullptr;
 			if (s == nullptr)
 			{
 				s = ShaderLib::loadOrGetShader("res/shaders/Blur.shader");
 				s->bind();
-				dynamic_cast<GLShader*>(s)->setUniform1i("u_attachment", 0); //txture input
+				std::static_pointer_cast<GLShader>(s)->setUniform1i("u_attachment", 0); //txture input
 				s->unbind();
 			}
 			return s;

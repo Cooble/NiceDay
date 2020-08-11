@@ -31,13 +31,12 @@ TestQuad::~TestQuad()
 {
 	delete vao;
 	delete vbo;
-	delete shader;
 }
 
 void TestQuad::render(const glm::mat4& transform)
 {
 	shader->bind();
-	dynamic_cast<GLShader*>(shader)->setUniformMat4("u_transform", transform);
+	std::static_pointer_cast<GLShader>(shader)->setUniformMat4("u_transform", transform);
 	vao->bind();
 	GLCall(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
 	shader->unbind();

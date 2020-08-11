@@ -2,7 +2,6 @@
 #include <codecvt>
 //current implementation works only on windows
 
-
 static std::string ws2s(const std::wstring& wstr)
 {
 	using convert_typeX = std::codecvt_utf8<wchar_t>;
@@ -15,6 +14,8 @@ void FUtil::cleanPathString(std::string& s)
 	SUtil::replaceWith(s, "\\", "/");
 	SUtil::replaceWith(s, "//", "/", 2);
 }
+
+
 
 std::string FUtil::getAbsolutePath(const char* fileName)
 {

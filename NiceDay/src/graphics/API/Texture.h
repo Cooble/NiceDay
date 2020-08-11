@@ -143,10 +143,36 @@ public:
 	TexDimensions getDimensions() const { return { getWidth(),getHeight() }; }
 	virtual unsigned int getID() const = 0;
 
-
+	virtual const std::string& getFilePath() const = 0;
 	virtual void setPixels(float* light_map) = 0; //todo add template anotation to enable more than jut floats
 	virtual void setPixels(uint8_t* light_map) =0; //todo add template anotation to enable more than jut bytes
 public:
 	static Texture* create(const TextureInfo&);
+	
 };
 typedef Ref<Texture> TexturePtr;
+
+class TextureLib
+{
+private:
+	inline static std::unordered_map<std::string, TexturePtr> m_textures;
+public:
+	// if neccessary, loads texture, otherwise retrives already loaded
+	static TexturePtr loadOrGetTexture(const std::string& path,TextureType type=TextureType::_2D)
+	{
+		auto it = m_textures.find(path);
+		if (it == m_textures.end()) {
+			auto t = std::shared_ptr<Texture>(Texture::create(TextureInfo(type,path)));
+			m_textures[path] = t;
+			return t;
+		}
+		return it->second;
+	}
+	static void unloadAll()
+	{
+		m_textures.clear();
+	}
+};
+
+
+

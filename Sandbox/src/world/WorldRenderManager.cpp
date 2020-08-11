@@ -88,7 +88,7 @@ WorldRenderManager::WorldRenderManager(Camera* cam, World* world)
 	//============OTHER==================
 	m_light_program = ShaderLib::loadOrGetShader("res/shaders/Light.shader");
 	m_light_program->bind();
-	dynamic_cast<GLShader*>(m_light_program)->setUniform1i("u_texture", 0);
+	std::static_pointer_cast<GLShader>(m_light_program)->setUniform1i("u_texture", 0);
 	m_light_program->unbind();
 	float quad[] = {
 		1, 0,
@@ -106,8 +106,8 @@ WorldRenderManager::WorldRenderManager(Camera* cam, World* world)
 	//setup simple light texture
 	m_light_simple_program = ShaderLib::loadOrGetShader("res/shaders/LightTexturePiece.shader");
 	m_light_simple_program->bind();
-	dynamic_cast<GLShader*>(m_light_simple_program)->setUniform1i("u_texture_0", 0);
-	dynamic_cast<GLShader*>(m_light_simple_program)->setUniform1i("u_texture_1", 1);
+	std::static_pointer_cast<GLShader>(m_light_simple_program)->setUniform1i("u_texture_0", 0);
+	std::static_pointer_cast<GLShader>(m_light_simple_program)->setUniform1i("u_texture_1", 1);
 	m_light_simple_program->unbind();
 
 	m_fbo_pair = new FrameBufferTexturePair();
@@ -543,7 +543,7 @@ void WorldRenderManager::render(BatchRenderer2D& batchRenderer, FrameBuffer* fbo
 	renderBiomeBackgroundToFBO(batchRenderer);
 
 	//chunk render
-	auto& chunkProgram = *ChunkMesh::getProgram();
+	auto& chunkProgram = ChunkMesh::getProgram();
 
 		//walls
 	m_wall_fbo->bind();
@@ -560,7 +560,7 @@ void WorldRenderManager::render(BatchRenderer2D& batchRenderer, FrameBuffer* fbo
 		Gcon.enableBlend();
 		
 		//walls
-		chunkProgram.bind();
+		chunkProgram->bind();
 		ChunkMesh::getAtlas()->bind(0);
 		ChunkMesh::getCornerAtlas()->bind(1);
 		m_chunks.getVAO().bind();
@@ -574,7 +574,7 @@ void WorldRenderManager::render(BatchRenderer2D& batchRenderer, FrameBuffer* fbo
 				mesh->getPos().x - m_camera->getPosition().x,
 				mesh->getPos().y - m_camera->getPosition().y, 0.0f));
 			worldMatrix = glm::scale(worldMatrix, glm::vec3(0.5f, 0.5f, 1));
-			dynamic_cast<GLShader*>(&chunkProgram)->setUniformMat4("u_transform", getProjMatrix() * worldMatrix);
+			std::static_pointer_cast<GLShader>(chunkProgram)->setUniformMat4("u_transform", getProjMatrix() * worldMatrix);
 			GLCall(glDrawArrays(GL_TRIANGLES, m_chunks.getVertexOffsetToWallBuffer(mesh->getIndex()), WORLD_CHUNK_AREA * 4 * 6));
 		}
 		m_wall_fbo->unbind();
@@ -598,7 +598,7 @@ void WorldRenderManager::render(BatchRenderer2D& batchRenderer, FrameBuffer* fbo
 		m_block_fbo->clear(BuffBit::COLOR);
 		Gcon.enableBlend();
 		Gcon.setBlendFunc(Blend::SRC_ALPHA, Blend::ONE_MINUS_SRC_ALPHA);
-		chunkProgram.bind();
+		chunkProgram->bind();
 		ChunkMesh::getAtlas()->bind(0);
 		ChunkMesh::getCornerAtlas()->bind(1);
 		m_chunks.getVAO().bind();
@@ -610,7 +610,7 @@ void WorldRenderManager::render(BatchRenderer2D& batchRenderer, FrameBuffer* fbo
 			auto world_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(
 				mesh->getPos().x - m_camera->getPosition().x,
 				mesh->getPos().y - m_camera->getPosition().y, 0.0f));
-			dynamic_cast<GLShader*>(&chunkProgram)->setUniformMat4("u_transform", getProjMatrix() * world_matrix);
+			std::static_pointer_cast<GLShader>(chunkProgram)->setUniformMat4("u_transform", getProjMatrix() * world_matrix);
 			GLCall(glDrawArrays(GL_TRIANGLES, m_chunks.getVertexOffsetToBlockBuffer(mesh->getIndex()), WORLD_CHUNK_AREA * 6));
 		}
 		if (Stats::light_enable)
@@ -627,8 +627,8 @@ void WorldRenderManager::render(BatchRenderer2D& batchRenderer, FrameBuffer* fbo
 	float CURSOR_YY = -(float)App::get().getWindow()->getHeight() / BLOCK_PIXEL_SIZE + m_camera->getPosition().y;
 
 	m_sky_program->bind();
-	dynamic_cast<GLShader*>(m_sky_program)->setUniformVec4f("u_up_color", getSkyColor(CURSOR_Y));
-	dynamic_cast<GLShader*>(m_sky_program)->setUniformVec4f("u_down_color", getSkyColor(CURSOR_YY));
+	std::static_pointer_cast<GLShader>(m_sky_program)->setUniformVec4f("u_up_color", getSkyColor(CURSOR_Y));
+	std::static_pointer_cast<GLShader>(m_sky_program)->setUniformVec4f("u_down_color", getSkyColor(CURSOR_YY));
 	Effect::renderDefaultVAO();
 
 	ND_IMGUI_VIEW_PROXY("sky first", fbo->getAttachment());
@@ -659,7 +659,7 @@ void WorldRenderManager::renderLightMap()
 	Gcon.disableBlend();
 
 	m_light_simple_program->bind();
-	dynamic_cast<GLShader*>(m_light_simple_program)->setUniformVec4f("u_chunkback_color", m_world->getSkyLight());
+	std::static_pointer_cast<GLShader>(m_light_simple_program)->setUniformVec4f("u_chunkback_color", m_world->getSkyLight());
 	m_light_simple_texture->bind(0);
 	m_light_sky_simple_texture->bind(1);
 	Effect::getDefaultVAO().bind();
@@ -688,7 +688,7 @@ void WorldRenderManager::applyLightMap(const Texture* lightmap, FrameBuffer* fbo
 	lightmap->bind(0);
 
 	m_light_program->bind();
-	dynamic_cast<GLShader*>(m_light_program)->setUniformMat4("u_transform", getProjMatrix() * worldMatrix);
+	std::static_pointer_cast<GLShader>(m_light_program)->setUniformMat4("u_transform", getProjMatrix() * worldMatrix);
 
 	m_light_VAO->bind();
 

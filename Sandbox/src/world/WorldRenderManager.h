@@ -28,7 +28,7 @@ class WorldRenderManager
 {
 private:
 	TestQuad* m_test_quad;
-	Shader* m_sky_program;
+	ShaderPtr m_sky_program;
 
 	FrameBufferTexturePair* m_fbo_pair;
 	GreenFilter* m_green_filter;
@@ -62,8 +62,8 @@ private:
 	Texture* m_light_sky_simple_texture;
 	Texture* m_block_mask_texture;
 
-	Shader* m_light_program;
-	Shader* m_light_simple_program;
+	ShaderPtr m_light_program;
+	ShaderPtr m_light_simple_program;
 
 	VertexBuffer* m_light_VBO;
 	VertexArray* m_light_VAO;

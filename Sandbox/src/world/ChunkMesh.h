@@ -27,7 +27,7 @@ class ChunkMesh
 private:
 	static VertexBufferLayout s_layout;
 	
-	static Shader* s_program;
+	static ShaderPtr s_program;
 	
 	static Texture* s_texture;
 	static Texture* s_texture_corners;
@@ -43,7 +43,7 @@ public:
 	
 	static void init();
 	static inline const VertexBufferLayout& getLayout() { return s_layout; }
-	static inline Shader* getProgram() { return s_program; }
+	static inline ShaderPtr getProgram() { return s_program; }
 	static inline Texture* getAtlas() { return s_texture; }
 	static inline Texture* getCornerAtlas() { return s_texture_corners; }
 };

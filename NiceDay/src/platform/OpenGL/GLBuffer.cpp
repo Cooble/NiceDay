@@ -9,8 +9,9 @@ OpenGLVertexBuffer::OpenGLVertexBuffer(void* data, uint32_t size,BufferUsage usa
 	:m_size(size),m_id(0)
 {
 	GLCall(glGenBuffers(1, &m_id));
-	GLCall(glBindBuffer(GL_ARRAY_BUFFER, m_id));
+	bind();
 	GLCall(glBufferData(GL_ARRAY_BUFFER, size, data, (int)usage));
+	unbind();
 }
 
 OpenGLVertexBuffer::~OpenGLVertexBuffer()
@@ -62,8 +63,9 @@ OpenGLIndexBuffer::OpenGLIndexBuffer(uint32_t* data, uint32_t count,BufferUsage 
 	:m_count(count)
 {
 	GLCall(glGenBuffers(1, &m_id));
-	GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_id));
+	bind();
 	GLCall(glBufferData(GL_ELEMENT_ARRAY_BUFFER, count*sizeof(uint32_t), data, (int)usage));
+	unbind();
 }
 
 OpenGLIndexBuffer::~OpenGLIndexBuffer()

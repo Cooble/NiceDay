@@ -4,7 +4,40 @@
 #include "graphics/Renderer.h"
 #include "platform/OpenGL/GLShader.h"
 
+static void extractLayoutIn(ShaderLayout& out, const std::string& vertexSrc)
+{
+	std::string noComments = vertexSrc;
+	SUtil::removeComments(noComments);
+	defaultable_vector<UniformElement> list;
+	for (auto it = SUtil::SplitIterator<true, const char*, true>(noComments, ";"); it; ++it)
+	{
+		auto line = *it;
+		for (auto it = SUtil::SplitIterator<true, const char*, true>(line, "\t\n ()="); it; ++it)
+		{
+			auto word = *it;
+			if (word == "layout") {
+				UniformElement e;
 
+				ASSERT(*++it == "location", "Error while extracting shader layout");//location
+				int ind=  std::stoi(std::string(*++it));//index
+				ASSERT(*++it=="in","Error while extracting shader layout");//in
+				e.type=GTypes::getType(*++it);//type
+				e.name = *++it;//name
+				e.offset = 0;
+				e.arraySize = 1;
+				list[ind] = std::move(e);
+			}
+		}
+	}
+	UniformLayout layout;
+	layout.name = "VERTEX";
+	layout.size = 0;
+	layout.prefixName = "";
+	layout.stages = 0;
+	for (UniformElement& uniform_element : list)
+		layout.elements.push_back(std::move(uniform_element));
+	out.structs.push_back(std::move(layout));
+}
 static void extractLayoutSingle(ShaderLayout& out, RenderStage stage, const std::string& src, bool expandPath)
 {
 	std::string noComments=src;
@@ -29,7 +62,10 @@ static void extractLayoutSingle(ShaderLayout& out, RenderStage stage, const std:
 						s.prefixName = structPrefixName;
 						if(expandPath)
 							for (auto& e : s.elements)
-								e.name = s.prefixName + "." + e.name;
+								if (!SUtil::startsWith(e.name, s.prefixName)) {//otherwise we would add prefix in each stage
+									e.name = s.prefixName + "." + e.name;
+								}
+								else break;
 						break;
 					}
 			}
@@ -84,6 +120,7 @@ ShaderLayout Shader::extractLayout(const ShaderProgramSources& res,bool expandPa
 	ShaderLayout out;
 	try
 	{
+		extractLayoutIn(out, res.vertexSrc);
 		extractLayoutSingle(out, RenderStage::VERTEX, res.vertexSrc, expandPath);
 		extractLayoutSingle(out, RenderStage::FRAGMENT, res.fragmentSrc, expandPath);
 		if (res.geometrySrc.size())
@@ -97,24 +134,24 @@ ShaderLayout Shader::extractLayout(const ShaderProgramSources& res,bool expandPa
 	}
 }
 
-Shader* Shader::create(const ShaderProgramSources& res)
+ShaderPtr Shader::create(const ShaderProgramSources& res)
 {
 	switch (Renderer::getAPI())
 	{
 	case GraphicsAPI::OpenGL:
-		return new GLShader(res);
+		return MakeRef<GLShader>(res);
 	default:
 		ASSERT(false, "Invalid RenderAPI");
 		return nullptr;
 	}
 }
 
-Shader* Shader::create(const std::string& filePath)
+ShaderPtr Shader::create(const std::string& filePath)
 {
 	switch (Renderer::getAPI())
 	{
 	case GraphicsAPI::OpenGL:
-		return new GLShader(filePath);
+		return MakeRef<GLShader>(filePath);
 	default:
 		ASSERT(false, "Invalid RenderAPI");
 		return nullptr;

@@ -69,7 +69,8 @@ enum class g_typ : uint32_t
 	IVEC4,
 	MAT3,
 	MAT4,
-	TEXTURE,
+	TEXTURE_2D,
+	TEXTURE_CUBE,
 
 	INVALID
 };
@@ -100,6 +101,10 @@ namespace GTypes {
 		default:return false;
 		}
 	}
+	constexpr bool isTexture(g_typ type)
+	{
+		return type == g_typ::TEXTURE_2D || type == g_typ::TEXTURE_CUBE;
+	}
 	constexpr int getCount(g_typ type)
 	{
 		switch(type)
@@ -113,7 +118,8 @@ namespace GTypes {
 		case g_typ::INT: 
 		case g_typ::MAT3:
 		case g_typ::MAT4:
-		case g_typ::TEXTURE:
+		case g_typ::TEXTURE_2D:
+		case g_typ::TEXTURE_CUBE:
 			return 1;
 		case g_typ::IVEC2:
 		case g_typ::VEC2:
@@ -153,8 +159,31 @@ namespace GTypes {
 		if (view == "uint")
 			return g_typ::UNSIGNED_INT;
 		if (view == "sampler2D")
-			return g_typ::TEXTURE;
+			return g_typ::TEXTURE_2D;
+		if (view == "samplerCube")
+			return g_typ::TEXTURE_CUBE;
 		return g_typ::INVALID;
+	}
+	constexpr const char* getName(g_typ type)
+	{
+		switch (type) {
+		
+		case g_typ::UNSIGNED_INT: return "uint";
+		case g_typ::FLOAT: return "float";
+		case g_typ::VEC2: return "vec2";
+		case g_typ::VEC3: return "vec3";
+		case g_typ::VEC4: return "vec4";
+		case g_typ::INT: return "int";
+		case g_typ::IVEC2: return "ivec2";
+		case g_typ::IVEC3: return "ivec3";
+		case g_typ::IVEC4: return "ivec4";
+		case g_typ::MAT3: return "mat3";
+		case g_typ::MAT4: return "mat4";
+		case g_typ::TEXTURE_2D: return "sampler2D";
+		case g_typ::TEXTURE_CUBE: return "samplerCube";
+		default:
+			return "INVALID TYPE";
+		}
 	}
 	constexpr static int GTYPE_SIZES[]
 	{
@@ -174,6 +203,7 @@ namespace GTypes {
 				4 * 3 * 3,	//MAT3,
 				4 * 4 * 4,	//MAT4,
 				4,		//TEXTURE,
+				4,		//TEXTURE_CUBE,
 				0		//INVALID
 	};
 	constexpr int getSize(g_typ type)
@@ -192,6 +222,8 @@ namespace GTypes {
 			return g_typ::INVALID;
 		}
 	}
+
+	
 }
 
 class GContext
@@ -216,6 +248,8 @@ public:
 	virtual void setBlendFunc(Blend src, Blend dst)=0;
 	virtual void setBlendConstant(float r, float g, float b, float a) = 0;
 	virtual void enableDepthTest(bool enable) = 0;
+	virtual void enableCullFace(bool enable) = 0;
+	virtual void depthMask(bool val) = 0;
 
 	virtual void clear(BufferBit bits) = 0;
 	virtual void setClearColor(float r, float g, float b, float a) = 0;

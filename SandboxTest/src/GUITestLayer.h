@@ -23,7 +23,7 @@ private:
 	Texture* fontTexture;
 	Texture* backTexture;
 	Sprite* backSprite;
-	Shader* fontShader;
+	ShaderPtr fontShader;
 	Font font;
 	FontMaterial* g_fontMat;
 

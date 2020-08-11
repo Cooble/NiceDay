@@ -171,21 +171,29 @@ FakeInput::FakeInput(FakeWindow* window, Input* realInput)
 
 bool FakeInput::isKeyPressed(int button)
 {
+	if (!m_window->isFocused())
+		return false;
 	return m_input->isKeyPressed(button);
 }
 
 bool FakeInput::isKeyFreshlyPressed(int button)
 {
+	if (!m_window->isFocused())
+		return false;
 	return m_input->isKeyFreshlyPressed(button);
 }
 
 bool FakeInput::isKeyFreshlyReleased(int button)
 {
+	if (!m_window->isFocused())
+		return false;
 	return m_input->isKeyFreshlyReleased(button);
 }
 
 bool FakeInput::isMousePressed(int button)
 {
+	if (!m_window->isFocused())
+		return false;
 	return m_input->isMousePressed(button);
 }
 

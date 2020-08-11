@@ -1,7 +1,7 @@
 ﻿#pragma once
 #include "ndpch.h"
 #include "graphics/API/Shader.h"
-#define BREAK_IF_SHADER_COMPILE_ERROR 1
+
 
 static const char* s_current_file = "null";
 
@@ -10,6 +10,7 @@ class GLShader:public Shader
 private:
 	ShaderLayout m_layout;
 	unsigned int m_id;
+	std::string m_file_path;
 	int getUniformLocation(const std::string& name);
 	std::unordered_map<std::string, int> cache;
 #ifdef ND_DEBUG
@@ -57,5 +58,7 @@ public:
 	{
 		setUniform2f(name, v.x, v.y);
 	}
+	virtual const std::string& getFilePath() const { return m_file_path; }
+
 	
 };

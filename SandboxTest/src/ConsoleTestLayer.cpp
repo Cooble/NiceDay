@@ -104,7 +104,7 @@ std::string ConsoleTestLayer::command(const std::string& command)
 }
 static Texture* smallTexture;
 
-static Shader* modelShader;
+static ShaderPtr modelShader;
 
 static Texture* texture;
 
@@ -138,16 +138,16 @@ void ConsoleTestLayer::onAttach()
 	
 	modelShader = ShaderLib::loadOrGetShader(ND_RESLOC("res/shaders/Model.shader"));
 	modelShader->bind();
-	dynamic_cast<GLShader*>(modelShader)->setUniform1i("u_material.diffuse", 0);
-	dynamic_cast<GLShader*>(modelShader)->setUniform1i("u_material.specular", 1);
-	dynamic_cast<GLShader*>(modelShader)->setUniform1f("u_material.shines", 64);
-	dynamic_cast<GLShader*>(modelShader)->setUniform3f("u_light.ambient", 0.1f, 0.1f, 0.1f);
-	dynamic_cast<GLShader*>(modelShader)->setUniform3f("u_light.diffuse", 0.5f, 0.5f, 0.5f);
-	dynamic_cast<GLShader*>(modelShader)->setUniform3f("u_light.specular", 1.f, 1.f, 1.f);
+	std::static_pointer_cast<GLShader>(modelShader)->setUniform1i("u_material.diffuse", 0);
+	std::static_pointer_cast<GLShader>(modelShader)->setUniform1i("u_material.specular", 1);
+	std::static_pointer_cast<GLShader>(modelShader)->setUniform1f("u_material.shines", 64);
+	std::static_pointer_cast<GLShader>(modelShader)->setUniform3f("u_light.ambient", 0.1f, 0.1f, 0.1f);
+	std::static_pointer_cast<GLShader>(modelShader)->setUniform3f("u_light.diffuse", 0.5f, 0.5f, 0.5f);
+	std::static_pointer_cast<GLShader>(modelShader)->setUniform3f("u_light.specular", 1.f, 1.f, 1.f);
 
-	dynamic_cast<GLShader*>(modelShader)->setUniform1f("u_light.constant", 1.f);
-	dynamic_cast<GLShader*>(modelShader)->setUniform1f("u_light.linear", 0.0014f);
-	dynamic_cast<GLShader*>(modelShader)->setUniform1f("u_light.quadratic", 0.000007f);
+	std::static_pointer_cast<GLShader>(modelShader)->setUniform1f("u_light.constant", 1.f);
+	std::static_pointer_cast<GLShader>(modelShader)->setUniform1f("u_light.linear", 0.0014f);
+	std::static_pointer_cast<GLShader>(modelShader)->setUniform1f("u_light.quadratic", 0.000007f);
 	
 	modelShader->unbind();
 
@@ -340,7 +340,7 @@ void ConsoleTestLayer::onRender()
 	fbos->bind();
 	Gcon.clear(BuffBit::COLOR);
 	deformationShader->bind();
-	dynamic_cast<GLShader*>(deformationShader)->setUniform1f("u_on_screen", m_on_screen_float);
+	std::static_pointer_cast<GLShader>(deformationShader)->setUniform1f("u_on_screen", m_on_screen_float);
 	deformationEffect->getTexture()->bind(0);
 	Effect::getDefaultVAO().bind();
 	GLCall(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
@@ -375,8 +375,8 @@ void ConsoleTestLayer::onRender()
 
 	//draw sky
 	skyShader->bind();
-	dynamic_cast<GLShader*>(skyShader)->setUniformMat4("u_viewMat", glm::mat4(glm::mat3(camm->getViewMatrix()))*glm::scale(glm::mat4(1.f),{20,20,20}));
-	dynamic_cast<GLShader*>(skyShader)->setUniformMat4("u_projMat", proj);
+	std::static_pointer_cast<GLShader>(skyShader)->setUniformMat4("u_viewMat", glm::mat4(glm::mat3(camm->getViewMatrix()))*glm::scale(glm::mat4(1.f),{20,20,20}));
+	std::static_pointer_cast<GLShader>(skyShader)->setUniformMat4("u_projMat", proj);
 
 	sky.vao->bind();
 	skyTex->bind(0);
@@ -391,21 +391,21 @@ void ConsoleTestLayer::onRender()
 
 	dragon.vao->bind();
 	modelShader->bind();
-	dynamic_cast<GLShader*>(modelShader)->setUniformMat4("u_worldMat", glm::rotate(glm::mat4(1.f), rotation,{0,1,0})*world);
-	dynamic_cast<GLShader*>(modelShader)->setUniformVec3f("u_camera_pos", lookEditor?editorCam->pos:playerCam->pos);
-	dynamic_cast<GLShader*>(modelShader)->setUniformVec3f("u_light.pos", lightPos);
+	std::static_pointer_cast<GLShader>(modelShader)->setUniformMat4("u_worldMat", glm::rotate(glm::mat4(1.f), rotation,{0,1,0})*world);
+	std::static_pointer_cast<GLShader>(modelShader)->setUniformVec3f("u_camera_pos", lookEditor?editorCam->pos:playerCam->pos);
+	std::static_pointer_cast<GLShader>(modelShader)->setUniformVec3f("u_light.pos", lightPos);
 	
-	dynamic_cast<GLShader*>(modelShader)->setUniformMat4("u_viewMat", camm->getViewMatrix());
-	dynamic_cast<GLShader*>(modelShader)->setUniformMat4("u_projMat", proj);
-	dynamic_cast<GLShader*>(modelShader)->setUniformVec4f("u_material.color", dragonColor);
+	std::static_pointer_cast<GLShader>(modelShader)->setUniformMat4("u_viewMat", camm->getViewMatrix());
+	std::static_pointer_cast<GLShader>(modelShader)->setUniformMat4("u_projMat", proj);
+	std::static_pointer_cast<GLShader>(modelShader)->setUniformVec4f("u_material.color", dragonColor);
 	Gcon.cmdDrawElements(Topology::TRIANGLES, dragon.vio->getCount());
 
 	texture->bind(0);
 	vector.vao->bind();
 	world = glm::translate(glm::mat4(1.f), {0.1, 0.5, 0.1});
 	world = glm::scale(world, {10, 10, 10});
-	dynamic_cast<GLShader*>(modelShader)->setUniformMat4("u_worldMat", world);
-	dynamic_cast<GLShader*>(modelShader)->setUniform4f("u_material.color", 0.2, 1, 1, 1);
+	std::static_pointer_cast<GLShader>(modelShader)->setUniformMat4("u_worldMat", world);
+	std::static_pointer_cast<GLShader>(modelShader)->setUniform4f("u_material.color", 0.2, 1, 1, 1);
 	Gcon.cmdDrawElements(Topology::TRIANGLES, vector.vio->getCount());
 
 	crateTexture->bind(0);
@@ -413,8 +413,8 @@ void ConsoleTestLayer::onRender()
 	crate.vao->bind();
 	world = glm::translate(glm::mat4(1.f), { 0.1, 0.5, 0.1 });
 	world = glm::scale(world, { 10, 10, 10 });
-	dynamic_cast<GLShader*>(modelShader)->setUniformMat4("u_worldMat", world);
-	dynamic_cast<GLShader*>(modelShader)->setUniform4f("u_material.color", 0,0,0,0);
+	std::static_pointer_cast<GLShader>(modelShader)->setUniformMat4("u_worldMat", world);
+	std::static_pointer_cast<GLShader>(modelShader)->setUniform4f("u_material.color", 0,0,0,0);
 	Gcon.cmdDrawElements(Topology::TRIANGLES, crate.vio->getCount());
 
 	texture->bind(0);
@@ -427,9 +427,9 @@ void ConsoleTestLayer::onRender()
 			world = glm::scale(world, { 2, 4, 2 });
 			glm::quat t({3.14159f/2,0,0});
 				
-			dynamic_cast<GLShader*>(modelShader)->setUniformMat4("u_worldMat", world);
-			dynamic_cast<GLShader*>(modelShader)->setUniform4f("u_material.color", 1, 0, 0, 1);
-			dynamic_cast<GLShader*>(modelShader)->setUniformMat4("u_worldMat", world * glm::toMat4(t));
+			std::static_pointer_cast<GLShader>(modelShader)->setUniformMat4("u_worldMat", world);
+			std::static_pointer_cast<GLShader>(modelShader)->setUniform4f("u_material.color", 1, 0, 0, 1);
+			std::static_pointer_cast<GLShader>(modelShader)->setUniformMat4("u_worldMat", world * glm::toMat4(t));
 			Gcon.cmdDrawElements(Topology::TRIANGLES, vector.vio->getCount());
 		}
 		if(!lookEditor)
@@ -438,8 +438,8 @@ void ConsoleTestLayer::onRender()
 			world = glm::scale(world, { 5, 5, 5 });
 			auto rot = cam->getLookingMat();
 			
-			dynamic_cast<GLShader*>(modelShader)->setUniformMat4("u_worldMat", world*rot);
-			dynamic_cast<GLShader*>(modelShader)->setUniform4f("u_material.color", 0, 1, 0, 1);
+			std::static_pointer_cast<GLShader>(modelShader)->setUniformMat4("u_worldMat", world*rot);
+			std::static_pointer_cast<GLShader>(modelShader)->setUniform4f("u_material.color", 0, 1, 0, 1);
 			Gcon.cmdDrawElements(Topology::TRIANGLES, vector.vio->getCount());
 		}
 		
@@ -451,8 +451,8 @@ void ConsoleTestLayer::onRender()
 		                       -20 * 4 + glm::floor(camm->pos.z / 4) * 4
 	                       });
 	world = glm::scale(world, {4, 1, 4});
-	dynamic_cast<GLShader*>(modelShader)->setUniform4f("u_material.color", 0.5f, 0.5f, 0.5f, 1);
-	dynamic_cast<GLShader*>(modelShader)->setUniformMat4("u_worldMat", world);
+	std::static_pointer_cast<GLShader>(modelShader)->setUniform4f("u_material.color", 0.5f, 0.5f, 0.5f, 1);
+	std::static_pointer_cast<GLShader>(modelShader)->setUniformMat4("u_worldMat", world);
 	wire.vao->bind();
 	Gcon.cmdDrawArrays(Topology::LINES, wire.vbo->getSize()/wire.vbo->getLayout().getStride());*/
 

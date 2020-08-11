@@ -106,6 +106,20 @@ void GLContext::enableDepthTest(bool enable)
 
 }
 
+void GLContext::enableCullFace(bool enable)
+{
+	if (enable) {
+		GLCall(glEnable(GL_CULL_FACE));
+	}
+	else
+		GLCall(glDisable(GL_CULL_FACE));
+}
+
+void GLContext::depthMask(bool val)
+{
+	GLCall(glDepthMask(val));
+}
+
 void GLContext::clear(BufferBit bits)
 {
 	GLCall(glClear(bits));

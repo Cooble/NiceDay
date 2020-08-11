@@ -5,7 +5,7 @@
 
 struct TestQuad
 {
-	Shader* shader;
+	ShaderPtr shader;
 	VertexBuffer* vbo;
 	VertexArray* vao;
 public:
