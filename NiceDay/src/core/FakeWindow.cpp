@@ -6,8 +6,13 @@
 #include "graphics/API/FrameBuffer.h"
 #include "event/WindowEvent.h"
 #include "App.h"
+#include "scene/GlobalAccess.h"
+#include "scene/components_imgui_access.h"
 
 static Texture* templateTex = nullptr;
+
+
+
 FakeWindow::FakeWindow(WindowTemplate* realWindow,int width, int height, const std::string& title, bool fullscreen)
 :
 	m_window(realWindow){
@@ -64,7 +69,8 @@ void FakeWindow::setCursorPolicy(WindowCursor state)
 
 void FakeWindow::setCursorPos(glm::vec2 pos)
 {
-	m_window->setCursorPos(pos + m_real_window_offset);
+	//m_window->setCursorPos(pos + m_real_window_offset);
+	m_window->setCursorPos(pos + getOffset());
 	
 }
 
@@ -95,6 +101,63 @@ void FakeWindow::swapBuffers()
 	}
 }
 
+void FakeWindow::drawNavBar()
+{
+	auto& icons = GlobalAccess::ui_icons;
+	m_nav_bar.freshPress = false;
+	m_nav_bar.freshRelease = false;
+
+	auto width = icons.getSubImage("move_icon").pixelSize.x;
+	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{ 0,0 });
+	
+	ImGui::SameLine(ImGui::GetWindowContentRegionMax().x - 4 * width - 5);
+	components_imgui_access::Image("move_icon", icons);
+	if(!m_nav_bar.moveActive&&ImGui::IsItemClicked())
+	{
+		m_nav_bar = {};
+		m_nav_bar.moveActive = true;
+		m_nav_bar.freshPress = true;
+	}
+	ImGui::SameLine(ImGui::GetWindowContentRegionMax().x-3* width - 5);
+	components_imgui_access::Image("zoom_icon", icons);
+	if (!m_nav_bar.scrollActive && ImGui::IsItemClicked())
+	{
+		m_nav_bar = {};
+		m_nav_bar.scrollActive = true;
+		m_nav_bar.freshPress = true;
+	}
+	
+	ImGui::SameLine(ImGui::GetWindowContentRegionMax().x - 2 * width - 5);
+	components_imgui_access::Image("rot_icon", icons);
+	if (!m_nav_bar.rotationActive && ImGui::IsItemClicked())
+	{
+		m_nav_bar = {};
+		m_nav_bar.rotationActive = true;
+		m_nav_bar.freshPress = true;
+	}
+	ImGui::SameLine(ImGui::GetWindowContentRegionMax().x - 1 * width - 5);
+	components_imgui_access::Image("rel_rot_icon", icons);
+	if (!m_nav_bar.lockActive && ImGui::IsItemClicked())
+	{
+		m_nav_bar = {};
+		m_nav_bar.lockActive = true;
+		m_nav_bar.freshPress = true;
+	}
+
+	ImGui::PopStyleVar();
+
+	bool dragging = ImGui::IsMouseDragging(ImGuiMouseButton_Left, 0);
+	if(!dragging&&m_nav_bar.isAnyActive())
+	{
+		m_nav_bar = {};
+		m_nav_bar.freshRelease = true;
+	}
+	else {
+		auto v = ImGui::GetMouseDragDelta(ImGuiMouseButton_Left, 0);
+		m_nav_bar.drag = *(glm::vec2*) &v;
+	}
+}
+
 void FakeWindow::renderView()
 {
 	static bool opened = true;
@@ -109,11 +172,18 @@ void FakeWindow::renderView()
 	
 	ImGui::PopStyleVar(2);
 	auto off = ImGui::GetWindowPos();
-	
-	m_real_window_offset = { off.x,off.y };
+
+	float offset = 0;
+	if (m_enableNavigationBar)
+	{
+		drawNavBar();
+		offset=ImGui::GetItemRectMax().y;
+	}
+
+	m_real_window_offset = { off.x,offset };
 	m_relative_offset = m_real_window_offset - m_window->getPos();
 	auto lastDim = m_dim;
-	m_dim = { ImGui::GetWindowWidth(),ImGui::GetWindowHeight() };
+	m_dim = { ImGui::GetContentRegionAvail().x,ImGui::GetContentRegionAvail().y };
 	m_data.width = m_dim.x;
 	m_data.height = m_dim.y;
 	m_dirty_dim |= lastDim != m_dim;
@@ -169,28 +239,28 @@ FakeInput::FakeInput(FakeWindow* window, Input* realInput)
 	:m_window(window), m_input(realInput) {
 }
 
-bool FakeInput::isKeyPressed(int button)
+bool FakeInput::isKeyPressed(KeyCode button)
 {
 	if (!m_window->isFocused())
 		return false;
 	return m_input->isKeyPressed(button);
 }
 
-bool FakeInput::isKeyFreshlyPressed(int button)
+bool FakeInput::isKeyFreshlyPressed(KeyCode  button)
 {
 	if (!m_window->isFocused())
 		return false;
 	return m_input->isKeyFreshlyPressed(button);
 }
 
-bool FakeInput::isKeyFreshlyReleased(int button)
+bool FakeInput::isKeyFreshlyReleased(KeyCode  button)
 {
 	if (!m_window->isFocused())
 		return false;
 	return m_input->isKeyFreshlyReleased(button);
 }
 
-bool FakeInput::isMousePressed(int button)
+bool FakeInput::isMousePressed(MouseCode button)
 {
 	if (!m_window->isFocused())
 		return false;

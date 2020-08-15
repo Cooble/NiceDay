@@ -1,5 +1,5 @@
 #pragma once
-
+#include "event/KeyEvent.h"
 typedef unsigned long long ControlType;
 
 namespace Controls {
@@ -21,3 +21,5 @@ namespace Controls {
 	extern void init();
 
 }
+inline bool operator==(const KeyCode& lhs, const ControlType& rhs) { return ((ControlType)lhs) == rhs; }
+inline bool operator!=(const KeyCode& lhs, const ControlType& rhs) { return ((ControlType)lhs) != rhs; }

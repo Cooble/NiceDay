@@ -26,17 +26,17 @@ const std::string& ResourceMan::getResPath()
 	return s_resPathFolder;
 }
 
-std::string ResourceMan::getResourceLoc(const std::string& resPath)
+std::string ResourceMan::getResourceLoc(std::string_view resPath)
 {
 
 	if (SUtil::startsWith(resPath, "res") || SUtil::startsWith(resPath, "/res"))
-		return s_resPath + resPath;
-	return resPath;
+		return s_resPath + std::string(resPath);
+	return std::string(resPath);
 }
 
-std::string ResourceMan::getLocalPath(const std::string& resPath)
+std::string ResourceMan::getLocalPath(std::string_view resPath)
 {
-	auto res = resPath;
+	auto res = std::string(resPath);
 	FUtil::cleanPathString(res);
 	size_t  offset = 0;
 	size_t out = std::string::npos;

@@ -374,7 +374,7 @@ void GUIElement::onMyEvent(Event& e)
 	case Event::EventType::MousePress:
 		{
 			auto& ev = dynamic_cast<MousePressEvent&>(e);
-			if (ev.getButton() == GLFW_MOUSE_BUTTON_1)
+			if (ev.getButton() == MouseCode::LEFT)
 				m_is_pressed = true;
 		}
 		break;
@@ -382,7 +382,7 @@ void GUIElement::onMyEvent(Event& e)
 	case Event::EventType::MouseRelease:
 		{
 			auto& ev = dynamic_cast<MouseReleaseEvent&>(e);
-			if (ev.getButton() == GLFW_MOUSE_BUTTON_1)
+			if (ev.getButton() == MouseCode::LEFT)
 				m_is_pressed = false;
 		}
 		break;

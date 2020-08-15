@@ -190,7 +190,7 @@ void HUD::consumeContainerEvent(const std::string& id, int slot, Inventory* inv,
 		return;
 	}
 	auto even = static_cast<MousePressEvent&>(e);
-	bool left = even.getButton() == GLFW_MOUSE_BUTTON_LEFT;
+	bool left = even.getButton() == MouseCode::LEFT;
 
 	auto inHand = m_hand_inventory->getItemStack(m_hand->getSlot());
 
@@ -201,7 +201,7 @@ void HUD::consumeContainerEvent(const std::string& id, int slot, Inventory* inv,
 		//take all from slot
 		if(left)
 		{
-			if(App::get().getInput().isKeyPressed(GLFW_KEY_LEFT_SHIFT))
+			if(App::get().getInput().isKeyPressed(KeyCode::LEFT_SHIFT))
 			{
 				inHand = c->takeFromIndex(slot,c->getItemStack(slot)!=nullptr?(int)std::ceil(c->getItemStack(slot)->size()/2.f):-1);
 				

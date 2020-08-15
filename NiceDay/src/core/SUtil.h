@@ -36,6 +36,76 @@ namespace SUtil
 
 		return sizeSuf <= sizeS && strncmp(suffix, s + sizeS - sizeSuf, sizeSuf) == 0;
 	}
+	inline void toLower(char* s)
+	{
+		int l = strlen(s);
+		int ind = 0;
+		// spec of "simd"
+		for (int i = 0; i < l / 4; i++) {
+			s[ind] = std::tolower(	s[ind]);
+			s[ind+1] = std::tolower(s[ind+1]);
+			s[ind+2] = std::tolower(s[ind+2]);
+			s[ind+3] = std::tolower(s[ind+3]);
+			ind += 4;
+		}
+		//do the rest linearly
+		for (int i = 0; i < (l&3); ++i)
+		{
+			s[ind++] = std::tolower(s[ind]);
+		}
+	}
+	inline void toLower(std::string& ss)
+	{
+		int l = ss.size();
+		auto s = ss.data();
+		int ind = 0;
+		// spec of "simd"
+		for (int i = 0; i < l / 4; i++) {
+			s[ind] = std::tolower(s[ind]);
+			s[ind + 1] = std::tolower(s[ind + 1]);
+			s[ind + 2] = std::tolower(s[ind + 2]);
+			s[ind + 3] = std::tolower(s[ind + 3]);
+			ind += 4;
+		}
+		//do the rest linearly
+		for (int i = 0; i < (l & 3); ++i)
+			s[ind++] = std::tolower(s[ind]);
+	}
+	inline void toUpper(char* s)
+	{
+		int l = strlen(s);
+		int ind = 0;
+		// spec of "simd"
+		for (int i = 0; i < l / 4; i++) {
+			s[ind] = std::toupper(s[ind]);
+			s[ind + 1] = std::toupper(s[ind + 1]);
+			s[ind + 2] = std::toupper(s[ind + 2]);
+			s[ind + 3] = std::toupper(s[ind + 3]);
+			ind += 4;
+		}
+		//do the rest linearly
+		for (int i = 0; i < (l & 3); ++i)
+		{
+			s[ind++] = std::toupper(s[ind]);
+		}
+	}
+	inline void toUpper(std::string& ss)
+	{
+		int l = ss.size();
+		auto s = ss.data();
+		int ind = 0;
+		// spec of "simd"
+		for (int i = 0; i < l / 4; i++) {
+			s[ind] = std::toupper(s[ind]);
+			s[ind + 1] = std::toupper(s[ind + 1]);
+			s[ind + 2] = std::toupper(s[ind + 2]);
+			s[ind + 3] = std::toupper(s[ind + 3]);
+			ind += 4;
+		}
+		//do the rest linearly
+		for (int i = 0; i < (l & 3); ++i)
+			s[ind++] = std::toupper(s[ind]);
+	}
 
 	inline bool replaceWith(char* src, char what, char with)
 	{
@@ -178,7 +248,7 @@ namespace SUtil
 			if (!operator bool())
 				return;
 
-			if (ignoreBlanks)
+			if constexpr (ignoreBlanks)
 			{
 				bool first = true;
 				while (m_pointer.empty() || first)
@@ -238,7 +308,7 @@ namespace SUtil
 		{
 			auto div = m_source.find_first_of(m_divider, 0);
 			m_pointer = std::string_view(m_source.data(), div == Stringo::npos ? m_source.size() : div);
-			if (ignoreBlanks)
+			if constexpr (ignoreBlanks)
 			{
 				if (m_pointer.empty())
 					step();

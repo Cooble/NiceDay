@@ -31,8 +31,8 @@ public:
 	inline unsigned int getID() const override { return m_id; }
 
 	const TextureInfo& getInfo() const { return m_info; }
-	void setPixels(float* light_map) override;//todo add template anotation to enable more than jut floats
-	void setPixels(uint8_t* light_map) override;//todo add template anotation to enable more than jut floats
+	void setPixels(float* pixels) override;//todo add template anotation to enable more than jut floats
+	void setPixels(uint8_t* pixels) override;//todo add template anotation to enable more than jut floats
 	bool isProxy() const { return !m_not_proxy; }
 
 	const std::string& getFilePath() const override { return m_info.file_path; }

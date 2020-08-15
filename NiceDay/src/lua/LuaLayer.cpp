@@ -10,6 +10,7 @@
 #include "imguifiledialog/ImGuiFileDialog.h"
 #include "core/NBT.h"
 #include "sol/sol.hpp"
+#include "core/ImGuiLayer.h"
 
 //-----------------------------------------------------------------------------
 // [SECTION] Example App: Debug Console / ShowExampleAppConsole()
@@ -828,7 +829,7 @@ static std::string readStringFromFile(const char* filePath)
 void LuaLayer::onAttach()
 {
 	//settings save and load
-
+	REGISTER_IMGUI_WIN("Lua Console", &m_show_imgui_console);
 	ZeroMemory(text, IM_ARRAYSIZE(text));
 	s_settings = NBT();
 	if (NBT::loadFromFile(s_settings_file, s_settings))
@@ -920,7 +921,7 @@ void LuaLayer::onEvent(Event& e)
 	if (e.getEventType() == Event::EventType::KeyPress)
 	{
 		auto m = dynamic_cast<KeyPressEvent&>(e);
-		if (m.getKey() == GLFW_KEY_L && m.isControlPressed())
+		if (m.getKey() == KeyCode::L && m.isControlPressed())
 		{
 			m_show_imgui_console = !m_show_imgui_console;
 		}

@@ -2,6 +2,21 @@
 #include "WindowTemplate.h"
 #include "Input.h"
 
+
+struct NavigationBar
+{
+	bool moveActive=false;
+	bool lockActive=false;
+	bool rotationActive = false; 
+	bool scrollActive = false;
+	bool freshPress = false;
+	bool freshRelease = false;
+	glm::vec2 drag;
+
+	constexpr bool isAnyActive() { return lockActive | rotationActive | moveActive | scrollActive; }
+	
+	
+};
 class FakeWindow:public WindowTemplate
 {
 private:
@@ -13,10 +28,13 @@ private:
 	bool m_dirty_dim=false;
 	bool m_is_focused;
 	bool m_is_hovered;
-	
 	WindowTemplate* m_window;
 	FrameBuffer* m_fbo;
+	NavigationBar m_nav_bar;
+
+	void drawNavBar();
 public:
+	bool m_enableNavigationBar=true;
 	FakeWindow(WindowTemplate* realWindow,int width, int height, const std::string& title, bool fullscreen = false);
 	~FakeWindow();
 
@@ -51,6 +69,8 @@ public:
 	//render fbo to imgui window
 	void renderView();
 
+	const NavigationBar& getNavigationBar()const { return m_nav_bar; }
+
 	//will convert physical window event to this window event or mark it as consumed if event should be ignored
 	void convertEvent(Event& e);
 
@@ -65,9 +85,9 @@ private:
 	Input* m_input;
 public:
 	FakeInput(FakeWindow* window, Input* realInput);
-	bool isKeyPressed(int button) override;
-	bool isKeyFreshlyPressed(int button)override;
-	bool isKeyFreshlyReleased(int button)override;
-	bool isMousePressed(int button)override;
+	bool isKeyPressed(KeyCode button) override;
+	bool isKeyFreshlyPressed(KeyCode button)override;
+	bool isKeyFreshlyReleased(KeyCode button)override;
+	bool isMousePressed(MouseCode button)override;
 	glm::vec2 getMouseLocation()override;
 };

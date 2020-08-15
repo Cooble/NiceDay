@@ -3,7 +3,7 @@
 #include "graphics/API/VertexArray.h"
 #include "scene/Colli.h"
 
-namespace MeshFactory
+namespace MeshLibrary
 {
 	VertexArray* buildVAO(Mesh* mesh)
 	{
@@ -39,6 +39,7 @@ namespace MeshFactory
 	}
 
 	static std::unordered_map<Strid, MeshPtr> s_meshes;
+
 	MeshPtr loadOrGet(const std::string& filePath)
 	{
 		auto it = s_meshes.find(SID(filePath));
@@ -49,13 +50,23 @@ namespace MeshFactory
 		return t;
 	}
 
+	MeshPtr registerMesh(MeshData* meshData)
+	{
+		auto t = buildNewMesh(meshData);
+		s_meshes[t->getID()] = t;
+		return t;
+	}
+
 	std::unordered_map<Strid, MeshPtr>& getList()
 	{
 		return s_meshes;
 	}
-
+	static MeshPtr nullmesh = nullptr;
 	MeshPtr& get(Strid id)
 	{
-		return s_meshes[id];
+		auto it = s_meshes.find(id);
+		if (it == s_meshes.end())
+			return nullmesh;
+		return it->second;
 	}
 }

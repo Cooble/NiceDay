@@ -1,10 +1,31 @@
 ﻿#pragma once
 #include "layer/Layer.h"
+#include "core/NBT.h"
 //renders specified texture as a imgui window
 
 class NBT;
 class Texture;
 class FrameBuffer;
+
+#define REGISTER_IMGUI_WIN(name,boolPtr) registerImGuiWinFunc(name,boolPtr)
+void registerImGuiWinFunc(std::string_view v, bool* p);
+
+enum class ImGuiLayout
+{
+	DEFAULT,
+	SCREEN,
+	CUSTOM0,
+	NONE
+};
+constexpr const char* getLayoutName(ImGuiLayout type)
+{
+	switch (type) {
+	case ImGuiLayout::DEFAULT: return "Default";
+	case ImGuiLayout::SCREEN: return "Fullscreen";
+	case ImGuiLayout::CUSTOM0: return "Custom0";
+	}
+	return "NOne";
+}
 
 class ImGuiLayer : public Layer
 {
@@ -19,8 +40,19 @@ private:
 		bool owner;
 	};
 	std::vector<View> m_views;
+	struct ImGuiWin
+	{
+		std::string name;
+		bool* opened;
+	};
+	std::vector<ImGuiWin> m_wins;
 
+	NBT m_wins_past;
 
+	ImGuiLayout m_layout_type=ImGuiLayout::DEFAULT;
+	std::string m_iniConfigToLoad;
+	bool m_freshLayoutChange = false;
+	std::string m_iniConfigToSave;
 	void renderViewWindows();
 	FrameBuffer* m_copyFBO;
 public:
@@ -36,6 +68,21 @@ public:
 	void updateTelemetry();
 	void drawTelemetry();
 	void renderBaseImGui();
+	// do this in onAttach to register window in window list,
+	// opened will be switched to show or to completely hide the window
+	void registerWindow(std::string_view windowName, bool* opened);
+	
+	void setINILayoutConfiguration(ImGuiLayout type,bool resetToDefault=false)
+	{
+		if (m_layout_type == type&&!resetToDefault)
+			return;
+		m_iniConfigToSave = std::string(getLayoutName(m_layout_type)) + ".ini";
+		m_layout_type = type;
+		if(!resetToDefault)
+			m_iniConfigToLoad = std::string(getLayoutName(m_layout_type))+".ini";
+		
+		m_freshLayoutChange = resetToDefault || !std::filesystem::exists(std::string(getLayoutName(m_layout_type)) + ".ini");
+	}
 
 	void updateViewAnimation();
 	void animateView();

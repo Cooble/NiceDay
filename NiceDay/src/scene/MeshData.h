@@ -78,7 +78,7 @@ public:
 	}
 	Topology getTopology() const { return m_topology; }
 	Strid getID() { return m_id; }
-	const std::string& getName() const { return m_name; }
+	const std::string& getFilePath() const { return m_name; }
 };
 namespace MeshDataFactory
 {

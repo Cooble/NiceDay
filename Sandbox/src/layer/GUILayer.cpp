@@ -212,6 +212,8 @@ void GUILayer::onRender()
 	m_renderer.pop();
 }
 
+
+
 void GUILayer::onEvent(Event& e)
 {
 	bool flipped = e.isInCategory(Event::EventCategory::Mouse);

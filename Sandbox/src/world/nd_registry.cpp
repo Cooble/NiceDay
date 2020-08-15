@@ -184,9 +184,8 @@ void nd_registry::loadTexturesItems()
 {
 	BlockTextureCreator t;
 	t.createTextures();
-	std::string itemAtlasFolder = ND_RESLOC("res/images/itemAtlas/");
 	TextureAtlas atlas;
-	atlas.createAtlas(itemAtlasFolder, ITEM_ATLAS_SIZE, 32);
+	atlas.createAtlas("res/images/itemAtlas", ITEM_ATLAS_SIZE, 32,TextureAtlasFlags_DontCreateTexture|TextureAtlasFlags_CreateFile);
 	ND_TRACE("Created TextureAtlas with size of {}*{}", ITEM_ATLAS_SIZE, ITEM_ATLAS_SIZE);
 	ItemRegistry::get().initTextures(atlas);
 }
@@ -206,9 +205,8 @@ void nd_registry::loadTexturesEntities()
 void nd_registry::loadTexturesParticles()
 {
 	//particles
-	std::string particleAtlasFolder = ND_RESLOC("res/images/particleAtlas/");
 	TextureAtlas particleAtlas;
-	particleAtlas.createAtlas(particleAtlasFolder, particleAtlasSize, 8);
+	particleAtlas.createAtlas("res/images/particleAtlas", particleAtlasSize, 8,TextureAtlasFlags_CreateFile|TextureAtlasFlags_DontCreateTexture);
 	ND_TRACE("Created ParticleAtlas with size of {}*{}", particleAtlasSize, particleAtlasSize);
 	ParticleRegistry::get().initTextures(particleAtlas);
 }

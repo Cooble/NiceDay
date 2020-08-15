@@ -61,7 +61,7 @@ Item::Item(ItemID id, const std::string& textName)
 
 void Item::onTextureLoaded(const TextureAtlas& atlas)
 {
-	m_texture_pos = atlas.getTexture("item/" + toString());
+	m_texture_pos = atlas.getSubImage("item/" + toString());
 }
 
 int Item::getTextureOffset(const ItemStack& b) const

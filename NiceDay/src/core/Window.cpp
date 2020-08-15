@@ -10,7 +10,7 @@
 #include "platform/OpenGL/GLRenderer.h"
 #include "graphics/API/FrameBuffer.h"
 #include "graphics/Renderer.h"
-#include "App.h"
+#include "stb_image.h"
 
 static void blankFun(Event& e) {}
 static bool is_glfw_initialized = false;
@@ -41,9 +41,23 @@ Window::Window(int width, int height, const std::string& title,bool fullscreen) 
 	
 	glfwWindowHint(GLFW_SAMPLES, 4);
 	
-	// glfw window creation
-	// --------------------
 	m_window = glfwCreateWindow(width, height, title.c_str(), NULL, NULL);
+
+	// load icons
+	// --------------------
+	{
+		stbi_set_flip_vertically_on_load(false);
+
+		int w, h, mbbpp;
+		GLFWimage icons[1];
+		icons->pixels = stbi_load(ND_RESLOC("res/images/nd_icon2.png").c_str(), &w, &h, &mbbpp, 4);
+		icons->width = w;
+		icons->height = h;
+
+		glfwSetWindowIcon(m_window, 1, icons);
+		stbi_image_free((void*)icons[0].pixels);
+	}
+	
 	if (m_window == NULL)
 	{
 		ND_ERROR("Failed to create GLFW window");
@@ -303,7 +317,7 @@ void RealInput::update()
 	for (int i = 0; i < m_keys.size(); ++i)
 	{
 		auto& k = getKey(i);
-		if (isKeyPressed(i)) {
+		if (isKeyPressed((KeyCode)i)) {
 			if (k < 127)
 				++k;
 		}
@@ -313,27 +327,27 @@ void RealInput::update()
 	}
 }
 
-bool RealInput::isKeyPressed(int button)
+bool RealInput::isKeyPressed(KeyCode button)
 {
-	getKey(button);//save this button to vector
+	getKey((int)button);//save this button to vector
 	GLFWwindow* w = (GLFWwindow*)m_window->getWindow();
-	auto state = glfwGetKey(w, button);
+	auto state = glfwGetKey(w, (int)button);
 	return state == GLFW_PRESS || state == GLFW_REPEAT;
 }
-bool RealInput::isKeyFreshlyPressed(int button)
+bool RealInput::isKeyFreshlyPressed(KeyCode button)
 {
-	return getKey(button) == 1;
+	return getKey((int)button) == 1;
 }
-bool RealInput::isKeyFreshlyReleased(int button)
+bool RealInput::isKeyFreshlyReleased(KeyCode button)
 {
-	return getKey(button) == -1;
+	return getKey((int)button) == -1;
 }
 
-bool RealInput::isMousePressed(int button)
+bool RealInput::isMousePressed(MouseCode button)
 {
 	GLFWwindow* w = (GLFWwindow*)m_window->getWindow();
 
-	auto state = glfwGetMouseButton(w, button);
+	auto state = glfwGetMouseButton(w, (int)button);
 	return state == GLFW_PRESS;
 }
 

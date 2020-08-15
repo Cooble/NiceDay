@@ -16,6 +16,9 @@
 #include "platform/OpenGL/GLRenderer.h"
 #include "components_imgui_access.h"
 #include "Atelier.h"
+#include "files/FUtil.h"
+#include "script/NativeScript.h"
+#include "graphics/TextureAtlas.h"
 
 
 struct Env
@@ -37,18 +40,36 @@ struct Env
 
 UniformLayout envLayout;
 static MaterialPtr enviroment;
-static Entity currentCamera;
-EditorCam* editCam;
 
-static void onPointerComponentDestroyed(entt::registry& reg, entt::entity ent)
+static void onCamComponentDestroyed(entt::registry& reg, entt::entity ent)
 {
-	auto& t = reg.get<PointerComponent>(ent);
-	if (t.ptr)
-		free(t.ptr);
+
 }
 
+struct WireMoveScript:NativeScript
+{
+	void onUpdate()
+	{
+		auto& transform = getComponent<TransformComponent>();
+		auto& camTrans = scene->currentCamera().get<TransformComponent>();
+
+		bool rec = false;
+		if (abs((transform.pos.x+20*4) - camTrans.pos.x) > 4) {
+			transform.pos.x = camTrans.pos.x-20*4;
+			rec = true;
+		}
+		if (abs((transform.pos.z+20*4) - camTrans.pos.z) > 4) {
+			transform.pos.z = camTrans.pos.z-20*4;
+			rec = true;
+		}
+		if(rec)
+		transform.recomputeMatrix();
+		
+	}
+};
 void SceneLayer::onAttach()
 {
+	components_imgui_access::windows.init();
 	auto t =Atelier::get();//just init atelier
 	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 	ImGuiIO& io = ImGui::GetIO();
@@ -59,9 +80,9 @@ void SceneLayer::onAttach()
 	config.MergeMode = true;
 	io.Fonts->AddFontFromFileTTF(ND_RESLOC("res/fonts/NotoSansCJKjp-Medium.otf").c_str(), 20, &config, io.Fonts->GetGlyphRangesJapanese());
 	io.Fonts->Build();*/
-
 	m_scene = new NewScene;
-	m_scene->reg().on_destroy<PointerComponent>().connect<&onPointerComponentDestroyed>();
+	m_scene->reg().on_destroy<CameraComponent>().connect<&onCamComponentDestroyed>();
+	components_imgui_access::windows.scene = m_scene;
 
 
 	envLayout.name = "GLO";
@@ -89,10 +110,10 @@ void SceneLayer::onAttach()
 	modelMat->setValue("shines", 64.f);
 
 
-	auto crate1Mesh = MeshFactory::buildNewMesh(Colli::buildMesh("res/models/cube.fbx"));
+	auto crate1Mesh = MeshLibrary::loadOrGet("res/models/cube.fbx");
 
 
-	if (!std::filesystem::exists(ND_RESLOC("res/models/dragon.bin")))
+	if (!FUtil::exists("res/models/dragon.bin"))
 	{
 		ND_INFO("Building dragon binary mesh");
 		MeshDataFactory::writeBinaryFile(
@@ -102,7 +123,7 @@ void SceneLayer::onAttach()
 	{
 		//adding cube_map
 		auto skyTex = Texture::create(TextureInfo(TextureType::_CUBE_MAP, "res/images/skymap2/*.png"));
-		auto mesh = MeshFactory::buildNewMesh(MeshDataFactory::buildCube(40.f));
+		auto mesh = MeshLibrary::registerMesh(MeshDataFactory::buildCube(40.f));
 
 		auto flags = MaterialFlags::DEFAULT_FLAGS;
 		flags = (~(MaterialFlags::FLAG_CULL_FACE | MaterialFlags::FLAG_DEPTH_MASK) & flags) | MaterialFlags::FLAG_CHOP_VIEW_MAT_POS;
@@ -110,7 +131,7 @@ void SceneLayer::onAttach()
 		mat->setValue("cubemap", std::shared_ptr<Texture>(skyTex));
 		auto ent = m_scene->createEntity("SkyBox");
 		ent.emplaceOrReplace<TransformComponent>(glm::vec3(0.f), glm::vec3(1.f), glm::vec3(0.f));
-		ent.emplaceOrReplace<ModelComponent>(mesh, mat);
+		ent.emplaceOrReplace<ModelComponent>(mesh->getID(), mat->getID());
 	}
 	//adding crate
 	{
@@ -118,24 +139,23 @@ void SceneLayer::onAttach()
 		//auto specular = Texture::create(TextureInfo("res/models/crate_specular.png"));
 
 		//auto mesh = NewMeshFactory::buildNewMesh(Colli::buildMesh(ND_RESLOC("res/models/cube.fbx")));
-		auto mesh = crate1Mesh;
 
 		/*auto mat = modelMat->copy("crateMaterial");
 		mat->setValue("diffuse", std::shared_ptr<Texture>(diffuse));
 		mat->setValue("specular", std::shared_ptr<Texture>(specular));
 		mat->setValue("color", glm::vec4(1.0, 1.0, 0, 0));
 		MaterialLibrary::save(mat, "res/crateM.mat");*/
-		auto mat = MaterialLibrary::load("res/models/crateM.mat");
+		auto mat = MaterialLibrary::loadOrGet("res/models/crateM.mat");
 
 		auto ent = m_scene->createEntity("Crate");
 		ent.emplaceOrReplace<TransformComponent>(glm::vec3(1.f), glm::vec3(100.f), glm::vec3(0.f));
-		ent.emplaceOrReplace<ModelComponent>(mesh, mat);
+		ent.emplaceOrReplace<ModelComponent>(crate1Mesh->getID(), mat->getID());
 	}
 	//adding sphere
 	{
 		auto diffuse = Texture::create(TextureInfo("res/models/crate.png"));
 
-		auto mesh = MeshFactory::buildNewMesh(Colli::buildMesh("res/models/sphere.fbx"));
+		auto mesh = MeshLibrary::loadOrGet("res/models/sphere.fbx");
 
 		auto mat = MaterialLibrary::copy(modelMat,"SphereMat");
 		mat->setValue("color", glm::vec4(1.0, 1.0, 0, 0));
@@ -143,7 +163,7 @@ void SceneLayer::onAttach()
 
 		auto ent = m_scene->createEntity("Sphere");
 		ent.emplaceOrReplace<TransformComponent>(glm::vec3(0.f,5.f,0.f), glm::vec3(1.f), glm::vec3(0.f));
-		ent.emplaceOrReplace<ModelComponent>(mesh, mat);
+		ent.emplaceOrReplace<ModelComponent>(mesh->getID(), mat->getID());
 	}
 	//adding dragoon
 	/*{
@@ -171,9 +191,26 @@ void SceneLayer::onAttach()
 		auto ent = m_scene->createEntity("Cam");
 		ent.emplaceOrReplace<TransformComponent>(glm::vec3(0.f), glm::vec3(1.f), glm::vec3(0.f));
 		ent.emplaceOrReplace<CameraComponent>(glm::mat4(1.f), glm::quarter_pi<float>(), 1.f, 100.f);
-		editCam = (EditorCam*)malloc(sizeof(EditorCam));
-		ent.emplaceOrReplace<PointerComponent>(new(editCam)EditorCam(ent));
-		currentCamera = ent;
+		m_scene->currentCamera() = ent;
+		ent.emplaceOrReplace<NativeScriptComponent>();
+		auto& script = ent.get<NativeScriptComponent>();
+		script.bind<EditCameraController>();
+	}
+	//adding wire
+	{
+		auto ent = m_scene->createEntity("Wire");
+		ent.emplaceOrReplace<TransformComponent>(glm::vec3(0.f), glm::vec3(4.f), glm::vec3(0.f));
+		
+		auto mesh = MeshLibrary::registerMesh(MeshDataFactory::buildWirePlane(40,40));
+		auto mat = MaterialLibrary::create({ ShaderLib::loadOrGetShader("res/shaders/Model.shader"),"MAT","WireMat" ,nullptr,MaterialFlags::DEFAULT_FLAGS });
+		mat->setValue("shines", 0.f);
+		mat->setValue("color", glm::vec4(0.5f,0.5f, 0.5f,1));
+		
+		
+		ent.emplaceOrReplace<ModelComponent>(mesh->getID(), mat->getID());
+		ent.emplaceOrReplace<NativeScriptComponent>();
+		auto& script = ent.get<NativeScriptComponent>();
+		script.bind<WireMoveScript>();
 	}
 }
 
@@ -183,8 +220,16 @@ void SceneLayer::onDetach()
 
 void SceneLayer::onUpdate()
 {
-	
-	editCam->onUpdate();
+	auto view = m_scene->reg().view<NativeScriptComponent>();
+	for(auto entity:view)
+	{
+		auto& script = view.get(entity);
+		if (!script.ptr) {
+			script.construct(m_scene->wrap(entity), m_scene);
+			script.onCreate();
+		}
+		script.onUpdate();
+	}
 }
 
 void SceneLayer::onRender()
@@ -193,12 +238,13 @@ void SceneLayer::onRender()
 	Renderer::getDefaultFBO()->bind();
 	Gcon.enableCullFace(true);
 	Gcon.enableDepthTest(true);
+	Entity camEntity = m_scene->currentCamera();
 	//Renderer::getDefaultFBO()->clear(BuffBit::COLOR, { 0,1,0,1 });
-	auto& camCom = currentCamera.get<CameraComponent>();
-	auto& transCom = currentCamera.get<TransformComponent>();
+	auto& camCom = camEntity.get<CameraComponent>();
+	auto& transCom = camEntity.get<TransformComponent>();
 	env.camera_pos = transCom.pos;
 
-	env.view = editCam->getViewMatrix();
+	env.view = camCom.viewMatrix;
 	env.proj = glm::perspective(camCom.fov,
 	                            (float)App::get().getWindow()->getWidth() / (float)App::get()
 	                                                                                   .getWindow()->getHeight(),
@@ -226,21 +272,22 @@ void SceneLayer::onRender()
 		auto& trans = models.get<TransformComponent>(model);
 		trans.recomputeMatrix();
 		auto& mod = models.get<ModelComponent>(model);
-
+		auto& material = mod.Material();
+		auto& mesh = mod.Mesh();
 		//bind mat vars
-		mod.material->bind();
+		material->bind();
 
 		//bind enviroment vars
 		enviroment->setRaw(env);
-		enviroment->bind(0, mod.material->getShader());
-		mod.mesh->vao_temp->bind();
+		enviroment->bind(0, material->getShader());
+		mesh->vao_temp->bind();
 
 		//bind other vars
-		auto s = std::static_pointer_cast<GLShader>(mod.material->getShader());
+		auto s = std::static_pointer_cast<GLShader>(material->getShader());
 		//if(mod.material->getShader()->getLayout().getLayoutByName("world"))
 		s->setUniformMat4("world", trans.trans);
 
-		auto flags = mod.material->getFlags();
+		auto flags = material->getFlags();
 		if (flags != MaterialFlags::DEFAULT_FLAGS) {
 			Gcon.depthMask(flags & MaterialFlags::FLAG_DEPTH_MASK);
 			Gcon.enableCullFace(flags & MaterialFlags::FLAG_CULL_FACE);
@@ -250,10 +297,10 @@ void SceneLayer::onRender()
 		}
 		
 
-		if (mod.mesh->indexData.exists())
-			Gcon.cmdDrawElements(mod.mesh->data->getTopology(), mod.mesh->indexData.count);
+		if (mesh->indexData.exists())
+			Gcon.cmdDrawElements(mesh->data->getTopology(), mesh->indexData.count);
 		else
-			Gcon.cmdDrawArrays(mod.mesh->data->getTopology(), mod.mesh->vertexData.binding.count);
+			Gcon.cmdDrawArrays(mesh->data->getTopology(), mesh->vertexData.binding.count);
 
 		//reset if neccessary
 		if (flags != MaterialFlags::DEFAULT_FLAGS) {
@@ -264,23 +311,21 @@ void SceneLayer::onRender()
 	}
 }
 
-
-
 void SceneLayer::onImGuiRender()
 {
-	auto lastCam = currentCamera;
-	components_imgui_access::drawEntityManager(*m_scene,currentCamera);
-	if (lastCam != currentCamera) {
-		editCam = (EditorCam*)currentCamera.get<PointerComponent>().ptr;
-		lastCam = currentCamera;
-	}
-	
+	components_imgui_access::windows.activeCamera = m_scene->currentCamera();
 	components_imgui_access::windows.drawWindows();
+	m_scene->currentCamera() = components_imgui_access::windows.activeCamera;
 }
 
 void SceneLayer::onEvent(Event& e)
 {
-	editCam->onEvent(e);
-	//auto& com = currentCamera.get<EventConsumerComponent>().consumer;
-	//com(currentCamera,e);
+	auto view = m_scene->reg().view<NativeScriptComponent>();
+	for (auto entity : view)
+	{
+		auto& script = view.get(entity);
+		if (!script.ptr)
+			script.construct(m_scene->wrap(entity), m_scene);
+		script.onEvent(e);
+	}
 }

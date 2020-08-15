@@ -2,6 +2,7 @@
 #include "ndpch.h"
 #include <bitset>
 
+
 namespace NDUtil
 {
 	//List is dynamically allocated, will get bigger if more items are pushed

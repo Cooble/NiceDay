@@ -41,10 +41,14 @@ struct TagComponent
 };
 struct ModelComponent
 {
-	MeshPtr mesh;
-	MaterialPtr material;
+	Strid mesh=0;
+	Strid material=0;
+	
+	MeshPtr& Mesh() { return MeshLibrary::get(mesh); }
+	MaterialPtr& Material() { return MaterialLibrary::get(material); }
+	
 	ModelComponent() = default;
-	ModelComponent(MeshPtr mesh, MaterialPtr ptr) :mesh(mesh), material(ptr){}
+	ModelComponent(Strid mesh, Strid mat) :mesh(mesh), material(mat){}
 
 };
 
@@ -75,17 +79,54 @@ struct CameraComponent
 	float fov;
 	float Near=1;
 	float Far=100;
-	
+	enum CameraType
+	{
+		EDITOR,
+		PLAYER
+	}type= CameraType::EDITOR;
 };
-// points somewhere
-// free() will be called on component destruction
-// 
-// for this to work this ptr needs to point to memory allocated by malloc()!
-// and destructor wont be called whatsoever...
-struct PointerComponent
+
+
+ND_HAS_MEMBER_METHOD_PREPARE(onCreate);
+ND_HAS_MEMBER_METHOD_PREPARE(onDestroy);
+ND_HAS_MEMBER_METHOD_PREPARE(onUpdate);
+ND_HAS_MEMBER_METHOD_PREPARE(onEvent);
+
+class Entity;
+class NewScene;
+class Event;
+
+struct NativeScriptComponent
 {
 	void* ptr=nullptr;
-	PointerComponent() = default;
-	PointerComponent(void* ptr):ptr(ptr){}
+	std::function<void(void**,Entity&,NewScene*)> constructorFunc;
+	std::function<void(void*)> destructorFunc;
+	std::function<void(void*)> onCreateFunc;
+	std::function<void(void*)> onDestroyFunc;
+	std::function<void(void*)> onUpdateFunc;
+	std::function<void(void*,Event&)> onEventFunc;
+
+	template<typename T>
+	void bind()
+	{
+		constructorFunc = [](void** ptr, Entity& entity,NewScene* scene) {*ptr = new T(); ((T*)(*ptr))->entity = entity; ((T*)(*ptr))->scene = scene; };
+		destructorFunc = [](void* ptr) {delete (T*)ptr; };
+
+		if constexpr (ND_HAS_MEMBER_METHOD(T,onCreate))
+			onCreateFunc = [](void* ptr) {((T*)ptr)->onCreate(); };
+		if constexpr (ND_HAS_MEMBER_METHOD(T, onDestroy))
+			onDestroyFunc = [](void* ptr) {((T*)ptr)->onDestroy(); };
+		if constexpr (ND_HAS_MEMBER_METHOD(T, onUpdate))
+			onUpdateFunc = [](void* ptr) {((T*)ptr)->onUpdate(); };
+		if constexpr (ND_HAS_MEMBER_METHOD(T, onEvent))
+			onEventFunc = [](void* ptr, Event& e) {((T*)ptr)->onEvent(e); };
+
+	}
+	void onCreate() { if(onCreateFunc)onCreateFunc(ptr); }
+	void onUpdate() { if (onUpdateFunc)onUpdateFunc(ptr); }
+	void onDestroy() { if (onDestroyFunc)onDestroyFunc(ptr); }
+	void onEvent(Event& e){ if (onEventFunc)onEventFunc(ptr,e); }
+	void construct(Entity& entity,NewScene* scene) { constructorFunc(&ptr,entity,scene); }
+	void destruct() { destructorFunc(ptr); }
 };
 

@@ -69,6 +69,11 @@ void App::init(const AppInfo& info)
 	GContext::init(Renderer::getAPI());
 	Effect::init();
 	m_Window->setEventCallback(m_io.enableSCENE ? physicalWindowCallback : eventCallback);
+	if (m_io.enableIMGUI)
+	{
+		m_ImGuiLayer = new ImGuiLayer();
+		m_LayerStack.pushOverlay(m_ImGuiLayer);
+	}
 	m_lua_layer = new LuaLayer();
 	m_LayerStack.pushLayer(m_lua_layer);
 	if (m_io.enableMONO) {
@@ -77,11 +82,7 @@ void App::init(const AppInfo& info)
 	}
 	if (m_io.enableSOUND)
 		m_LayerStack.pushLayer(new SoundLayer());
-	if (m_io.enableIMGUI)
-	{
-		m_ImGuiLayer = new ImGuiLayer();
-		m_LayerStack.pushOverlay(m_ImGuiLayer);
-	}
+	
 
 }
 

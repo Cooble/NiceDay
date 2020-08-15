@@ -86,15 +86,15 @@ void GUITextBox::onMyEvent(Event& e)
 			auto m = static_cast<KeyPressEvent&>(e);
 			switch (m.getKey())
 			{
-			case GLFW_KEY_ENTER:
+			case KeyCode::ENTER:
 				if (onValueEntered)
 					onValueEntered(*this);
-			case GLFW_KEY_ESCAPE:
+			case KeyCode::ESCAPE:
 				GUIContext::get().setFocusedElement(nullptr);
 				m_has_total_focus = false;
 				e.handled = true;
 				break;
-			case GLFW_KEY_BACKSPACE:
+			case KeyCode::BACKSPACE:
 				if (m_text.size() && cursorPos > 0)
 				{
 					m_text = m_text.substr(0, cursorPos - 1) + m_text.substr(cursorPos);
@@ -103,7 +103,7 @@ void GUITextBox::onMyEvent(Event& e)
 					onValueModified();
 				}
 				break;
-			case GLFW_KEY_DELETE:
+			case KeyCode::DELETE_KEY:
 				if (cursorPos < m_text.size())
 				{
 					m_text = m_text.substr(0, cursorPos) + m_text.substr(cursorPos + 1);
@@ -112,10 +112,10 @@ void GUITextBox::onMyEvent(Event& e)
 				}
 				break;
 
-			case GLFW_KEY_LEFT:
+			case KeyCode::LEFT:
 				moveCursor(-1);
 				break;
-			case GLFW_KEY_RIGHT:
+			case KeyCode::RIGHT:
 				moveCursor(1);
 				break;
 			}
@@ -126,7 +126,7 @@ void GUITextBox::onMyEvent(Event& e)
 		{
 			auto m = static_cast<KeyTypeEvent&>(e);
 			auto key = m.getKey();
-			if (key != GLFW_KEY_UNKNOWN)
+			if (key != KeyCode::UNKNOWN)
 			{
 				m_text.insert(m_text.begin() + cursorPos, (char)key);
 				moveCursor(1);

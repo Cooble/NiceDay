@@ -220,7 +220,7 @@ void ConsoleTestLayer::onEvent(Event& e)
 {
 	auto key = KeyPressEvent::getKeyNumber(e);
 	
-	if (key == GLFW_KEY_F11)
+	if (key == KeyCode::F11)
 	{
 		App::get().getWindow()->toggleFullscreen();
 	}
@@ -229,7 +229,7 @@ void ConsoleTestLayer::onEvent(Event& e)
 	if (e.handled)
 		return;
 
-	char c = KeyTypeEvent::getKeyNumber(e);
+	char c = (char)KeyTypeEvent::getKeyNumber(e);
 	std::string currentLine = lines[lines.size() - 1];
 	if (c != -1)
 	{
@@ -247,7 +247,7 @@ void ConsoleTestLayer::onEvent(Event& e)
 	}
 	key = KeyPressEvent::getKeyNumber(e);
 	return;
-	if (key == GLFW_KEY_ENTER)
+	if (key == KeyCode::ENTER)
 	{
 		while (lines.size() > MAX_LINES)
 		{
@@ -259,14 +259,14 @@ void ConsoleTestLayer::onEvent(Event& e)
 		rebuildMesh();
 		e.handled = true;
 	}
-	else if (key == GLFW_KEY_BACKSPACE)
+	else if (key == KeyCode::BACKSPACE)
 	{
 		lines[lines.size() - 1] = currentLine.substr(0, currentLine.size() - 1);
 		showCursor();
 		rebuildMesh();
 		e.handled = true;
 	}
-	else if (key == GLFW_KEY_LEFT)
+	else if (key == KeyCode::LEFT)
 	{
 		if ((sizeOfLines() - lines[lines.size() - 1].size()) < cursor->cursorPos - 1)
 		{
@@ -277,7 +277,7 @@ void ConsoleTestLayer::onEvent(Event& e)
 
 		e.handled = true;
 	}
-	else if (key == GLFW_KEY_RIGHT)
+	else if (key == KeyCode::RIGHT)
 	{
 		if (sizeOfLines() >= cursor->cursorPos)
 		{
@@ -288,7 +288,7 @@ void ConsoleTestLayer::onEvent(Event& e)
 
 		e.handled = true;
 	}
-	if (key == GLFW_KEY_F11)
+	if (key == KeyCode::F11)
 	{
 		App::get().getWindow()->setFullScreen(!App::get().getWindow()->isFullscreen());
 	}

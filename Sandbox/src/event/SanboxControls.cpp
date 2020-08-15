@@ -1,19 +1,19 @@
 #include "SandboxControls.h"
-#include "GLFW/glfw3.h"
 #include "event/ControlMap.h"
+#include "event/KeyEvent.h"
 
 
-ControlType Controls::SPAWN_ENTITY=			GLFW_KEY_E;
-ControlType Controls::DROP_ITEM =			GLFW_KEY_Q;
-ControlType Controls::OPEN_CONSOLE =		GLFW_KEY_F;
-ControlType Controls::OPEN_INVENTORY =		GLFW_KEY_I;
-ControlType Controls::GO_UP =				GLFW_KEY_UP;
-ControlType Controls::GO_DOWN =				GLFW_KEY_DOWN;
-ControlType Controls::GO_LEFT =				GLFW_KEY_LEFT;
-ControlType Controls::GO_RIGHT =			GLFW_KEY_RIGHT;
-ControlType Controls::SPAWN_TNT=			GLFW_KEY_T;
-ControlType Controls::SPAWN_BULLETS =		GLFW_KEY_B;
-ControlType Controls::FLY_MODE =			GLFW_KEY_C;
+ControlType Controls::SPAWN_ENTITY=			(ControlType)KeyCode::E;
+ControlType Controls::DROP_ITEM =			(ControlType)KeyCode::Q;
+ControlType Controls::OPEN_CONSOLE =		(ControlType)KeyCode::F;
+ControlType Controls::OPEN_INVENTORY =		(ControlType)KeyCode::I;
+ControlType Controls::GO_UP =				(ControlType)KeyCode::UP;
+ControlType Controls::GO_DOWN =				(ControlType)KeyCode::DOWN;
+ControlType Controls::GO_LEFT =				(ControlType)KeyCode::LEFT;
+ControlType Controls::GO_RIGHT =			(ControlType)KeyCode::RIGHT;
+ControlType Controls::SPAWN_TNT =			(ControlType)KeyCode::T;
+ControlType Controls::SPAWN_BULLETS =		(ControlType)KeyCode::B;
+ControlType Controls::FLY_MODE =			(ControlType)KeyCode::C;
 
 void Controls::init()
 {

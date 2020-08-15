@@ -76,6 +76,7 @@ class NewScene
 {
 private:
 	entt::registry m_reg;
+	Entity m_current_camera=Entity::null;
 public:
 	Entity createEntity(const char* name="Invalid") {
 		Entity e{m_reg.create(), &m_reg };
@@ -94,4 +95,5 @@ public:
 		return m_reg.group<Owned...>(entt::exclude_t<Exclude...>());
 	}
 	entt::registry& reg() { return m_reg; }
+	Entity& currentCamera() { return m_current_camera; }
 };

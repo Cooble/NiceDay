@@ -13,5 +13,5 @@ ParticleID ParticleRegistry::registerTemplate(const ParticleTemplate& t)
 void ParticleRegistry::initTextures(const TextureAtlas& atlas)
 {
 	for (auto& t : m_templates)
-		t.texture_pos = atlas.getTexture(t.name);
+		t.texture_pos = atlas.getSubImage(t.name);
 }

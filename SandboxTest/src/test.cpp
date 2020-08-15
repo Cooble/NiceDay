@@ -1,7 +1,6 @@
 #define ND_TEST
 #include "core/App.h"
 
-#include "graphics/API/Shader.h"
 #include "scene/SceneLayer.h"
 
 class TestApp:public App
@@ -22,10 +21,15 @@ public:
 	}
 	
 };
+
+
 #ifdef ND_TEST
 int main()
 {
 	Log::init();
+
+	
+	
 	TestApp t;
 
 	t.start();

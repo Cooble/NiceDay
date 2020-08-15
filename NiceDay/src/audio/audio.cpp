@@ -417,7 +417,7 @@ bool SoundBuffer::loadFromFile(const char* filePath)
 		ND_ERROR("cannot load sound {}", filePath);
 		return false;
 	}
-	m_id = SID(std::string(filePath));
+	m_id = SID(filePath);
 	m_is_malloc = true;
 	return true;
 }

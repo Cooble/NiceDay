@@ -25,7 +25,7 @@ res/models
 *.world
 *.nbt
 *.world.entity
-*imgui.ini
+*.ini
 *lua_editor_settings.json
 *settings.json
 *log.*.txt

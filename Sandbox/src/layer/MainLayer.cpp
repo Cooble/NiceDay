@@ -35,7 +35,7 @@ void MainLayer::onEvent(Event& e)
 	if(e.getEventType()==Event::EventType::KeyPress)
 	{
 		auto event = dynamic_cast<KeyPressEvent*>(&e);
-		if (event->getKey() == GLFW_KEY_F11) {
+		if (event->getKey() == KeyCode::F11) {
 			App::get().getWindow()->setFullScreen(!App::get().getWindow()->isFullscreen());
 			e.handled = true;
 			ND_INFO("Fullscreen mode: {}", !App::get().getWindow()->isFullscreen());

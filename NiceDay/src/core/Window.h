@@ -44,10 +44,10 @@ public:
 	RealInput(Window* window);
 	~RealInput() = default;
 	void update() override;
-	bool isKeyPressed(int button) override;
-	bool isKeyFreshlyPressed(int button)override;
-	bool isKeyFreshlyReleased(int button)override;
-	bool isMousePressed(int button)override;
+	bool isKeyPressed(KeyCode button) override;
+	bool isKeyFreshlyPressed(KeyCode button)override;
+	bool isKeyFreshlyReleased(KeyCode button)override;
+	bool isMousePressed(MouseCode button)override;
 	glm::vec2 getMouseLocation()override;
 };
 

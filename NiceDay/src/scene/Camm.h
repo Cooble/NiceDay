@@ -1,18 +1,18 @@
 #pragma once
 #include "ndpch.h"
 #include "NewScene.h"
+#include "script/NativeScript.h"
 
 struct CameraComponent;
-class Event;
-struct Cam 
+
+struct CameraController:NativeScript
 {
+	float mouseSensitivity = 2.5f;
 	float speed = 0.4f;
 	float turnSpeed = 0.01;
-	Entity entity;
-
 	struct Angles
 	{
-		union{
+		union {
 			struct
 			{
 				float pitch;
@@ -22,14 +22,13 @@ struct Cam
 			glm::vec3 rot;
 		};
 		Angles() = default;
-		Angles(glm::vec3 rot):rot(rot){}
+		Angles(glm::vec3 rot) :rot(rot) {}
 		operator glm::vec3() { return rot; }
 	};
 	Angles* angles;
 	glm::vec3* position;
-	void refreshData();
-	Cam(Entity e);
-	virtual ~Cam() = default;
+	glm::vec2 mouseCorrdsOffset=glm::vec2(0.f);
+	glm::vec3 camRot;
 
 	glm::mat4 getLookingMat()
 	{
@@ -41,7 +40,7 @@ struct Cam
 		glm::quat q(*angles);
 		return  glm::vec3(glm::toMat4(q) * glm::vec4(0, 0, -1, 0));
 	}
-	virtual glm::mat4 getViewMatrix()
+	glm::mat4 getViewMatrix()
 	{
 		auto out = glm::rotate(glm::mat4(1.f), -(*angles).pitch, { 1, 0, 0 });
 		out = glm::rotate(out, -(*angles).yaw, { 0, 1, 0 });
@@ -50,34 +49,21 @@ struct Cam
 		return glm::translate(out, -(*position));
 	}
 
-	virtual void go(const glm::vec3& relativeDirection) {}
-
-	virtual void onEvent(Event& e) {}
-
-	virtual void onUpdate() {}
+	void loadComponentsData();
 };
-
-struct PlayerCam : Cam
+struct PlayerCameraController :CameraController
 {
-	float mouseSensitivity = 2.5f;
-	glm::vec2 currentMouseCoords;
-	glm::vec3 camRot;
-
 	bool fullRotation = false;
-	PlayerCam(Entity e);
-	void onEvent(Event& e) override;
+	void onEvent(Event& e);
 
+	void onUpdate();
 
-	void onUpdate() override;
-
-	void go(const glm::vec3& relativeDirection) override;
+	void go(const glm::vec3& relativeDirection);
+	
 };
-
-struct EditorCam : Cam
+struct EditCameraController:CameraController
 {
-	float mouseSensitivity = 2.5f;
-	glm::vec2 currentMouseCoords;
-	glm::vec3 camRot;
+	float metersPerPixel = 0.01f;
 	glm::vec3 camPos;
 	glm::vec3 farPoint;
 	const float pointDistance = 10;
@@ -87,10 +73,8 @@ struct EditorCam : Cam
 	bool fullMove = false;
 	bool fullRotRelative = false;
 
-	EditorCam(Entity e);
-	void onEvent(Event& e) override;
+	void onEvent(Event& e);
+	void onUpdate();
 
-	void onUpdate() override;
-
-	void go(const glm::vec3& relativeDirection) override;
+	void go(const glm::vec3& relativeDirection);
 };

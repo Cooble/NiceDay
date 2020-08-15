@@ -2,6 +2,7 @@
 #include "ndpch.h"
 #include <utility>
 #include "ResourceMan.h"
+#include <type_traits>
 
 template<class T>
 using Ref = std::shared_ptr<T>;
@@ -75,6 +76,17 @@ inline TimerStaper::~TimerStaper()
 #define ND_RESLOC(x)\
 	ResourceMan::getResourceLoc(x)
 
+
+#define ND_HAS_MEMBER_METHOD_PREPARE(methName)\
+template<typename T, typename U = void>\
+struct Has_##methName :std::false_type{};\
+\
+template<typename T>\
+struct Has_##methName <T,decltype(/*std::is_member_function_pointer<decltype(*/&T::##methName/*)>::value*/,void())>\
+:std::is_member_function_pointer<decltype(&T::##methName)>{};
+
+#define ND_HAS_MEMBER_METHOD(Type,methName)\
+	Has_##methName <Type>::value
 
 
 

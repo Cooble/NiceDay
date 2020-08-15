@@ -1,6 +1,12 @@
 #pragma once
 #include "Event.h"
 
+enum class MouseCode
+{
+	LEFT     = 0 ,
+	RIGHT    = 1 ,
+	MIDDLE   = 2 
+};
 class MouseEvent : public Event
 {
 private:
@@ -17,13 +23,13 @@ public:
 		m_x(x), m_y(y)
 	{
 	}
-	inline void flipY(float screenHeight)
+	void flipY(float screenHeight)
 	{
 		m_y = screenHeight - 1 - m_y;
 	}
-	inline float getX() const { return m_x; }
-	inline float getY() const { return m_y; }
-	inline const glm::vec2& getPos() const { return m_pos; }
+	float getX() const { return m_x; }
+	float getY() const { return m_y; }
+	const glm::vec2& getPos() const { return m_pos; }
 	//for internal engine purposes (do not use)
 	void setPos(float x, float y) { m_x = x; m_y = y; }
 };
@@ -41,8 +47,8 @@ public:
 	{
 	}
 
-	inline float getScrollX() const { return m_scrollX; }
-	inline float getScrollY() const { return m_scrollY; }
+	float getScrollX() const { return m_scrollX; }
+	float getScrollY() const { return m_scrollY; }
 	EVENT_TYPE_BUILD(MouseScroll)
 	EVENT_CATEGORY_BUILD(Mouse)
 	EVENT_COPY(MouseScrollEvent)
@@ -111,7 +117,7 @@ public:
 	{
 	}
 
-	inline int getButton() const { return m_button; }
+	MouseCode getButton() const { return (MouseCode)m_button; }
 	EVENT_TYPE_BUILD(MousePress)
 	EVENT_CATEGORY_BUILD(Mouse | MouseKey)
 	EVENT_COPY(MousePressEvent)
@@ -127,7 +133,7 @@ public:
 	{
 	}
 
-	inline int getButton() const { return m_button; }
+	MouseCode getButton() const { return (MouseCode)m_button; }
 	EVENT_TYPE_BUILD(MouseRelease)
 	EVENT_CATEGORY_BUILD(Mouse | MouseKey)
 	EVENT_COPY(MouseReleaseEvent)

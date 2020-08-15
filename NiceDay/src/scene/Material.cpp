@@ -290,8 +290,11 @@ void MaterialLibrary::save(MaterialPtr& ptr, const std::string& path)
 	NBT::saveToFile(path, e);
 }
 
-MaterialPtr MaterialLibrary::load(const std::string& filepath)
+MaterialPtr MaterialLibrary::loadOrGet(const std::string& filepath)
 {
+	auto it = m_materials.find(SID(filepath));
+	if (it != m_materials.end())
+		return it->second;
 	NBT e;
 	NBT::loadFromFile(filepath, e);
 	if (e.size() == 0)
@@ -336,10 +339,12 @@ bool& MaterialLibrary::isDirty(Strid mat)
 	ASSERT(it != m_dirties.end(), "This material is not in lib");
 	return it->second;
 }
-
+static std::shared_ptr<Material> nullMat(nullptr);
 MaterialPtr& MaterialLibrary::get(Strid id)
 {
 	auto it = m_materials.find(id);
-	ASSERT(it != m_materials.end(), "This material is not in lib");
+	if (it == m_materials.end())
+		return nullMat;
+	//ASSERT(it != m_materials.end(), "This material is not in lib");
 	return it->second;
 }

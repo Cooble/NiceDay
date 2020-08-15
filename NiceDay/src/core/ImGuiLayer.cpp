@@ -11,6 +11,9 @@
 #include "graphics/API/Texture.h"
 #include "graphics/API/FrameBuffer.h"
 #include "graphics/Effect.h"
+#include "scene/GlobalAccess.h"
+#include <entt/entt.hpp>
+#include "FakeWindow.h"
 
 static void setImGuiCinema4DStyle()
 {
@@ -92,9 +95,15 @@ static std::vector<MovingBox> s_boxes;
 static const int view_size = 256;
 
 
+void registerImGuiWinFunc(std::string_view v, bool* p)
+{
+	if(App::get().getIO().enableIMGUI)
+		App::get().getImGui()->registerWindow(v, p);
+}
+
 void ImGuiLayer::renderViewWindows()
 {
-	for (int i = m_views.size()-1; i >= 0; --i)
+	for (int i = m_views.size() - 1; i >= 0; --i)
 	{
 		auto& view = m_views[i];
 		if (!view.refreshed) {//remove those which have not been submitted this frame
@@ -106,17 +115,17 @@ void ImGuiLayer::renderViewWindows()
 		}
 		view.refreshed = false;
 
-		if(!view.opened)
+		if (!view.opened)
 			continue;
-		
+
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
 		//ImGui::SetNextWindowDockID(dock_left_id, ImGuiCond_Once);
-		if(s_is_animaiting)
+		if (s_is_animaiting)
 		{
 			auto& box = s_boxes[i];
-			ImGui::SetNextWindowPos(ImVec2(box.srcPos.x,box.srcPos.y),ImGuiCond_Always);
-			ImGui::SetNextWindowSize(ImVec2(box.scale* view_size,box.scale* view_size),ImGuiCond_Always);
+			ImGui::SetNextWindowPos(ImVec2(box.srcPos.x, box.srcPos.y), ImGuiCond_Always);
+			ImGui::SetNextWindowSize(ImVec2(box.scale * view_size, box.scale * view_size), ImGuiCond_Always);
 		}
 		else {
 			ImGui::SetNextWindowSize({ (float)view_size,(float)view_size }, ImGuiCond_Once);
@@ -128,7 +137,7 @@ void ImGuiLayer::renderViewWindows()
 		ImGui::Image((void*)view.texture->getID(), size, { 0,1 }, { 1,0 });
 		ImGui::End();
 	}
-	
+
 }
 
 ImGuiLayer::ImGuiLayer()
@@ -138,7 +147,10 @@ ImGuiLayer::ImGuiLayer()
 
 }
 
+static bool showTelemetrics = false;
+static bool showDemoWindow = false;
 
+static bool firstRun = false;
 void ImGuiLayer::onAttach()
 {
 	// Setup Dear ImGui context
@@ -174,17 +186,66 @@ void ImGuiLayer::onAttach()
 	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 	ImGui_ImplGlfw_InitForOpenGL(window, true);
 	ImGui_ImplOpenGL3_Init("#version 410");
+
+	GlobalAccess::ui_icons.createAtlas("res/models/scene_icons", 64, 1/*, TextureAtlasUVFlags_CreateFile*/);
+	ImGui::GetIO().IniFilename = nullptr;
+
+	registerWindow("Telemetrics", &showTelemetrics);
+	registerWindow("Demo", &showDemoWindow);
+	registerWindow("NavBar", &dynamic_cast<FakeWindow*>(App::get().getWindow())->m_enableNavigationBar);
+	
+	m_iniConfigToLoad = std::string(getLayoutName(m_layout_type)) + ".ini";
+	m_freshLayoutChange = !std::filesystem::exists(std::string(getLayoutName(m_layout_type)) + ".ini");
+	m_wins_past = NBT();
+	NBT::loadFromFile(m_iniConfigToLoad + ".nbt", m_wins_past);
+	
+	firstRun = true;
 }
 
 void ImGuiLayer::onDetach()
 {
+	ImGui::SaveIniSettingsToDisk((std::string(getLayoutName(m_layout_type)) + ".ini").c_str());
+	m_wins_past = NBT();
+	for (auto& win : m_wins)
+		m_wins_past[win.name] = *win.opened;
+	NBT::saveToFile(std::string(getLayoutName(m_layout_type)) + ".ini.nbt", m_wins_past);
+
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui_ImplGlfw_Shutdown();
 	ImGui::DestroyContext();
+
+
 }
 
 void ImGuiLayer::begin()
 {
+	if(firstRun)
+	{
+		firstRun = false;
+		for (auto& win : m_wins)
+			if (m_wins_past.exists(win.name))
+				*win.opened = m_wins_past[win.name];
+	}
+	if (!m_iniConfigToSave.empty()) {
+		ImGui::SaveIniSettingsToDisk(m_iniConfigToSave.c_str());
+		m_wins_past = NBT();
+		if (!m_freshLayoutChange)
+			for (auto& win : m_wins)
+				m_wins_past[win.name] = *win.opened;
+	
+		NBT::saveToFile(m_iniConfigToSave + ".nbt", m_wins_past);
+		m_iniConfigToSave = "";
+	}
+	if (!m_iniConfigToLoad.empty()) {//todo imgui node crash on load ini settings: (assert) because of ImGui::DockContextBuildNodesFromSettings should be called before.
+		ImGui::LoadIniSettingsFromDisk(m_iniConfigToLoad.c_str());
+		m_wins_past = NBT();
+		NBT::loadFromFile(m_iniConfigToLoad + ".nbt", m_wins_past);
+		m_iniConfigToLoad = "";
+		for (auto& win : m_wins)
+			if(m_wins_past.exists(win.name))
+				*win.opened = m_wins_past[win.name];
+	}
+
 	ImGui_ImplOpenGL3_NewFrame();
 	ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
@@ -212,15 +273,13 @@ void ImGuiLayer::end()
 }
 
 static int maxValResetDelay = 60 * 2;
-static bool openTelemetrics = false;
-static bool showTelemetrics = false;
+
 
 void ImGuiLayer::onImGuiRender()
 {
-	static bool show = true;
-	if (show)
-		ImGui::ShowDemoWindow(&show);
-	if (openTelemetrics)
+	if (showDemoWindow)
+		ImGui::ShowDemoWindow(&showDemoWindow);
+	if (showTelemetrics)
 		drawTelemetry();
 
 	renderViewWindows();
@@ -253,8 +312,9 @@ void ImGuiLayer::onEvent(Event& e)
 		//exception when view imgui window is focused - dont consume event
 		if (App::get().getIO().enableSCENE && App::get().getWindow()->isFocused()) {
 
-		}else{
-			
+		}
+		else {
+
 			e.handled = true;
 			return;
 		}
@@ -308,45 +368,41 @@ void ImGuiLayer::renderBaseImGui()
 	// DockSpace
 	ImGuiDockNodeFlags dockspaceFlags = ImGuiDockNodeFlags_AutoHideTabBar;
 	ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
-
+	//ImGui::Load
 	ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspaceFlags);
 
-	if (dock_left_id == 0) {
+	if (m_freshLayoutChange) {
+		m_freshLayoutChange = false;
 
-		ImGui::DockBuilderRemoveNodeChildNodes(dockspace_id);
-		ImGui::DockBuilderSplitNode(dockspace_id, ImGuiDir_Left, 0.8f, &dock_left_id, &dock_right_id);
-		ImGui::DockBuilderSplitNode(dock_left_id, ImGuiDir_Down, 0.2f, &dock_down_id, &dock_up_id);
-		ImGui::DockBuilderDockWindow("FakeWindow", dock_up_id);
-		ImGui::DockBuilderDockWindow("Scene", dock_right_id);
-		ImGui::DockBuilderDockWindow("MMBrowser", dock_down_id);
-		ImGui::DockBuilderFinish(dockspace_id);
+		if (m_layout_type == ImGuiLayout::DEFAULT|| m_layout_type == ImGuiLayout::CUSTOM0) {
+			ImGui::DockBuilderRemoveNodeChildNodes(dockspace_id);
+			ImGui::DockBuilderSplitNode(dockspace_id, ImGuiDir_Left, 0.8f, &dock_left_id, &dock_right_id);
+			ImGui::DockBuilderSplitNode(dock_left_id, ImGuiDir_Down, 0.2f, &dock_down_id, &dock_up_id);
+			ImGui::DockBuilderDockWindow("FakeWindow", dock_up_id);
+			ImGui::DockBuilderDockWindow("Scene", dock_right_id);
+			ImGui::DockBuilderDockWindow("MMBrowser", dock_down_id);
+			ImGui::DockBuilderFinish(dockspace_id);
+		}
+		else if (m_layout_type == ImGuiLayout::SCREEN)
+		{
+			ImGui::DockBuilderRemoveNodeChildNodes(dockspace_id);
+			ImGui::DockBuilderDockWindow("FakeWindow", dockspace_id);
+			ImGui::DockBuilderFinish(dockspace_id);
+		}
 	}
+
+
 	static ImGuiWindowFlags viewWindowFlags = 0;
 
 	if (ImGui::BeginMenuBar())
 	{
-		if (ImGui::BeginMenu("Docking"))
-		{
-			// Disabling fullscreen would allow the window to be moved to the front of other windows,
-			// which we can't undo at the moment without finer window depth/z control.
-			//ImGui::MenuItem("Fullscreen", NULL, &opt_fullscreen_persistant);
-
-			if (ImGui::MenuItem("Flag: NoSplit", "", (dockspace_flags & ImGuiDockNodeFlags_NoSplit) != 0))                 dockspace_flags ^= ImGuiDockNodeFlags_NoSplit;
-			if (ImGui::MenuItem("Flag: NoResize", "", (dockspace_flags & ImGuiDockNodeFlags_NoResize) != 0))                dockspace_flags ^= ImGuiDockNodeFlags_NoResize;
-			if (ImGui::MenuItem("Flag: NoDockingInCentralNode", "", (dockspace_flags & ImGuiDockNodeFlags_NoDockingInCentralNode) != 0))  dockspace_flags ^= ImGuiDockNodeFlags_NoDockingInCentralNode;
-			if (ImGui::MenuItem("Flag: PassthruCentralNode", "", (dockspace_flags & ImGuiDockNodeFlags_PassthruCentralNode) != 0))     dockspace_flags ^= ImGuiDockNodeFlags_PassthruCentralNode;
-			if (ImGui::MenuItem("Flag: AutoHideTabBar", "", (dockspace_flags & ImGuiDockNodeFlags_AutoHideTabBar) != 0))          dockspace_flags ^= ImGuiDockNodeFlags_AutoHideTabBar;
-			ImGui::Separator();
-			if (ImGui::MenuItem("Close DockSpace", NULL, false, p_open != NULL))
-				p_open = false;
-			ImGui::EndMenu();
-		}
-		if (ImGui::BeginMenu("Views"))
+		
+		if (ImGui::BeginMenu("View"))
 		{
 			for (auto& view : m_views)
 				if (ImGui::MenuItem(view.name.c_str(), "", view.opened))	view.opened = !view.opened;
 			ImGui::Separator();
-			
+
 			if (ImGui::MenuItem("Enable All", "", false)) {
 				for (auto& view : m_views) view.opened = true;
 			}
@@ -354,7 +410,7 @@ void ImGuiLayer::renderBaseImGui()
 				for (auto& view : m_views) view.opened = false;
 
 
-			ImGui::PushStyleColor(ImGuiCol_Text, {0.3f,0.3f,0.3f,1.f});
+			ImGui::PushStyleColor(ImGuiCol_Text, { 0.3f,0.3f,0.3f,1.f });
 			if (ImGui::MenuItem("Enable All (EasterEgg)", "", false)) {
 				for (auto& view : m_views) view.opened = true;
 				animateView();
@@ -362,11 +418,45 @@ void ImGuiLayer::renderBaseImGui()
 			ImGui::PopStyleColor();
 			ImGui::EndMenu();
 		}
+		if (ImGui::BeginMenu("Window"))
+		{
+			for (auto& win : m_wins)
+				ImGui::MenuItem(win.name.c_str(), "", win.opened);
+			ImGui::EndMenu();
+		}
+		ImGui::SameLine(ImGui::GetWindowContentRegionMax().x - 60);
+		if (ImGui::BeginMenu("Layout"))
+		{
+			// Disabling fullscreen would allow the window to be moved to the front of other windows,
+			// which we can't undo at the moment without finer window depth/z control.
+			//ImGui::MenuItem("Fullscreen", NULL, &opt_fullscreen_persistant);
+
+			if (ImGui::MenuItem(getLayoutName(ImGuiLayout::DEFAULT), "", m_layout_type == ImGuiLayout::DEFAULT, m_layout_type != ImGuiLayout::DEFAULT))
+				this->setINILayoutConfiguration(ImGuiLayout::DEFAULT);
+			if (ImGui::MenuItem(getLayoutName(ImGuiLayout::SCREEN), "", m_layout_type == ImGuiLayout::SCREEN, m_layout_type != ImGuiLayout::SCREEN))
+				this->setINILayoutConfiguration(ImGuiLayout::SCREEN);
+			if (ImGui::MenuItem(getLayoutName(ImGuiLayout::CUSTOM0), "", m_layout_type == ImGuiLayout::CUSTOM0, m_layout_type != ImGuiLayout::CUSTOM0))
+				this->setINILayoutConfiguration(ImGuiLayout::CUSTOM0);
+			ImGui::Separator();
+			if (ImGui::MenuItem("Reset current layout"))
+				this->setINILayoutConfiguration(m_layout_type, true);
+			ImGui::EndMenu();
+
+		}
 
 		ImGui::EndMenuBar();
 	}
 
 	ImGui::End();
+}
+
+void ImGuiLayer::registerWindow(std::string_view windowName, bool* opened)
+{
+	for (auto& m_win : m_wins)
+		if (m_win.name == windowName)
+			return;
+	m_wins.push_back({ std::string(windowName), opened });
+
 }
 
 
@@ -380,29 +470,29 @@ void ImGuiLayer::animateView()
 	s_is_animaiting = true;
 	s_boxes.clear();
 	auto realDim = App::get().getPhysicalWindow()->getDimensions();
-	auto realPos= App::get().getPhysicalWindow()->getPos();
+	auto realPos = App::get().getPhysicalWindow()->getPos();
 
 	int currentX = padding;
-	int currentY= padding;
-	
+	int currentY = padding;
+
 	for (int i = 0; i < m_views.size(); ++i)
 	{
 		auto from = realPos + glm::vec2(2, 2);
 		auto to = realPos + glm::vec2(currentX, currentY);
 		//auto sp = glm::normalize(to - from) * speed;
 		auto sp = (to - from) * speed;
-		s_boxes.push_back({i,from,to,sp,speed,0.01 });
+		s_boxes.push_back({ i,from,to,sp,speed,0.01 });
 		currentX += view_size + padding;
-		if (currentX+view_size >= realDim.x)
+		if (currentX + view_size >= realDim.x)
 		{
 			currentX = padding;
 			currentY += view_size + padding;
 		}
 
-		
+
 	}
-	
-	
+
+
 }
 
 void ImGuiLayer::updateViewAnimation()
@@ -410,12 +500,12 @@ void ImGuiLayer::updateViewAnimation()
 	if (s_boxes.size() == 0)
 		return;
 	static int will_die_in = 0;
-	if (will_die_in>0)
+	if (will_die_in > 0)
 	{
 		if (--will_die_in == 0)
 			s_is_animaiting = false;
 	}
-	if(s_is_animaiting&&will_die_in==0)
+	if (s_is_animaiting && will_die_in == 0)
 	{
 		auto& box = s_boxes[current_index_idx];
 		box.srcPos += box.speed;
@@ -424,33 +514,31 @@ void ImGuiLayer::updateViewAnimation()
 			s_is_animaiting = false;
 			return;
 		}
-		if(
+		if (
 			box.srcPos.x + box.speed.x > box.targetPos.x &&
 			box.srcPos.y + box.speed.y > box.targetPos.y)
 		{
 			box.scale = 1;
 			box.srcPos = box.targetPos;
-			if(++current_index_idx==s_boxes.size())
+			if (++current_index_idx == s_boxes.size())
 			{
 				will_die_in = 5;//done
 			}
 		}
-	
-	
-		
+
+
+
 
 	}
 }
 
-
-
-void ImGuiLayer::renderView(const std::string& name,const  Texture* t)
+void ImGuiLayer::renderView(const std::string& name, const  Texture* t)
 {
 	if (!t)
 		return;
 	for (auto& view : m_views)
 	{
-		if(view.name==name)
+		if (view.name == name)
 		{
 			view.texture = t;
 			view.refreshed = true;
@@ -458,10 +546,10 @@ void ImGuiLayer::renderView(const std::string& name,const  Texture* t)
 		}
 	}
 	m_views.push_back({ true,name,t,true,false });
-	
+
 }
 
-void ImGuiLayer::renderViewProxy(const std::string& name,const Texture* t)
+void ImGuiLayer::renderViewProxy(const std::string& name, const Texture* t)
 {
 	if (!t)
 		return;
@@ -472,9 +560,9 @@ void ImGuiLayer::renderViewProxy(const std::string& name,const Texture* t)
 			view.refreshed = true;
 			if (!view.opened)
 				return;//no render if window not opened
-			
+
 			ASSERT(view.owner, "Change in ownership not permitted");
-			
+
 			if (t->getDimensions() != view.texture->getDimensions()) {
 				delete view.texture;
 				view.texture = Texture::create(TextureInfo().size(t->getWidth(), t->getHeight()));
@@ -487,46 +575,38 @@ void ImGuiLayer::renderViewProxy(const std::string& name,const Texture* t)
 			Gcon.enableDepthTest(false);
 			Effect::render(t, m_copyFBO);
 			m_copyFBO->unbind();
-			
+
 			return;
 		}
 	}
-	
+
 	auto  tex = Texture::create(TextureInfo().size(t->getWidth(), t->getHeight()));
 	m_copyFBO->bind();
 	m_copyFBO->attachTexture(tex->getID(), 0);
 	Gcon.setViewport(t->getWidth(), t->getHeight());
 	Gcon.disableBlend();
 	Gcon.enableDepthTest(false);
-	Effect::render(t,m_copyFBO);
+	Effect::render(t, m_copyFBO);
 	m_copyFBO->unbind();
-	
+
 	m_views.push_back({ true,name,tex,true,true });
-	
+
 }
 
 void ImGuiLayer::updateTelemetry()
 {
-	if (App::get().getInput().isKeyFreshlyPressed(GLFW_KEY_D))
-		if (App::get().getInput().isKeyPressed(GLFW_KEY_LEFT_CONTROL))
-		{
-			openTelemetrics = !openTelemetrics;
-			if (openTelemetrics)
-				showTelemetrics = true;
-		}
+	if (App::get().getInput().isKeyFreshlyPressed(KeyCode::D))
+		if (App::get().getInput().isKeyPressed(KeyCode::LEFT_CONTROL))
+			showTelemetrics = !showTelemetrics;
 }
 
 void ImGuiLayer::drawTelemetry()
 {
 	if (!ImGui::Begin("Telemetrics", &showTelemetrics,
-		ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_AlwaysAutoResize))
+		ImGuiWindowFlags_NoNav | ImGuiWindowFlags_AlwaysAutoResize))
 	{
 		ImGui::End();
 		return;
-	}
-	if (!showTelemetrics)
-	{
-		openTelemetrics = false;
 	}
 	//todo following lines should be called by onupdate()
 	if (ImGui::TreeNode("Tick"))
@@ -550,15 +630,13 @@ void ImGuiLayer::drawTelemetry()
 	ImGui::Separator();
 	ImGui::Value("Scheduled Tasks: ", ND_SCHED.size());
 	ImGui::Separator();
-	static bool shouldOpen;
+	/*static bool shouldOpen;
 	if (ImGui::Checkbox("Soundlayer", &shouldOpen))
 	{
 		if (shouldOpen)
 			App::get().fireEvent(MessageEvent("openSoundLayer"));
 		else App::get().fireEvent(MessageEvent("closeSoundLayer"));
-	}
-
-	ImGui::Separator();
+	}*/
 	auto mouseLoc = App::get().getInput().getMouseLocation();
 	ImGui::Text("Mouse[%d, %d]", (int)mouseLoc.x, (int)mouseLoc.y);
 	drawGlobals();

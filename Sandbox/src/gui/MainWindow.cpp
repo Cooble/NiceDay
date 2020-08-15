@@ -527,8 +527,8 @@ ControlsWindow::ControlsWindow(const MessageConsumer& c)
 				if(eve.getEventType()==Event::EventType::KeyPress)
 				{
 					auto m = static_cast<KeyPressEvent&>(eve);
-					ControlMap::setValueAtPointer(titlo,m.getKey());
-					button->getTextElement()->setText(titlo + ": " + Font::colorize(Font::BLACK, "#013220") + ControlMap::getKeyName(m.getKey()));
+					ControlMap::setValueAtPointer(titlo,(uint64_t)m.getKey());
+					button->getTextElement()->setText(titlo + ": " + Font::colorize(Font::BLACK, "#013220") + ControlMap::getKeyName((uint64_t)m.getKey()));
 					GUIContext::get().setFocusedElement(nullptr);
 				}
 			}else if(eve.getEventType()==Event::EventType::MouseFocusGain)
@@ -573,8 +573,8 @@ ControlsWindow::ControlsWindow(const MessageConsumer& c)
 				if (eve.getEventType() == Event::EventType::KeyPress)
 				{
 					auto m = static_cast<KeyPressEvent&>(eve);
-					ControlMap::setValueAtPointer(titlo, m.getKey());
-					button->getTextElement()->setText(titlo + ": " + Font::colorize(Font::BLACK, "#013220") + ControlMap::getKeyName(m.getKey()));
+					ControlMap::setValueAtPointer(titlo, (uint64_t)m.getKey());
+					button->getTextElement()->setText(titlo + ": " + Font::colorize(Font::BLACK, "#013220") + ControlMap::getKeyName((uint64_t)m.getKey()));
 					GUIContext::get().setFocusedElement(nullptr);
 				}
 			}

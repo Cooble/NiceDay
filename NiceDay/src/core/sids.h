@@ -17,8 +17,7 @@
 
 	To obtain string from id call StringIdLookup::getString(id)
  */
-#define DEBUG_ID_LOOKUP_ENABLE 1
-
+#define DEBUG_ID_LOOKUP_ENABLE 0
 
 
 // disable overflow warnings due to intentional large integer multiplication
@@ -35,6 +34,10 @@ constexpr unsigned long long stringIdHashConcat(unsigned long long base, const c
 constexpr unsigned long long stringIdHash(const char* str)
 {
 	return stringIdHashConcat(0xcbf29ce484222325, str);
+}
+constexpr unsigned long long stringIdHash(const std::string& str)
+{
+	return stringIdHashConcat(0xcbf29ce484222325, str.c_str());
 }
 
 //-----------------------------------------------------------------------------
@@ -62,6 +65,14 @@ public:
 	StringId concat(const char* str) const
 	{
 		return StringId(stringIdHashConcat(m_data, str));
+	}
+	StringId concat(char str) const
+	{
+		return StringId(stringIdHashConcat(m_data, &str));
+	}
+	StringId concat(const std::string& str) const
+	{
+		return StringId(stringIdHashConcat(m_data, str.c_str()));
 	}
 
 	Strid getValue() const { return m_data; }
@@ -111,11 +122,11 @@ public:
 
 
 
-#if DEBUG_ID_LOOKUP_ENABLE==1
+#if DEBUG_ID_LOOKUP_ENABLE == 1
 	#define SID(str) (StringIdLookup::sid((str)))
 	#define SIDS(str) (StringIdLookup::sids((str)))
 #else
-	#define SID(str) (StringIdHash(str))
+	#define SID(str) (stringIdHash(str))
 	#define SIDS(str) (StringId(str))
 #endif
 

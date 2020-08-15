@@ -3,6 +3,7 @@
 #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
 #include <spdlog/common.h>
 #include "spdlog/spdlog.h"
+#include <spdlog/fmt/bundled/ostream.h>
 
 class Log {
 public:
@@ -23,3 +24,24 @@ private:
 #define ND_WARN(...)     SPDLOG_LOGGER_WARN(Log::GetCoreLogger(), __VA_ARGS__)
 #define ND_ERROR(...)    SPDLOG_LOGGER_ERROR(Log::GetCoreLogger(), __VA_ARGS__)
 #define ND_WAIT_FOR_INPUT std::cin.get()
+
+
+	template <typename T>
+	std::ostream& operator<<(std::ostream& ost, const glm::vec<2, T>& d)
+	{
+		ost << fmt::format("Vec2=({}, {})", d.x, d.y);
+		return ost;
+	}
+	template <typename T>
+	std::ostream& operator<<(std::ostream& ost, const glm::vec<3, T>& d)
+	{
+		ost << fmt::format("Vec3=({}, {}, {})", d.x, d.y, d.z);
+		return ost;
+	}
+	template <typename T>
+	std::ostream& operator<<(std::ostream& ost, const glm::vec<4, T>& d)
+	{
+		ost << fmt::format("Vec4=({}, {}, {}, {})", d.x, d.y, d.z, d.w);
+		return ost;
+	}
+

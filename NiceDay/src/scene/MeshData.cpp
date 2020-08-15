@@ -262,6 +262,7 @@ namespace MeshDataFactory
 			*point++ = { 0,0,zz };
 			*point++ = { x,0,zz };
 		}
+		mesh->m_topology = Topology::LINES;
 		mesh->setID(("BuildWire" + std::to_string(64871*x + z * 123456)).c_str());
 		return mesh;
 	}

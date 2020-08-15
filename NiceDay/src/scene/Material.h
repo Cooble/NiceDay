@@ -154,12 +154,17 @@ public:
 	static MaterialPtr create(const MaterialInfo& info);
 	static MaterialPtr copy(const MaterialPtr& mat, const std::string& newName);
 	static void save(MaterialPtr& ptr, const std::string& path = "");
-	static MaterialPtr load(const std::string& filepath);
+	static MaterialPtr loadOrGet(const std::string& filepath);
 	static void clearUnused();
 	static std::unordered_map<Strid,MaterialPtr>& getList();
 	static void remove(Strid mat);
 
 	static bool& isDirty(Strid mat);
+
+	//returns ptr or nullptr
 	static MaterialPtr& get(Strid id);
+
+	//returns material based on filepath or nullptr if material not loaded
+	static MaterialPtr& getByFilePath(Strid filePath);
 };
 

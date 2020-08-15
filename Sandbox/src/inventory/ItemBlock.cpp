@@ -13,7 +13,7 @@ m_block_id(blockID)
 
 void ItemBlock::onTextureLoaded(const TextureAtlas& atlas)
 {
-	m_texture_pos = atlas.getTexture((m_no_block_texture?"item/":"item_block/") + toString());
+	m_texture_pos = atlas.getSubImage((m_no_block_texture?"item/":"item_block/") + toString());
 }
 
 int ItemBlock::getTextureOffset(const ItemStack& b) const

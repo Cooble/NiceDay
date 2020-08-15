@@ -37,8 +37,7 @@ GLTexture::GLTexture(const TextureInfo& info)
 
 	if (!info.file_path.empty())
 	{
-		std::string facesNames = "pxnxpynypznz";
-		
+
 		stbi_set_flip_vertically_on_load(true);
 		if (info.texture_type == TextureType::_2D) {
 			m_buffer = stbi_load(m_filePath.c_str(), &m_width, &m_height, &m_BPP, 4);
@@ -49,8 +48,10 @@ GLTexture::GLTexture(const TextureInfo& info)
 				ND_ERROR("Invalid texture path: {}", m_filePath.c_str());
 			}
 		}
-		else if(info.texture_type==TextureType::_CUBE_MAP)
+		else if (info.texture_type == TextureType::_CUBE_MAP)
 		{
+			std::string facesNames = "pxnxpynypznz";
+
 			stbi_set_flip_vertically_on_load(false);
 
 			for (GLuint i = 0; i < 6; i++)
@@ -68,6 +69,10 @@ GLTexture::GLTexture(const TextureInfo& info)
 				}
 			}
 		}
+	}
+	else if(info.pixel_data)
+	{
+		GLCall(glTexImage2D(GL_TEXTURE_2D, 0, (int)m_format, m_width, m_height, 0, (int)m_format, GL_UNSIGNED_BYTE, info.pixel_data));
 	}
 	else
 	{
@@ -105,18 +110,18 @@ GLTexture::GLTexture(uint32_t id, const TextureInfo& info)
 }
 
 
-void GLTexture::setPixels(float* light_map)
+void GLTexture::setPixels(float* pixels)
 {
 	ASSERT(m_not_proxy, "This texture is only proxy");
 	GLCall(glBindTexture((int)m_type, m_id));
-	GLCall(glTexSubImage2D((int)m_type, 0, 0, 0, m_width, m_height, (int)m_format, GL_FLOAT, light_map));
+	GLCall(glTexSubImage2D((int)m_type, 0, 0, 0, m_width, m_height, (int)m_format, GL_FLOAT, pixels));
 	GLCall(glBindTexture((int)m_type, 0));
 }
-void GLTexture::setPixels(uint8_t* light_map)
+void GLTexture::setPixels(uint8_t* pixels)
 {
 	ASSERT(m_not_proxy, "This texture is only proxy");
 	GLCall(glBindTexture((int)m_type, m_id));
-	GLCall(glTexSubImage2D((int)m_type, 0, 0, 0, m_width, m_height, (int)m_format, GL_UNSIGNED_BYTE, light_map));
+	GLCall(glTexSubImage2D((int)m_type, 0, 0, 0, m_width, m_height, (int)m_format, GL_UNSIGNED_BYTE, pixels));
 	GLCall(glBindTexture((int)m_type, 0));
 }
 

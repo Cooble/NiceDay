@@ -8,8 +8,8 @@ class ResourceMan
 	// res folder
 	static std::string s_resPathFolder;
 public:
-	static std::string getResourceLoc(const std::string& resPath);
-	static std::string getLocalPath(const std::string& resPath);
+	static std::string getResourceLoc(std::string_view resPath);
+	static std::string getLocalPath(std::string_view  resPath);
 	static void init();
 	static const std::string& getResPath();
 	

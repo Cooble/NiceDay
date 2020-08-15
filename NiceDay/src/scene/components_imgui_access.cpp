@@ -5,12 +5,63 @@
 #include <shellapi.h>
 #include "Atelier.h"
 #include <sol/sol.hpp>
-#include "Colli.h"
 #include "Mesh.h"
+#include "core/NBT.h"
+#include "GlobalAccess.h"
 
-namespace components_imgui_access
+namespace comp_util
 {
-	static void drawTexOrNo(MaterialPtr& c,int width,int height)
+#define COPPY_EE(Type) \
+	if (src.has<Type>()){\
+		target.emplaceOrReplace<Type>();\
+		target.get<Type>() = src.get<Type>();}
+	// really lame way of copying components (but is there a better one?)
+	static void copyEntity(Entity src, Entity target)
+	{
+		COPPY_EE(TransformComponent);
+		COPPY_EE(ModelComponent);
+		COPPY_EE(LightComponent);
+		COPPY_EE(CameraComponent);
+		if (src.has<NativeScriptComponent>()) {
+			
+				target.emplaceOrReplace<NativeScriptComponent>();
+				auto& t = target.get<NativeScriptComponent>();
+				t = src.get<NativeScriptComponent>();
+				t.construct(target, components_imgui_access::windows.scene);
+				t.onCreate();
+		}
+	}
+	static void saveEntity(Entity e)
+	{
+		NBT n;
+		if (e.has<ModelComponent>()) {
+			auto& model = e.get<ModelComponent>();
+			auto& mesh = model.Mesh();
+			auto& material = model.Material();
+			auto& tag = e.get<TagComponent>();
+			n.save("name", tag.name);
+			n.save("mesh", mesh->data->getFilePath());
+			if (!SUtil::startsWith(material->getName(), "res")) {
+				MaterialLibrary::save(material, "res/models/" + material->getName() + ".mat");
+				n.save("material", "res/models/" + material->getName() + ".mat");
+			}
+			else
+				n.save("material", material->getName());
+			NBT::saveToFile(std::string("res/models/") + e.get<TagComponent>().name + ".model", n);
+			ND_BUG("Model Saved to: res/models/{}.model", e.get<TagComponent>().name);
+		}
+	}
+	static Entity loadEntity(NewScene* s, const std::string& path)
+	{
+		NBT n;
+		NBT::loadFromFile(path, n);
+		auto e = s->createEntity(n["name"].c_str());
+		MeshLibrary::loadOrGet(n["mesh"].string());
+		MaterialLibrary::loadOrGet(n["material"].string());
+		e.emplaceOrReplace<ModelComponent>(SID(n["mesh"].string()), SID(n["material"].string()));
+		return e;
+	}
+	static void drawTexOrNo(MaterialPtr& c, int width, int height)
 	{
 		static auto no = TextureLib::loadOrGetTexture("res/images/no.png")->getID();
 		ImGui::Image((ImTextureID)(c ? Atelier::get().getPhoto(c)->getID() : no), { (float)width,(float)height }, { 0,1 }, { 1,0 });
@@ -44,7 +95,7 @@ namespace components_imgui_access
 			{
 				IM_ASSERT(payload->DataSize == sizeof(Strid));
 				Strid payload_n = *(Strid*)payload->Data;
-				ptr = MeshFactory::get(payload_n);
+				ptr = MeshLibrary::get(payload_n);
 			}
 			ImGui::EndDragDropTarget();
 		}
@@ -78,86 +129,17 @@ namespace components_imgui_access
 			ImGui::EndDragDropTarget();
 		}
 	}
-	
-	SceneWindows windows = SceneWindows();
-
-	void draw(Entity e, LightComponent& c)
-	{
-		ImGui::ColorEdit3("ambient", (float*)&c.ambient);
-		ImGui::ColorEdit3("diffuse", (float*)&c.diffuse);
-		ImGui::ColorEdit3("specular", (float*)&c.specular);
-		ImGui::Spacing();
-		ImGui::SliderFloat("constant", &c.constant, 0.01, 1);
-		ImGui::SliderFloat("linear", &c.linear, 0.01, 1);
-		ImGui::SliderFloat("quadratic", &c.quadratic, 0.01, 1);
-	}
-
-	void draw(Entity e, TransformComponent& c)
-	{
-		ImGui::DragFloat3("pos", (float*)&c.pos, 0.05f);
-		ImGui::DragFloat3("scale", (float*)&c.scale, 0.05f);
-		ImGui::DragFloat3("rotation", (float*)&c.rot, 0.05f, -glm::two_pi<float>(), glm::two_pi<float>());
-		c.recomputeMatrix();
-	}
-
-	void draw(Entity e, ModelComponent& c)
-	{
-		//=========================================
-		ImGui::Text("MATERIAL");
-		
-		
-		drawTexOrNo(c.material, AtelierDim::width, AtelierDim::height);
-		if (c.material && ImGui::IsItemClicked(ImGuiMouseButton_Right))
-		{
-			windows.material = c.material;
-			windows.open_material = true;
-		}
-		if (c.material)
-			makeDragDropSource(c.material);
-		makeDragDropTarget(c.material);
-
-
-		if(c.material)
-			ImGui::TextColored({ 0, 1, 1, 1 } ,c.material->getName().c_str());
-		else ImGui::TextColored({ 1, 0, 0, 1 }, "No Material Bound");
-
-		//=========================================
-		ImGui::Text("MESH");
-	
-		drawTexOrNo(c.mesh, AtelierDim::width, AtelierDim::height);
-		makeDragDropTarget(c.mesh);
-		if (c.mesh)
-			makeDragDropSource(c.mesh);
-		if (c.mesh)
-			ImGui::TextColored({ 0, 1, 1, 1 }, c.mesh->getName().c_str());
-		else ImGui::TextColored({ 1, 0, 0, 1 }, "No Mesh Bound");
-	}
-
-	void draw(Entity e, CameraComponent& c)
-	{
-		auto angle = glm::degrees(c.fov);
-		if (ImGui::SliderFloat("Fov", &angle, 10, 180))
-			c.fov = glm::radians(angle);
-		ImGui::SliderFloat("Near", &c.Near, 0.5f, 100.f);
-		ImGui::SliderFloat("Far", &c.Far, 0.5f, 100.f);
-	}
-
-	bool drawWindow(Mesh& c)
-	{
-		return true;
-	}
-
 	static Strid fileComboLastID = 0;
 
-	static std::string fileCombo(const std::string& currentValue, const std::string& sourceFolder, const char** suffix,size_t suffixLength,
+	static std::string fileCombo(const std::string& currentValue, const std::string& sourceFolder, const char** suffix, size_t suffixLength,
 		StringId calledID)
 	{
-		ImVec4 col = std::filesystem::exists(ND_RESLOC(currentValue)) ? ImVec4(0, 1, 0, 1) : ImVec4(1, 0.2, 0.2, 1);
+		ImVec4 col = FUtil::exists(currentValue) ? ImVec4(0, 1, 0, 1) : ImVec4(1, 0.2, 0.2, 1);
 		ImGui::TextColored(col, currentValue.c_str());
 
 		std::vector<std::string> files;
 
-		if (!std::filesystem::exists(ND_RESLOC(sourceFolder)))
+		if (!FUtil::exists(sourceFolder))
 			return currentValue;
 		for (auto& file : std::filesystem::recursive_directory_iterator(ND_RESLOC(sourceFolder)))
 			for (int i = 0; i < suffixLength; ++i)
@@ -168,7 +150,7 @@ namespace components_imgui_access
 					break;
 				}
 			}
-			
+
 		static ImGuiTextFilter filter;
 		if (calledID() != fileComboLastID)
 		{
@@ -213,7 +195,144 @@ namespace components_imgui_access
 					}
 		return currentValue;
 	}
+	// opens and begins a popup to request user input string, callback will be called when enter is hit and entered string is not empty
+	static void drawStringDialog(bool open, const char* popupName, const char* fieldName, const std::function<void(const char*)>& callBack)
+	{
+		//static Strid lastPopupName = 0;
+		static char buff[256];
 
+		if (open) {
+			ImGui::OpenPopup(popupName);
+			buff[0] = 0;
+		}
+
+		/*if(lastPopupName!=SID(popupName))
+		{
+			buff[0] = 0;
+			lastPopupName = SID(popupName);
+		}*/
+
+		if (ImGui::BeginPopup(popupName))
+		{
+			if (fieldName)
+				ImGui::Text(fieldName);
+
+			ImGui::SetKeyboardFocusHere(0);
+			if (ImGui::InputText(fieldName, buff, IM_ARRAYSIZE(buff), ImGuiInputTextFlags_EnterReturnsTrue))
+			{
+				if (buff[0])
+					callBack(buff);
+				buff[0] = 0;
+				ImGui::CloseCurrentPopup();
+			}
+			ImGui::EndPopup();
+		}
+	}
+	// opens and begins a popup to request user input file, callback will be called when enter is hit and entered string is not empty
+	static void drawFileDialog(bool open, const char* popupName, const char* fieldName, const std::string& sourceFolder, const char** suffixes, int suffixLength, bool forbidCustomPath, const std::function<void(const char*)>& callBack)
+	{
+		static std::string strin;
+		int focus = 0;
+		if (open) {
+			ImGui::OpenPopup(popupName);
+			strin = "";
+			focus = 5;
+		}
+
+		if (ImGui::BeginPopup(popupName))
+		{
+			if (fieldName)
+				ImGui::Text(fieldName);
+
+			//if(focus-- == 0)
+			//	ImGui::SetKeyboardFocusHere(0);
+			strin = fileCombo(strin, sourceFolder, suffixes, suffixLength, popupName);
+			if (!strin.empty())
+			{
+				callBack(strin.c_str());
+				ImGui::CloseCurrentPopup();
+				strin = "";
+			}
+			ImGui::EndPopup();
+		}
+	}
+	static void drawFileDialog(bool open, const char* popupName, const char* fieldName, const std::string& sourceFolder, const char* suffix, bool forbidCustomPath, const std::function<void(const char*)>& callBack)
+	{
+		drawFileDialog(open, popupName, fieldName, sourceFolder, &suffix, 1, forbidCustomPath, callBack);
+	}
+}
+namespace components_imgui_access
+{
+	SceneWindows windows = SceneWindows();
+	TextureAtlasUV* ui_icons = nullptr;
+
+	void Image(ImTextureID image, const TextureAtlasUVCoords& coords, ImVec2 size)
+	{
+		ImGui::Image(image, size, *(ImVec2*)(&coords.min), *(ImVec2*)(&coords.max));
+	}
+
+	void draw(Entity e, LightComponent& c)
+	{
+		ImGui::ColorEdit3("ambient", (float*)&c.ambient);
+		ImGui::ColorEdit3("diffuse", (float*)&c.diffuse);
+		ImGui::ColorEdit3("specular", (float*)&c.specular);
+		ImGui::Spacing();
+		ImGui::SliderFloat("constant", &c.constant, 0.01, 1);
+		ImGui::SliderFloat("linear", &c.linear, 0.01, 1);
+		ImGui::SliderFloat("quadratic", &c.quadratic, 0.01, 1);
+	}
+
+	void draw(Entity e, TransformComponent& c)
+	{
+		ImGui::DragFloat3("pos", (float*)&c.pos, 0.05f);
+		ImGui::DragFloat3("scale", (float*)&c.scale, 0.05f);
+		ImGui::DragFloat3("rotation", (float*)&c.rot, 0.05f, -glm::two_pi<float>(), glm::two_pi<float>());
+		c.recomputeMatrix();
+	}
+
+	void draw(Entity e, ModelComponent& c)
+	{
+		//=========================================
+		ImGui::Text("MATERIAL");
+		
+		auto& material = c.Material();
+		comp_util::drawTexOrNo(material, AtelierDim::width, AtelierDim::height);
+		if (material && ImGui::IsItemClicked(ImGuiMouseButton_Left)&&ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
+		{
+			windows.material = material;
+			windows.open_material = true;
+		}
+		if (material)
+			comp_util::makeDragDropSource(material);
+		comp_util::makeDragDropTarget(material);
+
+
+		if(material)
+			ImGui::TextColored({ 0, 1, 1, 1 } ,material->getName().c_str());
+		else ImGui::TextColored({ 1, 0, 0, 1 }, "No Material Bound");
+
+		//=========================================
+		ImGui::Text("MESH");
+
+		auto& mesh = c.Mesh();
+		comp_util::drawTexOrNo(mesh, AtelierDim::width, AtelierDim::height);
+		comp_util::makeDragDropTarget(mesh);
+		if (mesh)
+			comp_util::makeDragDropSource(mesh);
+		if (mesh)
+			ImGui::TextColored({ 0, 1, 1, 1 }, mesh->getName().c_str());
+		else ImGui::TextColored({ 1, 0, 0, 1 }, "No Mesh Bound");
+	}
+
+	void draw(Entity e, CameraComponent& c)
+	{
+		auto angle = glm::degrees(c.fov);
+		if (ImGui::SliderFloat("Fov", &angle, 10, 170))
+			c.fov = glm::radians(angle);
+		ImGui::SliderFloat("Near", &c.Near, 0.5f, 200.f);
+		ImGui::SliderFloat("Far", &c.Far, 0.5f, 200.f);
+	}
+	
 	static std::string shaderCombo(const std::string& currentCombo)
 	{
 		// Using the generic BeginCombo() API, you have full control over how to display the combo contents.
@@ -298,8 +417,8 @@ namespace components_imgui_access
 			ImGui::Text("VERTEX");
 			ImGui::Separator();
 			ImGui::Columns(3, 0, false);
-			ImGui::SetColumnWidth(0, 20);
-			ImGui::SetColumnWidth(1, 80);
+			ImGui::SetColumnWidth(0, 20.f);
+			ImGui::SetColumnWidth(1, 80.f);
 			int i = 0;
 			for (auto& val : layoutVertex->elements)
 			{
@@ -314,7 +433,7 @@ namespace components_imgui_access
 			ImGui::Text("GLOBALS");
 			ImGui::Separator();
 			ImGui::Columns(2, 0, false);
-			ImGui::SetColumnWidth(-1, 100);
+			ImGui::SetColumnWidth(-1, 100.f);
 			int i = 0;
 			for (auto& val : layoutGlo->elements)
 			{
@@ -344,73 +463,13 @@ namespace components_imgui_access
 		c[4] = 0;
 
 		auto s = ".png";
-		auto ret = fileCombo(currentCombo, "res",&s, 1, StringId("textureCombo")/*.concat(c)*/);
+		auto ret = comp_util::fileCombo(currentCombo, "res",&s, 1, StringId("textureCombo")/*.concat(c)*/);
 
 		return ret;
 	}
 
 
-	// opens and begins a popup to request user input string, callback will be called when enter is hit and entered string is not empty
-	static void drawStringDialog(bool open, const char* popupName, const char* fieldName, const std::function<void(const char*)>& callBack)
-	{
-		//static Strid lastPopupName = 0;
-		static char buff[256];
-
-		if (open) {
-			ImGui::OpenPopup(popupName);
-			buff[0] = 0;
-		}
-
-		/*if(lastPopupName!=SID(popupName))
-		{
-			buff[0] = 0;
-			lastPopupName = SID(popupName);
-		}*/
-
-		if (ImGui::BeginPopup(popupName))
-		{
-			if (fieldName)
-				ImGui::Text(fieldName);
-
-			ImGui::SetKeyboardFocusHere(0);
-			if (ImGui::InputText(fieldName, buff, IM_ARRAYSIZE(buff), ImGuiInputTextFlags_EnterReturnsTrue))
-			{
-				if (buff[0])
-					callBack(buff);
-				buff[0] = 0;
-				ImGui::CloseCurrentPopup();
-			}
-			ImGui::EndPopup();
-		}
-	}
-	// opens and begins a popup to request user input file, callback will be called when enter is hit and entered string is not empty
-	static void drawFileDialog(bool open, const char* popupName, const char* fieldName, const std::string& sourceFolder, const char** suffixes,int suffixLength, bool forbidCustomPath,const std::function<void(const char*)>& callBack)
-	{
-		static std::string strin;
-		int focus = 0;
-		if (open) {
-			ImGui::OpenPopup(popupName);
-			strin = "";
-			focus = 5;
-		}
-
-		if (ImGui::BeginPopup(popupName))
-		{
-			if (fieldName)
-				ImGui::Text(fieldName);
-
-			//if(focus-- == 0)
-			//	ImGui::SetKeyboardFocusHere(0);
-			strin = fileCombo(strin, sourceFolder, suffixes, suffixLength, popupName);
-			if(!strin.empty())
-			{
-				callBack(strin.c_str());
-				ImGui::CloseCurrentPopup();
-				strin = "";
-			}
-			ImGui::EndPopup();
-		}
-	}
+	
 
 #define PROP_DRAW(imguiFunc,Type,imguiType)\
 	{\
@@ -449,7 +508,7 @@ namespace components_imgui_access
 		}
 
 		//ImGui::SetNextWindowDockID(dockspace_id, ImGuiCond_Always);
-		ImGui::SetNextWindowSize({ 900,500 }, ImGuiCond_Once);
+		ImGui::SetNextWindowSize({ 900.f,500.f }, ImGuiCond_Once);
 		ImGui::Begin("Material Editor", &keepOpen/*, ImGuiWindowFlags_NoDocking*/);
 
 		if (!keepOpen)
@@ -671,19 +730,14 @@ if (ImGui::BeginTabItem(name, &open,ImGuiTabItemFlags_NoCloseButton))\
 	components_imgui_access::draw(selected, selected.get<Typ>());\
 	ImGui::EndTabItem();\
 }
-	bool drawEntityManager(NewScene& c,Entity& lookThroughCam)
+	bool drawEntityManager()
 	{
-		static auto eyeOnId = TextureLib::loadOrGetTexture("res/models/eye_on.png")->getID();
-		static auto eyeOffId = TextureLib::loadOrGetTexture("res/models/eye_off.png")->getID();
-		auto eyeOnID = eyeOnId;
-		auto eyeOffID = eyeOffId;
 		static bool open = true;
-		auto sci = &c;
 		static Entity selected = Entity::null;
 		bool newModel = false;
 		bool newLight = false;
 		bool newCamera= false;
-		NewScene* sc = &c;
+		bool loadModel = false;
 		//static defaultable_vector<int> tabsOpened;
 		if (ImGui::Begin("Scene", &open, ImGuiWindowFlags_MenuBar)){
 			if (ImGui::BeginMenuBar()){
@@ -696,31 +750,42 @@ if (ImGui::BeginTabItem(name, &open,ImGuiTabItemFlags_NoCloseButton))\
 					}
 					ImGui::EndMenu();
 				}
+				if (ImGui::BeginMenu("Model")) {
+					loadModel = ImGui::MenuItem("Load");
+					ImGui::EndMenu();
+				}
 				ImGui::EndMenuBar();
 			}
-			
-			drawStringDialog(newModel, "newModel", "Name", [sc](const char* c)
+
+			comp_util::drawStringDialog(newModel, "newModel", "Name", [](const char* c)
 			{
-					auto ent = sc->createEntity(c);
+					auto ent = windows.scene->createEntity(c);
 					ent.emplaceOrReplace<TransformComponent>(glm::vec3(0.f, 0.f, 0.f), glm::vec3(1.f), glm::vec3(0.f));
-					ent.emplaceOrReplace<ModelComponent>(nullptr, nullptr);
+					ent.emplaceOrReplace<ModelComponent>();
 					ent.get<TagComponent>().enabled = false;
 			});
-			drawStringDialog(newLight, "newLight", "Name", [sc](const char* c)
+			comp_util::drawStringDialog(newLight, "newLight", "Name", [](const char* c)
 				{
-					auto ent = sc->createEntity(c);
+					auto ent = windows.scene->createEntity(c);
 					ent.emplaceOrReplace<TransformComponent>(glm::vec3(0.f), glm::vec3(1.f), glm::vec3(0.f));
 					ent.emplaceOrReplace<LightComponent>();
 				});
-			drawStringDialog(newCamera, "newCamera", "Name", [sc](const char* c)
+			comp_util::drawStringDialog(newCamera, "newCamera", "Name", [](const char* c)
 				{
-					auto ent = sc->createEntity(c);
+					auto ent = windows.scene->createEntity(c);
 					ent.emplaceOrReplace<TransformComponent>(glm::vec3(0.f), glm::vec3(1.f), glm::vec3(0.f));
 					ent.emplaceOrReplace<CameraComponent>(glm::mat4(1.f), glm::quarter_pi<float>(), 1.f, 100.f);
-					auto editCam = (EditorCam*)malloc(sizeof(EditorCam));
-					ent.emplaceOrReplace<PointerComponent>(new(editCam)EditorCam(ent));
+					ent.emplaceOrReplace<NativeScriptComponent>();
+					auto& script = ent.get<NativeScriptComponent>();
+					script.bind<EditCameraController>();
+					script.construct(ent, windows.scene);
+					script.onCreate();
 				});
-			
+			comp_util::drawFileDialog(loadModel, "loadModel", "Name", "res/models", ".model", true, [](const char* c)
+			{
+					auto ent = comp_util::loadEntity(windows.scene, c);
+					ND_BUG("Loaded entity from {}", c);
+			});
 			
 			ImGui::SetNextItemOpen(true, ImGuiCond_Always);
 			if (ImGui::TreeNode("Objects"))
@@ -728,56 +793,86 @@ if (ImGui::BeginTabItem(name, &open,ImGuiTabItemFlags_NoCloseButton))\
 				ImGui::Columns(2);
 
 				int i = 0;
-				c.reg().each([sci, &i,&lookThroughCam,eyeOffID,eyeOnID](const entt::entity ent)
+				auto tagView = windows.scene->reg().view<TagComponent>();
+				for (auto ent : tagView)
+				{
+					auto& tag = tagView.get<TagComponent>(ent);
+					ImGui::PushID(i++);
+					auto entity = windows.scene->wrap(ent);
+					bool selectedi = selected == entity;
+
+					if (selectedi)
+						ImGui::PushStyleColor(ImGuiCol_Text, { 0, 1, 0, 1 });
+					if (ImGui::TreeNodeEx(tag(), ImGuiTreeNodeFlags_OpenOnArrow))
 					{
-						ImGui::PushID(i++);
-						auto entity = sci->wrap(ent);
-						bool selectedi = selected == entity;
-						auto& tag = entity.get<TagComponent>();
-
 						if (selectedi)
-							ImGui::PushStyleColor(ImGuiCol_Text, { 0, 1, 0, 1 });
-						if (ImGui::TreeNodeEx(tag(), ImGuiTreeNodeFlags_OpenOnArrow))
+							ImGui::PopStyleColor();
+						//ImGui::Text("Blemc");
+						ImGui::TreePop();
+					}
+					else if (selectedi) 
+						ImGui::PopStyleColor();
+					if (ImGui::IsItemClicked(ImGuiMouseButton_Left))
+						selected = entity;
+					auto nameid = (std::string("entityPop ") + tag.name).c_str();
+					if (ImGui::IsItemClicked(ImGuiMouseButton_Right))
+						ImGui::OpenPopup(nameid);
+					bool copyFlag = false;
+					bool delFlag = false;
+					if(ImGui::BeginPopup(nameid))
+					{
+						copyFlag = ImGui::MenuItem("Copy");
+						delFlag = ImGui::MenuItem("Delete");
+						if(ImGui::MenuItem("Save"))
 						{
-							if (selectedi)
-								ImGui::PopStyleColor();
-							//ImGui::Text("Blemc");
-							ImGui::TreePop();
+							comp_util::saveEntity(entity);
 						}
-						else if (selectedi) ImGui::PopStyleColor();
-						if (ImGui::IsItemClicked())
-						{
-							selected = entity;
-						}
-						ImGui::NextColumn();
-						bool enabl = tag.enabled;
-						ImGui::Checkbox("##enabledee", &enabl);ImGui::SameLine();
-						if (entity.has<ModelComponent>())
-						{
-							auto& model = entity.get<ModelComponent>();
-							auto& material = model.material;
-							if(material && model.mesh)//enable only if both material and mesh are bound
-								tag.enabled = enabl;
+						ImGui::EndPopup();
+					}
 
-							drawTexOrNo(material, ImGui::GetItemRectSize().y, ImGui::GetItemRectSize().y);
-							makeDragDropSource(material);
-							makeDragDropTarget(material);
-							if (ImGui::IsItemClicked(ImGuiMouseButton_Left) && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
-							{
-								windows.open_material = true;
-								windows.material = material;
-							}
-						}else if(entity.has<CameraComponent>())//set viewing to this camera
+					comp_util::drawStringDialog(copyFlag, (std::string("entityPop ") + tag.name).c_str(), "Name", [entity](const char* c)
 						{
-							bool lookThrough = lookThroughCam == entity;
-							ImGui::Image((ImTextureID)(lookThrough ? eyeOnID : eyeOffID), { 25,25 }, { 0,1 }, { 1,0 });
-							if(ImGui::IsItemClicked())
-								lookThroughCam = entity;
+							auto ent = windows.scene->createEntity(c);
+							comp_util::copyEntity(entity, ent);//not work for cameras
 							
+						});
+					
+					ImGui::NextColumn();
+					bool enabl = tag.enabled;
+					ImGui::Checkbox("##enabledee", &enabl); ImGui::SameLine();
+					if (entity.has<ModelComponent>())
+					{
+						auto& model = entity.get<ModelComponent>();
+						auto& material = model.Material();
+						if (material && model.Mesh())//enable only if both material and mesh are bound
+							tag.enabled = enabl;
+
+						comp_util::drawTexOrNo(material, ImGui::GetItemRectSize().y, ImGui::GetItemRectSize().y);
+						comp_util::makeDragDropSource(material);
+						comp_util::makeDragDropTarget(material);
+						if (ImGui::IsItemClicked(ImGuiMouseButton_Left) && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
+						{
+							windows.open_material = true;
+							windows.material = material;
 						}
-						ImGui::NextColumn();
-						ImGui::PopID();
-					});
+					}
+					else if (entity.has<CameraComponent>())//set viewing to this camera
+					{
+						bool lookThrough = windows.activeCamera == entity;
+						Image(lookThrough ? SIDS("eye_on") : SIDS("eye_off"), *ui_icons, { 25,25 });
+						//ImGui::Image((ImTextureID)(lookThrough ? eyeOnID : eyeOffID), { 25,25 }, { 0,1 }, { 1,0 });
+						if (ImGui::IsItemClicked())
+							windows.activeCamera = entity;
+
+					}
+					ImGui::NextColumn();
+					ImGui::PopID();
+					if (delFlag) {
+						if (selected == entity)
+							selected = Entity::null;
+						entity.destroy();
+					}
+				}
 				ImGui::Columns(1);
 
 				if (ImGui::Selectable("None", false))
@@ -800,7 +895,6 @@ if (ImGui::BeginTabItem(name, &open,ImGuiTabItemFlags_NoCloseButton))\
 					//if (opt_reorderable)
 					//	NotifyOfDocumentsClosedElsewhere(app);
 					// Submit Tabs
-					int tabIdx = 0;
 					bool open = true;
 					COMPO_ENTRY_IMGUI(TransformComponent, "Trans");
 					COMPO_ENTRY_IMGUI(LightComponent, "Light");
@@ -814,9 +908,10 @@ if (ImGui::BeginTabItem(name, &open,ImGuiTabItemFlags_NoCloseButton))\
 		ImGui::End();
 		return true;
 	}
+
 	bool drawMaterialManager(bool clickOnNew)
 	{
-		drawStringDialog(clickOnNew, "MaterNew?", "Texture Name", [](const char* c){
+		comp_util::drawStringDialog(clickOnNew, "MaterNew?", "Texture Name", [](const char* c){
 			MaterialLibrary::create({ ShaderLib::loadOrGetShader("res/shaders/Model.shader"),"MAT",c });
 		});
 
@@ -850,7 +945,7 @@ if (ImGui::BeginTabItem(name, &open,ImGuiTabItemFlags_NoCloseButton))\
 				windows.material = material;
 				windows.open_material = true;
 			}
-			makeDragDropSource(material);
+			comp_util::makeDragDropSource(material);
 			ImGui::TextColored({ 0, 1, 1, 1 }, material->getName().c_str());
 			ImGui::EndGroup();
 			float last_button_x2 = ImGui::GetItemRectMax().x;
@@ -916,11 +1011,11 @@ if (ImGui::BeginTabItem(name, &open,ImGuiTabItemFlags_NoCloseButton))\
 	bool drawModelManager(bool clickOnNew)
 	{
 		const char* suffixes[]{ ".fbx",".obj",".dae",".bin" };
-		drawFileDialog(clickOnNew, "MaterNew?", "Texture Name","res/models", suffixes,4,true, [](const char* c) {
-			MeshFactory::loadOrGet(std::string(c));
+		comp_util::drawFileDialog(clickOnNew, "MaterNew?", "Texture Name","res/models", suffixes,4,true, [](const char* c) {
+			MeshLibrary::loadOrGet(std::string(c));
 			});
 
-		auto& list = MeshFactory::getList();
+		auto& list = MeshLibrary::getList();
 
 		ImGuiStyle& style = ImGui::GetStyle();
 		float window_visible_x2 = ImGui::GetWindowPos().x + ImGui::GetWindowContentRegionMax().x;
@@ -945,7 +1040,7 @@ if (ImGui::BeginTabItem(name, &open,ImGuiTabItemFlags_NoCloseButton))\
 				windows.material = new_mesh;
 				windows.open_material = true;
 			}*/
-			makeDragDropSource(new_mesh);
+			comp_util::makeDragDropSource(new_mesh);
 			ImGui::TextColored({ 0, 1, 1, 1 }, new_mesh->getName().c_str());
 			ImGui::EndGroup();
 			float last_button_x2 = ImGui::GetItemRectMax().x;
@@ -961,7 +1056,7 @@ if (ImGui::BeginTabItem(name, &open,ImGuiTabItemFlags_NoCloseButton))\
 				if (ImGui::MenuItem("Delete"))
 				{
 					if (new_mesh.use_count() == 1)
-						MeshFactory::remove(new_mesh->getID());
+						MeshLibrary::remove(new_mesh->getID());
 
 					ImGui::EndPopup();
 					ImGui::PopID();
@@ -1016,9 +1111,13 @@ if (ImGui::BeginTabItem(name, &open,ImGuiTabItemFlags_NoCloseButton))\
 	{
 		if (open_material)
 			open_material = drawWindow(material);
-		if (open_mesh)
-			open_mesh = drawWindow(*mesh);
+		drawEntityManager();
 		drawMMBrowser();
 		
+	}
+
+	void SceneWindows::init()
+	{
+		ui_icons = &GlobalAccess::ui_icons;
 	}
 }

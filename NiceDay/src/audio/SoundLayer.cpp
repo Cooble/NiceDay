@@ -8,6 +8,8 @@
 #include "event/KeyEvent.h"
 #include "GLFW/glfw3.h"
 #include "event/MessageEvent.h"
+#include "core/App.h"
+#include "core/ImGuiLayer.h"
 
 #define SAMPLE_RATE (44100)
 //#define SAMPLE_RATE (22050)
@@ -224,9 +226,10 @@ SoundLayer::SoundLayer()
 static SoundBuffer soundBuff;
 static MusicStream musicStream;
 static size_t soundBuffOffset = 0;
-
+static bool ImGUIopen = false;
 void SoundLayer::onAttach()
 {
+	REGISTER_IMGUI_WIN("Sound Editor", &ImGUIopen);
 	Sounder::get().init();
 	Sounder::get().start();
 	/*ND_INFO("Sound start");
@@ -349,7 +352,7 @@ void SoundLayer::onUpdate()
 	Sounder::get().flushSpatialData();
 }
 
-static bool ImGUIopen = true;
+
 void SoundLayer::onImGuiRender()
 {
 	if (!ImGUIopen)

@@ -11,7 +11,7 @@ static std::string ws2s(const std::wstring& wstr)
 }
 void FUtil::cleanPathString(std::string& s)
 {
-	SUtil::replaceWith(s, "\\", "/");
+	SUtil::replaceWith(s, '\\', '/');
 	SUtil::replaceWith(s, "//", "/", 2);
 }
 

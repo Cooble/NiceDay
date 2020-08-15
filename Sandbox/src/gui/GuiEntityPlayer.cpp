@@ -45,15 +45,16 @@ GUIActionSlots::GUIActionSlots(PlayerInventory* player, HUD& hud)
 
 }
 
+
 void GUIActionSlots::onMyEvent(Event& e)
 {
 	GUIElement::onMyEvent(e);
 	if(e.getEventType()==Event::EventType::KeyType)
 	{
 		auto m = static_cast<KeyTypeEvent&>(e);
-		if(m.getKey()>=GLFW_KEY_0&&m.getKey()<=GLFW_KEY_9)
+		if(m.getKey()>=KeyCode::NUM_0&&m.getKey()<=KeyCode::NUM_9)
 		{
-			int slot = m.getKey() - GLFW_KEY_1;
+			int slot = m.getKey() - KeyCode::NUM_1;
 			if (slot == -1)
 				slot = 9;
 
@@ -271,7 +272,7 @@ void GUIEntityConsole::onEvent(Event& e)
 {
 	if (e.getEventType() == Event::EventType::MouseMove)
 		return;
-	if (KeyTypeEvent::getKeyNumber(e) == 'f')
+	if (KeyTypeEvent::getKeyNumber(e) == KeyCode::F)
 	{
 		ND_INFO("INF");
 	}

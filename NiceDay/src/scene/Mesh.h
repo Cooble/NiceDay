@@ -71,19 +71,21 @@ public:
 	MeshData* data;
 
 	Strid getID() const { return data->getID(); }
-	const std::string& getName() const { return data->getName(); }
+	const std::string& getName() const { return data->getFilePath(); }
 
 };
 typedef Ref<Mesh> MeshPtr;
-namespace MeshFactory
+namespace MeshLibrary
 {
 	static VertexArray* buildVAO(Mesh* mesh);
 	MeshPtr buildNewMesh(MeshData* data);
 
 	MeshPtr loadOrGet(const std::string& filePath);
+	MeshPtr registerMesh(MeshData* meshData);
 	std::unordered_map<Strid, MeshPtr>& getList();
 
 
+	//returns meshptr or nullptr
 	MeshPtr& get(Strid id);
 	inline void remove(Strid id) { getList().erase(getList().find(id)); }
 }

@@ -999,13 +999,13 @@ void WorldLayer::onEvent(Event& e)
 	{
 		auto event = dynamic_cast<MousePressEvent*>(&e);
 
-		if (event->getButton() == GLFW_MOUSE_BUTTON_1)
+		if (event->getButton() == MouseCode::LEFT)
 		{
 			isDragging = true;
 			event->handled = true;
 		}
 
-		if (event->getButton() == GLFW_MOUSE_BUTTON_MIDDLE)
+		if (event->getButton() == MouseCode::MIDDLE)
 		{
 			if (BLOCK_OR_WALL_SELECTED)
 			{
@@ -1018,7 +1018,7 @@ void WorldLayer::onEvent(Event& e)
 
 			event->handled = true;
 		}
-		if (event->getButton() == GLFW_MOUSE_BUTTON_RIGHT)
+		if (event->getButton() == MouseCode::RIGHT)
 		{
 			auto inHand = getPlayer().getInventory().itemInHand();
 			if (inHand)

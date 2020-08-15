@@ -47,15 +47,16 @@ struct TextureInfo
 	TextureWrapMode wrap_mode_t = TextureWrapMode::REPEAT;
 	TextureWrapMode wrap_mode_r = TextureWrapMode::REPEAT;
 	TextureFormat f_format = TextureFormat::RGBA;
+	void* pixel_data = nullptr;
 
-	inline TextureInfo& filterMode(TextureFilterMode mode)
+	TextureInfo& filterMode(TextureFilterMode mode)
 	{
 		filter_mode_min = mode;
 		filter_mode_max = mode;
 		return *this;
 	}
 
-	inline TextureInfo& wrapMode(TextureWrapMode mode)
+	TextureInfo& wrapMode(TextureWrapMode mode)
 	{
 		wrap_mode_s = mode;
 		wrap_mode_t = mode;
@@ -63,32 +64,37 @@ struct TextureInfo
 		return *this;
 	}
 
-	inline TextureInfo& path(const std::string& s)
+	TextureInfo& path(const std::string& s)
 	{
 		file_path = s;
 		return *this;
 	}
 
-	inline TextureInfo& size(int w, int h)
+	TextureInfo& size(int w, int h)
 	{
 		width = w;
 		height = h;
 		return *this;
 	}
-	inline TextureInfo& size(int d)
+	TextureInfo& size(int d)
 	{
 		width = d;
 		height = d;
 		return *this;
 	}
 
-	inline TextureInfo& format(TextureFormat form)
+	TextureInfo& format(TextureFormat form)
 	{
 		f_format = form;
 		return *this;
 	}
+	TextureInfo& pixels(void* pixels)
+	{
+		this->pixel_data = pixels;
+		return *this;
+	}
 
-	inline TextureInfo& borderColor(float r, float g, float b, float a)
+	TextureInfo& borderColor(float r, float g, float b, float a)
 	{
 		border_color[0] = r;
 		border_color[1] = g;
@@ -96,14 +102,14 @@ struct TextureInfo
 		border_color[3] = a;
 		return *this;
 	}
-	inline TextureInfo& type(TextureType type)
+	TextureInfo& type(TextureType type)
 	{
 		texture_type = type;
 	
 		return *this;
 	}
 
-	inline TextureInfo copy() const { return *this; }
+	TextureInfo copy() const { return *this; }
 
 	TextureInfo()
 	{

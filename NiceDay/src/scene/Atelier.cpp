@@ -11,7 +11,7 @@ void Atelier::init()
 	m_fbo = FrameBuffer::create(FrameBufferInfo().multiSample(4));
 	m_fbo->createBindSpecialAttachment(FBAttachment::DEPTH_STENCIL, { 256,256 });
 	m_background = TextureLib::loadOrGetTexture("res/models/material_bg.png");
-	m_sphere = MeshFactory::buildNewMesh(Colli::buildMesh(ND_RESLOC("res/models/sphere.fbx")));
+	m_sphere = MeshLibrary::buildNewMesh(Colli::buildMesh(ND_RESLOC("res/models/sphere.fbx")));
 
 	static UniformLayout envLayout;
 	envLayout.name = "GLO";
