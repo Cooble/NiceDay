@@ -63,6 +63,7 @@ struct PlayerCameraController :CameraController
 };
 struct EditCameraController:CameraController
 {
+	float lastdepth = 0;
 	float metersPerPixel = 0.01f;
 	glm::vec3 camPos;
 	glm::vec3 farPoint;
@@ -72,6 +73,7 @@ struct EditCameraController:CameraController
 	bool fullRotation = false;
 	bool fullMove = false;
 	bool fullRotRelative = false;
+	bool fullRotRelativeOverride = false;//no point to rotate around, use rotation instead
 
 	void onEvent(Event& e);
 	void onUpdate();

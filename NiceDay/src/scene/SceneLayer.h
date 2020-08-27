@@ -13,4 +13,6 @@ public:
 	void onRender() override;
 	void onImGuiRender() override;
 	void onEvent(Event& e) override;
+
+	float getCurrentDepth();
 };

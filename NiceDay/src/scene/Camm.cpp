@@ -120,7 +120,7 @@ void EditCameraController::onEvent(Event& e)
 	loadComponentsData();
 	/*auto& navBar = dynamic_cast<FakeWindow*>(App::get().getWindow())->getNavigationBar();
 
-	
+
 	if (navBar.freshPress)
 	{
 		if (navBar.rotationActive && !fullRotation)
@@ -225,7 +225,7 @@ void EditCameraController::onEvent(Event& e)
 	}
 	else if (navBar.scrollActive)
 	{
-	
+
 		go({ 0, 0, navBar.drag.y/20.f * speed });
 	}*/
 	getComponent<CameraComponent>().viewMatrix = getViewMatrix();
@@ -392,7 +392,10 @@ void EditCameraController::onUpdate()
 		{
 			App::get().getWindow()->setCursorPolicy(Window::CURSOR_DISABLED);
 			camRot = (*angles);
-			farPoint = (*position) + facingDirection() * pointDistance;
+			//farPoint = (*position) + facingDirection() * pointDistance;
+			lastdepth = scene->getLookingDepth();
+			fullRotRelativeOverride = lastdepth >= getComponent<CameraComponent>().Far-0.1f;
+			farPoint = (*position) + facingDirection() * lastdepth;
 			fullRotRelative = true;
 		}
 		else if (navBar.scrollActive)
@@ -407,13 +410,14 @@ void EditCameraController::onUpdate()
 		fullRotation = false;
 		fullMove = false;
 		fullRotRelative = false;
+		fullRotRelativeOverride = false;
 		App::get().getWindow()->setCursorPolicy(Window::CURSOR_ENABLED);
 		App::get().getWindow()->setCursorPos(startCursor);
 	}
-	else if (fullRotation)
+	else if (fullRotation || fullRotRelativeOverride)
 	{
 		auto delta = navBar.drag;
-		(*angles).pitch = camRot.x - (delta.y-mouseCorrdsOffset.y) / App::get().getWindow()->getWidth() * mouseSensitivity;
+		(*angles).pitch = camRot.x - (delta.y - mouseCorrdsOffset.y) / App::get().getWindow()->getWidth() * mouseSensitivity;
 		(*angles).yaw = camRot.y - delta.x / App::get().getWindow()->getWidth() * mouseSensitivity;
 
 		if ((*angles).pitch < -3.14159f / 2 || (*angles).pitch > 3.14159f / 2)
@@ -441,8 +445,9 @@ void EditCameraController::onUpdate()
 		(*position) = camPos;
 		go({ -delta.x , delta.y , 0 });
 	}
-	else if (fullRotRelative)
+	else if (fullRotRelative && !fullRotRelativeOverride)
 	{
+
 		auto delta = navBar.drag;
 
 		(*angles).pitch = camRot.x - delta.y / App::get().getWindow()->getWidth() * mouseSensitivity;
@@ -467,14 +472,15 @@ void EditCameraController::onUpdate()
 		else if ((*angles).roll < -3.14159f)
 			(*angles).roll += 2 * 3.14159f;
 
-		(*position) = farPoint - pointDistance * facingDirection();
+
+		(*position) = farPoint - lastdepth * facingDirection();
 	}
 	else if (navBar.scrollActive)
 	{
 		(*position) = camPos;
 		go({ 0, 0, navBar.drag.y * metersPerPixel });
 	}
-	
+
 
 	/*glm::vec3 go(0, 0, 0);
 	if (App::get().getInput().isKeyPressed(KeyCode::RIGHT))

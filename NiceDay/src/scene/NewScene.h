@@ -77,6 +77,7 @@ class NewScene
 private:
 	entt::registry m_reg;
 	Entity m_current_camera=Entity::null;
+	float m_depth;
 public:
 	Entity createEntity(const char* name="Invalid") {
 		Entity e{m_reg.create(), &m_reg };
@@ -96,4 +97,5 @@ public:
 	}
 	entt::registry& reg() { return m_reg; }
 	Entity& currentCamera() { return m_current_camera; }
+	float& getLookingDepth() { return m_depth; }
 };

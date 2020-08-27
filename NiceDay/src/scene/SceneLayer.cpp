@@ -46,7 +46,7 @@ static void onCamComponentDestroyed(entt::registry& reg, entt::entity ent)
 
 }
 
-struct WireMoveScript:NativeScript
+struct WireMoveScript :NativeScript
 {
 	void onUpdate()
 	{
@@ -54,23 +54,27 @@ struct WireMoveScript:NativeScript
 		auto& camTrans = scene->currentCamera().get<TransformComponent>();
 
 		bool rec = false;
-		if (abs((transform.pos.x+20*4) - camTrans.pos.x) > 4) {
-			transform.pos.x = camTrans.pos.x-20*4;
+		if (abs((transform.pos.x + 20 * 4) - camTrans.pos.x) > 4) {
+			transform.pos.x = camTrans.pos.x - 20 * 4;
 			rec = true;
 		}
-		if (abs((transform.pos.z+20*4) - camTrans.pos.z) > 4) {
-			transform.pos.z = camTrans.pos.z-20*4;
+		if (abs((transform.pos.z + 20 * 4) - camTrans.pos.z) > 4) {
+			transform.pos.z = camTrans.pos.z - 20 * 4;
 			rec = true;
 		}
-		if(rec)
-		transform.recomputeMatrix();
-		
+		if (rec)
+			transform.recomputeMatrix();
+
 	}
 };
+static float centerDepth;
+static float* depth_buff;
 void SceneLayer::onAttach()
 {
+	depth_buff = &centerDepth;
+	//depth_buff = (float*)malloc(1920 * 1080 * sizeof(float));
 	components_imgui_access::windows.init();
-	auto t =Atelier::get();//just init atelier
+	auto t = Atelier::get();//just init atelier
 	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 	ImGuiIO& io = ImGui::GetIO();
 	io.Fonts->AddFontFromFileTTF(ND_RESLOC("res/fonts/ignore/OpenSans-Regular.ttf").c_str(), 20);
@@ -99,13 +103,13 @@ void SceneLayer::onAttach()
 	envLayout.emplaceElement(g_typ::FLOAT, 1, "glo.constant");
 	envLayout.emplaceElement(g_typ::FLOAT, 1, "glo.linear");
 	envLayout.emplaceElement(g_typ::FLOAT, 1, "glo.quadratic");
-	enviroment = Material::create({nullptr, "GLO", "Enviroment", &envLayout});
+	enviroment = Material::create({ nullptr, "GLO", "Enviroment", &envLayout });
 
 
 	auto modelMat = Material::create({
 		std::shared_ptr<Shader>(ShaderLib::loadOrGetShader("res/shaders/Model.shader")), "MAT",
 		"modelMaterial"
-	});
+		});
 	modelMat->setValue("color", glm::vec4(1.0, 1.0, 0, 1));
 	modelMat->setValue("shines", 64.f);
 
@@ -157,12 +161,12 @@ void SceneLayer::onAttach()
 
 		auto mesh = MeshLibrary::loadOrGet("res/models/sphere.fbx");
 
-		auto mat = MaterialLibrary::copy(modelMat,"SphereMat");
+		auto mat = MaterialLibrary::copy(modelMat, "SphereMat");
 		mat->setValue("color", glm::vec4(1.0, 1.0, 0, 0));
 		mat->setValue("diffuse", std::shared_ptr<Texture>(diffuse));
 
 		auto ent = m_scene->createEntity("Sphere");
-		ent.emplaceOrReplace<TransformComponent>(glm::vec3(0.f,5.f,0.f), glm::vec3(1.f), glm::vec3(0.f));
+		ent.emplaceOrReplace<TransformComponent>(glm::vec3(0.f, 5.f, 0.f), glm::vec3(1.f), glm::vec3(0.f));
 		ent.emplaceOrReplace<ModelComponent>(mesh->getID(), mat->getID());
 	}
 	//adding dragoon
@@ -179,7 +183,7 @@ void SceneLayer::onAttach()
 		ent.emplaceOrReplace<TransformComponent>(glm::vec3(0.f), glm::vec3(1.f), glm::vec3(0.f));
 		ent.emplaceOrReplace<ModelComponent>(mesh, mat);
 	}*/
-	
+
 	//adding light
 	{
 		auto ent = m_scene->createEntity("Light");
@@ -200,13 +204,13 @@ void SceneLayer::onAttach()
 	{
 		auto ent = m_scene->createEntity("Wire");
 		ent.emplaceOrReplace<TransformComponent>(glm::vec3(0.f), glm::vec3(4.f), glm::vec3(0.f));
-		
-		auto mesh = MeshLibrary::registerMesh(MeshDataFactory::buildWirePlane(40,40));
+
+		auto mesh = MeshLibrary::registerMesh(MeshDataFactory::buildWirePlane(40, 40));
 		auto mat = MaterialLibrary::create({ ShaderLib::loadOrGetShader("res/shaders/Model.shader"),"MAT","WireMat" ,nullptr,MaterialFlags::DEFAULT_FLAGS });
 		mat->setValue("shines", 0.f);
-		mat->setValue("color", glm::vec4(0.5f,0.5f, 0.5f,1));
-		
-		
+		mat->setValue("color", glm::vec4(0.5f, 0.5f, 0.5f, 1));
+
+
 		ent.emplaceOrReplace<ModelComponent>(mesh->getID(), mat->getID());
 		ent.emplaceOrReplace<NativeScriptComponent>();
 		auto& script = ent.get<NativeScriptComponent>();
@@ -221,7 +225,7 @@ void SceneLayer::onDetach()
 void SceneLayer::onUpdate()
 {
 	auto view = m_scene->reg().view<NativeScriptComponent>();
-	for(auto entity:view)
+	for (auto entity : view)
 	{
 		auto& script = view.get(entity);
 		if (!script.ptr) {
@@ -231,7 +235,7 @@ void SceneLayer::onUpdate()
 		script.onUpdate();
 	}
 }
-
+static glm::vec2 minMaxCam;
 void SceneLayer::onRender()
 {
 	Atelier::get().makePendingPhotos();
@@ -241,14 +245,15 @@ void SceneLayer::onRender()
 	Entity camEntity = m_scene->currentCamera();
 	//Renderer::getDefaultFBO()->clear(BuffBit::COLOR, { 0,1,0,1 });
 	auto& camCom = camEntity.get<CameraComponent>();
+	minMaxCam = { camCom.Near,camCom.Far };
 	auto& transCom = camEntity.get<TransformComponent>();
 	env.camera_pos = transCom.pos;
 
 	env.view = camCom.viewMatrix;
 	env.proj = glm::perspective(camCom.fov,
-	                            (float)App::get().getWindow()->getWidth() / (float)App::get()
-	                                                                                   .getWindow()->getHeight(),
-	                            camCom.Near, camCom.Far);
+		(float)App::get().getWindow()->getWidth() / (float)App::get()
+		.getWindow()->getHeight(),
+		camCom.Near, camCom.Far);
 
 	auto lights = m_scene->view<LightComponent>();
 	for (auto light : lights)
@@ -266,7 +271,7 @@ void SceneLayer::onRender()
 	int index = 0;
 	for (auto model : models)
 	{
-		if(!m_scene->reg().get<TagComponent>(model).enabled)
+		if (!m_scene->reg().get<TagComponent>(model).enabled)
 			continue;
 		//auto& [trans, mod] = models.get<TransformComponent,ModelComponent>(model);
 		auto& trans = models.get<TransformComponent>(model);
@@ -292,10 +297,10 @@ void SceneLayer::onRender()
 			Gcon.depthMask(flags & MaterialFlags::FLAG_DEPTH_MASK);
 			Gcon.enableCullFace(flags & MaterialFlags::FLAG_CULL_FACE);
 			Gcon.enableDepthTest(flags & MaterialFlags::FLAG_DEPTH_TEST);
-			if(flags& MaterialFlags::FLAG_CHOP_VIEW_MAT_POS)
+			if (flags & MaterialFlags::FLAG_CHOP_VIEW_MAT_POS)
 				s->setUniformMat4("glo.view", glm::mat4(glm::mat3(env.view)) * glm::scale(glm::mat4(1.f), trans.scale));
 		}
-		
+
 
 		if (mesh->indexData.exists())
 			Gcon.cmdDrawElements(mesh->data->getTopology(), mesh->indexData.count);
@@ -309,6 +314,14 @@ void SceneLayer::onRender()
 			Gcon.enableDepthTest(true);
 		}
 	}
+	auto size = Renderer::getDefaultFBO()->getSize();
+	GLCall(glReadPixels(size.x/2, size.y/2,1,1, GL_DEPTH_COMPONENT, GL_FLOAT, depth_buff));
+	m_scene->getLookingDepth() = getCurrentDepth();
+
+}
+// get world distance based on depth pixel value d
+static float transformDepth(float d, float min, float max) {
+	return (max * min / (max - min)) / (-d + max / (max - min));
 }
 
 void SceneLayer::onImGuiRender()
@@ -328,4 +341,10 @@ void SceneLayer::onEvent(Event& e)
 			script.construct(m_scene->wrap(entity), m_scene);
 		script.onEvent(e);
 	}
+}
+
+float SceneLayer::getCurrentDepth() {
+	//float f = *(depth_buff + App::get().getWindow()->getWidth() * App::get().getWindow()->getHeight() / 2);
+	float f = *depth_buff;
+	return transformDepth(f, minMaxCam.x, minMaxCam.y);
 }
