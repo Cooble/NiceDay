@@ -317,7 +317,7 @@ void SceneLayer::onRender()
 	auto size = Renderer::getDefaultFBO()->getSize();
 	GLCall(glReadPixels(size.x/2, size.y/2,1,1, GL_DEPTH_COMPONENT, GL_FLOAT, depth_buff));
 	m_scene->getLookingDepth() = getCurrentDepth();
-
+	
 }
 // get world distance based on depth pixel value d
 static float transformDepth(float d, float min, float max) {
