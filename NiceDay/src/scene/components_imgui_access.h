@@ -15,9 +15,9 @@ namespace components_imgui_access
 	}
 	inline void Image(StringId id, const TextureAtlasUV& atlas)
 	{
-		Image((ImTextureID)(atlas.getTexture()->getID()), atlas.getSubImage(id));
+		Image(reinterpret_cast<ImTextureID>(atlas.getTexture()->getID()), atlas.getSubImage(id));
 	}
-	inline void Image(StringId id, const TextureAtlasUV& atlas, ImVec2 size) { Image((ImTextureID)(atlas.getTexture()->getID()), atlas.getSubImage(id), size); }
+	inline void Image(StringId id, const TextureAtlasUV& atlas, ImVec2 size) { Image(reinterpret_cast<ImTextureID>(atlas.getTexture()->getID()), atlas.getSubImage(id), size); }
 
 	
 	void draw(Entity e, LightComponent& c);
