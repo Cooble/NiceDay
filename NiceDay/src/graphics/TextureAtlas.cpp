@@ -404,9 +404,9 @@ bool TextureAtlas::createAtlas(std::string_view folder, int segmentCount, int se
 	if (!(flags & TextureAtlasFlags_DontCreateTexture))
 		m_texture = Texture::create(TextureInfo().size(size, size).format(TextureFormat::RGBA).pixels(atlas));
 	if (flags & TextureAtlasFlags_CreateFile)
-		stbi_write_png((ND_RESLOC(folder)+ "atlas.png").c_str(), size, size, STBI_rgb_alpha, atlas, size * 4);
+		stbi_write_png((ND_RESLOC(folder)+ "/atlas.png").c_str(), size, size, STBI_rgb_alpha, atlas, size * 4);
 	free(atlas);
-	ND_TRACE("[TextureAtlas] Done: {}", std::string(folder)+ "atlas.png");
+	ND_TRACE("[TextureAtlas] Done: {}", std::string(folder)+ "/atlas.png");
 	return true;
 }
 half_int TextureAtlas::getSubImage(const std::string& fileName, const char* subName) const
@@ -503,7 +503,7 @@ bool TextureAtlasUV::createAtlas(std::string_view folder, int size,int padding,T
 					delete[] ordered_icons;
 					return false;
 				}
-				m_size *= 1.5f;
+				m_size = m_size*1.5f;
 				cont = true;
 				break;
 			}

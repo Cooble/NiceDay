@@ -351,8 +351,7 @@ void BlockPumpkin::onBlockPlaced(World& w, WorldEntity* e, int x, int y, BlockSt
 		for (int yy = -3; yy < m_height; ++yy)
 		{
 			w.setBlockWithNotify(x + xx, y + yy, 0);
-			w.spawnParticle(ParticleList::dot, glm::vec2(x + xx + 0.5f, y + yy + 0.5f), glm::vec2(0), glm::vec2(0), 60,
-			                -1);
+			w.spawnParticle(ParticleList::dot, glm::vec2(x + xx + 0.5f, y + yy + 0.5f), glm::vec2(0), glm::vec2(0), -1);
 		}
 	//we have snowman!
 	auto man = EntityAllocator::createEntity(ENTITY_TYPE_SNOWMAN);

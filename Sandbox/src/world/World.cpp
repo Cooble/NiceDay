@@ -1182,14 +1182,12 @@ void World::genWorld()
 }
 
 //=========================PARTICLES=====================
-
-void World::spawnParticle(ParticleID id, const glm::vec2& pos, const glm::vec2& speed, const glm::vec2& acc, int life,
+void World::spawnParticle(ParticleID id, const glm::vec2& pos, const glm::vec2& speed, const glm::vec2& acc,
 	float rotation, half_int texturePos)
 {
-	if(texturePos.x==-1)
-	m_particle_manager->createParticle(id, pos, speed, acc, life, rotation);
-	else m_particle_manager->createParticle(id, pos, speed, acc, life, rotation,texturePos);
-
+	if (texturePos.x == -1)
+		m_particle_manager->createParticle(id, pos, speed, acc, 0, rotation);
+	else m_particle_manager->createParticle(id, pos, speed, acc, 0, rotation, texturePos);
 }
 
 void World::spawnBlockBreakParticles(int x, int y)

@@ -30,8 +30,8 @@
     "ticksPerFrame": 35
   },
   "note": {
-    "frameCount": 4,
-    "ticksPerFrame": 100000
+    "frameCount": 1,
+    "ticksPerFrame": 300
   },
   "fire": {
     "size": [1,1],

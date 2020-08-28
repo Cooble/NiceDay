@@ -680,7 +680,7 @@ bool EntityRoundBullet::onBlockHit(World& w, int blockX, int blockY)
 			w.getBlockOrAir(m_pos.x + partX * radiusCheck, m_pos.y + partY * radiusCheck)->
 			  block_id).hasCollisionBox())
 			w.spawnParticle(ParticleList::bulletShatter, m_pos + glm::vec2(partX, partY) * 0.1f,
-			                glm::vec2(partX, partY) * 0.15f, {0, -0.55f / 60}, 60, -1);
+			                glm::vec2(partX, partY) * 0.15f, {0, -0.55f / 60}, -1);
 	}
 	return Bullet::onBlockHit(w, blockX, blockY);
 }
@@ -828,16 +828,14 @@ void TileEntityTorch::update(World& w)
 		w.spawnParticle(
 			ParticleList::torch_fire,
 			m_pos + glm::vec2(0.5f + randDispersedFloat(0.05f), 1),
-			{randDispersedFloat(0.001), randFloat(0.001f) + 0.001f},
-			vec2(0),
-			60 * 3);
+			{randDispersedFloat(0.001f), randFloat(0.001f) + 0.001f},
+			vec2(0));
 
 		w.spawnParticle(
 			ParticleList::torch_smoke,
 			m_pos + glm::vec2(0.5f + randDispersedFloat(0.05f), 1),
-			{randDispersedFloat(0.01), randFloat(0.005f) + 0.01f},
-			vec2(0),
-			60 * 4);
+			{randDispersedFloat(0.01f), randFloat(0.005f) + 0.01f},
+			vec2(0));
 	}
 }
 
@@ -967,10 +965,9 @@ void TileEntityRadio::update(World& w)
 		m_randTime = std::rand() % 60 + 1 * 60;
 		w.spawnParticle(
 			ParticleList::note,
-			m_pos + glm::vec2(1.f + randDispersedFloat(0.05f), 1.5),
-			{randDispersedFloat(0.001), randFloat(0.001f) + 0.001f},
+			m_pos + glm::vec2(1.f + randDispersedFloat(0.05f), 1.5f),
+			{randDispersedFloat(0.001f), randFloat(0.001f) + 0.001f},
 			vec2(0),
-			60 * 3,
 			0,
 			half_int(std::rand()&3, 0)
 			);
@@ -978,9 +975,8 @@ void TileEntityRadio::update(World& w)
 		w.spawnParticle(
 			ParticleList::note,
 			m_pos + glm::vec2(0.5f + randDispersedFloat(0.05f), 1),
-			{randDispersedFloat(0.01), randFloat(0.005f) + 0.01f},
+			{randDispersedFloat(0.01f), randFloat(0.005f) + 0.01f},
 			vec2(0),
-			60 * 4,
 			0,
 			half_int(std::rand() & 3, 0));
 	}
@@ -1071,9 +1067,9 @@ void EntityTNT::boom(World& w)
 		glm::vec2 vel(std::cos(angle), std::sin(angle));
 		vel *= (std::rand() % 100) / 100.f / 3;
 
-		w.spawnParticle(ParticleList::torch_smoke, m_pos, vel, -vel * 0.01f, 50 + std::rand() % 30);
+		w.spawnParticle(ParticleList::torch_smoke, m_pos, vel, -vel * 0.01f);
 		if (std::rand() % 10 == 0)
-			w.spawnParticle(ParticleList::torch_fire, m_pos, vel * 0.1f, -vel * 0.001f, 50 + std::rand() % 30);
+			w.spawnParticle(ParticleList::torch_fire, m_pos, vel * 0.1f, -vel * 0.001f);
 	}
 	/*for (int i = 0; i < 20; ++i)
 	{
@@ -1174,9 +1170,9 @@ void EntityBomb::boom(World& w)
 		glm::vec2 vel(std::cos(angle), std::sin(angle));
 		vel *= (std::rand() % 100) / 100.f / 3;
 
-		w.spawnParticle(ParticleList::torch_smoke, m_pos, vel, -vel * 0.01f, 50 + std::rand() % 30);
+		w.spawnParticle(ParticleList::torch_smoke, m_pos, vel, -vel * 0.01f);
 		if (std::rand() % 10 == 0)
-			w.spawnParticle(ParticleList::torch_fire, m_pos, vel * 0.1f, -vel * 0.001f, 50 + std::rand() % 30);
+			w.spawnParticle(ParticleList::torch_fire, m_pos, vel * 0.1f, -vel * 0.001f);
 	}
 	/*for (int i = 0; i < 20; ++i)
 	{

@@ -545,7 +545,7 @@ void ImGuiLayer::renderView(const std::string& name, const  Texture* t)
 			return;
 		}
 	}
-	m_views.push_back({ true,name,t,true,false });
+	m_views.push_back({ false,name,t,true,false });
 
 }
 
@@ -589,7 +589,7 @@ void ImGuiLayer::renderViewProxy(const std::string& name, const Texture* t)
 	Effect::render(t, m_copyFBO);
 	m_copyFBO->unbind();
 
-	m_views.push_back({ true,name,tex,true,true });
+	m_views.push_back({ false,name,tex,true,true });
 
 }
 

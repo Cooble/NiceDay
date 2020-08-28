@@ -85,7 +85,7 @@ void ParticleManager::createParticle(ParticleID id, const glm::vec2& pos, const 
 	p.pos = pos;
 	p.velocity = speed;
 	p.acceleration = acc;
-	p.life = life;
+	p.life = life==0?templ.ticksPerFrame*templ.frameCount:life;
 	p.textureIndex = templ.texture_pos;
 	p.currentFrame = 0;
 	p.nextFrame = templ.frameCount == 1 ? 0 : 1;
@@ -107,7 +107,7 @@ void ParticleManager::createParticle(ParticleID id, const glm::vec2& pos, const 
 	p.pos = pos;
 	p.velocity = speed;
 	p.acceleration = acc;
-	p.life = life;
+	p.life = life == 0 ? templ.ticksPerFrame * templ.frameCount : life;
 	p.textureIndex = templ.texture_pos + texturePos;
 	p.currentFrame = 0;
 	p.nextFrame = templ.frameCount == 1 ? 0 : 1;
@@ -159,6 +159,8 @@ void ParticleManager::render(ParticleRenderer& renderer)
 	for (int i = 0; i < m_particleCount; ++i)
 	{
 		auto& particle = m_list[i];
+		if(particle.life<=0)
+			continue;
 		UVQuad quad0;
 
 		auto piece = particle.isBlock() ? piece2 : piece1;
@@ -172,7 +174,7 @@ void ParticleManager::render(ParticleRenderer& renderer)
 		quad0.uv[3].y += siz.y;
 
 		//quad0.setPosition(glm::vec2((particle.textureIndex.x + (int)particle.currentFrame * particle.textureSize.x), particle.textureIndex.y) * piece);
-		quad0.setSize(glm::vec2(particle.textureSize.x, particle.textureSize.y) * piece);
+		//quad0.setSize(glm::vec2(particle.textureSize.x, particle.textureSize.y) * piece);
 
 
 		//quad1.setPosition(glm::vec2(particle.textureIndex.x + (int)particle.nextFrame * particle.textureSize.x, particle.textureIndex.y) * piece);
@@ -191,13 +193,15 @@ void ParticleManager::render(ParticleRenderer& renderer)
 			quad1.uv[2] = quad1.uv[0] + siz;
 			quad1.uv[1].x += siz.x;
 			quad1.uv[3].y += siz.y;
+			float mix = (float)particle.frameAge / particle.tpf * (particle.life<particle.tpf?-1.f:1.f);
+			//float mix = (float)particle.frameAge / particle.tpf ;
 			
 			renderer.submit(glm::vec3(-particle.textureSize.x / 2.f, -particle.textureSize.y / 2.f,
 			                          -0.5f + (float)particle.isLighted()),
 			                glm::vec2(particle.textureSize.x, particle.textureSize.y),
 			                quad0, quad1,
 			                m_atlas,
-			                ((float)particle.frameAge) / particle.tpf);
+			                mix);
 		}
 		else
 		{

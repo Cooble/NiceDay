@@ -39,6 +39,7 @@ flat in float v_mix_coeficient;
 flat in int v_textureSlot;
 
 void main() {
-	color = mix(texture2D(u_textures[v_textureSlot], v_uv_0), texture2D(u_textures[v_textureSlot], v_uv_1), pow(v_mix_coeficient,1.0f/0.5f));
+	color = mix(texture2D(u_textures[v_textureSlot], v_uv_0), texture2D(u_textures[v_textureSlot], v_uv_1), pow(max(0.0,v_mix_coeficient),1.0f/0.5f));
+	color.a *= 1.0 - abs(min(0.0, v_mix_coeficient));//the more negative the more transparent
 }
 

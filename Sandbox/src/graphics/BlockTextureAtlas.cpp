@@ -490,6 +490,7 @@ void BlockTextureAtlas::createAtlas(const std::string& folder, int segmentCount,
 	}
 
 	stbi_write_png((folder + "atlas.png").c_str(), size, size, STBI_rgb_alpha, atlas, size * 4);
+	free(atlas);
 	ND_TRACE("[TextureAtlas] Done: {}", folder + "atlas.png");
 }
 
