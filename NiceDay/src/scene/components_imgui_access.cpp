@@ -455,7 +455,7 @@ namespace components_imgui_access
 			? TextureLib::loadOrGetTexture(currentCombo)->getID()
 			: TextureLib::loadOrGetTexture("res/images/no.png")->getID();
 		if (id)
-			ImGui::Image(reinterpret_cast<ImTextureID>(id), { AtelierDim::width,AtelierDim::height }, { 0.f, 1.f }, { 1.f, 0.f });
+			ImGui::Image(reinterpret_cast<ImTextureID>(id), { (float)AtelierDim::width, (float)AtelierDim::height}, { 0.f, 1.f }, { 1.f, 0.f });
 		//else ImGui::TextColored({ 1,0,0,1 }, "Image %s not found", currentCombo.c_str());
 
 		char c[5];
@@ -538,7 +538,7 @@ namespace components_imgui_access
 		ImGui::End();
 		ImGui::Begin("LeftMaterial");
 
-		ImGui::Image(reinterpret_cast<ImTextureID>(Atelier::get().getPhoto(c)->getID()), { AtelierDim::width,AtelierDim::height }, { 0.f, 1.f }, { 1.f, 0.f });
+		ImGui::Image(reinterpret_cast<ImTextureID>(Atelier::get().getPhoto(c)->getID()), { (float)AtelierDim::width,(float)AtelierDim::height }, { 0.f, 1.f }, { 1.f, 0.f });
 		if (ImGui::IsItemClicked(ImGuiMouseButton_Right))
 			ImGui::OpenPopup("materialPop");
 		if (ImGui::BeginPopup("materialPop"))
