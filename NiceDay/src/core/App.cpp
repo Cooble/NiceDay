@@ -107,6 +107,11 @@ static void eventCallback(Event& e)
 	for (auto it = stack.end(); it != stack.begin();)
 	{
 		(*--it)->onEvent(e);
+		if(e.getEventType()==Event::EventType::WindowResize)
+		{
+			auto dim = dynamic_cast<WindowResizeEvent*>(&e);
+			(*it)->onWindowResize(dim->getWidth(), dim->getHeight());
+		}
 		if (e.handled)
 			break;
 	}

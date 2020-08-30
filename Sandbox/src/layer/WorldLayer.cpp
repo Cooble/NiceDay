@@ -133,7 +133,7 @@ void WorldLayer::loadWorld(nd::temp_string& worldname, bool regen)
 		else
 		{
 			worldAlreadyLoaded = false;
-			ND_SCHED.callWhenDone([this, job, world, info]()
+			APsched().callWhenDone([this, job, world, info]()
 				{
 					if (job->m_variable != JobAssignment::JOB_SUCCESS)
 					{
@@ -216,7 +216,7 @@ void WorldLayer::onWorldLoaded()
 		exit(1);
 		}*/
 		int timeout = App::get().getTPS() * 1; //wait n seconds to load entity
-		ND_SCHED.runTaskTimer([this, timeout]() mutable
+		APsched().runTaskTimer([this, timeout]() mutable
 			{
 				if (m_world->getLoadedEntity(playerID))
 				{
@@ -349,10 +349,10 @@ void WorldLayer::onDetach()
 		ND_INFO("Cannot save world");
 	else
 		ND_INFO("World saved");
-	ND_SCHED.deallocateJob(job);
+	APsched().deallocateJob(job);
 
-	ND_SCHED.update(); //this is really nasty and bad and disgusting
-	ND_SCHED.update(); //this is really nasty and bad and disgusting
+	APsched().update(); //this is really nasty and bad and disgusting
+	APsched().update(); //this is really nasty and bad and disgusting
 	ND_INFO("Waiting for save 2 seconds");
 	std::this_thread::sleep_for(std::chrono::milliseconds(2000));
 	delete m_chunk_loader;
@@ -397,9 +397,9 @@ void WorldLayer::onUpdate()
 		m_world->getLightCalculator().snapshot();
 		lightCalcDelay = 1;
 	}
-	auto pair = App::get().getInput().getMouseLocation();
-	CURSOR_X = pair.x - App::get().getWindow()->getWidth() / 2;
-	CURSOR_Y = -pair.y + App::get().getWindow()->getHeight() / 2;
+	auto pair = APin().getMouseLocation();
+	CURSOR_X = pair.x - APwin()->getWidth() / 2;
+	CURSOR_Y = -pair.y + APwin()->getHeight() / 2;
 
 	CURSOR_X = CURSOR_X / BLOCK_PIXEL_SIZE + m_cam->getPosition().x;
 	CURSOR_Y = CURSOR_Y / BLOCK_PIXEL_SIZE + m_cam->getPosition().y;
@@ -413,7 +413,7 @@ void WorldLayer::onUpdate()
 	}
 
 	bool istsunderBlock = !m_world->isAir(m_cam->getPosition().x, m_cam->getPosition().y - 1);
-	if (!App::get().getWindow()->isFocused())
+	if (!APwin()->isFocused())
 		return;
 	if (getPlayer().hasCreative())
 		onCreativeUpdate();
@@ -427,30 +427,30 @@ void WorldLayer::onUpdate()
 	float acc = 0.3f;
 	float moveThroughBlockSpeed = 6;
 
-	if (!GUIContext::isAnyItemActive()&&App::get().getWindow()->isFocused())
+	if (!GUIContext::isAnyItemActive()&&APwin()->isFocused())
 	{
 		if (Stats::move_through_blocks_enable)
 		{
 			velocity = glm::vec2(0, 0);
-			if (App::get().getInput().isKeyPressed(Controls::GO_RIGHT))
+			if (APin().isKeyPressed(Controls::GO_RIGHT))
 				velocity.x = moveThroughBlockSpeed;
-			if (App::get().getInput().isKeyPressed(Controls::GO_LEFT))
+			if (APin().isKeyPressed(Controls::GO_LEFT))
 				velocity.x = -moveThroughBlockSpeed;
 
 
-			if (App::get().getInput().isKeyPressed(Controls::GO_UP))
+			if (APin().isKeyPressed(Controls::GO_UP))
 				velocity.y = moveThroughBlockSpeed;
-			if (App::get().getInput().isKeyPressed(Controls::GO_DOWN))
+			if (APin().isKeyPressed(Controls::GO_DOWN))
 				velocity.y = -moveThroughBlockSpeed;
 		}
 
 		else
 		{
-			if (App::get().getInput().isKeyPressed(Controls::GO_RIGHT))
+			if (APin().isKeyPressed(Controls::GO_RIGHT))
 				accel.x = acc;
-			if (App::get().getInput().isKeyPressed(Controls::GO_LEFT))
+			if (APin().isKeyPressed(Controls::GO_LEFT))
 				accel.x = -acc;
-			if (App::get().getInput().isKeyPressed(Controls::GO_UP))
+			if (APin().isKeyPressed(Controls::GO_UP))
 			{
 				if (istsunderBlock || Stats::fly_enable)
 					velocity.y = 10;
@@ -474,7 +474,7 @@ void WorldLayer::onCreativeUpdate()
 	static int deltaBum = 0;
 	if (!GUIContext::isAnyItemActive())
 	{
-		if (App::get().getInput().isKeyPressed(Controls::SPAWN_TNT))
+		if (APin().isKeyPressed(Controls::SPAWN_TNT))
 		{
 			if (tntenable)
 			{
@@ -489,12 +489,12 @@ void WorldLayer::onCreativeUpdate()
 				}
 			}
 		}
-		if (App::get().getInput().isKeyFreshlyPressed(Controls::FLY_MODE))
+		if (APin().isKeyFreshlyPressed(Controls::FLY_MODE))
 		{
 			Stats::fly_enable = !Stats::fly_enable;
 			ND_INFO("Fly mode: {}", Stats::fly_enable);
 		}
-		if (App::get().getInput().isKeyFreshlyPressed(Controls::SPAWN_ENTITY))
+		if (APin().isKeyFreshlyPressed(Controls::SPAWN_ENTITY))
 		{
 			auto entityBuff = malloc(EntityRegistry::get().getBucket(ENTITY_PALLETE_SELECTED).byte_size);
 			EntityRegistry::get().createInstance(ENTITY_PALLETE_SELECTED, entityBuff);
@@ -505,7 +505,7 @@ void WorldLayer::onCreativeUpdate()
 			ND_TRACE("bum");
 		}
 
-		if (App::get().getInput().isKeyPressed(Controls::SPAWN_BULLETS))
+		if (APin().isKeyPressed(Controls::SPAWN_BULLETS))
 		{
 			constexpr int BULLET_CADENCE_DELAY = 8;
 			static int counter = 0;

@@ -318,7 +318,7 @@ void World::loadChunksAndGen(nd::temp_set<int>& toLoadChunks)
 			{
 				toupdateChunks[pair.first] |= maskFreshlyOnlyLoaded;
 				if (loadJob == nullptr)
-					loadJob = ND_SCHED.allocateJob();
+					loadJob = APsched().allocateJob();
 				m_chunk_provider->assignChunkLoad(loadJob, &m_chunks[chunkOffset], getChunkSaveOffset(chunkID));
 			}
 		}
@@ -340,8 +340,8 @@ void World::loadChunksAndGen(nd::temp_set<int>& toLoadChunks)
 	// need to wait for our loading jobs, and all prior jobs of workers (i.e. chunk_provider, threaded_gen)
 	if (!chunksToWaitFor.empty())
 	{
-		JobAssignmentP loadFence = ND_SCHED.allocateJob();
-		JobAssignmentP genFence = ND_SCHED.allocateJob();
+		JobAssignmentP loadFence = APsched().allocateJob();
+		JobAssignmentP genFence = APsched().allocateJob();
 		bool fencesDone = false;
 		m_chunk_provider->assignWait(loadFence);
 		m_threaded_gen.assignWait(genFence);
@@ -350,10 +350,10 @@ void World::loadChunksAndGen(nd::temp_set<int>& toLoadChunks)
 		{
 			if (!fencesDone && loadFence->isDone() && genFence->isDone() && (loadJob == nullptr || loadJob->isDone()))
 			{
-				ND_SCHED.deallocateJob(loadFence);
-				ND_SCHED.deallocateJob(genFence);
+				APsched().deallocateJob(loadFence);
+				APsched().deallocateJob(genFence);
 				if (loadJob)
-					ND_SCHED.deallocateJob(loadJob);
+					APsched().deallocateJob(loadJob);
 				fencesDone = true;
 			}
 			if (fencesDone)
@@ -367,12 +367,12 @@ void World::loadChunksAndGen(nd::temp_set<int>& toLoadChunks)
 
 			return false;
 		};
-		ND_SCHED.runTaskTimer(waitForWorkFunc);
+		APsched().runTaskTimer(waitForWorkFunc);
 	}
 		//need to wait only for our load job
 	else if (loadJob)
 	{
-		ND_SCHED.callWhenDone([this, toupdateChunks]() mutable
+		APsched().callWhenDone([this, toupdateChunks]() mutable
 			{
 				genChunks(toupdateChunks);
 			}, loadJob);
@@ -396,7 +396,7 @@ void World::genChunks(defaultable_map<int, int, 0>& toUpdateChunks)
 		{
 			header.setState(BEING_GENERATED);
 			if (genJob == nullptr)
-				genJob = ND_SCHED.allocateJob();
+				genJob = APsched().allocateJob();
 			m_chunks[offset].m_x = half_int::X(chunkID);
 			m_chunks[offset].m_y = half_int::Y(chunkID);
 			m_threaded_gen.assignChunkGen(genJob, &m_chunks[offset]);
@@ -424,9 +424,9 @@ void World::genChunks(defaultable_map<int, int, 0>& toUpdateChunks)
 				updateLight(toUpdateChunks);
 				loadEntFinal(toUpdateChunks, entitiesToLoad);
 			};
-			ND_SCHED.callWhenDone(afterBound, job);
+			APsched().callWhenDone(afterBound, job);
 		};
-		ND_SCHED.callWhenDone(afterGen, genJob);
+		APsched().callWhenDone(afterGen, genJob);
 	}
 	else
 	{
@@ -496,18 +496,18 @@ void World::loadEntFinal(defaultable_map<int, int, 0>& toUpdateChunks, std::vect
 		if (entityLoadedFence->isDone())
 		{
 			afterEntity();
-			ND_SCHED.deallocateJob(entityLoadedFence);
+			APsched().deallocateJob(entityLoadedFence);
 		}
 		else
-			ND_SCHED.callWhenDone(afterEntity, entityLoadedFence);
+			APsched().callWhenDone(afterEntity, entityLoadedFence);
 	}
 }
 
 JobAssignmentP World::loadEntities2(std::vector<int>& chunkEntitiesToLoad)
 {
-	JobAssignmentP p = ND_SCHED.allocateJob();
+	JobAssignmentP p = APsched().allocateJob();
 
-	JobAssignmentP entityLoadedFence = ND_SCHED.allocateJob();
+	JobAssignmentP entityLoadedFence = APsched().allocateJob();
 	entityLoadedFence->assign();
 
 	WorldEntity*** entityPointerArrayChunkArray = new WorldEntity**[chunkEntitiesToLoad.size()];
@@ -542,7 +542,7 @@ JobAssignmentP World::loadEntities2(std::vector<int>& chunkEntitiesToLoad)
 		delete[] entityPointerArraySizeChunkArray;
 		entityLoadedFence->markDone();
 	};
-	ND_SCHED.callWhenDone(afterLoad, p);
+	APsched().callWhenDone(afterLoad, p);
 	return entityLoadedFence;
 }
 
@@ -572,7 +572,7 @@ JobAssignmentP World::updateBounds2(defaultable_map<int, int, 0>& toUpdateChunks
 		                   });
 		resources.push_back(resource); //todo use emplace instead of push
 		if (boundUpdateJob == nullptr)
-			boundUpdateJob = ND_SCHED.allocateJob();
+			boundUpdateJob = APsched().allocateJob();
 		m_threaded_gen.assignChunkBoundUpdate(boundUpdateJob, resource, flags);
 	}
 	//lock all chunks which are boun updated and souroundings
@@ -581,7 +581,7 @@ JobAssignmentP World::updateBounds2(defaultable_map<int, int, 0>& toUpdateChunks
 			if (chunkP)
 				m_chunk_headers[getChunkIndex(chunkP->chunkID())].getJob()->assign();
 
-	JobAssignmentP p = ND_SCHED.allocateJob();
+	JobAssignmentP p = APsched().allocateJob();
 	if (boundUpdateJob)
 	{
 		p->assign();
@@ -598,7 +598,7 @@ JobAssignmentP World::updateBounds2(defaultable_map<int, int, 0>& toUpdateChunks
 			m_has_chunk_changed = true; //notify worldrender to gather chunks to render
 			p->markDone();
 		};
-		ND_SCHED.callWhenDone(afterBoundUpdate, boundUpdateJob);
+		APsched().callWhenDone(afterBoundUpdate, boundUpdateJob);
 	}
 	return p;
 }
@@ -634,7 +634,7 @@ void World::unloadChunks(nd::temp_set<int>& chunk_ids)
 		header.getJob()->assign();
 		chunk.last_save_time = getWorldTicks();
 		if (assignment == nullptr)
-			assignment = ND_SCHED.allocateJob();
+			assignment = APsched().allocateJob();
 		m_chunk_provider->assignChunkSave(assignment, &chunk, getChunkSaveOffset(chunkId));
 		chunksToUnload.push_back(chunkId);
 	}
@@ -729,7 +729,7 @@ void World::unloadChunks(nd::temp_set<int>& chunk_ids)
 		delete[] arrayOfEntityArraySizes;
 		delete[] arrayOfEntityArrayPointers;
 	};
-	ND_SCHED.callWhenDone(afterUnload, assignment);
+	APsched().callWhenDone(afterUnload, assignment);
 }
 
 void World::updateChunkBounds(BlockAccess& world, int cx, int cy, int bitBounds)

@@ -319,7 +319,7 @@ void Sounder::prepareMusic(Music** musi, const SoundAssignment& command, bool bu
 	music->optional_sound_buffer = buffFill ? (SoundBuff*)1 : nullptr;
 	music->fileName = command.soundFile;
 	music->sid = SID(music->fileName);
-	JobAssignmentP job = ND_SCHED.allocateJob();
+	JobAssignmentP job = APsched().allocateJob();
 	job->assign();
 	music->optional_job = job;
 	music->data.volume = 0;
@@ -770,7 +770,7 @@ void Sounder::loopInternal()
 					m_rings.deallocate(reinterpret_cast<RingBufferSounder*>(music->data.ring_buffer));
 					delete music;
 				}
-				ND_SCHED.deallocateJob(job);
+				APsched().deallocateJob(job);
 			}
 			//remove music streams if done
 			for (int i = m_music_streams.size() - 1; i >= 0; --i)

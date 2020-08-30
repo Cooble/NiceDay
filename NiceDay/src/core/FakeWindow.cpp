@@ -271,3 +271,18 @@ glm::vec2 FakeInput::getMouseLocation()
 {
 	return m_input->getMouseLocation() - m_window->getOffset();
 }
+
+bool FakeInput::isMouseFreshlyReleased(MouseCode button)
+{
+	return m_input->isMouseFreshlyReleased(button);
+}
+
+bool FakeInput::isMouseFreshlyPressed(MouseCode button)
+{
+	return m_input->isMouseFreshlyPressed(button);
+}
+
+glm::vec2 FakeInput::getDragging()
+{
+	return m_input->getDragging();
+}

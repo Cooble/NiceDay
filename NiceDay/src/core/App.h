@@ -7,8 +7,6 @@
 #include "Scheduler.h"
 #include "memory/StackAllocator.h"
 
-#define ND_SCHED App::get().getScheduler()
-
 // allocates string on doublebuffered stack
 // this string is valid for 2 ticks
 #define ND_TEMP_STRING(x) App::get().getBufferedAllocator().allocateString((x))
@@ -120,4 +118,7 @@ protected:
 
 //Debug settings variables -> loaded and saved to app.json
 
-
+inline auto& APin() { return App::get().getInput(); }
+inline auto APwin() { return App::get().getWindow(); }
+inline auto& APsched() { return App::get().getScheduler(); }
+inline auto APgui() { return App::get().getImGui(); }

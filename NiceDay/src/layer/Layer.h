@@ -13,8 +13,10 @@ public:
 	virtual void onDetach() {}
 	virtual void onUpdate() {}
 	virtual void onRender() {}
+	virtual void onWindowResize(int width,int height) {}
 	virtual void onImGuiRender() {}
 	virtual void onEvent(Event& e) {}
+	
 
 	inline const std::string& getName() const { return m_name; }
 };

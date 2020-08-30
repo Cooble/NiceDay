@@ -63,7 +63,7 @@ void PriorGenLayer::onRender()
 
 	trans =
 		glm::scale(trans,
-		           {1.f / App::get().getWindow()->getWidth(), 1.f / App::get().getWindow()->getHeight(), 1});
+		           {1.f / APwin()->getWidth(), 1.f / APwin()->getHeight(), 1});
 	trans =
 		glm::translate(trans,
 		               {
@@ -72,7 +72,7 @@ void PriorGenLayer::onRender()
 		               });
 	trans =
 		glm::scale(trans,
-		           {m_tex->getWidth() * textureZoom, m_tex->getHeight() * textureZoom, 1});
+		           {m_tex->width() * textureZoom, m_tex->height() * textureZoom, 1});
 
 
 	Effect::getDefaultShader()->bind();
@@ -123,7 +123,7 @@ void PriorGenLayer::onImGuiRender()
 
 	if (m_tex)
 	{
-		if ((int)settings["width"] != m_tex->getWidth() || (int)settings["height"] != m_tex->getHeight())
+		if ((int)settings["width"] != m_tex->width() || (int)settings["height"] != m_tex->height())
 		{
 			delete m_tex;
 			m_tex = genom.buildTexture();

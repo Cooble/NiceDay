@@ -36,6 +36,7 @@ namespace components_imgui_access
 
 		NewScene* scene;
 		Entity activeCamera;
+		Entity selectedEntity;
 
 		void drawWindows();
 		void init();

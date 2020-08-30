@@ -13,15 +13,15 @@ static float logoTransient = -1.3;
 
 MainWindow::MainWindow(const MessageConsumer& c)
 	:m_messenger(c) {
-	width = App::get().getWindow()->getWidth();
-	height = App::get().getWindow()->getHeight();
+	width = APwin()->getWidth();
+	height = APwin()->getHeight();
 	isVisible = false;
 	isMoveable = false;
 	isResizable = false;
 	dimInherit = GUIDimensionInherit::WIDTH_HEIGHT;
 
 
-	setCenterPosition(App::get().getWindow()->getWidth(), App::get().getWindow()->getHeight());
+	setCenterPosition(APwin()->getWidth(), APwin()->getHeight());
 
 	auto material = FontMatLib::getMaterial("res/fonts/andrew_big.fnt");
 
@@ -37,7 +37,7 @@ MainWindow::MainWindow(const MessageConsumer& c)
 
 	m_logo = new GUIImage();
 	m_logo->setImage(new Sprite(res));
-	m_logo->image->setSize({ logo->getWidth(), logo->getHeight() });
+	m_logo->image->setSize({ logo->width(), logo->height() });
 	m_logo->packDimensions();
 	m_logo->isAlwaysPacked = true;
 	m_logo->scale = 0;
@@ -210,9 +210,9 @@ const std::string& GUIWorldEntry::getWorldName()
 
 PlayWindow::PlayWindow(const MessageConsumer& c)
 :m_messenger(c){
-	width = App::get().getWindow()->getWidth();
-	height = App::get().getWindow()->getHeight();
-	setCenterPosition(App::get().getWindow()->getWidth(), App::get().getWindow()->getHeight());
+	width = APwin()->getWidth();
+	height = APwin()->getHeight();
+	setCenterPosition(APwin()->getWidth(), APwin()->getHeight());
 
 	
 	isVisible = false;
@@ -352,9 +352,9 @@ void PlayWindow::setWorlds(const std::vector<WorldInfoData>& worlds)
 PauseWindow::PauseWindow(const MessageConsumer& c)
 :m_messenger(c){
 	
-	width = App::get().getWindow()->getWidth();
-	height = App::get().getWindow()->getHeight();
-	setCenterPosition(App::get().getWindow()->getWidth(), App::get().getWindow()->getHeight());
+	width = APwin()->getWidth();
+	height = APwin()->getHeight();
+	setCenterPosition(APwin()->getWidth(), APwin()->getHeight());
 
 	isVisible = false;
 	isMoveable = false;
@@ -440,9 +440,9 @@ PauseWindow::PauseWindow(const MessageConsumer& c)
 ControlsWindow::ControlsWindow(const MessageConsumer& c)
 	:m_messenger(c) {
 
-	width = App::get().getWindow()->getWidth();
-	height = App::get().getWindow()->getHeight();
-	setCenterPosition(App::get().getWindow()->getWidth(), App::get().getWindow()->getHeight());
+	width = APwin()->getWidth();
+	height = APwin()->getHeight();
+	setCenterPosition(APwin()->getWidth(), APwin()->getHeight());
 
 	isVisible = false;
 	isMoveable = false;
@@ -510,7 +510,7 @@ ControlsWindow::ControlsWindow(const MessageConsumer& c)
 				button->getTextElement()->setText(Font::BLUE+titlo + ": " + Font::colorize(Font::BLACK, "#013220") +ControlMap::getKeyName(*ControlMap::getButtonData(titlo)->pointer));
 			}
 			else {
-				auto loc = App::get().getInput().getMouseLocation();
+				auto loc = APin().getMouseLocation();
 				if (!e.contains(loc.x,loc.y))
 				{
 					GUIContext::get().setFocusedElement(nullptr);
@@ -556,7 +556,7 @@ ControlsWindow::ControlsWindow(const MessageConsumer& c)
 				button->getTextElement()->setText(Font::BLUE + titlo + ": " + Font::colorize(Font::BLACK, "#013220") + ControlMap::getKeyName(*ControlMap::getButtonData(titlo)->pointer));
 			}
 			else {
-				auto loc = App::get().getInput().getMouseLocation();
+				auto loc = APin().getMouseLocation();
 				if (!e.contains(loc.x, loc.y))
 				{
 					GUIContext::get().setFocusedElement(nullptr);

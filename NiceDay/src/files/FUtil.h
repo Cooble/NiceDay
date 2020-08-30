@@ -1,7 +1,7 @@
 #include "ndpch.h"
 namespace FUtil
 {
-	inline bool exists(const std::string& path) { return std::filesystem::exists(ND_RESLOC(path)); }
+	inline bool exists(std::string_view path) { return std::filesystem::exists(ND_RESLOC(path)); }
 	// folder path of current executable
 	const std::string& getExecutableFolderPath();
 	// executable path

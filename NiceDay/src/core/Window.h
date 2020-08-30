@@ -38,8 +38,11 @@ class RealInput :public Input
 {
 private:
 	std::vector<int8_t> m_keys;
+	std::vector<int8_t> m_mouse_keys;
 	int8_t& getKey(int button);
+	int8_t& getMouseKey(int button);
 	Window* m_window;
+	glm::vec2 m_drag_offset=glm::vec2(0.f);
 public:
 	RealInput(Window* window);
 	~RealInput() = default;
@@ -48,6 +51,10 @@ public:
 	bool isKeyFreshlyPressed(KeyCode button)override;
 	bool isKeyFreshlyReleased(KeyCode button)override;
 	bool isMousePressed(MouseCode button)override;
+	bool isMouseFreshlyPressed(MouseCode button) override;
+	bool isMouseFreshlyReleased(MouseCode button) override;
+	glm::vec2 getDragging() override;
+	
 	glm::vec2 getMouseLocation()override;
 };
 

@@ -92,7 +92,7 @@ void Sprite2D::setCutout()
 
 void Sprite2D::setDimensions(int pixelX, int pixelY)
 {
-	setScale(glm::vec2((float)pixelX / m_texture->getWidth(), (float)pixelY / m_texture->getHeight()));
+	setScale(glm::vec2((float)pixelX / m_texture->width(), (float)pixelY / m_texture->height()));
 }
 
 const glm::mat4& Sprite2D::getModelMatrix()

@@ -711,8 +711,8 @@ void Creature::throwItem(World& w, ItemStack* stack)
 	//get cursor vector
 	if (dynamic_cast<EntityPlayer*>(this))
 	{
-		auto loc = App::get().getInput().getMouseLocation();
-		auto dims = App::get().getWindow()->getDimensions();
+		auto loc = APin().getMouseLocation();
+		auto dims = APwin()->getDimensions();
 		loc.x = loc.x - dims.x / 2;
 		loc.y = -loc.y + dims.y / 2;;
 		loc = glm::normalize(loc);

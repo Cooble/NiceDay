@@ -90,4 +90,7 @@ public:
 	bool isKeyFreshlyReleased(KeyCode button)override;
 	bool isMousePressed(MouseCode button)override;
 	glm::vec2 getMouseLocation()override;
+	bool isMouseFreshlyReleased(MouseCode button) override;
+	bool isMouseFreshlyPressed(MouseCode button) override;
+	glm::vec2 getDragging() override;
 };

@@ -22,9 +22,9 @@ HUD::HUD()
 	m_title->isEnabled = false;
 	GUIWindow::appendChild(m_title);
 	
-	width = App::get().getWindow()->getWidth();
-	height = App::get().getWindow()->getHeight();
-	setCenterPosition(App::get().getWindow()->getWidth(), App::get().getWindow()->getHeight());
+	width = APwin()->getWidth();
+	height = APwin()->getHeight();
+	setCenterPosition(APwin()->getWidth(), APwin()->getHeight());
 
 	isVisible = false;
 	isMoveable = false;
@@ -201,7 +201,7 @@ void HUD::consumeContainerEvent(const std::string& id, int slot, Inventory* inv,
 		//take all from slot
 		if(left)
 		{
-			if(App::get().getInput().isKeyPressed(KeyCode::LEFT_SHIFT))
+			if(APin().isKeyPressed(KeyCode::LEFT_SHIFT))
 			{
 				inHand = c->takeFromIndex(slot,c->getItemStack(slot)!=nullptr?(int)std::ceil(c->getItemStack(slot)->size()/2.f):-1);
 				

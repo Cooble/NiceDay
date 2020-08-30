@@ -45,8 +45,8 @@ glm::mat4 FlatCam::getProjMatrix()
 {
 	auto trans = glm::mat4(1.0f);
 
-	glm::vec2 transla = pos - App::get().getWindow()->getDimensions() / 2.f * unitsPerPixel;
-	glm::vec2 scal = App::get().getWindow()->getDimensions() * unitsPerPixel;
+	glm::vec2 transla = pos - APwin()->getDimensions() / 2.f * unitsPerPixel;
+	glm::vec2 scal = APwin()->getDimensions() * unitsPerPixel;
 
 	trans = glm::translate(trans, { transla.x,transla.y, 0 });
 	trans = glm::scale(trans, { scal.x,scal.y, 1.f });

@@ -24,18 +24,18 @@ void PlayerCameraController::onEvent(Event& e)
 			fullRotation = !fullRotation;
 			if (fullRotation)
 			{
-				auto center = App::get().getWindow()->getDimensions() / 2.f;
+				auto center = APwin()->getDimensions() / 2.f;
 				fullRotation = true;
-				App::get().getWindow()->setCursorPolicy(Window::CURSOR_DISABLED);
-				App::get().getWindow()->setCursorPos(center);
+				APwin()->setCursorPolicy(Window::CURSOR_DISABLED);
+				APwin()->setCursorPos(center);
 				mouseCorrdsOffset = center;
 				camRot = (*angles);
 			}
 			else
 			{
-				auto center = App::get().getWindow()->getDimensions() / 2.f;
-				App::get().getWindow()->setCursorPolicy(Window::CURSOR_ENABLED);
-				App::get().getWindow()->setCursorPos(center);
+				auto center = APwin()->getDimensions() / 2.f;
+				APwin()->setCursorPolicy(Window::CURSOR_ENABLED);
+				APwin()->setCursorPos(center);
 			}
 		}
 	}
@@ -45,8 +45,8 @@ void PlayerCameraController::onEvent(Event& e)
 		{
 			auto m = dynamic_cast<MouseMoveEvent*>(&e);
 			auto delta = m->getPos() - mouseCorrdsOffset;
-			(*angles).pitch = camRot.x - delta.y / App::get().getWindow()->getWidth() * mouseSensitivity;
-			(*angles).yaw = camRot.y - delta.x / App::get().getWindow()->getWidth() * mouseSensitivity;
+			(*angles).pitch = camRot.x - delta.y / APwin()->getWidth() * mouseSensitivity;
+			(*angles).yaw = camRot.y - delta.x / APwin()->getWidth() * mouseSensitivity;
 
 			if ((*angles).pitch < -3.14159f / 2 || (*angles).pitch > 3.14159f / 2)
 			{
@@ -77,21 +77,21 @@ void PlayerCameraController::onUpdate()
 	loadComponentsData();
 	glm::vec3 go(0, 0, 0);
 
-	if (App::get().getInput().isKeyPressed(KeyCode::RIGHT))
+	if (APin().isKeyPressed(KeyCode::RIGHT))
 		go.x += 1;
-	if (App::get().getInput().isKeyPressed(KeyCode::LEFT))
+	if (APin().isKeyPressed(KeyCode::LEFT))
 		go.x -= 1;
 
 
-	if (App::get().getInput().isKeyPressed(KeyCode::SPACE))
+	if (APin().isKeyPressed(KeyCode::SPACE))
 		go.y += 1;
-	if (App::get().getInput().isKeyPressed(KeyCode::RIGHT_SHIFT))
+	if (APin().isKeyPressed(KeyCode::RIGHT_SHIFT))
 		go.y -= 1;
 
 
-	if (App::get().getInput().isKeyPressed(KeyCode::UP))
+	if (APin().isKeyPressed(KeyCode::UP))
 		go.z -= 1;
-	if (App::get().getInput().isKeyPressed(KeyCode::DOWN))
+	if (APin().isKeyPressed(KeyCode::DOWN))
 		go.z += 1;
 
 	if (go != glm::vec3(0, 0, 0))
@@ -118,37 +118,37 @@ void EditCameraController::onEvent(Event& e)
 	if (scene->currentCamera() != entity)
 		return;
 	loadComponentsData();
-	/*auto& navBar = dynamic_cast<FakeWindow*>(App::get().getWindow())->getNavigationBar();
+	/*auto& navBar = dynamic_cast<FakeWindow*>(APwin())->getNavigationBar();
 
 
 	if (navBar.freshPress)
 	{
 		if (navBar.rotationActive && !fullRotation)
 		{
-			auto center = App::get().getWindow()->getDimensions() / 2.f;
-			startCursor = App::get().getInput().getMouseLocation();
-			App::get().getWindow()->setCursorPolicy(Window::CURSOR_DISABLED);
-			App::get().getWindow()->setCursorPos(center);
+			auto center = APwin()->getDimensions() / 2.f;
+			startCursor = APin().getMouseLocation();
+			APwin()->setCursorPolicy(Window::CURSOR_DISABLED);
+			APwin()->setCursorPos(center);
 			currentMouseCoords = center;
 			camRot = (*angles);
 			fullRotation = true;
 		}
 		else if (navBar.moveActive && !fullMove)
 		{
-			auto center = App::get().getWindow()->getDimensions() / 2.f;
-			startCursor = App::get().getInput().getMouseLocation();
-			App::get().getWindow()->setCursorPolicy(Window::CURSOR_DISABLED);
-			App::get().getWindow()->setCursorPos(center);
+			auto center = APwin()->getDimensions() / 2.f;
+			startCursor = APin().getMouseLocation();
+			APwin()->setCursorPolicy(Window::CURSOR_DISABLED);
+			APwin()->setCursorPos(center);
 			currentMouseCoords = center;
 			camPos = (*position);
 			fullMove = true;
 		}
 		else if (navBar.lockActive && !fullRotRelative)
 		{
-			auto center = App::get().getWindow()->getDimensions() / 2.f;
-			startCursor = App::get().getInput().getMouseLocation();
-			App::get().getWindow()->setCursorPolicy(Window::CURSOR_DISABLED);
-			App::get().getWindow()->setCursorPos(center);
+			auto center = APwin()->getDimensions() / 2.f;
+			startCursor = APin().getMouseLocation();
+			APwin()->setCursorPolicy(Window::CURSOR_DISABLED);
+			APwin()->setCursorPos(center);
 			currentMouseCoords = center;
 			camRot = (*angles);
 			farPoint = (*position) + facingDirection() * pointDistance;
@@ -161,14 +161,14 @@ void EditCameraController::onEvent(Event& e)
 		fullRotation = false;
 		fullMove = false;
 		fullRotRelative = false;
-		App::get().getWindow()->setCursorPolicy(Window::CURSOR_ENABLED);
-		App::get().getWindow()->setCursorPos(startCursor);
+		APwin()->setCursorPolicy(Window::CURSOR_ENABLED);
+		APwin()->setCursorPos(startCursor);
 	}
 	else if (fullRotation)
 	{
 		auto delta = navBar.drag;
-		(*angles).pitch = camRot.x - delta.y / App::get().getWindow()->getWidth() * mouseSensitivity;
-		(*angles).yaw = camRot.y - delta.x / App::get().getWindow()->getWidth() * mouseSensitivity;
+		(*angles).pitch = camRot.x - delta.y / APwin()->getWidth() * mouseSensitivity;
+		(*angles).yaw = camRot.y - delta.x / APwin()->getWidth() * mouseSensitivity;
 
 		if ((*angles).pitch < -3.14159f / 2 || (*angles).pitch > 3.14159f / 2)
 		{
@@ -199,8 +199,8 @@ void EditCameraController::onEvent(Event& e)
 	{
 		auto delta = navBar.drag / 50.f;
 
-		(*angles).pitch = camRot.x - delta.y / App::get().getWindow()->getWidth() * mouseSensitivity;
-		(*angles).yaw = camRot.y - delta.x / App::get().getWindow()->getWidth() * mouseSensitivity;
+		(*angles).pitch = camRot.x - delta.y / APwin()->getWidth() * mouseSensitivity;
+		(*angles).yaw = camRot.y - delta.x / APwin()->getWidth() * mouseSensitivity;
 
 		if ((*angles).pitch < -3.14159f / 2 || (*angles).pitch > 3.14159f / 2)
 		{
@@ -236,37 +236,37 @@ void EditCameraController::onEvent(Event& e)
 	if (scene->currentCamera() != entity)
 		return;
 	loadComponentsData();
-	auto& navBar = dynamic_cast<FakeWindow*>(App::get().getWindow())->getNavigationBar();
+	auto& navBar = dynamic_cast<FakeWindow*>(APwin())->getNavigationBar();
 
 	auto press = dynamic_cast<KeyPressEvent*>(&e);
 	if (press)
 	{
 		if (press->getKey() == KeyCode::LEFT_CONTROL && !fullRotation && !fullMove)
 		{
-			auto center = App::get().getWindow()->getDimensions() / 2.f;
-			startCursor = App::get().getInput().getMouseLocation();
-			App::get().getWindow()->setCursorPolicy(Window::CURSOR_DISABLED);
-			App::get().getWindow()->setCursorPos(center);
+			auto center = APwin()->getDimensions() / 2.f;
+			startCursor = APin().getMouseLocation();
+			APwin()->setCursorPolicy(Window::CURSOR_DISABLED);
+			APwin()->setCursorPos(center);
 			currentMouseCoords = center;
 			camRot = (*angles);
 			fullRotation = true;
 		}
 		else if (press->getKey() == KeyCode::LEFT_SHIFT && !fullRotation && !fullMove)
 		{
-			auto center = App::get().getWindow()->getDimensions() / 2.f;
-			startCursor = App::get().getInput().getMouseLocation();
-			App::get().getWindow()->setCursorPolicy(Window::CURSOR_DISABLED);
-			App::get().getWindow()->setCursorPos(center);
+			auto center = APwin()->getDimensions() / 2.f;
+			startCursor = APin().getMouseLocation();
+			APwin()->setCursorPolicy(Window::CURSOR_DISABLED);
+			APwin()->setCursorPos(center);
 			currentMouseCoords = center;
 			camPos = (*position);
 			fullMove = true;
 		}
 		else if (press->getKey() == KeyCode::LEFT_ALT && !fullRotation && !fullMove && !fullRotRelative)
 		{
-			auto center = App::get().getWindow()->getDimensions() / 2.f;
-			startCursor = App::get().getInput().getMouseLocation();
-			App::get().getWindow()->setCursorPolicy(Window::CURSOR_DISABLED);
-			App::get().getWindow()->setCursorPos(center);
+			auto center = APwin()->getDimensions() / 2.f;
+			startCursor = APin().getMouseLocation();
+			APwin()->setCursorPolicy(Window::CURSOR_DISABLED);
+			APwin()->setCursorPos(center);
 			currentMouseCoords = center;
 			camRot = (*angles);
 			farPoint = (*position) + facingDirection() * pointDistance;
@@ -279,28 +279,28 @@ void EditCameraController::onEvent(Event& e)
 		if (rel->getKey() == KeyCode::LEFT_CONTROL && fullRotation)
 		{
 			fullRotation = false;
-			App::get().getWindow()->setCursorPolicy(Window::CURSOR_ENABLED);
-			App::get().getWindow()->setCursorPos(startCursor);
+			APwin()->setCursorPolicy(Window::CURSOR_ENABLED);
+			APwin()->setCursorPos(startCursor);
 		}
 		else if (rel->getKey() == KeyCode::LEFT_SHIFT && fullMove)
 		{
 			fullMove = false;
-			App::get().getWindow()->setCursorPolicy(Window::CURSOR_ENABLED);
-			App::get().getWindow()->setCursorPos(startCursor);
+			APwin()->setCursorPolicy(Window::CURSOR_ENABLED);
+			APwin()->setCursorPos(startCursor);
 		}
 		else if (rel->getKey() == KeyCode::LEFT_ALT && fullRotRelative)
 		{
 			fullRotRelative = false;
-			App::get().getWindow()->setCursorPolicy(Window::CURSOR_ENABLED);
-			App::get().getWindow()->setCursorPos(startCursor);
+			APwin()->setCursorPolicy(Window::CURSOR_ENABLED);
+			APwin()->setCursorPos(startCursor);
 		}
 	}
 	else if (e.getEventType() == Event::EventType::MouseMove && fullRotation)
 	{
 		auto m = dynamic_cast<MouseMoveEvent*>(&e);
 		auto delta = m->getPos() - currentMouseCoords;
-		(*angles).pitch = camRot.x - delta.y / App::get().getWindow()->getWidth() * mouseSensitivity;
-		(*angles).yaw = camRot.y - delta.x / App::get().getWindow()->getWidth() * mouseSensitivity;
+		(*angles).pitch = camRot.x - delta.y / APwin()->getWidth() * mouseSensitivity;
+		(*angles).yaw = camRot.y - delta.x / APwin()->getWidth() * mouseSensitivity;
 
 		if ((*angles).pitch < -3.14159f / 2 || (*angles).pitch > 3.14159f / 2)
 		{
@@ -332,8 +332,8 @@ void EditCameraController::onEvent(Event& e)
 	{
 		auto m = dynamic_cast<MouseMoveEvent*>(&e);
 		auto delta = m->getPos() - currentMouseCoords;
-		(*angles).pitch = camRot.x - delta.y / App::get().getWindow()->getWidth() * mouseSensitivity;
-		(*angles).yaw = camRot.y - delta.x / App::get().getWindow()->getWidth() * mouseSensitivity;
+		(*angles).pitch = camRot.x - delta.y / APwin()->getWidth() * mouseSensitivity;
+		(*angles).yaw = camRot.y - delta.x / APwin()->getWidth() * mouseSensitivity;
 
 		if ((*angles).pitch < -3.14159f / 2 || (*angles).pitch > 3.14159f / 2)
 		{
@@ -370,27 +370,27 @@ void EditCameraController::onUpdate()
 		return;
 	loadComponentsData();
 
-	auto& navBar = dynamic_cast<FakeWindow*>(App::get().getWindow())->getNavigationBar();
+	auto& navBar = dynamic_cast<FakeWindow*>(APwin())->getNavigationBar();
 
 	if (navBar.freshPress)
 	{
 		mouseCorrdsOffset = glm::vec2(0.f);
-		startCursor = App::get().getInput().getMouseLocation();
+		startCursor = APin().getMouseLocation();
 		if (navBar.rotationActive && !fullRotation)
 		{
-			App::get().getWindow()->setCursorPolicy(Window::CURSOR_DISABLED);
+			APwin()->setCursorPolicy(Window::CURSOR_DISABLED);
 			camRot = (*angles);
 			fullRotation = true;
 		}
 		else if (navBar.moveActive && !fullMove)
 		{
-			App::get().getWindow()->setCursorPolicy(Window::CURSOR_DISABLED);
+			APwin()->setCursorPolicy(Window::CURSOR_DISABLED);
 			camPos = (*position);
 			fullMove = true;
 		}
 		else if (navBar.lockActive && !fullRotRelative)
 		{
-			App::get().getWindow()->setCursorPolicy(Window::CURSOR_DISABLED);
+			APwin()->setCursorPolicy(Window::CURSOR_DISABLED);
 			camRot = (*angles);
 			//farPoint = (*position) + facingDirection() * pointDistance;
 			lastdepth = scene->getLookingDepth();
@@ -400,7 +400,7 @@ void EditCameraController::onUpdate()
 		}
 		else if (navBar.scrollActive)
 		{
-			App::get().getWindow()->setCursorPolicy(Window::CURSOR_DISABLED);
+			APwin()->setCursorPolicy(Window::CURSOR_DISABLED);
 			camPos = (*position);
 		}
 	}
@@ -411,14 +411,14 @@ void EditCameraController::onUpdate()
 		fullMove = false;
 		fullRotRelative = false;
 		fullRotRelativeOverride = false;
-		App::get().getWindow()->setCursorPolicy(Window::CURSOR_ENABLED);
-		App::get().getWindow()->setCursorPos(startCursor);
+		APwin()->setCursorPolicy(Window::CURSOR_ENABLED);
+		APwin()->setCursorPos(startCursor);
 	}
 	else if (fullRotation || fullRotRelativeOverride)
 	{
 		auto delta = navBar.drag;
-		(*angles).pitch = camRot.x - (delta.y - mouseCorrdsOffset.y) / App::get().getWindow()->getWidth() * mouseSensitivity;
-		(*angles).yaw = camRot.y - delta.x / App::get().getWindow()->getWidth() * mouseSensitivity;
+		(*angles).pitch = camRot.x - (delta.y - mouseCorrdsOffset.y) / APwin()->getWidth() * mouseSensitivity;
+		(*angles).yaw = camRot.y - delta.x / APwin()->getWidth() * mouseSensitivity;
 
 		if ((*angles).pitch < -3.14159f / 2 || (*angles).pitch > 3.14159f / 2)
 		{
@@ -450,8 +450,8 @@ void EditCameraController::onUpdate()
 
 		auto delta = navBar.drag;
 
-		(*angles).pitch = camRot.x - delta.y / App::get().getWindow()->getWidth() * mouseSensitivity;
-		(*angles).yaw = camRot.y - delta.x / App::get().getWindow()->getWidth() * mouseSensitivity;
+		(*angles).pitch = camRot.x - delta.y / APwin()->getWidth() * mouseSensitivity;
+		(*angles).yaw = camRot.y - delta.x / APwin()->getWidth() * mouseSensitivity;
 
 		if ((*angles).pitch < -3.14159f / 2 || (*angles).pitch > 3.14159f / 2)
 		{
@@ -483,21 +483,21 @@ void EditCameraController::onUpdate()
 
 
 	/*glm::vec3 go(0, 0, 0);
-	if (App::get().getInput().isKeyPressed(KeyCode::RIGHT))
+	if (APin().isKeyPressed(KeyCode::RIGHT))
 		go.x += 1;
-	if (App::get().getInput().isKeyPressed(KeyCode::LEFT))
+	if (APin().isKeyPressed(KeyCode::LEFT))
 		go.x -= 1;
 
 
-	if (App::get().getInput().isKeyPressed(KeyCode::SPACE))
+	if (APin().isKeyPressed(KeyCode::SPACE))
 		go.y += 1;
-	if (App::get().getInput().isKeyPressed(KeyCode::RIGHT_SHIFT))
+	if (APin().isKeyPressed(KeyCode::RIGHT_SHIFT))
 		go.y -= 1;
 
 
-	if (App::get().getInput().isKeyPressed(KeyCode::UP))
+	if (APin().isKeyPressed(KeyCode::UP))
 		go.z -= 1;
-	if (App::get().getInput().isKeyPressed(KeyCode::DOWN))
+	if (APin().isKeyPressed(KeyCode::DOWN))
 		go.z += 1;
 
 	if (go != glm::vec3(0, 0, 0))

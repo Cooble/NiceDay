@@ -13,7 +13,7 @@ void GUIContext::setFocusedElement(GUIElement* e)
 
 void GUIContext::openWindow(GUIWindow* win)
 {
-	auto dims = App::get().getWindow()->getDimensions();
+	auto dims = APwin()->getDimensions();
 	switch (win->dimInherit)
 	{
 	case GUIDimensionInherit::WIDTH:

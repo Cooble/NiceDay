@@ -108,8 +108,7 @@ void main(){
 	float dist = length(glo.sunPos - v_world_pos);
 	float atten = 1.0 / (glo.constant + dist * glo.linear + pow(dist, 2) * glo.quadratic);
 
-
+atten=1;
 	color = vec4((ambientLight + diffuseLight + reflectiveLight)* atten,1);
-//	color = texture2D(u_texture, v_uv) - 0.3 * vec4(angle / 3.14159 / 2, angle / 3.14159 / 2, angle / 3.14159 / 2, 1);
 }
 

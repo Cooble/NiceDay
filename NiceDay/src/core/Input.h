@@ -13,11 +13,18 @@ public:
 	virtual bool isKeyFreshlyPressed(KeyCode button) = 0;
 	virtual bool isKeyFreshlyReleased(KeyCode button) = 0;
 	virtual bool isMousePressed(MouseCode button) = 0;
+	virtual bool isMouseFreshlyPressed(MouseCode button) = 0;
+	virtual bool isMouseFreshlyReleased(MouseCode button) = 0;
+	virtual glm::vec2 getDragging() = 0;// should check isMousePressed beforehand
+
 
 	virtual glm::vec2 getMouseLocation() = 0;
+
 	
 	//just for syntactic sugar
 	bool isMousePressed(int button) { return isMousePressed((MouseCode)button); }
+	bool isMouseFreshlyPressed(int button) { return isMouseFreshlyPressed((MouseCode)button); }
+	bool isMouseFreshlyReleased(int button) { return isMouseFreshlyReleased((MouseCode)button); }
 	bool isKeyPressed(int button) { return isKeyPressed((KeyCode)button); }
 	bool isKeyFreshlyPressed(int button) { return isKeyFreshlyPressed((KeyCode)button); }
 	bool isKeyFreshlyReleased(int button) { return isKeyFreshlyReleased((KeyCode)button); }

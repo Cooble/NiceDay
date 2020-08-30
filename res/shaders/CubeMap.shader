@@ -23,6 +23,7 @@ void main(){
 
 struct MAT {
 	samplerCube cubemap; // cubemap texture sampler
+	//float upper;
 };
 uniform MAT mat;
 
@@ -31,6 +32,9 @@ layout(location=0) out vec4 color;
 
 void main()
 {
-	color = texture(mat.cubemap, v_texture_dir);
+
+	color = texture(mat.cubemap, normalize(v_texture_dir+vec3(0,2,0)));
+	//color = texture(mat.cubemap, normalize(v_texture_dir+vec3(0,mat.upper,0)));
+
 }
 

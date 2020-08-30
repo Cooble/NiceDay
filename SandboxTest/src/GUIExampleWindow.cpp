@@ -5,9 +5,9 @@
 
 GUIExampleWindow::GUIExampleWindow()
 {
-	width = App::get().getWindow()->getWidth() / 3 * 2;
-	height = App::get().getWindow()->getHeight() / 3 * 2;
-	setCenterPosition(App::get().getWindow()->getWidth(), App::get().getWindow()->getHeight());
+	width = APwin()->getWidth() / 3 * 2;
+	height = APwin()->getHeight() / 3 * 2;
+	setCenterPosition(APwin()->getWidth(), APwin()->getHeight());
 
 	auto g_fontMat = FontMatLib::getMaterial("res/fonts/andrew.fnt");
 	auto backTexture = Texture::create(TextureInfo("res/images/gui_back.png"));

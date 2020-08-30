@@ -1,7 +1,7 @@
 #define ND_TEST
 #include "core/App.h"
 
-#include "scene/SceneLayer.h"
+#include "scene/EditorLayer.h"
 
 class TestApp:public App
 {
@@ -15,7 +15,7 @@ public:
 		
 		init(info);
 		//m_LayerStack.pushLayer(new ConsoleTestLayer());
-		m_LayerStack.pushLayer(new SceneLayer());
+		m_LayerStack.pushLayer(new EditorLayer());
 		//m_LayerStack.pushLayer(new TestEnntLayer());
 		//m_LayerStack.pushLayer(new MandelBrotLayer());
 	}

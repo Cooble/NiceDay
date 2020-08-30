@@ -9,6 +9,9 @@
 #include "core/NBT.h"
 #include "GlobalAccess.h"
 
+
+ImVec4 GREEN_COL { 0,1,0,1 };
+ImVec4 RED_COL{ 1, 0.2f, 0.2f, 1 };
 namespace comp_util
 {
 #define COPPY_EE(Type) \
@@ -87,7 +90,7 @@ namespace comp_util
 			ImGui::EndDragDropSource();
 		}
 	}
-	static void makeDragDropTarget(MeshPtr& ptr)
+	static void makeDragDropTargetMesh(Strid& meshID)
 	{
 		if (ImGui::BeginDragDropTarget())
 		{
@@ -95,7 +98,8 @@ namespace comp_util
 			{
 				IM_ASSERT(payload->DataSize == sizeof(Strid));
 				Strid payload_n = *(Strid*)payload->Data;
-				ptr = MeshLibrary::get(payload_n);
+				auto c = MeshLibrary::get(payload_n);
+				meshID = c->getID();
 			}
 			ImGui::EndDragDropTarget();
 		}
@@ -116,7 +120,7 @@ namespace comp_util
 			ImGui::EndDragDropSource();
 		}
 	}
-	static void makeDragDropTarget(MaterialPtr& ptr)
+	static void makeDragDropTargetMaterial(Strid& matID)
 	{
 		if (ImGui::BeginDragDropTarget())
 		{
@@ -124,7 +128,8 @@ namespace comp_util
 			{
 				IM_ASSERT(payload->DataSize == sizeof(Strid));
 				Strid payload_n = *(Strid*)payload->Data;
-				ptr = MaterialLibrary::get(payload_n);
+				auto cp = MaterialLibrary::get(payload_n);
+				matID = cp->getID();//todo shared ptr problem, we need to change the shared pointer object at location, not the object itself
 			}
 			ImGui::EndDragDropTarget();
 		}
@@ -134,7 +139,7 @@ namespace comp_util
 	static std::string fileCombo(const std::string& currentValue, const std::string& sourceFolder, const char** suffix, size_t suffixLength,
 		StringId calledID)
 	{
-		ImVec4 col = FUtil::exists(currentValue) ? ImVec4(0, 1, 0, 1) : ImVec4(1, 0.2, 0.2, 1);
+		ImVec4 col = FUtil::exists(currentValue) ? GREEN_COL : RED_COL;
 		ImGui::TextColored(col, currentValue.c_str());
 
 		std::vector<std::string> files;
@@ -161,8 +166,7 @@ namespace comp_util
 		}
 		{
 			ImVec4 col = std::filesystem::exists(ND_RESLOC(std::string(filter.InputBuf)))
-				? ImVec4(0, 1, 0, 1)
-				: ImVec4(1, 0.2, 0.2, 1);
+				? GREEN_COL : RED_COL;
 			static bool changedeeed = false;
 			ImGui::PushStyleColor(ImGuiCol_Text, col);
 			bool entered = ImGui::InputText("Filter (inc,-exc)", filter.InputBuf, IM_ARRAYSIZE(filter.InputBuf),
@@ -185,13 +189,74 @@ namespace comp_util
 		}
 
 		if (strlen(filter.InputBuf) != 0)
-			for (int i = 0; i < files.size(); i++)
+			for (auto& file : files)
 				//if (filter.PassFilter(files[i].c_str()))
-				if (files[i].find(filter.InputBuf) != std::string::npos)
-					if (ImGui::Selectable(files[i].c_str(), false))
+				if (file.find(filter.InputBuf) != std::string::npos&&file!=currentValue)
+					if (ImGui::Selectable(file.c_str(), false))
 					{
-						memcpy(filter.InputBuf, files[i].c_str(), files[i].size() + 1);
-						return files[i];
+						memcpy(filter.InputBuf, file.c_str(), file.size() + 1);
+						return file;
+					}
+		return currentValue;
+	}
+	
+	static std::string folderCombo(const std::string& currentValue, const std::string& sourceFolder,const  std::function<bool(const std::string& folder)>& isValid,StringId calledID)
+	{
+		ImVec4 col = FUtil::exists(currentValue)&&isValid(currentValue) ? GREEN_COL : RED_COL;
+		ImGui::TextColored(col, currentValue.c_str());
+
+		std::vector<std::string> files;
+
+		if (!FUtil::exists(sourceFolder))
+			return currentValue;
+		for (auto& file : std::filesystem::recursive_directory_iterator(ND_RESLOC(sourceFolder))) {
+			auto local = ResourceMan::getLocalPath(file.path().string());
+			if (isValid(local))
+				files.push_back(local);
+			
+		}
+			
+
+		static ImGuiTextFilter filter;
+		if (calledID() != fileComboLastID)
+		{
+			fileComboLastID = calledID();
+			if (currentValue.size())
+				memcpy((void*)filter.InputBuf, currentValue.c_str(), currentValue.size() + 1);
+			else filter.InputBuf[0] = 0;
+		}
+		{
+			ImVec4 col = FUtil::exists(filter.InputBuf)&&isValid(filter.InputBuf)
+				? GREEN_COL : RED_COL;
+			static bool changedeeed = false;
+			ImGui::PushStyleColor(ImGuiCol_Text, col);
+			bool entered = ImGui::InputText("Filter (inc,-exc)", filter.InputBuf, IM_ARRAYSIZE(filter.InputBuf),
+				ImGuiInputTextFlags_EnterReturnsTrue |
+				ImGuiInputTextFlags_CallbackCharFilter,
+				[](ImGuiInputTextCallbackData* data)
+				{
+					changedeeed = true;
+					return 0;
+				});
+			ImGui::PopStyleColor();
+
+			if (changedeeed)
+				filter.Build();
+			changedeeed = false;
+			if (entered && FUtil::exists(filter.InputBuf)&&isValid(filter.InputBuf))
+				return std::string(filter.InputBuf);
+			if (entered && strlen(filter.InputBuf) == 0)
+				return "";
+		}
+
+		if (strlen(filter.InputBuf) != 0)
+			for (auto& file : files)
+				//if (filter.PassFilter(files[i].c_str()))
+				if (file.find(filter.InputBuf) != std::string::npos&& file != currentValue)//file must not be the current one
+					if (ImGui::Selectable(file.c_str(), false))
+					{
+						memcpy(filter.InputBuf, file.c_str(), file.size() + 1);
+						return file;
 					}
 		return currentValue;
 	}
@@ -294,34 +359,43 @@ namespace components_imgui_access
 	{
 		//=========================================
 		ImGui::Text("MATERIAL");
-		
+
+
 		auto& material = c.Material();
 		comp_util::drawTexOrNo(material, AtelierDim::width, AtelierDim::height);
-		if (material && ImGui::IsItemClicked(ImGuiMouseButton_Left)&&ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
+		if (material && ImGui::IsItemClicked(ImGuiMouseButton_Left) && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
 		{
 			windows.material = material;
 			windows.open_material = true;
 		}
 		if (material)
 			comp_util::makeDragDropSource(material);
-		comp_util::makeDragDropTarget(material);
+		comp_util::makeDragDropTargetMaterial(c.material);
 
+		{
+			auto& material = c.Material();
 
-		if(material)
-			ImGui::TextColored({ 0, 1, 1, 1 } ,material->getName().c_str());
-		else ImGui::TextColored({ 1, 0, 0, 1 }, "No Material Bound");
+			if (material)
+				ImGui::TextColored({ 0, 1, 1, 1 }, material->getName().c_str());
+			else ImGui::TextColored({ 1, 0, 0, 1 }, "No Material Bound");
+		}
 
 		//=========================================
 		ImGui::Text("MESH");
 
 		auto& mesh = c.Mesh();
 		comp_util::drawTexOrNo(mesh, AtelierDim::width, AtelierDim::height);
-		comp_util::makeDragDropTarget(mesh);
-		if (mesh)
-			comp_util::makeDragDropSource(mesh);
-		if (mesh)
-			ImGui::TextColored({ 0, 1, 1, 1 }, mesh->getName().c_str());
-		else ImGui::TextColored({ 1, 0, 0, 1 }, "No Mesh Bound");
+		comp_util::makeDragDropTargetMesh(c.mesh);
+
+		{
+			auto& mesh = c.Mesh();
+
+			if (mesh)
+				comp_util::makeDragDropSource(mesh);
+			if (mesh)
+				ImGui::TextColored({ 0, 1, 1, 1 }, mesh->getName().c_str());
+			else ImGui::TextColored({ 1, 0, 0, 1 }, "No Mesh Bound");
+		}
 	}
 
 	void draw(Entity e, CameraComponent& c)
@@ -449,23 +523,39 @@ namespace components_imgui_access
 
 	}
 
-	static std::string textureCombo(const std::string& currentCombo)
+	static std::string textureCombo(const std::string& currentCombo,TextureType type = TextureType::_2D)
 	{
-		auto id = std::filesystem::exists(ND_RESLOC(currentCombo))
-			? TextureLib::loadOrGetTexture(currentCombo)->getID()
-			: TextureLib::loadOrGetTexture("res/images/no.png")->getID();
-		if (id)
-			ImGui::Image(reinterpret_cast<ImTextureID>(id), { (float)AtelierDim::width, (float)AtelierDim::height}, { 0.f, 1.f }, { 1.f, 0.f });
-		//else ImGui::TextColored({ 1,0,0,1 }, "Image %s not found", currentCombo.c_str());
+		if (type == TextureType::_2D) {
+			auto id = std::filesystem::exists(ND_RESLOC(currentCombo))
+				? TextureLib::loadOrGetTexture(currentCombo)->getID()
+				: TextureLib::loadOrGetTexture("res/images/no.png")->getID();
+			if (id)
+				ImGui::Image(reinterpret_cast<ImTextureID>(id), { (float)AtelierDim::width, (float)AtelierDim::height }, { 0.f, 1.f }, { 1.f, 0.f });
+			//else ImGui::TextColored({ 1,0,0,1 }, "Image %s not found", currentCombo.c_str());
 
-		char c[5];
-		*(uint32_t*)&c[0] = ImGui::GetActiveID();
-		c[4] = 0;
+			char c[5];
+			*(uint32_t*)&c[0] = ImGui::GetActiveID();
+			c[4] = 0;
 
-		auto s = ".png";
-		auto ret = comp_util::fileCombo(currentCombo, "res",&s, 1, StringId("textureCombo")/*.concat(c)*/);
+			auto s = ".png";
+			auto ret = comp_util::fileCombo(currentCombo, "res", &s, 1, SIDS("textureCombo")/*.concat(c)*/);
 
-		return ret;
+			return ret;
+		}
+		if(type==TextureType::_CUBE_MAP)
+		{
+			auto lastSlash = currentCombo.find_last_of('/');
+			std::string src = currentCombo;
+			if(lastSlash!=std::string::npos)
+				src = currentCombo.substr(0, lastSlash);
+			auto s = comp_util::folderCombo(src, "res", [](auto& string) {
+				return FUtil::exists(string + "/px.png") && FUtil::exists(string + "/nx.png") &&
+					FUtil::exists(string + "/py.png") && FUtil::exists(string + "/ny.png") &&
+					FUtil::exists(string + "/pz.png") && FUtil::exists(string + "/nz.png");
+				 }, SIDS("texturecubecombo"));
+			
+			return s + (s.empty()?"":"/*.png");
+		}
 	}
 
 
@@ -613,7 +703,7 @@ namespace components_imgui_access
 				try
 				{
 					auto p = Shader::create(newValue);
-					if (!p->getLayout().structs.empty())
+					if (p->getLayout().getLayoutByName("MAT"))
 					{
 						c->setShader(p);
 						change = true;
@@ -691,7 +781,7 @@ namespace components_imgui_access
 			{
 				auto& texture = c->getValueFullName<TexturePtr>(element.name.c_str());
 
-				auto newTex = textureCombo(texture ? texture->getFilePath() : "");
+				auto newTex = textureCombo(texture ? texture->getFilePath() : "", element.type == g_typ::TEXTURE_2D ? TextureType::_2D : TextureType::_CUBE_MAP);
 				if (newTex.size() && (!texture || newTex != texture->getFilePath()))
 				{
 					auto newT = TextureLib::loadOrGetTexture(
@@ -733,7 +823,6 @@ if (ImGui::BeginTabItem(name, &open,ImGuiTabItemFlags_NoCloseButton))\
 	bool drawEntityManager()
 	{
 		static bool open = true;
-		static Entity selected = Entity::null;
 		bool newModel = false;
 		bool newLight = false;
 		bool newCamera= false;
@@ -799,7 +888,7 @@ if (ImGui::BeginTabItem(name, &open,ImGuiTabItemFlags_NoCloseButton))\
 					auto& tag = tagView.get<TagComponent>(ent);
 					ImGui::PushID(i++);
 					auto entity = windows.scene->wrap(ent);
-					bool selectedi = selected == entity;
+					bool selectedi = windows.selectedEntity == entity;
 
 					if (selectedi)
 						ImGui::PushStyleColor(ImGuiCol_Text, { 0, 1, 0, 1 });
@@ -813,7 +902,7 @@ if (ImGui::BeginTabItem(name, &open,ImGuiTabItemFlags_NoCloseButton))\
 					else if (selectedi) 
 						ImGui::PopStyleColor();
 					if (ImGui::IsItemClicked(ImGuiMouseButton_Left))
-						selected = entity;
+						windows.selectedEntity = entity;
 					auto nameid = (std::string("entityPop ") + tag.name).c_str();
 					if (ImGui::IsItemClicked(ImGuiMouseButton_Right))
 						ImGui::OpenPopup(nameid);
@@ -849,11 +938,12 @@ if (ImGui::BeginTabItem(name, &open,ImGuiTabItemFlags_NoCloseButton))\
 
 						comp_util::drawTexOrNo(material, ImGui::GetItemRectSize().y, ImGui::GetItemRectSize().y);
 						comp_util::makeDragDropSource(material);
-						comp_util::makeDragDropTarget(material);
+						comp_util::makeDragDropTargetMaterial(model.material);
+						
 						if (ImGui::IsItemClicked(ImGuiMouseButton_Left) && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
 						{
 							windows.open_material = true;
-							windows.material = material;
+							windows.material = model.Material();
 						}
 					}
 					else if (entity.has<CameraComponent>())//set viewing to this camera
@@ -868,8 +958,8 @@ if (ImGui::BeginTabItem(name, &open,ImGuiTabItemFlags_NoCloseButton))\
 					ImGui::NextColumn();
 					ImGui::PopID();
 					if (delFlag) {
-						if (selected == entity)
-							selected = Entity::null;
+						if (windows.selectedEntity == entity)
+							windows.selectedEntity = Entity::null;
 						entity.destroy();
 					}
 				}
@@ -877,15 +967,16 @@ if (ImGui::BeginTabItem(name, &open,ImGuiTabItemFlags_NoCloseButton))\
 
 				if (ImGui::Selectable("None", false))
 				{
-					selected = Entity::null;
+					windows.selectedEntity = Entity::null;
 					//tabsOpened.clear();
 				}
 				ImGui::TreePop();
 			}
 			ImGui::Separator();
-			if (selected)
+			if (windows.selectedEntity)
 			{
-				auto& tag = selected.get<TagComponent>();
+				auto& tag = windows.selectedEntity.get<TagComponent>();
+				auto selected = windows.selectedEntity;
 				//ImGui::PushID(tag.operator()());
 				ImGui::TextColored({ 0.f, 1.f, 0.f, 1.f }, tag.operator()());
 				ImGuiTabBarFlags tab_bar_flags = (ImGuiTabBarFlags_FittingPolicyDefault_) | (

@@ -308,6 +308,19 @@ int8_t& RealInput::getKey(int button)
 	return m_keys[button];
 }
 
+int8_t& RealInput::getMouseKey(int button)
+{
+	if (button >= m_mouse_keys.size())
+	{
+		auto lastSize = m_mouse_keys.size();
+		m_mouse_keys.resize(button + 1);
+		for (int i = 0; i < (button + 1) - lastSize; ++i)//clear all new keys
+			m_mouse_keys[i + lastSize] = 0;
+		m_mouse_keys[button] = 0;
+	}
+	return m_mouse_keys[button];
+}
+
 RealInput::RealInput(Window* window)
 	:m_window(window) {
 }
@@ -325,6 +338,19 @@ void RealInput::update()
 			k = -1;
 		else k = 0;
 	}
+	for (int i = 0; i < m_mouse_keys.size(); ++i)
+	{
+		auto& k = getMouseKey(i);
+		if (isMousePressed((MouseCode)i)) {
+			if (k < 127)
+				++k;
+		}
+		else if (k > 0)
+			k = -1;
+		else k = 0;
+	}
+	if (isMouseFreshlyPressed(MouseCode::LEFT) || isMouseFreshlyPressed(MouseCode::MIDDLE) || isMouseFreshlyPressed(MouseCode::RIGHT))
+		m_drag_offset = getMouseLocation();
 }
 
 bool RealInput::isKeyPressed(KeyCode button)
@@ -345,15 +371,31 @@ bool RealInput::isKeyFreshlyReleased(KeyCode button)
 
 bool RealInput::isMousePressed(MouseCode button)
 {
-	GLFWwindow* w = (GLFWwindow*)m_window->getWindow();
+	getMouseKey((int)button);//save this button to vector
 
+	GLFWwindow* w = (GLFWwindow*)m_window->getWindow();
 	auto state = glfwGetMouseButton(w, (int)button);
 	return state == GLFW_PRESS;
 }
 
+bool RealInput::isMouseFreshlyPressed(MouseCode button)
+{
+	return getMouseKey((int)button) == 1;
+}
+
+bool RealInput::isMouseFreshlyReleased(MouseCode button)
+{
+	return getMouseKey((int)button) == -1;
+}
+
+glm::vec2 RealInput::getDragging()
+{
+	return getMouseLocation()-m_drag_offset;
+}
+
 glm::vec2 RealInput::getMouseLocation()
 {
-	GLFWwindow* w = (GLFWwindow*)m_window->getWindow();
+	auto w = (GLFWwindow*)m_window->getWindow();
 
 	double x, y;
 	glfwGetCursorPos(w, &x, &y);

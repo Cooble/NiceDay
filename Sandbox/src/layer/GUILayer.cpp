@@ -204,7 +204,7 @@ void GUILayer::onRender()
 	m_renderer.push(
 		glm::scale(
 			glm::mat4(1.f),
-			{2.f / App::get().getWindow()->getWidth(), 2.f / App::get().getWindow()->getHeight(), 1}));
+			{2.f / APwin()->getWidth(), 2.f / APwin()->getHeight(), 1}));
 	//todo gui renderer does not need depth test possibly?
 	m_gui_renderer.render(m_renderer);
 	m_renderer.flush();
@@ -218,11 +218,11 @@ void GUILayer::onEvent(Event& e)
 {
 	bool flipped = e.isInCategory(Event::EventCategory::Mouse);
 	if (flipped)
-		static_cast<MouseMoveEvent&>(e).flipY(App::get().getWindow()->getHeight());
+		static_cast<MouseMoveEvent&>(e).flipY(APwin()->getHeight());
 	GUIContext::setContext(m_gui_context);
 	GUIContext::get().onEvent(e);
 	if (flipped)
-		static_cast<MouseMoveEvent&>(e).flipY(App::get().getWindow()->getHeight());
+		static_cast<MouseMoveEvent&>(e).flipY(APwin()->getHeight());
 	if (e.handled)
 		return;
 	if (m_game_screen == GameScreen::World)

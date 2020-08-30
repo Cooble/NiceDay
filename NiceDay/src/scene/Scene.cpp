@@ -217,7 +217,7 @@ void Scene::render()
 	clearDisplay(); //binds fbo
 
 	glm::mat4 proj = glm::perspective(getLookCam()->fov,
-	                                  (GLfloat)App::get().getWindow()->getWidth() / (GLfloat)App::get()
+	                                  (GLfloat)APwin()->getWidth() / (GLfloat)App::get()
 	                                                                                         .getWindow()->getHeight(),
 	                                  1.f, 100.0f);
 	glm::mat4 view = getLookCam()->getViewMatrix();

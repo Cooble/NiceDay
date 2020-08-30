@@ -144,9 +144,9 @@ public:
 	virtual void bind(unsigned int slot = 0) const = 0;
 	virtual void unbind() const = 0;
 
-	virtual int getWidth() const = 0;
-	virtual int getHeight() const = 0;
-	TexDimensions getDimensions() const { return { getWidth(),getHeight() }; }
+	virtual int width() const = 0;
+	virtual int height() const = 0;
+	TexDimensions getDimensions() const { return { width(),height() }; }
 	virtual unsigned int getID() const = 0;
 
 	virtual const std::string& getFilePath() const = 0;

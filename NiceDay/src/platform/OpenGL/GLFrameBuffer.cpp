@@ -229,7 +229,7 @@ void GLFrameBuffer::attachTexture(Texture* t, uint32_t attachmentNumber)
 {
 	ASSERT(m_type != FBType::WINDOW_TARGET, "Cannot attach texture to window target");
 	bind();
-	glViewport(0, 0, t->getWidth(), t->getHeight());
+	glViewport(0, 0, t->width(), t->height());
 	GLCall(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + attachmentNumber, GL_TEXTURE_2D, t->getID(), 0));
 }
 

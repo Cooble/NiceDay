@@ -222,7 +222,7 @@ void ConsoleTestLayer::onEvent(Event& e)
 	
 	if (key == KeyCode::F11)
 	{
-		App::get().getWindow()->toggleFullscreen();
+		APwin()->toggleFullscreen();
 	}
 	
 
@@ -290,7 +290,7 @@ void ConsoleTestLayer::onEvent(Event& e)
 	}
 	if (key == KeyCode::F11)
 	{
-		App::get().getWindow()->setFullScreen(!App::get().getWindow()->isFullscreen());
+		APwin()->setFullScreen(!APwin()->isFullscreen());
 	}
 }
 
@@ -311,11 +311,11 @@ void ConsoleTestLayer::onRender()
 	renderer.push(
 		glm::scale(
 			glm::mat4(1.f),
-			{2.f / App::get().getWindow()->getWidth(), 2.f / App::get().getWindow()->getHeight(), 1}));
+			{2.f / APwin()->getWidth(), 2.f / APwin()->getHeight(), 1}));
 	renderer.push(
 		glm::translate(
 			glm::mat4(1.f),
-			{5, App::get().getWindow()->getHeight() - fontMat->font->lineHeight, 0}));
+			{5, APwin()->getHeight() - fontMat->font->lineHeight, 0}));
 
 
 	renderer.submitText(textMesh, fontMat);
@@ -370,7 +370,7 @@ void ConsoleTestLayer::onRender()
 	//world = glm::rotate(world, rotation, { 0, 0, 1 });
 	modelShader->bind();
 	proj = glm::perspective(glm::quarter_pi<float>(),
-		(GLfloat)App::get().getWindow()->getWidth() / (GLfloat)App::get().getWindow()->getHeight(),
+		(GLfloat)APwin()->getWidth() / (GLfloat)APwin()->getHeight(),
 		1.f, 100.0f);
 
 	//draw sky
@@ -577,7 +577,7 @@ static void ShowExampleAppDockSpace(bool* p_open)
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0,0));
 	ImGui::Begin("Sup2", &secondOpen,ImGuiWindowFlags_NoDecoration);
 	ImGui::PopStyleVar(2);
-	ImGui::Image((ImTextureID)image->getID(), ImVec2(image->getWidth(), image->getHeight()),ImVec2(0,1),ImVec2(1,0));
+	ImGui::Image((ImTextureID)image->getID(), ImVec2(image->width(), image->height()),ImVec2(0,1),ImVec2(1,0));
 	ImGui::TextColored(ImVec4(0, 1, 1, 1), "Hello here");
 	ImGui::End();
 }

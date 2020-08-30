@@ -43,7 +43,7 @@ private:
 	std::string m_name;
 	std::string m_structName;
 	char* m_ubo;
-	ShaderPtr m_shader;
+	ShaderPtr m_shader=std::shared_ptr<Shader>(nullptr);
 	const UniformLayout* m_layout;
 	std::unordered_map<Strid, size_t> m_offsets;
 	//each texture has a slot associated and index in m_textures array
@@ -53,6 +53,8 @@ private:
 	void updateLayoutFromShader();
 	MaterialPtr copy(const char* name);
 public:
+	Material(const Material&) = delete;
+	Material(Material&&) = delete;
 	Material(const MaterialInfo& info);
 	static MaterialPtr create(const MaterialInfo& info);
 

@@ -149,14 +149,14 @@ WorldRenderManager::~WorldRenderManager()
 void WorldRenderManager::onScreenResize()
 {
 	//build world view matrix
-	float ratioo = (float)App::get().getWindow()->getHeight() / (float)App::get().getWindow()->getWidth();
-	float chunkheightt = 2 * (float)BLOCK_PIXEL_SIZE / (float)App::get().getWindow()->getHeight();
+	float ratioo = (float)APwin()->getHeight() / (float)APwin()->getWidth();
+	float chunkheightt = 2 * (float)BLOCK_PIXEL_SIZE / (float)APwin()->getHeight();
 	//this 2 means view is from -1 to 1 and not from 0 to 1
 	m_proj_matrix = glm::scale(glm::mat4(1.0f), glm::vec3(ratioo * chunkheightt, chunkheightt, 1));
 
 	//refresh number of chunks 
-	int screenWidth = App::get().getWindow()->getWidth();
-	int screenHeight = App::get().getWindow()->getHeight();
+	int screenWidth = APwin()->getWidth();
+	int screenHeight = APwin()->getHeight();
 	float chunkwidth = ((float)screenWidth / (float)BLOCK_PIXEL_SIZE) / (float)WORLD_CHUNK_SIZE;
 	float chunkheight = ((float)screenHeight / (float)BLOCK_PIXEL_SIZE) / (float)WORLD_CHUNK_SIZE;
 	m_chunk_width = ceil(chunkwidth) + 3;
@@ -425,7 +425,7 @@ void WorldRenderManager::renderBiomeBackgroundToFBO(BatchRenderer2D& batchRender
 	ND_PROFILE_METHOD();
 	using namespace glm;
 
-	vec2 screenDim = vec2(App::get().getWindow()->getWidth(), App::get().getWindow()->getHeight());
+	vec2 screenDim = vec2(APwin()->getWidth(), APwin()->getHeight());
 	vec2 lowerScreen = m_camera->getPosition() - ((screenDim / (float)BLOCK_PIXEL_SIZE));
 	vec2 upperScreen = m_camera->getPosition() + ((screenDim / (float)BLOCK_PIXEL_SIZE));
 	screenDim = upperScreen - lowerScreen;
@@ -623,8 +623,8 @@ void WorldRenderManager::render(BatchRenderer2D& batchRenderer, FrameBuffer* fbo
 	fbo->clear(BuffBit::COLOR | BuffBit::DEPTH);
 	//sky render
 	Gcon.disableBlend();
-	float CURSOR_Y = (float)App::get().getWindow()->getHeight() / BLOCK_PIXEL_SIZE + m_camera->getPosition().y;
-	float CURSOR_YY = -(float)App::get().getWindow()->getHeight() / BLOCK_PIXEL_SIZE + m_camera->getPosition().y;
+	float CURSOR_Y = (float)APwin()->getHeight() / BLOCK_PIXEL_SIZE + m_camera->getPosition().y;
+	float CURSOR_YY = -(float)APwin()->getHeight() / BLOCK_PIXEL_SIZE + m_camera->getPosition().y;
 
 	m_sky_program->bind();
 	std::static_pointer_cast<GLShader>(m_sky_program)->setUniformVec4f("u_up_color", getSkyColor(CURSOR_Y));

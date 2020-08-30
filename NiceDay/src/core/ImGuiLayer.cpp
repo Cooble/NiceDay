@@ -192,7 +192,7 @@ void ImGuiLayer::onAttach()
 
 	registerWindow("Telemetrics", &showTelemetrics);
 	registerWindow("Demo", &showDemoWindow);
-	registerWindow("NavBar", &dynamic_cast<FakeWindow*>(App::get().getWindow())->m_enableNavigationBar);
+	registerWindow("NavBar", &dynamic_cast<FakeWindow*>(APwin())->m_enableNavigationBar);
 	
 	m_iniConfigToLoad = std::string(getLayoutName(m_layout_type)) + ".ini";
 	m_freshLayoutChange = !std::filesystem::exists(std::string(getLayoutName(m_layout_type)) + ".ini");
@@ -310,7 +310,7 @@ void ImGuiLayer::onEvent(Event& e)
 			io.WantCaptureMouse && (e.getEventCategories() & Event::EventCategory::Mouse)))
 	{
 		//exception when view imgui window is focused - dont consume event
-		if (App::get().getIO().enableSCENE && App::get().getWindow()->isFocused()) {
+		if (App::get().getIO().enableSCENE && APwin()->isFocused()) {
 
 		}
 		else {
@@ -565,11 +565,11 @@ void ImGuiLayer::renderViewProxy(const std::string& name, const Texture* t)
 
 			if (t->getDimensions() != view.texture->getDimensions()) {
 				delete view.texture;
-				view.texture = Texture::create(TextureInfo().size(t->getWidth(), t->getHeight()));
+				view.texture = Texture::create(TextureInfo().size(t->width(), t->height()));
 			}
 			m_copyFBO->bind();
 			m_copyFBO->attachTexture(view.texture->getID(), 0);
-			Gcon.setViewport(t->getWidth(), t->getHeight());
+			Gcon.setViewport(t->width(), t->height());
 			m_copyFBO->clear(BuffBit::COLOR);
 			Gcon.disableBlend();
 			Gcon.enableDepthTest(false);
@@ -580,10 +580,10 @@ void ImGuiLayer::renderViewProxy(const std::string& name, const Texture* t)
 		}
 	}
 
-	auto  tex = Texture::create(TextureInfo().size(t->getWidth(), t->getHeight()));
+	auto  tex = Texture::create(TextureInfo().size(t->width(), t->height()));
 	m_copyFBO->bind();
 	m_copyFBO->attachTexture(tex->getID(), 0);
-	Gcon.setViewport(t->getWidth(), t->getHeight());
+	Gcon.setViewport(t->width(), t->height());
 	Gcon.disableBlend();
 	Gcon.enableDepthTest(false);
 	Effect::render(t, m_copyFBO);
@@ -595,8 +595,8 @@ void ImGuiLayer::renderViewProxy(const std::string& name, const Texture* t)
 
 void ImGuiLayer::updateTelemetry()
 {
-	if (App::get().getInput().isKeyFreshlyPressed(KeyCode::D))
-		if (App::get().getInput().isKeyPressed(KeyCode::LEFT_CONTROL))
+	if (APin().isKeyFreshlyPressed(KeyCode::D))
+		if (APin().isKeyPressed(KeyCode::LEFT_CONTROL))
 			showTelemetrics = !showTelemetrics;
 }
 
@@ -628,7 +628,7 @@ void ImGuiLayer::drawTelemetry()
 	ImGui::Separator();
 	ImGui::InputInt("Max val reset delay (ticks)", &maxValResetDelay);
 	ImGui::Separator();
-	ImGui::Value("Scheduled Tasks: ", ND_SCHED.size());
+	ImGui::Value("Scheduled Tasks: ", APsched().size());
 	ImGui::Separator();
 	/*static bool shouldOpen;
 	if (ImGui::Checkbox("Soundlayer", &shouldOpen))
@@ -637,7 +637,7 @@ void ImGuiLayer::drawTelemetry()
 			App::get().fireEvent(MessageEvent("openSoundLayer"));
 		else App::get().fireEvent(MessageEvent("closeSoundLayer"));
 	}*/
-	auto mouseLoc = App::get().getInput().getMouseLocation();
+	auto mouseLoc = APin().getMouseLocation();
 	ImGui::Text("Mouse[%d, %d]", (int)mouseLoc.x, (int)mouseLoc.y);
 	drawGlobals();
 	ImGui::End();

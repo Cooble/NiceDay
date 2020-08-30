@@ -2,7 +2,7 @@
 #include "layer/Layer.h"
 
 class NewScene;
-class SceneLayer:public Layer
+class EditorLayer:public Layer
 {
 private:
 	NewScene* m_scene;
@@ -15,4 +15,5 @@ public:
 	void onEvent(Event& e) override;
 
 	float getCurrentDepth();
+	void onWindowResize(int width, int height) override;
 };

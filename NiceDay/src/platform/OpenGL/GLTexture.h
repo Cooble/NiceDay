@@ -26,8 +26,8 @@ public:
 	void bind(unsigned int slot = 0) const override;
 	void unbind() const override;
 
-	inline int getWidth() const override { return m_width; }
-	inline int getHeight() const override { return m_height; }
+	inline int width() const override { return m_width; }
+	inline int height() const override { return m_height; }
 	inline unsigned int getID() const override { return m_id; }
 
 	const TextureInfo& getInfo() const { return m_info; }

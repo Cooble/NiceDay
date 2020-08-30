@@ -63,7 +63,7 @@ public:
 			context.getWindows().push_back(new GUIWindow());
 			auto& window = *context.getFocusedWindow();
 			window.dim = { 1200 + i * 50, 400 };
-			window.setCenterPosition(App::get().getWindow()->getWidth(), App::get().getWindow()->getHeight());
+			window.setCenterPosition(APwin()->getWidth(), APwin()->getHeight());
 			window.x += i * 50;
 			window.y += i * 50;
 			window.isResizable = false;
@@ -172,7 +172,7 @@ public:
 		g_batch_render->push(
 			glm::scale(
 				glm::mat4(1.f),
-				{2.f / App::get().getWindow()->getWidth(), 2.f / App::get().getWindow()->getHeight(), 1}));
+				{2.f / APwin()->getWidth(), 2.f / APwin()->getHeight(), 1}));
 
 		guiRender.render(*g_batch_render);
 		g_batch_render->pop();
@@ -189,10 +189,10 @@ public:
 		}
 		bool flipped = e.isInCategory(Event::EventCategory::Mouse);
 		if (flipped)
-			static_cast<MouseMoveEvent&>(e).flipY(App::get().getWindow()->getHeight());
+			static_cast<MouseMoveEvent&>(e).flipY(APwin()->getHeight());
 		GUIContext::get().onEvent(e);
 		if (flipped)
-			static_cast<MouseMoveEvent&>(e).flipY(App::get().getWindow()->getHeight());
+			static_cast<MouseMoveEvent&>(e).flipY(APwin()->getHeight());
 	}
 
 	void onUpdate() override

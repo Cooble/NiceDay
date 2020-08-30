@@ -36,9 +36,9 @@ void MainLayer::onEvent(Event& e)
 	{
 		auto event = dynamic_cast<KeyPressEvent*>(&e);
 		if (event->getKey() == KeyCode::F11) {
-			App::get().getWindow()->setFullScreen(!App::get().getWindow()->isFullscreen());
+			APwin()->setFullScreen(!APwin()->isFullscreen());
 			e.handled = true;
-			ND_INFO("Fullscreen mode: {}", !App::get().getWindow()->isFullscreen());
+			ND_INFO("Fullscreen mode: {}", !APwin()->isFullscreen());
 		}
 	}
 	//ND_INFO("eventos here {0}",e.toString());

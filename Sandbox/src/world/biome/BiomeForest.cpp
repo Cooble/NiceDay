@@ -97,7 +97,7 @@ BiomeForest::BiomeForest()
 void BiomeForest::updateSprites(World* m_world, Camera* m_camera)
 {
 	using namespace glm;
-	vec2 screenDim = vec2(App::get().getWindow()->getWidth(), App::get().getWindow()->getHeight());
+	vec2 screenDim = vec2(APwin()->getWidth(), APwin()->getHeight());
 	vec2 lowerScreen = m_camera->getPosition() - ((screenDim / (float)BLOCK_PIXEL_SIZE) / 2.0f);
 	vec2 upperScreen = m_camera->getPosition() + ((screenDim / (float)BLOCK_PIXEL_SIZE) / 2.0f);
 	screenDim = upperScreen - lowerScreen;
@@ -109,10 +109,10 @@ void BiomeForest::updateSprites(World* m_world, Camera* m_camera)
 		Sprite2D& s = *m_sprites[b];
 		int i = b - forestLayerIdx;
 
-		auto texDim = vec2(s.getTexture().getWidth() / 1.5, s.getTexture().getHeight() / 1.5);
+		auto texDim = vec2(s.getTexture().width() / 1.5, s.getTexture().height() / 1.5);
 		auto pos = vec2(
 			m_world->getInfo().chunk_width / 2 * WORLD_CHUNK_SIZE,
-			-i * 2 + (float)s.getTexture().getHeight() / BLOCK_PIXEL_SIZE / 3 + m_world->getInfo().terrain_level);
+			-i * 2 + (float)s.getTexture().height() / BLOCK_PIXEL_SIZE / 3 + m_world->getInfo().terrain_level);
 		//pos = pos - (m_camera->getPosition()-pos);
 		vec2 meshLower = pos;
 		vec2 meshUpper = pos + texDim / (float)BLOCK_PIXEL_SIZE;
@@ -137,8 +137,8 @@ void BiomeForest::updateSprites(World* m_world, Camera* m_camera)
 	//stars resize
 	{
 		auto& s = *m_star;
-		auto texDim = vec2(s.getTexture().getWidth(), s.getTexture().getHeight());
-		auto screenDim = App::get().getWindow()->getDimensions();
+		auto texDim = vec2(s.getTexture().width(), s.getTexture().height());
+		auto screenDim = APwin()->getDimensions();
 		auto scale = screenDim / texDim *0.5f;
 		auto tran = screenDim / 2.f / texDim;
 		mat4 t(1.0f);
@@ -152,8 +152,8 @@ void BiomeForest::updateSprites(World* m_world, Camera* m_camera)
 		auto cloudId = i - forestCloudIdx;
 		Sprite2D& s = *m_sprites[i];
 
-		auto texDim = vec2(s.getTexture().getWidth(), s.getTexture().getHeight());
-		auto displayDim = App::get().getWindow()->getDimensions();
+		auto texDim = vec2(s.getTexture().width(), s.getTexture().height());
+		auto displayDim = APwin()->getDimensions();
 		auto texDisRation = texDim / displayDim;
 
 		auto& cloudPos = cloudLocations[cloudId].pos;
@@ -211,8 +211,8 @@ void BiomeForest::updateSprites(World* m_world, Camera* m_camera)
 			//sun
 			float rat = 0.1;//todo this ratio sucks bad scaling when changing window dims
 			//moon
-			auto texDim = vec2(m_sun->getTexture().getWidth(), m_sun->getTexture().getHeight());
-			auto displayDim = App::get().getWindow()->getDimensions();
+			auto texDim = vec2(m_sun->getTexture().width(), m_sun->getTexture().height());
+			auto displayDim = APwin()->getDimensions();
 			//texDim=
 			auto texDisRation = 1.f / glm::normalize(displayDim);
 
@@ -242,8 +242,8 @@ void BiomeForest::updateSprites(World* m_world, Camera* m_camera)
 		{
 			float rat = 0.1;//todo this ratio sucks bad scaling when changing window dims
 			//moon
-			auto texDim = vec2(m_moon->getTexture().getWidth(), m_moon->getTexture().getHeight());
-			auto displayDim = App::get().getWindow()->getDimensions();
+			auto texDim = vec2(m_moon->getTexture().width(), m_moon->getTexture().height());
+			auto displayDim = APwin()->getDimensions();
 			//texDim=
 			auto texDisRation = 1.f / glm::normalize(displayDim);
 
