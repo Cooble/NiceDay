@@ -363,6 +363,8 @@ void ImGuiLayer::renderBaseImGui()
 
 	static ImGuiID dock_right_id;
 	static ImGuiID dock_left_id = 0;
+	static ImGuiID dock_left_left_id = 0;
+	static ImGuiID dock_left_right_id = 0;
 	static ImGuiID dock_down_id = 0;
 	static ImGuiID dock_up_id = 0;
 	// DockSpace
@@ -377,10 +379,12 @@ void ImGuiLayer::renderBaseImGui()
 		if (m_layout_type == ImGuiLayout::DEFAULT|| m_layout_type == ImGuiLayout::CUSTOM0) {
 			ImGui::DockBuilderRemoveNodeChildNodes(dockspace_id);
 			ImGui::DockBuilderSplitNode(dockspace_id, ImGuiDir_Left, 0.8f, &dock_left_id, &dock_right_id);
-			ImGui::DockBuilderSplitNode(dock_left_id, ImGuiDir_Down, 0.2f, &dock_down_id, &dock_up_id);
+			ImGui::DockBuilderSplitNode(dock_left_id, ImGuiDir_Left, 0.05f, &dock_left_left_id, &dock_left_right_id);
+			ImGui::DockBuilderSplitNode(dock_left_right_id, ImGuiDir_Down, 0.2f, &dock_down_id, &dock_up_id);
 			ImGui::DockBuilderDockWindow("FakeWindow", dock_up_id);
 			ImGui::DockBuilderDockWindow("Scene", dock_right_id);
 			ImGui::DockBuilderDockWindow("MMBrowser", dock_down_id);
+			ImGui::DockBuilderDockWindow("Tools", dock_left_left_id);
 			ImGui::DockBuilderFinish(dockspace_id);
 		}
 		else if (m_layout_type == ImGuiLayout::SCREEN)

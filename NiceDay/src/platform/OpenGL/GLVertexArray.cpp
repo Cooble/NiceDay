@@ -27,13 +27,14 @@ void GLVertexArray::addBuffer(const VertexBuffer& vbo)
 		
 		GLCall(glEnableVertexAttribArray(m_atrib_point_index + i));
 		if (GTypes::isIType(e.typ)) {
-			GLCall(glVertexAttribIPointer(m_atrib_point_index + i, e.count, toGL(e.typ), vbo.getLayout().getStride(), (const void*)offset));
+			GLCall(glVertexAttribIPointer(m_atrib_point_index + i, GTypes::getCount(e.typ), toGL(GTypes::getBase(e.typ)), vbo.getLayout().getStride(), (const void*)offset));
 		}
 		else {
-			GLCall(glVertexAttribPointer(m_atrib_point_index + i, e.count, toGL(e.typ), e.normalized, vbo.getLayout().getStride(), (const void*)offset));
+			GLCall(glVertexAttribPointer(m_atrib_point_index + i, GTypes::getCount(e.typ), toGL(GTypes::getBase(e.typ)), e.normalized, vbo.getLayout().getStride(), (const void*)offset));
 		}
+		
 
-		offset += e.count*GTypes::getSize(e.typ);
+		offset += GTypes::getSize(e.typ);
 	}
 	m_atrib_point_index += ray.size();
 	unbind();

@@ -928,7 +928,7 @@ void TileEntityRadio::onUnloaded(World& w)
 void TileEntityRadio::onLoaded(World& w)
 {
 	m_music.open("res/audio/neon.ogg");
-	m_music.updateSpatialData({m_pos, {5, 30}});
+	m_music.updateSpatialData({m_pos, {25, 45}});
 	if (m_is_playing)
 		m_music.play();
 }

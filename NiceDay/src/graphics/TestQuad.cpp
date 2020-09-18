@@ -1,6 +1,5 @@
 ﻿#include "ndpch.h"
 #include "TestQuad.h"
-#include "Renderer.h"
 #include "platform/OpenGL/GLRenderer.h"
 #include "platform/OpenGL/GLShader.h"
 
@@ -20,8 +19,7 @@ TestQuad::TestQuad(bool centered)
 	};
 	vbo = VertexBuffer::create(centered?quadCentered:quad,sizeof(float)*8, BufferUsage::STATIC_DRAW);
 	vao = VertexArray::create();
-	VertexBufferLayout l;
-	l.push<float>(2);
+	VertexBufferLayout l{ g_typ::VEC2 };
 	vbo->setLayout(l);
 	vao->addBuffer(*vbo);
 	shader = ShaderLib::loadOrGetShader("res/shaders/Test.shader");

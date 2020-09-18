@@ -120,9 +120,35 @@ void GLContext::depthMask(bool val)
 	GLCall(glDepthMask(val));
 }
 
+void GLContext::enableStencilTest(bool enable)
+{
+	if (enable) {
+		GLCall(glEnable(GL_STENCIL_TEST))
+	}
+	else
+	{
+		GLCall(glDisable(GL_STENCIL_TEST));
+	}
+}
+
 void GLContext::clear(BufferBit bits)
 {
 	GLCall(glClear(bits));
+}
+
+void GLContext::stencilOp(StencilOp stfails, StencilOp dtfails, StencilOp dtpass)
+{
+	GLCall(glStencilOp((uint32_t)stfails, (uint32_t)dtfails, (uint32_t)dtpass));
+}
+
+void GLContext::stencilMask(uint8_t mask)
+{
+	GLCall(glStencilMask(mask));
+}
+
+void GLContext::stencilFunc(StencilFunc func, int value, uint32_t mask)
+{
+	GLCall(glStencilFunc((uint32_t)func, value, mask));
 }
 
 void GLContext::setClearColor(float r, float g, float b, float a)

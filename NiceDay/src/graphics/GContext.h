@@ -9,7 +9,9 @@ typedef unsigned int BufferBit;
 namespace BuffBit {
 	constexpr BufferBit COLOR = GL_COLOR_BUFFER_BIT;
 	constexpr BufferBit DEPTH = GL_DEPTH_BUFFER_BIT;
+	constexpr BufferBit STENCIL = GL_STENCIL_BUFFER_BIT;
 }
+
 
 enum class Blend : uint32_t
 {
@@ -37,6 +39,27 @@ enum class BlendEquation : uint32_t
 	MIN = GL_MIN,
 	MAX = GL_MAX,
 	NONE
+};
+enum class StencilFunc :uint32_t
+{
+	NEVER = GL_NEVER,
+	LESS=GL_LESS,
+	LEQUAL=GL_LEQUAL,
+	GREATER=GL_GREATER,
+	GEQUAL=GL_GEQUAL,
+	EQUAL=GL_EQUAL,
+	NOTEQUAL=GL_NOTEQUAL,
+	ALWAYS=GL_ALWAYS
+};
+enum class StencilOp :uint32_t
+{
+	KEEP = GL_KEEP,
+	ZERO= GL_ZERO,
+	REPLACE= GL_REPLACE,
+	INCR= GL_INCR,
+	INCR_WRAP= GL_INCR_WRAP,
+	DECR= GL_DECR,
+	DECR_WRAP= GL_DECR_WRAP,
 };
 enum class Topology : uint32_t
 {
@@ -131,6 +154,23 @@ namespace GTypes {
 		case g_typ::IVEC4:
 			return 4;
 		default: return 0;
+		}
+	}
+	// base type of vector e.g. (vec2 is float, ivec3 is int)
+	// otherwise return argument
+	constexpr g_typ getBase(g_typ type)
+	{
+		switch (type)
+		{
+		case g_typ::VEC2:
+		case g_typ::VEC3:
+		case g_typ::VEC4:
+			return g_typ::FLOAT;
+		case g_typ::IVEC2:
+		case g_typ::IVEC3:
+		case g_typ::IVEC4:
+			return g_typ::INT;
+		default: return type;
 		}
 	}
 	constexpr g_typ getType(std::string_view view)
@@ -249,15 +289,30 @@ public:
 	virtual void setBlendConstant(float r, float g, float b, float a) = 0;
 	virtual void enableDepthTest(bool enable) = 0;
 	virtual void enableCullFace(bool enable) = 0;
+	virtual void enableStencilTest(bool enable) = 0;
 	virtual void depthMask(bool val) = 0;
+	virtual void stencilMask(uint8_t mask) = 0;
+	
+	// controls which elements should be rendered or discarded,
+	// does not update stencil buffer
+	// value -> reference value to which the content of stencil buffer is compared
+	// mask -> both values ANDed with this mask before test 
+	virtual void stencilFunc(StencilFunc func, int value, uint32_t mask=0xFF) = 0;
+
+	// how to update stencil buffer
+	// stfails -> when stencil test fails
+	// dtfails -> when depth test fails
+	// dtpass -> when both stencil and depth pass
+	virtual void stencilOp(StencilOp stfails, StencilOp dtfails,StencilOp dtpass) = 0;
+	
 
 	virtual void clear(BufferBit bits) = 0;
 	virtual void setClearColor(float r, float g, float b, float a) = 0;
 	virtual void setViewport(int x, int y, int width, int height) = 0;
-	inline void setViewport(int width, int height) { setViewport(0, 0, width, height); }
+	void setViewport(int width, int height) { setViewport(0, 0, width, height); }
 	virtual void cmdDrawElements(Topology t, size_t elementLength)=0;
 	virtual void cmdDrawMultiElements(Topology t, uint32_t* startIndexes, int* lengths, int multiSize) =0;
 	virtual void cmdDrawArrays(Topology t, size_t elementLength)=0;
 	
-	inline void setClearColor(const glm::vec4& c) { setClearColor(c.r, c.g, c.b, c.a); }
+	void setClearColor(const glm::vec4& c) { setClearColor(c.r, c.g, c.b, c.a); }
 };

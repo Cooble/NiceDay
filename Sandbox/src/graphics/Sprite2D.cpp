@@ -18,8 +18,7 @@ void Sprite2D::init()
 		0, 1,
 	};
 	s_vbo = VertexBuffer::create(quad, sizeof(quad), BufferUsage::STATIC_DRAW);
-	VertexBufferLayout l;
-	l.push<float>(2);
+	VertexBufferLayout l{ g_typ::VEC2 };
 	s_vao = VertexArray::create();
 	s_vbo->setLayout(l);
 	s_vao->addBuffer(*s_vbo);

@@ -37,10 +37,11 @@ void ChunkMesh::init()
 		std::static_pointer_cast<GLShader>(s_program)->setUniform1i("u_texture_atlas_pixel_width", BLOCK_ATLAS_PIXEL_WIDTH);//for every block we have 8 pixels in texture
 		s_program->unbind();
 
-		s_layout.push<float>(2);//pos
-		s_layout.push<float>(2);//uv0
-		s_layout.push<float>(2);//uv1
-
+		s_layout = {
+			g_typ::VEC2,//pos
+			g_typ::VEC2,//uv0
+			g_typ::VEC2,//uv1
+		};
 		/*
 		//pos
 		char* ray = new char[WORLD_CHUNK_AREA * 4 * 2 * sizeof(float)];

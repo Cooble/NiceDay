@@ -97,8 +97,7 @@ WorldRenderManager::WorldRenderManager(Camera* cam, World* world)
 		0, 1,
 	};
 	m_light_VBO = VertexBuffer::create(quad, sizeof(quad));
-	VertexBufferLayout l;
-	l.push<float>(2);
+	VertexBufferLayout l{ g_typ::VEC2 };
 	m_light_VAO = VertexArray::create();
 	m_light_VBO->setLayout(l);
 	m_light_VAO->addBuffer(*m_light_VBO);

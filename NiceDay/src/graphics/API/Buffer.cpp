@@ -3,6 +3,17 @@
 #include "graphics/Renderer.h"
 #include "platform/OpenGL/GLBuffer.h"
 
+VertexBufferLayout::VertexBufferLayout()
+	:m_stride(0)
+{
+}
+
+VertexBufferLayout::VertexBufferLayout(std::initializer_list<VertexBufferElement> list):m_stride(0)
+{
+	for (auto element : list)
+		this->pushElement(element);
+}
+
 VertexBuffer* VertexBuffer::create(void* vertices, uint32_t size, BufferUsage usage)
 {
 	switch (Renderer::getAPI())

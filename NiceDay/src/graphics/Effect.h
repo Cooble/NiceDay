@@ -14,7 +14,7 @@ private:
 	inline static ShaderPtr s_shader = nullptr;
 
 public:
-	inline static void init()
+	static void init()
 	{
 		if (s_vbo) //dont init again
 			return;
@@ -36,9 +36,10 @@ public:
 
 		};
 		s_vbo = VertexBuffer::create(f, sizeof(f));
-		VertexBufferLayout layout;
-		layout.push<float>(2); //pos
-		layout.push<float>(2); //uv
+		VertexBufferLayout layout{
+			g_typ::VEC2,//pos
+			g_typ::VEC2,//uv
+		};
 		s_vbo->setLayout(layout);
 		s_vao = VertexArray::create();
 		s_vao->addBuffer(*s_vbo);

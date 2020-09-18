@@ -41,11 +41,14 @@ void BatchRenderer2D::prepareQuad()
 	m_shader->unbind();
 	delete[] uniforms;
 
-	VertexBufferLayout l;
-	l.push<float>(3);			//POS
-	l.push<float>(2);			//UV
-	l.push<unsigned int>(1);	//TEXTURE_SLOT
-	l.push<unsigned int>(1);	//COLOR
+	VertexBufferLayout l{
+		g_typ::VEC3,			//POS
+		g_typ::VEC2,			//UV
+		g_typ::UNSIGNED_INT,	//TEXTURE_SLOT
+		g_typ::UNSIGNED_INT,	//COLOR
+		
+	};
+	
 
 	m_vbo = VertexBuffer::create(nullptr, MAX_VERTICES * sizeof(VertexData), BufferUsage::STREAM_DRAW);
 	m_vbo->setLayout(l);
@@ -83,11 +86,13 @@ void BatchRenderer2D::prepareText()
 	std::static_pointer_cast<GLShader>(m_text_shader)->setUniformMat4("u_transform", mat4(1.0f));
 	m_text_shader->unbind();
 
-	VertexBufferLayout l;
-	l.push<float>(3);			//POS
-	l.push<float>(2);			//UV
-	l.push<unsigned int>(1);	//COLOR
-	l.push<unsigned int>(1);	//BORDERCOLOR
+	VertexBufferLayout l{
+		g_typ::VEC3,			//POS
+		g_typ::VEC2,			//UV
+		g_typ::UNSIGNED_INT,	//COLOR
+		g_typ::UNSIGNED_INT,	//BORDER_COLOR
+
+	};
 
 	m_text_vbo = VertexBuffer::create(nullptr, MAX_VERTICES * sizeof(TextVertexData), BufferUsage::STREAM_DRAW);
 	m_text_vbo->setLayout(l);

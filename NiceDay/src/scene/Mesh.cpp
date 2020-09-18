@@ -31,7 +31,7 @@ namespace MeshLibrary
 		vbo->setLayout(data->getLayout());
 		for (auto& e:data->getLayout().getElements())
 		{
-			mesh->vertexData.declaration.addElement(index, GTypes::setCount(e.typ,e.count), VertexType::POS);
+			mesh->vertexData.declaration.addElement(index, e.typ, VertexType::POS);
 			mesh->vertexData.binding.setBinding(index++, vbo);
 		}
 		mesh->vao_temp = buildVAO(mesh.get());

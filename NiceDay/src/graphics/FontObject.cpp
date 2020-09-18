@@ -5,9 +5,10 @@ FontObject::FontObject(int size)
 	:m_textMesh(size)
 {
 	m_vbo = VertexBuffer::create(m_textMesh.getSrc(), m_textMesh.getMaxByteSize());
-	VertexBufferLayout layout;
-	layout.push<float>(2);//pos
-	layout.push<float>(2);//uv
+	VertexBufferLayout layout{
+		g_typ::VEC2,//pos
+		g_typ::VEC2,//uv
+	};
 	m_vbo->setLayout(layout);
 	m_vao = VertexArray::create();
 	m_vao->addBuffer(*m_vbo);

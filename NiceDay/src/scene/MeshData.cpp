@@ -187,11 +187,11 @@ namespace MeshDataFactory
 		VertexBufferLayout layout;
 
 
-		layout.push<float>(3);
+		layout.pushElement(g_typ::VEC3);
 		if (vnSize || usePosNormUv)
-			layout.push<float>(3);
+			layout.pushElement(g_typ::VEC3);
 		if (vtSize || usePosNormUv)
-			layout.push<float>(2);
+			layout.pushElement(g_typ::VEC2);
 
 		auto bigvertexSize = layout.getStride();
 
@@ -246,8 +246,7 @@ namespace MeshDataFactory
 		auto mesh = new MeshData;
 		auto size = (x + z) * 2;
 
-		VertexBufferLayout l;
-		l.push<float>(3);
+		VertexBufferLayout l{ g_typ::VEC3 };
 		mesh->allocate(size, sizeof(glm::vec3), 0, l);
 		
 		auto point = (glm::vec3*) mesh->getVertices();
@@ -311,8 +310,7 @@ namespace MeshDataFactory
 		
 		
 		MeshData* mesh = new MeshData;
-		VertexBufferLayout l;
-		l.push<float>(3);
+		VertexBufferLayout l{ g_typ::VEC3 };
 		mesh->allocate(36, sizeof(glm::vec3), 0, l);
 		auto point = (glm::vec3*)mesh->getVertices();
 		memcpy(point, (char*)cubeVertices, mesh->getVerticesSize());

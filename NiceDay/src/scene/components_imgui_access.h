@@ -4,6 +4,12 @@
 #include "graphics/TextureAtlas.h"
 #include "imgui.h"
 
+typedef int TransOp;
+constexpr TransOp TRANSOP_NONE = 0;
+constexpr TransOp TRANSOP_MOVE = 1;
+constexpr TransOp TRANSOP_SCALE = 2;
+constexpr TransOp TRANSOP_ROTATE = 3;
+
 namespace components_imgui_access
 {
 	
@@ -37,6 +43,9 @@ namespace components_imgui_access
 		NewScene* scene;
 		Entity activeCamera;
 		Entity selectedEntity;
+		TransOp transformOperation=TRANSOP_MOVE;
+		float* quantizationPos;
+		float* quantizationScale;
 
 		void drawWindows();
 		void init();

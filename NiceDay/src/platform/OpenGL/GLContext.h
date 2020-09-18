@@ -52,7 +52,11 @@ public:
 	void enableCullFace(bool enable) override;
 	void depthMask(bool val) override;
 
+	void enableStencilTest(bool enable) override;
 	void clear(BufferBit bits) override;
+	void stencilOp(StencilOp stfails, StencilOp dtfails, StencilOp dtpass) override;
+	void stencilMask(uint8_t mask) override;
+	void stencilFunc(StencilFunc func, int value, uint32_t mask) override;
 	void setClearColor(float r, float g, float b, float a) override;
 	void setViewport(int x, int y, int width, int height) override;
 	void cmdDrawElements(Topology t, size_t elementLength) override;

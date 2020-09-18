@@ -164,8 +164,8 @@ void App::start()
 		}
 		m_tel_tick_millis = maxMil;
 
-		//if(nowTime()-lastRenderTime<1000/m_target_tps)
-		if (nowTime() - lastRenderTime < 1000 / 50)
+		if(nowTime()-lastRenderTime<1000/m_target_tps)
+		//if (nowTime() - lastRenderTime < 1000 / 50)
 			continue; //skip render
 		now = nowTime();
 		lastRenderTime = now;
@@ -221,7 +221,7 @@ void App::render()
 	//ND_PROFILE_CALL(m_Window->swapBuffers());
 	m_Window->swapBuffers();
 	Renderer::getDefaultFBO()->bind();
-	Renderer::getDefaultFBO()->clear(BuffBit::COLOR|BuffBit::DEPTH);
+	Renderer::getDefaultFBO()->clear(BuffBit::COLOR|BuffBit::DEPTH|(m_io.enableSCENE? BuffBit::STENCIL:0));
 	for (Layer* l : m_LayerStack)
 		l->onRender();
 

@@ -351,8 +351,20 @@ namespace components_imgui_access
 	{
 		ImGui::DragFloat3("pos", (float*)&c.pos, 0.05f);
 		ImGui::DragFloat3("scale", (float*)&c.scale, 0.05f);
-		ImGui::DragFloat3("rotation", (float*)&c.rot, 0.05f, -glm::two_pi<float>(), glm::two_pi<float>());
+
+		static bool rad = false;
+		
+		if (rad) {
+			ImGui::DragFloat3("rotation", (float*)&c.rot, 0.05f, -glm::two_pi<float>(), glm::two_pi<float>());
+		}else
+		{
+			auto deg = glm::degrees(c.rot);
+			if(ImGui::DragFloat3("rotation", (float*)&deg, 0.05f, -180.f, 180.f))
+				c.rot = glm::radians(deg);//refresh only and only if change has occurred, otherwise due to imprecision value would keep changing
+		}
 		c.recomputeMatrix();
+		ImGui::SameLine();
+		ImGui::Checkbox(rad ? "Rad" : "Deg", &rad);
 	}
 
 	void draw(Entity e, ModelComponent& c)
@@ -1198,12 +1210,53 @@ if (ImGui::BeginTabItem(name, &open,ImGuiTabItemFlags_NoCloseButton))\
 		return true;
 	}
 
+	bool drawQuantizeDialog(bool enabled)
+	{
+		static bool ena=false;
+		if (enabled)
+			ena =!ena;
+		if (ena) {
+			if (ImGui::Begin("Quantization", &ena))
+			{
+				ImGui::DragFloat("pos", windows.quantizationPos, 0.1f);
+				ImGui::DragFloat("scale", windows.quantizationScale, 0.1f);
+			}
+			ImGui::End();
+		}
+		return true;
+	}
+	bool drawToolPanel()
+	{
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 10));
+		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{ 0,10 });
+		ImGui::SetNextWindowSize(ImVec2(52, 0), ImGuiCond_Always);
+		ImGui::Begin("Tools",0, ImGuiWindowFlags_NoDecoration);
+		Image(windows.transformOperation==TRANSOP_MOVE ? SIDS("move_on") : SIDS("move_off"), *ui_icons, { 50.f,50.f });
+		if (ImGui::IsItemClicked())windows.transformOperation = TRANSOP_MOVE;
+
+		Image(windows.transformOperation == TRANSOP_SCALE ? SIDS("scale_on") : SIDS("scale_off"), *ui_icons, { 50.f,50.f });
+		if (ImGui::IsItemClicked())windows.transformOperation = TRANSOP_SCALE;
+
+		Image(windows.transformOperation == TRANSOP_ROTATE ? SIDS("rotate_on") : SIDS("rotate_off"), *ui_icons, { 50.f,50.f });
+		if (ImGui::IsItemClicked())windows.transformOperation = TRANSOP_ROTATE;
+
+		Image(SIDS("quantize"), *ui_icons, { 50.f,50.f });
+		drawQuantizeDialog(ImGui::IsItemClicked());
+		
+	
+		ImGui::PopStyleVar(3);
+		ImGui::End();
+		return true;
+	}
+
 	void SceneWindows::drawWindows()
 	{
 		if (open_material)
 			open_material = drawWindow(material);
 		drawEntityManager();
 		drawMMBrowser();
+		drawToolPanel();
 		
 	}
 

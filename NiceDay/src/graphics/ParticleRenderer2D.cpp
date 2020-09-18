@@ -35,12 +35,14 @@ ParticleRenderer2D::ParticleRenderer2D()
 	m_shader->unbind();
 	delete[] uniforms;
 
-	VertexBufferLayout l;
-	l.push<float>(3);			//POS
-	l.push<float>(2);			//UV0
-	l.push<float>(2);			//UV1
-	l.push<unsigned int>(1);	//TEXTURE_SLOT
-	l.push<float>(1);			//MIX_CONSTANT
+	VertexBufferLayout l{
+		g_typ::VEC3,			//POS
+		g_typ::VEC2,			//UV0
+		g_typ::VEC2,			//UV1
+		g_typ::UNSIGNED_INT,	//TEXTURE_SLOT
+		g_typ::FLOAT,			//MIX_CONSTANT
+
+	};
 
 	m_vbo = VertexBuffer::create(nullptr, PRenderer2DSpecs::MAX_VERTICES * sizeof(VertexData), BufferUsage::STREAM_DRAW);
 	m_vbo->setLayout(l);

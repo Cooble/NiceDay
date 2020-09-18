@@ -8,7 +8,8 @@ struct VertexBufferElement
 	bool normalized;
 	uint32_t count;
 	VertexBufferElement()=default;
-	VertexBufferElement(g_typ typ,bool norm,uint32_t count):typ(typ),normalized(norm),count(count){}
+	VertexBufferElement(g_typ typ,uint32_t count,bool norm=false):typ(typ),normalized(norm),count(count){}
+	VertexBufferElement(g_typ typ, uint32_t count=1) :typ(typ), normalized(false), count(count) {}
 };
 
 class VertexBufferLayout
@@ -18,47 +19,13 @@ private:
 	unsigned int m_stride;
 public:
 	VertexBufferLayout();
+	VertexBufferLayout(std::initializer_list<VertexBufferElement> list);
 
-	template <typename T>
-	void push(unsigned int count)
-	{
-		ND_WARN("Shit ....");
-		ASSERT(false,"fuk");
-	}
 	void pushElement(const VertexBufferElement& e)
 	{
 		m_elements.push_back(e);
 		m_stride += GTypes::getSize(e.typ) * e.count;
 	}
-
-	template <>
-	void push<float>(unsigned int count)
-	{
-		m_elements.emplace_back(g_typ::FLOAT, false, count);
-		m_stride += GTypes::getSize(g_typ::FLOAT) * count;
-	}
-
-	template <>
-	void push<unsigned int>(unsigned int count)
-	{
-		m_elements.emplace_back(g_typ::UNSIGNED_INT, false, count);
-		m_stride += GTypes::getSize(g_typ::UNSIGNED_INT) * count;
-	}
-
-	template <>
-	void push<unsigned short>(unsigned int count)
-	{
-		m_elements.emplace_back(g_typ::UNSIGNED_SHORT,false, count);
-		m_stride += GTypes::getSize(g_typ::UNSIGNED_SHORT) * count;
-	}
-
-	template <>
-	void push<unsigned char>(unsigned int count)
-	{
-		m_elements.emplace_back(g_typ::UNSIGNED_BYTE, false, count);
-		m_stride += GTypes::getSize(g_typ::UNSIGNED_BYTE) * count;
-	}
-
 	const std::vector<VertexBufferElement>& getElements() const { return m_elements; }
 	unsigned int getStride() const { return m_stride; }
 };

@@ -134,7 +134,7 @@ static int paMusicCallback(const void* inputBuffer, void* outputBuffer,
 	paTestData* data = (paTestData*)userData;
 	float* out = (float*)outputBuffer;
 
-	auto currentFrame = (float*)data->buffer->read();
+	auto currentFrame = (const float*)data->buffer->read();
 	if (!currentFrame)
 	{
 		//shit no data available
@@ -377,7 +377,7 @@ void SoundLayer::onImGuiRender()
 			if (delayPlay == 0)
 			{
 				ND_PROFILE_SCOPE("soundscope");
-				Sounder::get().playSound("D:/Dev/C++/NiceDay/res/audio/sound.ogg", vol);
+				Sounder::get().playSound(ND_RESLOC("res/audio/sound.ogg"), vol);
 				delayPlay = 10;
 			}
 		}
@@ -386,7 +386,7 @@ void SoundLayer::onImGuiRender()
 			if (delayPlay == 0)
 			{
 				ND_PROFILE_SCOPE("musicspoce");
-				Sounder::get().playMusic("D:/Dev/C++/NiceDay/res/audio/tower_clock.ogg", vol);
+				Sounder::get().playMusic(ND_RESLOC("res/audio/tower_clock.ogg"), vol);
 				delayPlay = 10;
 			}
 		}

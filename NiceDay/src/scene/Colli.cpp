@@ -5,7 +5,7 @@
 #include "MeshData.h"
 namespace Colli
 {
-	static MeshData* loadWithAssimp(const std::string& path, float scale, bool buildTangent)
+	static MeshData* loadWithAssimp(const std::string& path, float scale, ColliFlags flags, VertexBufferLayout* targetLayout)
 	{
 		Assimp::Importer importer;
 
@@ -17,7 +17,7 @@ namespace Colli
 			aiProcess_Triangulate |
 			aiProcess_GenBoundingBoxes |
 			aiProcess_JoinIdenticalVertices |
-			(buildTangent ? aiProcess_CalcTangentSpace : 0) |
+			(flags & ColliFlags_BuildTangent ? aiProcess_CalcTangentSpace : 0) |
 			aiProcess_SortByPType | aiProcess_GlobalScale);
 
 
@@ -40,13 +40,13 @@ namespace Colli
 		auto m = scene->mMeshes[0];
 
 		VertexBufferLayout layout;
-		layout.push<float>(3);
-		if (m->mNormals)
-			layout.push<float>(3);
+		layout.pushElement({ g_typ::VEC3 });
+		if (m->mNormals && !(flags&ColliFlags_NoNormals))
+			layout.pushElement({ g_typ::VEC3 });
 		if (m->mTextureCoords[0])
-			layout.push<float>(2);
-		if (m->mTangents && buildTangent)
-			layout.push<float>(3);
+			layout.pushElement({ g_typ::VEC2 });
+		if (m->mTangents && flags & ColliFlags_BuildTangent)
+			layout.pushElement({ g_typ::VEC3 });
 		MeshData* mesh = new MeshData;
 		mesh->allocate(m->mNumVertices, layout.getStride(),
 			m->mNumFaces * 3, layout);
@@ -57,7 +57,7 @@ namespace Colli
 			*vertices++ = m->mVertices[vIdx].y * scale;
 			*vertices++ = m->mVertices[vIdx].z * scale;
 
-			if (m->mNormals)
+			if (m->mNormals&&!(flags&ColliFlags_NoNormals))
 			{
 				*vertices++ = m->mNormals[vIdx].x;
 				*vertices++ = m->mNormals[vIdx].y;
@@ -68,7 +68,7 @@ namespace Colli
 				*vertices++ = m->mTextureCoords[0][vIdx].x;
 				*vertices++ = m->mTextureCoords[0][vIdx].y;
 			}
-			if (m->mTangents && buildTangent)
+			if (m->mTangents && flags & ColliFlags_BuildTangent)
 			{
 				*vertices++ = m->mTangents[vIdx].x;
 				*vertices++ = m->mTangents[vIdx].y;
@@ -88,11 +88,12 @@ namespace Colli
 		mesh->setAABB({ glm::vec3(m->mAABB.mMin.x,m->mAABB.mMin.y,m->mAABB.mMin.z),glm::vec3(m->mAABB.mMax.x,m->mAABB.mMax.y,m->mAABB.mMax.z) });
 		return mesh;
 	}
-	MeshData* buildMesh(const std::string& path,float scale,bool buildTangent)
+	MeshData* buildMesh(const std::string& path,float scale, ColliFlags flags, VertexBufferLayout* targetLayout)
 	{
 		if(SUtil::endsWith(path,".bin"))
 			return MeshDataFactory::readBinaryFile(path);
-		return loadWithAssimp(path, scale, buildTangent);
+		return loadWithAssimp(path, scale, flags, targetLayout);
 		
 	}
+
 }

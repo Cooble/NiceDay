@@ -33,7 +33,7 @@ layout(location=0) out vec4 color;
 void main()
 {
 
-	color = texture(mat.cubemap, normalize(v_texture_dir+vec3(0,2,0)));
+	color = texture(mat.cubemap, normalize(v_texture_dir+vec3(0,0,0)));
 	//color = texture(mat.cubemap, normalize(v_texture_dir+vec3(0,mat.upper,0)));
 
 }
