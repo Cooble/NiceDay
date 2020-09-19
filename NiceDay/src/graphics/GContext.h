@@ -312,7 +312,7 @@ public:
 	void setViewport(int width, int height) { setViewport(0, 0, width, height); }
 	virtual void cmdDrawElements(Topology t, size_t elementLength)=0;
 	virtual void cmdDrawMultiElements(Topology t, uint32_t* startIndexes, int* lengths, int multiSize) =0;
-	virtual void cmdDrawArrays(Topology t, size_t elementLength)=0;
+	virtual void cmdDrawArrays(Topology t, size_t elementLength, size_t offset=0)=0;
 	
 	void setClearColor(const glm::vec4& c) { setClearColor(c.r, c.g, c.b, c.a); }
 };

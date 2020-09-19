@@ -67,6 +67,7 @@ namespace Spacer3D
 		p.z = -1;//looking towards
 		return  glm::normalize(glm::vec3(glm::inverse(view) * p));
 	}
+
 	/*
 	 * Solves equation: A*a+B*b+C*c = D
 	 * Returns vec3(a,b,c)
@@ -88,7 +89,7 @@ namespace Spacer3D
 		return ret;
 	}
 
-	static glm::vec3 getClosestPointOnLine(
+	glm::vec3 getClosestPointOnLine(
 		const glm::vec3& lineDir, const glm::vec3& linePos,
 		const glm::vec3& secondDir, const glm::vec3& secondPos)
 	{
@@ -131,7 +132,7 @@ namespace Spacer3D
 
 
 float thic = 2;
-
+int ringSegments = 30;
 static MeshData* buildRing(int segments)
 {
 	constexpr  float thickness = 0.05f;
@@ -139,7 +140,7 @@ static MeshData* buildRing(int segments)
 		g_typ::VEC3,
 		g_typ::VEC3
 	};
-	auto mesh = new MeshData(segments * 6 * 3, l.getStride(), 0, l);
+	auto mesh = new MeshData(segments * 6 * 3+segments*2, l.getStride(), 0, l);
 	glm::vec3* buff = (glm::vec3*)mesh->getVertices();
 	float stepAngle = 2 * glm::pi<float>() / segments;
 	float currentAngle = 0;
@@ -198,6 +199,37 @@ static MeshData* buildRing(int segments)
 		*buff++ = p0;	*buff++ = color;
 		*buff++ = p3;	*buff++ = color;
 		*buff++ = p2;	*buff++ = color;
+	}
+
+	// Outer ring
+	/*constexpr float thick = 1.1f;
+	color = { 0.5f,0.5f,0.5f };
+	for (int seg = 0; seg < segments; ++seg)
+	{
+		glm::vec3 p0 = { glm::sin(currentAngle) ,glm::cos(currentAngle) ,0 };
+		glm::vec3 p1 = { p0.x* thick, p0.y* thick, 0 };
+		currentAngle += stepAngle;
+		glm::vec3 p2 = { glm::sin(currentAngle) ,glm::cos(currentAngle) ,0 };
+		glm::vec3 p3 = { p2.x * thick, p2.y * thick, 0 };
+
+		*buff++ = p0;	*buff++ = color;
+		*buff++ = p1;	*buff++ = color;
+		*buff++ = p3;	*buff++ = color;
+
+		*buff++ = p0;	*buff++ = color;
+		*buff++ = p3;	*buff++ = color;
+		*buff++ = p2;	*buff++ = color;
+	}*/
+	color = { 0.5f,0.5f,0.5f };
+	for (int seg = 0; seg < segments; ++seg)
+	{
+		glm::vec3 p0 = { glm::sin(currentAngle) ,glm::cos(currentAngle) ,0 };
+		currentAngle += stepAngle;
+		glm::vec3 p1 = { glm::sin(currentAngle) ,glm::cos(currentAngle) ,0 };
+
+
+		*buff++ = p0;	*buff++ = color;
+		*buff++ = p1;	*buff++ = color;
 	}
 
 	return mesh;
@@ -280,7 +312,7 @@ struct EditorHUD
 		lineVAO->addBuffer(*lineVBO);
 
 
-		auto ringsData = buildRing(15);
+		auto ringsData = buildRing(ringSegments);
 
 		VertexBufferLayout lay{
 			g_typ::VEC3,//pos
@@ -302,8 +334,13 @@ struct EditorHUD
 		sh->setUniform4f("color", 1, 1, 1, 1);
 		sh->setUniformMat4("world", trans * glm::translate(glm::mat4(1.f), glm::vec3(0, 0, 0)) * glm::scale(glm::mat4(1.f), glm::vec3(0.1f)));
 		ring->vao_temp->bind();
-		GLCall(glLineWidth(5));
-		Gcon.cmdDrawArrays(ring->data->getTopology(), ring->vertexData.binding.count);
+		Gcon.cmdDrawArrays(ring->data->getTopology(), 6*ringSegments*3);
+
+		GLCall(glLineWidth(3));
+		auto pos = env.view  *glm::vec4(selectedEntity.get<TransformComponent>().pos,1);
+		//pos.z = +0.5f;
+		sh->setUniformMat4("world", env.proj * glm::scale(glm::translate(glm::mat4(1.f),glm::vec3(pos)),glm::vec3(rescale*0.1f)));
+		Gcon.cmdDrawArrays(Topology::LINES, ringSegments*2, 6 * ringSegments * 3);
 	}
 	void renderCross(const glm::mat4& trans)
 	{
@@ -408,7 +445,7 @@ struct EditorHUD
 					oldScale = trans.scale;
 					oldAngles = trans.rot;
 					auto s = Spacer3D::screenToRay(glm::vec2(APin().getMouseLocation().x, APwin()->getDimensions().y - APin().getMouseLocation().y), env.proj, env.view, APwin()->getDimensions());
-					oldPosOffset = selectedEntity.get<TransformComponent>().pos - Spacer3D::getClosestPointOnLine(getDir(dir), oldPos, s, env.camera_pos);
+					oldPosOffset = selectedEntity.get<TransformComponent>().pos - Spacer3D::getClosestPointOnLine(glm::vec3(glm::eulerAngleYXZ(oldAngles.x, oldAngles.y, oldAngles.z) * glm::vec4(getDir(dir), 0.f)), oldPos, s, env.camera_pos);
 					oldPlanePoint = Spacer3D::getPointOnPlane(glm::vec3(glm::eulerAngleYXZ(oldAngles.x, oldAngles.y, oldAngles.z) * glm::vec4(getDir(dir), 0.f)), oldPos, s, env.camera_pos) /*+ oldPosOffset*/;
 
 				}
@@ -429,7 +466,7 @@ struct EditorHUD
 					auto s = Spacer3D::screenToRay(glm::vec2(APin().getMouseLocation().x, APwin()->getDimensions().y - APin().getMouseLocation().y), env.proj, env.view, APwin()->getDimensions());
 					auto& trans = selectedEntity.get<TransformComponent>();
 
-					trans.pos = Spacer3D::getClosestPointOnLine(getDir(dir), oldPos, s, env.camera_pos) + oldPosOffset;
+					trans.pos = Spacer3D::getClosestPointOnLine(glm::vec3(glm::eulerAngleYXZ(oldAngles.x, oldAngles.y, oldAngles.z) * glm::vec4(getDir(dir), 0.f)), oldPos, s, env.camera_pos) + oldPosOffset;
 					trans.pos = quantize(trans.pos, oldPos, dir, quantizationPos);
 					trans.recomputeMatrix();
 				}
@@ -479,8 +516,6 @@ struct EditorHUD
 						break;
 					case Z:trans.rot.z = oldAngles.z + angle;
 						break;
-
-					default:;
 					}
 					trans.recomputeMatrix();
 

@@ -200,9 +200,9 @@ void GLContext::cmdDrawMultiElements(Topology t, uint32_t* startIndexes, int* le
 	glMultiDrawElements((uint32_t)t, lengths, GL_UNSIGNED_INT, (void**)startIndexes, multiSize);//fuk of
 }
 
-void GLContext::cmdDrawArrays(Topology t, size_t elementLength)
+void GLContext::cmdDrawArrays(Topology t, size_t elementLength, size_t offset)
 {
-	GLCall(glDrawArrays((uint32_t)t,0, elementLength));
+	GLCall(glDrawArrays((uint32_t)t, offset, elementLength));
 }
 
 

@@ -14,9 +14,10 @@ struct TransformComponent
 
 	void recomputeMatrix()
 	{
-		trans = glm::translate(glm::mat4(1.f), pos);
-		trans = glm::scale(trans, scale);
+		trans = glm::mat4(1.f);
+		trans = glm::translate(trans, pos);
 		trans = trans* glm::eulerAngleYXZ(rot.x, rot.y, rot.z);
+		trans = glm::scale(trans, scale);
 	}
 	
 	TransformComponent() = default;
