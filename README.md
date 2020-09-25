@@ -3,6 +3,8 @@
 
 Let's make Terraria in C++!  
 I decided to make a "simple" clone of Terraria in C++ using my own engine which is being created on the go. 
+<br> 
+<br> 
 **!!To see how project progresses see** [**changelog with pictures**](screenshots/TIMELINE.md)**!!** ("*it's interesting*")
 <br>  
 <br>
