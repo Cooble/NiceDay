@@ -46,6 +46,7 @@ namespace components_imgui_access
 		TransOp transformOperation=TRANSOP_MOVE;
 		float* quantizationPos;
 		float* quantizationScale;
+		float* quantizationRot;
 
 		void drawWindows();
 		void init();

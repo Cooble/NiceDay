@@ -14,6 +14,8 @@ ImVec4 GREEN_COL { 0,1,0,1 };
 ImVec4 RED_COL{ 1, 0.2f, 0.2f, 1 };
 namespace comp_util
 {
+	
+
 #define COPPY_EE(Type) \
 	if (src.has<Type>()){\
 		target.emplaceOrReplace<Type>();\
@@ -328,6 +330,7 @@ namespace comp_util
 }
 namespace components_imgui_access
 {
+	static bool useRad = false;
 	SceneWindows windows = SceneWindows();
 	TextureAtlasUV* ui_icons = nullptr;
 
@@ -352,9 +355,10 @@ namespace components_imgui_access
 		ImGui::DragFloat3("pos", (float*)&c.pos, 0.05f);
 		ImGui::DragFloat3("scale", (float*)&c.scale, 0.05f);
 
-		static bool rad = false;
+	
 		
-		if (rad) {
+		if (useRad) {
+			
 			ImGui::DragFloat3("rotation", (float*)&c.rot, 0.05f, -glm::two_pi<float>(), glm::two_pi<float>());
 		}else
 		{
@@ -364,7 +368,7 @@ namespace components_imgui_access
 		}
 		c.recomputeMatrix();
 		ImGui::SameLine();
-		ImGui::Checkbox(rad ? "Rad" : "Deg", &rad);
+		ImGui::Checkbox(useRad ? "Rad" : "Deg", &useRad);
 	}
 
 	void draw(Entity e, ModelComponent& c)
@@ -1220,6 +1224,18 @@ if (ImGui::BeginTabItem(name, &open,ImGuiTabItemFlags_NoCloseButton))\
 			{
 				ImGui::DragFloat("pos", windows.quantizationPos, 0.1f);
 				ImGui::DragFloat("scale", windows.quantizationScale, 0.1f);
+				if (useRad) {
+
+					ImGui::DragFloat("rot", windows.quantizationRot, 0.1f);
+				}
+				else
+				{
+					auto deg = glm::degrees(*windows.quantizationRot);
+					if (ImGui::DragFloat("rotation", (float*)&deg, 1.f))
+						*windows.quantizationRot = glm::radians(deg);//refresh only and only if change has occurred, otherwise due to imprecision value would keep changing
+				}
+				ImGui::SameLine();
+				ImGui::Checkbox(useRad ? "Rad" : "Deg", &useRad);
 			}
 			ImGui::End();
 		}

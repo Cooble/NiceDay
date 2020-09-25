@@ -259,6 +259,7 @@ struct EditorHUD
 	VertexArray* lineVAO;
 	float quantizationPos;
 	float quantizationScale;
+	float quantizationRotate;
 	MeshPtr ring;
 	enum DIR
 	{
@@ -508,6 +509,8 @@ struct EditorHUD
 					float angle = glm::acos(glm::dot(glm::normalize(planePoint - trans.pos), glm::normalize(oldPlanePoint - trans.pos)))/*/glm::length(planePoint - trans.pos)/glm::length(oldPlanePoint - trans.pos)*/;
 					if (!(glm::abs(glm::length2(glm::normalize(glm::cross(planePoint - trans.pos, oldPlanePoint - trans.pos)) - glm::normalize(glm::vec3(glm::eulerAngleYXZ(oldAngles.x, oldAngles.y, oldAngles.z) * glm::vec4(getDir(dir), 0.f))))) > 0.1f))
 						angle *= -1;
+					if (quantizationRotate)
+						angle = glm::round(angle / quantizationRotate) * quantizationRotate;
 					switch (dir) {
 					case X:  trans.rot.y = oldAngles.y + angle; 
 						break;
@@ -582,6 +585,7 @@ void EditorLayer::onAttach()
 	hud.init();
 	components_imgui_access::windows.quantizationPos = &hud.quantizationPos;
 	components_imgui_access::windows.quantizationScale = &hud.quantizationScale;
+	components_imgui_access::windows.quantizationRot = &hud.quantizationRotate;
 
 	auto screenRes = glm::vec2(100, 100);
 	auto worldPos = glm::vec3(2, 5, 10);
