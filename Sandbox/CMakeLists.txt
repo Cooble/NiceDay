@@ -20,6 +20,11 @@ project(Sandbox)
         "src"
         "../res/registry/headers"
     )
+	add_custom_command(TARGET Sandbox 
+	POST_BUILD
+    COMMAND  ${CMAKE_COMMAND} -DTT_TARGET_DIR=${CMAKE_CURRENT_BINARY_DIR} -P ${CMAKE_SOURCE_DIR}/CopyMonoDll.cmake
+    COMMENT "copying mono dll to build dir..."
+)
 
 # Precompiled Header
 #    target_precompile_headers(NiceDay PRIVATE 
