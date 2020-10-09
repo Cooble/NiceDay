@@ -1,6 +1,8 @@
 ﻿#include "ndpch.h"
 #include "player.h"
 #include "core/App.h"
+#include "files/FUtil.h"
+
 
 #include <portaudio.h>
 
@@ -1006,6 +1008,8 @@ void Sounder::flushSpatialData()
 SoundID Sounder::playAudio(const std::string& filePath, bool sound_or_music, float volume, float pitch, bool loop,
                            float fadeTime, const SpatialData& data)
 {
+	FUTIL_ASSERT_EXIST(filePath);
+
 	auto out = m_current_id++;
 	submit({
 			SoundAssignment::PLAY,

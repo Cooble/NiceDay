@@ -2,12 +2,13 @@
 #include "GLTexture.h"
 #include "stb_image.h"
 #include "GLRenderer.h"
+#include "files/FUtil.h"
 
 static std::string replace(const std::string& str, const std::string& from, const std::string& to) {
 	size_t start_pos = str.find(from);
 	if (start_pos == std::string::npos)
 		return str;
-	std::string out=str;
+	std::string out = str;
 	out.replace(start_pos, from.length(), to);
 	return out;
 }
@@ -22,13 +23,13 @@ GLTexture::GLTexture(const TextureInfo& info)
 {
 	auto type = (uint32_t)info.texture_type;
 	GLCall(glGenTextures(1, &m_id));
-	
+
 	GLCall(glBindTexture(type, m_id));
 	GLCall(glTexParameteri(type, GL_TEXTURE_MIN_FILTER, (int)info.filter_mode_min));
 	GLCall(glTexParameteri(type, GL_TEXTURE_MAG_FILTER, (int)info.filter_mode_max));
 	GLCall(glTexParameteri(type, GL_TEXTURE_WRAP_S, (int)info.wrap_mode_s));
 	GLCall(glTexParameteri(type, GL_TEXTURE_WRAP_T, (int)info.wrap_mode_t));
-	if(info.texture_type==TextureType::_CUBE_MAP)
+	if (info.texture_type == TextureType::_CUBE_MAP)
 		GLCall(glTexParameteri(type, GL_TEXTURE_WRAP_R, (int)info.wrap_mode_r));
 
 
@@ -40,6 +41,9 @@ GLTexture::GLTexture(const TextureInfo& info)
 
 		stbi_set_flip_vertically_on_load(true);
 		if (info.texture_type == TextureType::_2D) {
+
+			FUTIL_ASSERT_EXIST(m_filePath);
+
 			m_buffer = stbi_load(m_filePath.c_str(), &m_width, &m_height, &m_BPP, 4);
 			GLCall(glTexImage2D(GL_TEXTURE_2D, 0, (int)m_format, m_width, m_height, 0, (int)m_format, GL_UNSIGNED_BYTE, m_buffer));
 			if (m_buffer)
@@ -57,6 +61,9 @@ GLTexture::GLTexture(const TextureInfo& info)
 			for (GLuint i = 0; i < 6; i++)
 			{
 				std::string realPath = replace(m_filePath, "*", facesNames.substr(i * 2, 2));
+
+				FUTIL_ASSERT_EXIST(realPath);
+
 				m_buffer = stbi_load(realPath.c_str(), &m_width, &m_height, &m_BPP, 3);
 				GLCall(glTexImage2D(
 					GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
@@ -70,7 +77,7 @@ GLTexture::GLTexture(const TextureInfo& info)
 			}
 		}
 	}
-	else if(info.pixel_data)
+	else if (info.pixel_data)
 	{
 		GLCall(glTexImage2D(GL_TEXTURE_2D, 0, (int)m_format, m_width, m_height, 0, (int)m_format, GL_UNSIGNED_BYTE, info.pixel_data));
 	}
@@ -87,12 +94,12 @@ GLTexture::GLTexture(const TextureInfo& info)
 
 GLTexture::~GLTexture()
 {
-	if(m_not_proxy)
+	if (m_not_proxy)
 		GLCall(glDeleteTextures(1, &m_id));
 }
 
 GLTexture::GLTexture(uint32_t id, uint32_t width, uint32_t height, TextureType type)
-	:m_width(width),m_height(height),m_id(id),m_not_proxy(false),m_type(type)
+	:m_width(width), m_height(height), m_id(id), m_not_proxy(false), m_type(type)
 {
 }
 

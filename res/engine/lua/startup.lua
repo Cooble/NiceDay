@@ -1,7 +1,7 @@
 --runs on start of the engine
 --used to load scripts
 
-runf("res/lua/vec.lua")
+runf("res/engine/lua/vec.lua")
 ND_INFO("[LUA] loaded vec lib")
 
 function starts_with(str, start)

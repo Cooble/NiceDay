@@ -11,6 +11,7 @@
 #include "graphics/API/FrameBuffer.h"
 #include "graphics/Renderer.h"
 #include "stb_image.h"
+#include "files/FUtil.h"
 
 static void blankFun(Event& e) {}
 static bool is_glfw_initialized = false;
@@ -50,12 +51,15 @@ Window::Window(int width, int height, const std::string& title,bool fullscreen) 
 
 		int w, h, mbbpp;
 		GLFWimage icons[1];
-		icons->pixels = stbi_load(ND_RESLOC("res/images/nd_icon2.png").c_str(), &w, &h, &mbbpp, 4);
-		icons->width = w;
-		icons->height = h;
+		auto resIcon = ND_RESLOC("res/engine/images/nd_icon2.png");
+		if (FUtil::exists(resIcon)) {
+			icons->pixels = stbi_load(resIcon.c_str(), &w, &h, &mbbpp, 4);
+			icons->width = w;
+			icons->height = h;
 
-		glfwSetWindowIcon(m_window, 1, icons);
-		stbi_image_free((void*)icons[0].pixels);
+			glfwSetWindowIcon(m_window, 1, icons);
+			stbi_image_free((void*)icons[0].pixels);
+		}
 	}
 	
 	if (m_window == NULL)

@@ -1,6 +1,8 @@
 ﻿#pragma once
 #include "luabinder_particles.h"
+#ifndef NOO_SOOL
 #include <sol/sol.hpp>
+#endif
 #include "world/particle/particles.h"
 #include "world/World.h"
 #include "world/entity/EntityPlayer.h"
@@ -13,7 +15,7 @@ static EntityPlayer* player;
 
 void lua_binder_particles::bindEverything(sol::state& state,World* w, EntityPlayer* p)
 {
-
+#ifndef NOO_SOOL
 	auto particles = state["Particle"].get_or_create<sol::table>();
 
 	int ind = 0;
@@ -29,7 +31,8 @@ void lua_binder_particles::bindEverything(sol::state& state,World* w, EntityPlay
 
 	App::get().getLua()->runScriptInConsole(state.lua_state(), "world = World()");
 	App::get().getLua()->runScriptInConsole(state.lua_state(), "playerPos = PlayerPos()");
-	
+#endif
+
 	
 /*	state.new_usertype<SoundHandle>("Sound",
 		"play", sol::overload(&SoundHandle::play, [](SoundHandle& h) { h.play(); }),

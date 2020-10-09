@@ -31,10 +31,8 @@ static Texture* image;
 int ConsoleTestLayer::sizeOfLines()
 {
 	int out = 0;
-	for (int i = 0; i < lines.size(); ++i)
-	{
-		out += lines[i].size();
-	}
+	for (auto& line : lines)
+		out += line.size();
 	return out;
 }
 
@@ -120,9 +118,9 @@ void ConsoleTestLayer::onAttach()
 
 	fontMat = FontMatLib::getMaterial("res/fonts/consolas.fnt");
 	textMesh.reserve(50000);
-	lines.push_back("#008800Line1 is nice");
-	lines.push_back("Line2 is nicer no doubt about this \nreally this seems to be somehing else");
-	lines.push_back("#008800ls");
+	lines.emplace_back("#008800Line1 is nice");
+	lines.emplace_back("Line2 is nicer no doubt about this \nreally this seems to be somehing else");
+	lines.emplace_back("#008800ls");
 	rebuildMesh();
 
 	deformationShader = ShaderLib::loadOrGetShader(ND_RESLOC("res/shaders/Deformation.shader"));
@@ -301,7 +299,7 @@ void ConsoleTestLayer::onRender()
 {
 	
 	deformationEffect->defaultBind();
-	Gcon.setClearColor(0, 0.1, 0, 1);
+	Gcon.setClearColor(0, 0.1f, 0, 1);
 	Gcon.clear(BuffBit::COLOR);
 	renderer.begin(Renderer::getDefaultFBO());
 	renderer.push(

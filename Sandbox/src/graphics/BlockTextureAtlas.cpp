@@ -3,6 +3,8 @@
 
 #include "stb_image.h"
 #include "stb_image_write.h"
+#include "files/FUtil.h"
+
 #include <filesystem>
 #include "world/ChunkMesh.h"
 #include "graphics/Imager2D.h"
@@ -207,6 +209,8 @@ inline static std::string convertToShrunkFilePath(const std::string& folder, con
 
 void BlockTextureAtlas::createAtlas(const std::string& folder, int segmentCount, int segmentSize)
 {
+	FUTIL_ASSERT_EXIST(folder);
+
 	stbi_flip_vertically_on_write(false);
 	stbi_set_flip_vertically_on_load(false);
 	

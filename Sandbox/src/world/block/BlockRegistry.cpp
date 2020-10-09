@@ -16,7 +16,7 @@ void BlockRegistry::readAllConnectGroupsJSON()
 {
 	allConnectGroups.clear();
 	NBT t;
-	NBT::loadFromFile(ND_RESLOC("res/registry/blocks/connect_groups.json"), t);
+	NBT::loadFromFile("res/registry/blocks/connect_groups.json", t);
 	if(t.isArray())
 	{
 		allConnectGroups.reserve(t.size());

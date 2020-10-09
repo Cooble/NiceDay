@@ -6,9 +6,7 @@ bin-int/
 nogit/
 ignore/
 profiles/
-res/audio/
-res/lua/temp/
-res/registry/headers
+
 build/
 
 #atlases made on the go
@@ -16,11 +14,13 @@ res/images/blockAtlas/atlas.png
 res/images/itemAtlas/atlas.png
 res/images/particleAtlas/atlas.png
 res/images/itemAtlas/item_block
-res/images/skymap2
-res/images/skymap3
-res/images/skymap4
-res/models
 
+#resources ignored by git
+res/examples/
+res/audio/
+res/engine/lua/temp
+res/lua/temp
+res/registry/headers
 
 # Files
 *.user

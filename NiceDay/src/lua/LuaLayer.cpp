@@ -2,19 +2,29 @@
 #include "LuaLayer.h"
 #include "imgui.h"
 
+
+
 #include "event/KeyEvent.h"
 #include <GLFW/glfw3.h>
 #include "memory/stack_allocator.h"
+#ifndef NOO_SOOL
+#include "sol/sol.hpp"
+#endif
+
 #include <lua.hpp>
 #include "nd_luabinder.h"
 #include "imguifiledialog/ImGuiFileDialog.h"
 #include "core/NBT.h"
-#include "sol/sol.hpp"
 #include "core/ImGuiLayer.h"
+#include "files/FUtil.h"
 
 //-----------------------------------------------------------------------------
 // [SECTION] Example App: Debug Console / ShowExampleAppConsole()
 //-----------------------------------------------------------------------------
+
+
+
+
 
 #define LUACON_ERROR_PREF "[error]"
 #define LUACON_TRACE_PREF "[trace]"
@@ -22,7 +32,10 @@
 #define LUACON_WARN_PREF "[warn_]"
 
 static NBT s_settings;
+#ifndef NOO_SOOL
 sol::state s_lua;
+#endif
+
 
 static const char* s_settings_file = "lua_editor_settings.json";
 
@@ -816,6 +829,8 @@ static std::string s_couroutineFileSrc;
 static char buf[1024];
 static std::string readStringFromFile(const char* filePath)
 {
+	FUTIL_ASSERT_EXIST(filePath);
+
 	FILE* f = fopen(filePath, "r");
 	if (!f)
 		return "";
@@ -857,8 +872,11 @@ void LuaLayer::onAttach()
 	s_lua_layer = this;
 	m_console = new LuaConsole(this);
 
+#ifndef NOO_SOOL
 	m_L = s_lua.lua_state();
-	//m_L = luaL_newstate();
+#else
+	m_L = luaL_newstate();
+#endif
 
 	luaopen_base(m_L); // load basic libs (eg. print)
 	luaL_openlibs(m_L);
@@ -870,21 +888,26 @@ void LuaLayer::onAttach()
 	lua_register(m_L, "ND_WARN", nd_warn);
 	lua_register(m_L, "ND_ERROR", nd_error);
 	lua_register(m_L, "ND_RUN_FILE", nd_run_lua_file_script);
+#ifndef NOO_SOOL
 	s_lua.set_function("ND_RESLOC", [](const std::string& a) {return ND_RESLOC(a); });
+#endif
 	lua_register(m_L, "runf", nd_run_lua_file_script);
 	lua_register(m_L, "exit", nd_exit);
 
 	lua_register(m_L, "ls", ls);
 
+#ifndef NOO_SOOL
 	nd_luabinder::bindEverything(s_lua);
+#endif
 	
 	//s_lua.set_function("opii", [](GUIWindow& e, int ee) {ND_INFO("gotcha {}", ee); });
 	//auto namespac = s_lua["GUIContext"].get_or_create<sol::table>();
 
 	//namespac.set_function("openWindow", [](GUIWindow& window) {GUIContext::get().openWindow(&window); });
-	
-	s_couroutineFileSrc = readStringFromFile(ND_RESLOC("res/lua/coroutines.lua").c_str());
-	runScriptFromFile(m_L, "res/lua/startup.lua");
+
+	s_couroutineFileSrc = readStringFromFile(ND_RESLOC("res/engine/lua/coroutines.lua").c_str());
+
+	runScriptFromFile(m_L, "res/engine/lua/startup.lua");
 }
 static void saveConsoleState()
 {
@@ -930,7 +953,13 @@ void LuaLayer::onEvent(Event& e)
 
 sol::state* LuaLayer::getSolState()
 {
+#ifndef NOO_SOOL
 	return &s_lua;
+#else
+	return nullptr;
+#endif
+	//return nullptr;
+	
 }
 
 void LuaLayer::printToLuaConsole(lua_State* L, const char* c)
@@ -953,6 +982,8 @@ void LuaLayer::runScriptInConsole(lua_State* L, const char* c)
 
 void LuaLayer::runScriptFromFile(lua_State* L, const nd::temp_string& filePath)
 {
+	//FUTIL_ASSERT_EXIST(filePath);
+
 	int result = luaL_loadfile(m_L, ND_RESLOC(std::string(filePath)).c_str());
 	if (result != LUA_OK)
 	{

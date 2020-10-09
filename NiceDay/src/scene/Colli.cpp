@@ -1,4 +1,5 @@
 ﻿#include "Colli.h"
+#include <files/FUtil.h>     
 #include <assimp/Importer.hpp>      // C++ importer interface
 #include <assimp/scene.h>           // Output data structure
 #include <assimp/postprocess.h>     // Post processing flags
@@ -7,6 +8,8 @@ namespace Colli
 {
 	static MeshData* loadWithAssimp(const std::string& path, float scale, ColliFlags flags, VertexBufferLayout* targetLayout)
 	{
+		FUTIL_ASSERT_EXIST(path);
+
 		Assimp::Importer importer;
 
 		// And have it read the given file with some example postprocessing
@@ -90,6 +93,7 @@ namespace Colli
 	}
 	MeshData* buildMesh(const std::string& path,float scale, ColliFlags flags, VertexBufferLayout* targetLayout)
 	{
+		
 		if(SUtil::endsWith(path,".bin"))
 			return MeshDataFactory::readBinaryFile(path);
 		return loadWithAssimp(path, scale, flags, targetLayout);

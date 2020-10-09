@@ -197,6 +197,8 @@ TextureAtlas::~TextureAtlas()
 
 bool TextureAtlas::createAtlas(std::string_view folder, int segmentCount, int segmentSize, TextureAtlasFlags flags)
 {
+	FUTIL_ASSERT_EXIST(folder);
+
 	stbi_flip_vertically_on_write(false);
 	stbi_set_flip_vertically_on_load(flags & TextureAtlasFlags_FlipY);
 
@@ -432,6 +434,8 @@ TextureAtlasUV::~TextureAtlasUV()
 
 bool TextureAtlasUV::createAtlas(std::string_view folder, int size,int padding,TextureAtlasFlags flags)
 {
+	FUTIL_ASSERT_EXIST(folder);
+
 	m_size = size;
 	stbi_flip_vertically_on_write(false);
 	stbi_set_flip_vertically_on_load(flags & TextureAtlasFlags_FlipY);

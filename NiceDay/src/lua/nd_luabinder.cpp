@@ -1,8 +1,10 @@
 ﻿#include "ndpch.h"
 #include "nd_luabinder.h"
+#ifndef NOO_SOOL
 #include <sol/sol.hpp>
+#endif
+
 #include "audio/audio_handle.h"
-#include "lua.h"
 #include "audio/player.h"
 #include "core/NBT.h"
 #include "gui/GUIElement.h"
@@ -51,6 +53,7 @@ static void bindBasic(sol::state& state)
 
 static void bindGLM(sol::state& state)
 {
+#ifndef NOO_SOOL
 	//glm::vec<2, float, Q> operator+(vec<2, T, Q> const& v1, vec<2, T, Q> const& v2)
 	state.new_usertype<half_int>("half_int",
 		sol::constructors<half_int(int), half_int(int, int)>(),
@@ -90,7 +93,7 @@ static void bindGLM(sol::state& state)
 		sol::overload([](glm::vec3& a, glm::vec3& b) { return a / b; },
 			[](glm::vec3& a, float b) { return a / b; })
 		);
-	state.set_function("Vec3", sol::overload([](float x, float y,float z) {return glm::vec3(x, y,z); }, [](float v) {return glm::vec3(v); }));
+	state.set_function("Vec3", sol::overload([](float x, float y, float z) {return glm::vec3(x, y, z); }, [](float v) {return glm::vec3(v); }));
 	state.new_usertype<glm::vec4>("vec4",
 		sol::constructors<glm::vec4(float, float, float, float)>(),
 		"x", &glm::vec4::x,
@@ -106,16 +109,18 @@ static void bindGLM(sol::state& state)
 		sol::overload([](glm::vec4& a, glm::vec4& b) { return a / b; },
 			[](glm::vec4& a, float b) { return a / b; })
 		);
-	state.set_function("Vec4", sol::overload([](float x, float y, float z,float w) {return glm::vec4(x, y, z, w); }, [](float v) {return glm::vec4(v); }));
+	state.set_function("Vec4", sol::overload([](float x, float y, float z, float w) {return glm::vec4(x, y, z, w); }, [](float v) {return glm::vec4(v); }));
 	state.set_function("normalize", sol::overload(
 		[](glm::vec2 v) {return glm::normalize(v); },
 		[](glm::vec3 v) {return glm::normalize(v); },
 		[](glm::vec4 v) {return glm::normalize(v); }));
+#endif
 
 }
 
 static void bindSound(sol::state& state)
 {
+#ifndef NOO_SOOL
 	state.new_usertype<SoundHandle>("Sound",
 		"play", sol::overload(&SoundHandle::play, [](SoundHandle& h) { h.play(); }),
 		"stop", sol::overload(&SoundHandle::stop, [](SoundHandle& h) { h.stop(); }),
@@ -153,6 +158,8 @@ static void bindSound(sol::state& state)
 
 	lua_register(state.lua_state(), "playSound", playSound);
 	lua_register(state.lua_state(), "playMusic", playMusic);
+#endif
+
 }
 
 static int playSound(lua_State* L)
@@ -205,6 +212,7 @@ static int nbtGetValue(lua_State* L);
 
 static void bindNBT(sol::state& state)
 {
+#ifndef NOO_SOOL
 	auto namespac = state["NBType"].get_or_create<sol::table>();
 
 	namespac["T_NUMBER_FLOAT"] = NBT::NBTType::T_NUMBER_FLOAT;
@@ -240,11 +248,14 @@ static void bindNBT(sol::state& state)
 		"getValue", &nbtGetValue,
 		"setValue", &nbtSetValue
 		);
+#endif
 }
 
 //sets current nbt's value (use nil to erase it to T_NULL)
 static int nbtSetValue(lua_State* L)
 {
+
+#ifndef NOO_SOOL
 	if (lua_gettop(L) != 2)
 	{
 		return luaL_error(L, "expecting exactly 2 arguments");
@@ -279,12 +290,16 @@ static int nbtSetValue(lua_State* L)
 		else
 			return luaL_error(L, "LUA Invalid type passed to nbt");
 	}
+#endif
+
 	return 0;
 }
 
 //get current nbt's value (=string/bool/number). if nil or container -> returns itself
 static int nbtGetValue(lua_State* L)
 {
+
+#ifndef NOO_SOOL
 	NBT& nbt = sol::stack::get_usertype<NBT>(L, 1);
 
 	if (nbt.isString())
@@ -303,12 +318,15 @@ static int nbtGetValue(lua_State* L)
 		return 1;
 	}
 	sol::stack::push(L, sol::make_reference(L, &nbt));
+#endif
+
 	return 1;
 }
 
 //returns always nbt reference or nothing if nbt is not proper container at specified key
 static int nbtRetrieve(lua_State* L)
 {
+#ifndef NOO_SOOL
 	if (lua_gettop(L) != 2)
 	{
 		return luaL_error(L, "expecting exactly 2 arguments");
@@ -336,12 +354,14 @@ static int nbtRetrieve(lua_State* L)
 		sol::stack::push(L, sol::make_reference(L, &n));
 		return 1;
 	}
+#endif
 	return 0;
 }
 
 //returns value at specified key (bool,string,number) or nbt reference
 static int nbtIndex(lua_State* L)
 {
+#ifndef NOO_SOOL
 	NBT& nbt = sol::stack::get_usertype<NBT>(L, 1);
 	auto type = lua_type(L, 2);
 
@@ -397,12 +417,15 @@ static int nbtIndex(lua_State* L)
 		sol::stack::push(L, sol::make_reference(L, &n));
 		return 1;
 	}
+#endif
+
 	return 0;
 }
 
 //sets value at specified key
 static int nbtNewIndex(lua_State* L)
 {
+#ifndef NOO_SOOL
 	constexpr auto INDEX = 3;
 
 	NBT& nbt = sol::stack::get_usertype<NBT>(L, 1);
@@ -497,6 +520,7 @@ static int nbtNewIndex(lua_State* L)
 			break;
 		}
 	}
+#endif
 	return 0;
 }
 
@@ -765,6 +789,7 @@ static void bindGUIContext(sol::state& state)
 
 static void bindFontMaterial(sol::state& state)
 {
+#ifndef NOO_SOOL
 	state.new_usertype<FontMaterial>("FontMaterial",
 		sol::no_constructor,
 		"color", &FontMaterial::color,
@@ -773,4 +798,5 @@ static void bindFontMaterial(sol::state& state)
 	auto namespac = state["FontMatLib"].get_or_create<sol::table>();
 
 	namespac.set_function("getMaterial", &FontMatLib::getMaterial);
+#endif
 }

@@ -47,13 +47,13 @@ namespace comp_util
 			n.save("name", tag.name);
 			n.save("mesh", mesh->data->getFilePath());
 			if (!SUtil::startsWith(material->getName(), "res")) {
-				MaterialLibrary::save(material, "res/models/" + material->getName() + ".mat");
-				n.save("material", "res/models/" + material->getName() + ".mat");
+				MaterialLibrary::save(material, "res/examples/models/" + material->getName() + ".mat");
+				n.save("material", "res/examples/models/" + material->getName() + ".mat");
 			}
 			else
 				n.save("material", material->getName());
-			NBT::saveToFile(std::string("res/models/") + e.get<TagComponent>().name + ".model", n);
-			ND_BUG("Model Saved to: res/models/{}.model", e.get<TagComponent>().name);
+			NBT::saveToFile(std::string("res/examples/models/") + e.get<TagComponent>().name + ".model", n);
+			ND_BUG("Model Saved to: res/examples/models/{}.model", e.get<TagComponent>().name);
 		}
 	}
 	static Entity loadEntity(NewScene* s, const std::string& path)
@@ -572,6 +572,7 @@ namespace components_imgui_access
 			
 			return s + (s.empty()?"":"/*.png");
 		}
+		return "";
 	}
 
 
@@ -651,7 +652,7 @@ namespace components_imgui_access
 		{
 			if (ImGui::MenuItem("Save Material"))
 			{
-				MaterialLibrary::save(c, std::string("res/models/") + c->getName() + ".mat");
+				MaterialLibrary::save(c, std::string("res/examples/models/") + c->getName() + ".mat");
 			}
 			ImGui::EndPopup();
 		}
@@ -886,7 +887,7 @@ if (ImGui::BeginTabItem(name, &open,ImGuiTabItemFlags_NoCloseButton))\
 					script.construct(ent, windows.scene);
 					script.onCreate();
 				});
-			comp_util::drawFileDialog(loadModel, "loadModel", "Name", "res/models", ".model", true, [](const char* c)
+			comp_util::drawFileDialog(loadModel, "loadModel", "Name", "res/examples/models", ".model", true, [](const char* c)
 			{
 					auto ent = comp_util::loadEntity(windows.scene, c);
 					ND_BUG("Loaded entity from {}", c);
@@ -1063,7 +1064,7 @@ if (ImGui::BeginTabItem(name, &open,ImGuiTabItemFlags_NoCloseButton))\
 			{
 				if (ImGui::MenuItem("Save"))
 				{
-					MaterialLibrary::save(material, std::string("res/models/") + material->getName() + ".mat");
+					MaterialLibrary::save(material, std::string("res/examples/models/") + material->getName() + ".mat");
 				}
 				if (ImGui::MenuItem("Copy"))
 				{
@@ -1118,7 +1119,7 @@ if (ImGui::BeginTabItem(name, &open,ImGuiTabItemFlags_NoCloseButton))\
 	bool drawModelManager(bool clickOnNew)
 	{
 		const char* suffixes[]{ ".fbx",".obj",".dae",".bin" };
-		comp_util::drawFileDialog(clickOnNew, "MaterNew?", "Texture Name","res/models", suffixes,4,true, [](const char* c) {
+		comp_util::drawFileDialog(clickOnNew, "MaterNew?", "Texture Name","res/examples/models", suffixes,4,true, [](const char* c) {
 			MeshLibrary::loadOrGet(std::string(c));
 			});
 

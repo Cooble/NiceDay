@@ -1,0 +1,13 @@
+Main folder to store every resource of the program
+
+Subfolders might include:
+ - audio
+ - fonts
+ - images
+ - lua
+ - models 
+ - shaders
+
+Special subfolders:
+ - engine 	(stores engine required resources, (e.g. icon images, internal lua scripts))
+ - examples 	(just for dev purposes, ignored by git, need to download separately)

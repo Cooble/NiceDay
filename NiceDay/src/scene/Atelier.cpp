@@ -10,8 +10,8 @@ void Atelier::init()
 {
 	m_fbo = FrameBuffer::create(FrameBufferInfo().multiSample(4));
 	m_fbo->createBindSpecialAttachment(FBAttachment::DEPTH_STENCIL, { 256,256 });
-	m_background = TextureLib::loadOrGetTexture("res/models/material_bg.png");
-	m_sphere = MeshLibrary::buildNewMesh(Colli::buildMesh(ND_RESLOC("res/models/sphere.fbx")));
+	m_background = TextureLib::loadOrGetTexture("res/engine/images/material_bg.png");
+	m_sphere = MeshLibrary::buildNewMesh(Colli::buildMesh(ND_RESLOC("res/examples/models/sphere.fbx")));
 
 	static UniformLayout envLayout;
 	envLayout.name = "GLO";

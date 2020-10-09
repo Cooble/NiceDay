@@ -1,6 +1,7 @@
 ﻿#include "ndpch.h"
 #include "GLShader.h"
 #include "GLRenderer.h"
+#include "files/FUtil.h"
 #define IGNORE_UNIFORM_DOESNT_EXIST 1
 #define THROW_PARSING 1
 #define BREAK_IF_SHADER_COMPILE_ERROR 0
@@ -27,9 +28,10 @@ static void shaderTypeToString(unsigned int t)
 
 static GLShader::ShaderProgramSources parseShader(const std::string& file_path)
 {
+	FUTIL_ASSERT_EXIST(file_path);
+
 	s_current_file = file_path.c_str();
 	
-	ASSERT(std::filesystem::exists(s_current_file), "Invalid shader path {}",s_current_file);
 	std::ifstream stream(file_path);
 
 	enum class ShaderType

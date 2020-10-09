@@ -187,7 +187,7 @@ void ImGuiLayer::onAttach()
 	ImGui_ImplGlfw_InitForOpenGL(window, true);
 	ImGui_ImplOpenGL3_Init("#version 410");
 
-	GlobalAccess::ui_icons.createAtlas("res/models/scene_icons", 64, 1/*, TextureAtlasUVFlags_CreateFile*/);
+	GlobalAccess::ui_icons.createAtlas("res/engine/images/scene_icons", 64, 1/*, TextureAtlasUVFlags_CreateFile*/);
 	ImGui::GetIO().IniFilename = nullptr;
 
 	registerWindow("Telemetrics", &showTelemetrics);

@@ -1,1 +1,0 @@
-maxvelocity cannot be clamped - needs normalization instead

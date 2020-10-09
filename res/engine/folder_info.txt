@@ -1,0 +1,2 @@
+This folder is intended to store resources of the engine itself, such as icons in editor window.
+No specific game related files should be stored here.

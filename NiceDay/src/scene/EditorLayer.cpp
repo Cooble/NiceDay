@@ -321,7 +321,7 @@ struct EditorHUD
 		};
 		ring = MeshLibrary::buildNewMesh(ringsData);
 		//MeshData nData = MeshData(ringsData->getVerticesCount() * 2, ringsData->getOneVertexSize() * 2, 0);
-		//ring = MeshLibrary::loadOrGet("res/models/circle.fbx");
+		//ring = MeshLibrary::loadOrGet("res/examples/models/circle.fbx");
 
 
 	}
@@ -602,7 +602,8 @@ void EditorLayer::onAttach()
 	auto t = Atelier::get();//just init atelier
 	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 	ImGuiIO& io = ImGui::GetIO();
-	io.Fonts->AddFontFromFileTTF(ND_RESLOC("res/fonts/ignore/OpenSans-Regular.ttf").c_str(), 20);
+        if(FUtil::exists("res/engine/fonts/OpenSans-Regular.ttf"))
+	  io.Fonts->AddFontFromFileTTF(ND_RESLOC("res/engine/fonts/OpenSans-Regular.ttf").c_str(), 20);
 
 	//adding JP (merging with current font) -> nihongode ok kedo, mada nai to omou
 	/*ImFontConfig config;
@@ -642,7 +643,7 @@ void EditorLayer::onAttach()
 	modelMat->setValue("shines", 64.f);
 
 
-	auto crate1Mesh = MeshLibrary::loadOrGet("res/models/cube.fbx");
+	auto crate1Mesh = MeshLibrary::loadOrGet("res/examples/models/cube.fbx");
 
 
 	auto simpleMat = MaterialLibrary::create({
@@ -652,11 +653,11 @@ void EditorLayer::onAttach()
 	simpleMat->setValue("color", glm::vec4(1.0, 1.0, 0.5, 1));
 	simpleMat->setValue("shines", 64.f);
 
-	if (!FUtil::exists("res/models/dragon.bin"))
+	if (!FUtil::exists("res/examples/models/dragon.bin"))
 	{
 		ND_INFO("Building dragon binary mesh");
 		MeshDataFactory::writeBinaryFile(
-			"res/models/dragon.bin", *Colli::buildMesh("res/models/dragon.obj"));
+			"res/examples/models/dragon.bin", *Colli::buildMesh("res/examples/models/dragon.obj"));
 	}
 	//adding cubemap
 	{
@@ -668,7 +669,7 @@ void EditorLayer::onAttach()
 
 		ND_INFO("Loading cubemaps");
 		auto mat = MaterialLibrary::create({ ShaderLib::loadOrGetShader("res/shaders/CubeMap.shader"),"MAT","SkyMaterial2" ,nullptr,flags });
-		mat->setValue("cubemap", std::shared_ptr<Texture>(Texture::create(TextureInfo(TextureType::_CUBE_MAP, "res/images/skymap2/*.png"))));
+		mat->setValue("cubemap", std::shared_ptr<Texture>(Texture::create(TextureInfo(TextureType::_CUBE_MAP, "res/examples/images/skymap2/*.png"))));
 		/*auto mat1 = MaterialLibrary::create({ ShaderLib::loadOrGetShader("res/shaders/CubeMap.shader"),"MAT","SkyMaterial3" ,nullptr,flags });
 		mat1->setValue("cubemap", std::shared_ptr<Texture>(Texture::create(TextureInfo(TextureType::_CUBE_MAP, "res/images/skymap3/*.png"))));
 		auto mat2 = MaterialLibrary::create({ ShaderLib::loadOrGetShader("res/shaders/CubeMap.shader"),"MAT","SkyMaterial4" ,nullptr,flags });
@@ -681,17 +682,18 @@ void EditorLayer::onAttach()
 
 	//adding crate
 	{
-		//auto diffuse = Texture::create(TextureInfo("res/models/crate.png"));
-		//auto specular = Texture::create(TextureInfo("res/models/crate_specular.png"));
+		auto diffuse = Texture::create(TextureInfo("res/examples/images/crate.png"));
+		auto specular = Texture::create(TextureInfo("res/examples/images/crate_specular.png"));
 
-		//auto mesh = NewMeshFactory::buildNewMesh(Colli::buildMesh(ND_RESLOC("res/models/cube.fbx")));
+		//auto mesh = NewMeshFactory::buildNewMesh(Colli::buildMesh(ND_RESLOC("res/examples/models/cube.fbx")));
 
-		/*auto mat = modelMat->copy("crateMaterial");
+		auto mat = MaterialLibrary::copy(modelMat,"crateMaterial");
 		mat->setValue("diffuse", std::shared_ptr<Texture>(diffuse));
 		mat->setValue("specular", std::shared_ptr<Texture>(specular));
 		mat->setValue("color", glm::vec4(1.0, 1.0, 0, 0));
-		MaterialLibrary::save(mat, "res/crateM.mat");*/
-		auto mat = MaterialLibrary::loadOrGet("res/models/crateM.mat");
+		MaterialLibrary::save(mat, "res/crateM.mat");
+
+		//auto mat = MaterialLibrary::loadOrGet("res/examples/models/crateM.mat");
 
 		auto ent = m_scene->createEntity("Crate");
 		ent.emplaceOrReplace<TransformComponent>(glm::vec3(1.f), glm::vec3(100.f), glm::vec3(0.f));
@@ -700,9 +702,9 @@ void EditorLayer::onAttach()
 
 	//adding sphere
 	{
-		auto diffuse = Texture::create(TextureInfo("res/models/crate.png"));
+		auto diffuse = Texture::create(TextureInfo("res/examples/images/crate.png"));
 
-		auto mesh = MeshLibrary::loadOrGet("res/models/sphere.fbx");
+		auto mesh = MeshLibrary::loadOrGet("res/examples/models/sphere.fbx");
 
 		auto mat = MaterialLibrary::copy(modelMat, "SphereMat");
 		mat->setValue("color", glm::vec4(1.0, 1.0, 0, 0));
@@ -744,7 +746,7 @@ void EditorLayer::onAttach()
 	}
 	//adding dragoon
 	/*{
-	auto dragonMesh = NewMeshFactory::buildNewMesh(MeshFactory::readBinaryFile(ND_RESLOC("res/models/dragon.bin")));
+	auto dragonMesh = NewMeshFactory::buildNewMesh(MeshFactory::readBinaryFile(ND_RESLOC("res/examples/models/dragon.bin")));
 		//auto mesh = NewMeshFactory::buildNewMesh(data);
 		auto mesh = dragonMesh;
 		mesh->topology = Topology::TRIANGLES;
@@ -760,7 +762,7 @@ void EditorLayer::onAttach()
 	//adding light
 	{
 		auto ent = m_scene->createEntity("Light");
-		ent.emplaceOrReplace<TransformComponent>(glm::vec3(0.f), glm::vec3(1, 10.f, 1), glm::vec3(0.f));
+		ent.emplaceOrReplace<TransformComponent>(glm::vec3(10.f), glm::vec3(1.f), glm::vec3(0.f));
 		ent.emplaceOrReplace<LightComponent>();
 	}
 	//adding camera
