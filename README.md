@@ -12,10 +12,20 @@ I decided to make a "simple" clone of Terraria in C++ using my own engine which 
 
 I decided to create this game/engine in order to improve my programming skills in C++ and see, 
 how "easy" it is to recreate such a popular 2D pixelart-ish game in C++ with only a "few" 3rd party libraries. 
-Well, if there is a hell in the world... I think I've found it.
+Well, if there is a hell in the world... I think I've found it.<br>
 Also this project focuses on Terraria clone as well as on "universal" 3D engine, 
 so updates in [TIMELINE.md](screenshots/TIMELINE.md) are from both.
 And yes, I like to use '"' a lot.
+
+## Installation
+For now the whole clone-and-run proccess should as simple as:
+1. `git clone --recurse-submodules (--depth=1) https://github.com/Cooble/NiceDay.git`
+2. In parallel can be run:
+   - `External-WIN32-Build.bat` (create build directory)
+   - `DownloadAdditionalResources.bat` (download resources that are not part of git VCS)
+   - `InstallMono.bat` (if Mono is not yet installed on the machine)
+3. `cd build`
+3. `start NiceDaySolution.sln` or `cmake --build . --config (Debug | Release) --target (Sandbox | SandboxTest | TestNiceDay)`
 
 
 ### External dependencies/libs
