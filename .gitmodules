@@ -29,3 +29,6 @@
 [submodule "NiceDay/vendor/assimp"]
 	path = NiceDay/vendor/assimp
 	url = https://github.com/Cooble/assimp.git
+[submodule "NiceDay/vendor/monobind"]
+	path = NiceDay/vendor/monobind
+	url = https://github.com/Cooble/monobind
