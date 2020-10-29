@@ -9,6 +9,7 @@
 # GACUTIL_EXECUTABLE     Where to find 'gacutil'
 # MONO_PKG_CONFIG_PATH   Path for pkg-config files for this mono installation, e.g. /usr/lib/pkgconfig
 # MONO_LIBRARIES         Libraries to link (without full path)
+# MONO_ROOT_DIR          Root directory in which reside lib and etc folder
 # MONO_LIBRARY_DIRS      Directories containing the libraries (-L option)
 # MONO_LDFLAGS           All required linker flags
 # MONO_INCLUDE_DIRS      The directories containing header files (-I option)
@@ -60,8 +61,8 @@ endfunction()
 if(NOT MONO_ROOT OR NOT EXISTS ${MONO_ROOT})
     message("Finding mono installation path")
     set(PATHETIC_PATHS $ENV{PATH})
-    LIST(APPEND PATHETIC_PATHS "C:\\Program Files")
-    LIST(APPEND PATHETIC_PATHS "C:\\Program Files (x86)")
+    LIST(APPEND PATHETIC_PATHS "C:/Program Files")
+    LIST(APPEND PATHETIC_PATHS "C:/Program Files (x86)")
     set(FOUND OFF)
     foreach(pathe IN ITEMS ${PATHETIC_PATHS})
         #message("Searching for mono ${pathe}")
@@ -90,10 +91,11 @@ if(NOT MONO_ROOT OR NOT EXISTS ${MONO_ROOT})
     endforeach()
 endif()
 
-#if(EXISTS "${MONO_ROOT}")
-#message("MonoRoot:")
-#PrintDir("${MONO_ROOT}" " " "2")
-#endif()
+if(NOT MONO_FIND_QUIETLY)
+	if(EXISTS "${MONO_ROOT}")
+		message("MonoRoot: ${MONO_ROOT}")
+	endif()
+endif()
 
 SET(MONO_LOOK_FOR_LIBRARIES FALSE)
 
@@ -278,7 +280,7 @@ IF(MONO_EXECUTABLE AND EXISTS ${MONO_EXECUTABLE})
      GET_FILENAME_COMPONENT(MONO_PKG_CONFIG_PATH ${MONO_PKG_CONFIG_PATH} ABSOLUTE)
   ENDIF(EXISTS ${__MONO_PKG_CONFIG_PATH})
 ENDIF(MONO_EXECUTABLE AND EXISTS ${MONO_EXECUTABLE})
-
+ 
 
 IF(MONO_FOUND)
   IF(NOT MONO_FIND_QUIETLY)
@@ -308,5 +310,7 @@ ELSE(MONO_FOUND)
     ENDIF(MONO_ONLY_LIBRARIES_REQUIRED)
   ENDIF(MONO_FIND_REQUIRED)
 ENDIF(MONO_FOUND)
+
+set(MONO_ROOT_DIR "${MONO_ROOT}")
 
 MARK_AS_ADVANCED(MONO_EXECUTABLE MCS_EXECUTABLE GMCS_EXECUTABLE GACUTIL_EXECUTABLE MONO_PKG_CONFIG_PATH)
