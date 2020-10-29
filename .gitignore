@@ -23,7 +23,7 @@ res/lua/temp
 res/registry/headers
 
 # Files
-.mat #material files of the engine
+*.mat #material files of the engine
 *.user
 *.world
 *.nbt
