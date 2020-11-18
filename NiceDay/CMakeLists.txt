@@ -171,12 +171,12 @@ LIST( APPEND CMAKE_MODULE_PATH
     add_my_lib(assimp)
     #very important to change cxx_standard otherwise standard is 17 where certain things are deprecated and treated as error
     set_property(TARGET assimp PROPERTY CXX_STANDARD 14) 
-    set_target_properties(IrrXML PROPERTIES USE_FOLDERS ON FOLDER "vendor")
+    #set_target_properties(IrrXML PROPERTIES USE_FOLDERS ON FOLDER "vendor")
     #set_target_properties(assimp_cmd PROPERTIES USE_FOLDERS ON FOLDER "vendor")
     set_target_properties(UpdateAssimpLibsDebugSymbolsAndDLLs PROPERTIES USE_FOLDERS ON FOLDER "vendor")
     #set_target_properties(zlib PROPERTIES USE_FOLDERS ON FOLDER "vendor")
     set_target_properties(zlibstatic PROPERTIES USE_FOLDERS ON FOLDER "vendor")
-    set_target_properties(uninstall PROPERTIES USE_FOLDERS ON FOLDER "vendor")
+    #set_target_properties(uninstall PROPERTIES USE_FOLDERS ON FOLDER "vendor")
     
     # == spdlog (no need to subdir (header-only))
     #add_subdirectory("vendor/spdlog")
