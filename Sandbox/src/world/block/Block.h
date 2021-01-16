@@ -229,7 +229,7 @@ public:
 	virtual int getCornerOffset(int x, int y, const BlockStruct& b) const;
 
 	//returns true if this block was changed as well
-	virtual bool onNeighbourBlockChange(BlockAccess& world, int x, int y) const;
+	virtual bool onNeighborBlockChange(BlockAccess& world, int x, int y) const;
 
 	virtual void onBlockPlaced(World& w, WorldEntity* e, int x, int y, BlockStruct& b) const;
 	virtual void onBlockDestroyed(World& w, WorldEntity* e, int x, int y, BlockStruct& b) const;
@@ -278,7 +278,7 @@ public:
 
 	int getTextureOffset(int x, int y, const BlockStruct& b) const override;
 
-	bool onNeighbourBlockChange(BlockAccess& world, int x, int y) const override;
+	bool onNeighborBlockChange(BlockAccess& world, int x, int y) const override;
 
 	void onBlockPlaced(World& w, WorldEntity* e, int x, int y, BlockStruct& b) const override;
 

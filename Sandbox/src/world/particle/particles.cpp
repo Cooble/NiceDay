@@ -1,7 +1,7 @@
 ﻿#include "ndpch.h"
 #include "particles.h"
 #include "core/NBT.h"
-#define PARTICATOR(var)var= PARTICLE_ID(#var)
+#define PARTICATOR(var) var= PARTICLE_ID(#var)
 
 namespace ParticleList {
 

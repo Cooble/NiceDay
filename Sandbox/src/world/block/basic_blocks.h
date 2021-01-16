@@ -11,7 +11,7 @@ public:
 	void onTextureLoaded(const BlockTextureAtlas& atlas) override {}
 
 	int getTextureOffset(int x, int y, const BlockStruct&) const override;
-	bool onNeighbourBlockChange(BlockAccess& world, int x, int y) const override;
+	bool onNeighborBlockChange(BlockAccess& world, int x, int y) const override;
 
 };
 class BlockPumpkin : public MultiBlock
@@ -38,7 +38,7 @@ class BlockPlatform : public Block
 {
 public:
 	BlockPlatform();
-	bool onNeighbourBlockChange(BlockAccess& world, int x, int y) const override;
+	bool onNeighborBlockChange(BlockAccess& world, int x, int y) const override;
 	int getTextureOffset(int x, int y, const BlockStruct&) const override;
 };
 
@@ -46,7 +46,7 @@ class BlockGrass : public Block
 {
 public:
 	BlockGrass();
-	bool onNeighbourBlockChange(BlockAccess& world, int x, int y) const override;
+	bool onNeighborBlockChange(BlockAccess& world, int x, int y) const override;
 	int getTextureOffset(int x, int y, const BlockStruct&) const override;
 };
 
@@ -55,7 +55,7 @@ class BlockGlass : public Block
 public:
 	BlockGlass();
 	int getTextureOffset(int x, int y, const BlockStruct&) const override;
-	bool onNeighbourBlockChange(BlockAccess& world, int x, int y) const override;
+	bool onNeighborBlockChange(BlockAccess& world, int x, int y) const override;
 };
 
 class BlockTorch : public Block
@@ -65,7 +65,7 @@ public:
 	void onBlockClicked(World& w, WorldEntity* e, int x, int y, BlockStruct& b) const override;
 	int getTextureOffset(int x, int y, const BlockStruct&) const override;
 	bool isInTorchGroup(BlockAccess& world, int x, int y) const;
-	bool onNeighbourBlockChange(BlockAccess& world, int x, int y) const override;
+	bool onNeighborBlockChange(BlockAccess& world, int x, int y) const override;
 };
 
 class BlockDoor : public MultiBlock
@@ -106,7 +106,7 @@ public:
 	BlockTree();
 	void onTextureLoaded(const BlockTextureAtlas& atlas) override;
 	int getTextureOffset(int x, int y, const BlockStruct&) const override;
-	bool onNeighbourBlockChange(BlockAccess& world, int x, int y) const override;
+	bool onNeighborBlockChange(BlockAccess& world, int x, int y) const override;
 	void onBlockDestroyed(World& w, WorldEntity* e, int x, int y, BlockStruct& b) const override;
 };
 namespace BlockTreeScope
@@ -146,7 +146,7 @@ class BlockPlant :public Block
 public:
 	BlockPlant(std::string id);
 	int getTextureOffset(int x, int y, const BlockStruct& b) const override;
-	bool onNeighbourBlockChange(BlockAccess& world, int x, int y) const override;
+	bool onNeighborBlockChange(BlockAccess& world, int x, int y) const override;
 	bool canBePlaced(World& w, int x, int y) const override;
 	void onBlockPlaced(World& w, WorldEntity* e, int x, int y, BlockStruct& b) const override;
 

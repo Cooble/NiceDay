@@ -8,6 +8,10 @@
   },*/
   
   
+  "dot": {
+    "frameCount": 4,
+    "ticksPerFrame": 60
+  },
   "line": {
     "size": [2,1],
     "frameCount": 1,

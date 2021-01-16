@@ -349,7 +349,7 @@ public:
 		return b == nullptr || b->isAir();
 	}
 
-	//automatically calls chunk.markdirty() to update graphics and call onNeighbourBlockChange()
+	//automatically calls chunk.markdirty() to update graphics and call onNeighborBlockChange()
 	void setBlockWithNotify(int x, int y, BlockStruct& block) override;
 
 	// just changes block value of blockstruct (no notification)

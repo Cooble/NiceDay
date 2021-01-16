@@ -257,7 +257,7 @@ void WorldGen::genLayer0(World& w,Chunk& c)
 			auto worldx = offsetX + x;
 			auto worldy = offsetY + y;
 			if (!block.isAir())
-				BlockRegistry::get().getBlock(block.block_id).onNeighbourBlockChange(p, worldx, worldy);
+				BlockRegistry::get().getBlock(block.block_id).onNeighborBlockChange(p, worldx, worldy);
 			if (!block.isWallFree())
 				BlockRegistry::get().getWall(block.wallID()).onNeighbourWallChange(p, worldx, worldy);
 		}

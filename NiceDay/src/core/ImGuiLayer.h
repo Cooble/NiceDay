@@ -26,6 +26,16 @@ constexpr const char* getLayoutName(ImGuiLayout type)
 	}
 	return "NOne";
 }
+inline ImGuiLayout getLayoutFromName(const char* type)
+{
+	if (!strcmp(type, getLayoutName(ImGuiLayout::DEFAULT)))
+		return ImGuiLayout::DEFAULT;
+	if (!strcmp(type, getLayoutName(ImGuiLayout::CUSTOM0)))
+		return ImGuiLayout::CUSTOM0;
+	if (!strcmp(type, getLayoutName(ImGuiLayout::SCREEN)))
+		return ImGuiLayout::SCREEN;
+	return ImGuiLayout::NONE;
+}
 
 class ImGuiLayer : public Layer
 {

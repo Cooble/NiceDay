@@ -25,7 +25,7 @@ BlockAir::BlockAir()
 int BlockAir::getTextureOffset(int x, int y, const BlockStruct&) const { return -1; }
 
 
-bool BlockAir::onNeighbourBlockChange(BlockAccess& world, int x, int y) const { return false; }
+bool BlockAir::onNeighborBlockChange(BlockAccess& world, int x, int y) const { return false; }
 
 
 //STONE=======================================
@@ -36,7 +36,7 @@ BlockPlatform::BlockPlatform()
 {
 }
 
-bool BlockPlatform::onNeighbourBlockChange(BlockAccess& world, int x, int y) const
+bool BlockPlatform::onNeighborBlockChange(BlockAccess& world, int x, int y) const
 {
 	BlockStruct& block = *world.getBlockM(x, y);
 	int lastMeta = block.block_metadata;
@@ -101,7 +101,7 @@ int BlockGrass::getTextureOffset(int x, int y, const BlockStruct& s) const
 }
 
 
-bool BlockGrass::onNeighbourBlockChange(BlockAccess& world, int x, int y) const
+bool BlockGrass::onNeighborBlockChange(BlockAccess& world, int x, int y) const
 {
 	auto& block = *world.getBlockM(x, y);
 	int lastid = block.block_id;
@@ -109,7 +109,7 @@ bool BlockGrass::onNeighbourBlockChange(BlockAccess& world, int x, int y) const
 	bool custombit = (lastCorner & BIT(4)); //perserve custombit
 	block.block_corner &= ~BIT(4);
 
-	Block::onNeighbourBlockChange(world, x, y); //update corner state
+	Block::onNeighborBlockChange(world, x, y); //update corner state
 	if (block.block_corner == BLOCK_STATE_FULL
 		|| block.block_corner == BLOCK_STATE_LINE_DOWN
 		|| block.block_corner == BLOCK_STATE_LINE_LEFT
@@ -145,9 +145,9 @@ int BlockGlass::getTextureOffset(int x, int y, const BlockStruct& s) const
 	return (m_texture_pos + half_int(s.block_metadata, 0));
 }
 
-bool BlockGlass::onNeighbourBlockChange(BlockAccess& world, int x, int y) const
+bool BlockGlass::onNeighborBlockChange(BlockAccess& world, int x, int y) const
 {
-	auto c = Block::onNeighbourBlockChange(world, x, y);
+	auto c = Block::onNeighborBlockChange(world, x, y);
 	auto& e = *world.getBlockM(x, y);
 	e.block_metadata = std::rand() % 10;
 	e.block_metadata &= 3;
@@ -192,7 +192,7 @@ bool BlockTorch::isInTorchGroup(BlockAccess& world, int x, int y) const
 	return id != BLOCK_TORCH && id != BLOCK_AIR;
 }
 
-bool BlockTorch::onNeighbourBlockChange(BlockAccess& world, int x, int y) const
+bool BlockTorch::onNeighborBlockChange(BlockAccess& world, int x, int y) const
 {
 	auto& s = *world.getBlockM(x, y);
 	int lastCorner = s.block_corner;
@@ -454,7 +454,7 @@ int BlockTree::getTextureOffset(int x, int y, const BlockStruct& s) const
 }
 
 
-bool BlockTree::onNeighbourBlockChange(BlockAccess& world, int x, int y) const
+bool BlockTree::onNeighborBlockChange(BlockAccess& world, int x, int y) const
 {
 	return false;
 }
@@ -519,7 +519,7 @@ void BlockPlant::onBlockPlaced(World& w, WorldEntity* e, int x, int y, BlockStru
 	b.block_metadata = std::rand() % m_max_metadata;
 }
 
-bool BlockPlant::onNeighbourBlockChange(BlockAccess& world, int x, int y) const
+bool BlockPlant::onNeighborBlockChange(BlockAccess& world, int x, int y) const
 {
 	if (world.getBlockM(x, y - 1)->block_id != BLOCK_GRASS)
 	{

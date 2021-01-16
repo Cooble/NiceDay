@@ -743,7 +743,7 @@ void World::updateChunkBounds(BlockAccess& world, int cx, int cy, int bitBounds)
 			auto& block = c.block(x, WORLD_CHUNK_SIZE - 1);
 			auto worldx = wx + x;
 			auto worldy = wy + WORLD_CHUNK_SIZE - 1;
-			BlockRegistry::get().getBlock(block.block_id).onNeighbourBlockChange(world, worldx, worldy);
+			BlockRegistry::get().getBlock(block.block_id).onNeighborBlockChange(world, worldx, worldy);
 			if (block.isWallOccupied())
 				BlockRegistry::get().getWall(block.wallID()).onNeighbourWallChange(world, worldx, worldy);
 		}
@@ -753,7 +753,7 @@ void World::updateChunkBounds(BlockAccess& world, int cx, int cy, int bitBounds)
 			auto& block = c.block(x, 0);
 			auto worldx = wx + x;
 			auto worldy = wy;
-			BlockRegistry::get().getBlock(block.block_id).onNeighbourBlockChange(world, worldx, worldy);
+			BlockRegistry::get().getBlock(block.block_id).onNeighborBlockChange(world, worldx, worldy);
 			if (block.isWallOccupied())
 				BlockRegistry::get().getWall(block.wallID()).onNeighbourWallChange(world, worldx, worldy);
 		}
@@ -763,7 +763,7 @@ void World::updateChunkBounds(BlockAccess& world, int cx, int cy, int bitBounds)
 			auto& block = c.block(0, y);
 			auto worldx = wx;
 			auto worldy = wy + y;
-			BlockRegistry::get().getBlock(block.block_id).onNeighbourBlockChange(world, worldx, worldy);
+			BlockRegistry::get().getBlock(block.block_id).onNeighborBlockChange(world, worldx, worldy);
 			if (block.isWallOccupied())
 				BlockRegistry::get().getWall(block.wallID()).onNeighbourWallChange(world, worldx, worldy);
 		}
@@ -773,7 +773,7 @@ void World::updateChunkBounds(BlockAccess& world, int cx, int cy, int bitBounds)
 			auto& block = c.block(WORLD_CHUNK_SIZE - 1, y);
 			auto worldx = wx + WORLD_CHUNK_SIZE - 1;
 			auto worldy = wy + y;
-			BlockRegistry::get().getBlock(block.block_id).onNeighbourBlockChange(world, worldx, worldy);
+			BlockRegistry::get().getBlock(block.block_id).onNeighborBlockChange(world, worldx, worldy);
 			if (block.isWallOccupied())
 				BlockRegistry::get().getWall(block.wallID()).onNeighbourWallChange(world, worldx, worldy);
 		}
@@ -864,7 +864,7 @@ void World::flushBlockSet()
 	{
 		auto pair = m_edit_buffer.front();
 		m_edit_buffer.pop();
-		BlockRegistry::get().getBlock(getBlockM(pair.first, pair.second)->block_id).onNeighbourBlockChange(
+		BlockRegistry::get().getBlock(getBlockM(pair.first, pair.second)->block_id).onNeighborBlockChange(
 			*this, pair.first, pair.second);
 		onBlocksChange(pair.first, pair.second);
 
@@ -895,7 +895,7 @@ void World::setBlockWithNotify(int x, int y, BlockStruct& newBlock)
 	if (!m_edit_buffer_enable)
 	{
 		regNew.onBlockPlaced(*this, nullptr, x, y, *blok);
-		regNew.onNeighbourBlockChange(*this, x, y);
+		regNew.onNeighborBlockChange(*this, x, y);
 		onBlocksChange(x, y);
 
 		auto res = LightCalculator::createQuadroSquare(x, y);
@@ -936,25 +936,25 @@ void World::onBlocksChange(int x, int y, int deep)
 	}
 
 	auto p = getBlockM(x, y + 1);
-	if (p && BlockRegistry::get().getBlock(p->block_id).onNeighbourBlockChange(*this, x, y + 1))
+	if (p && BlockRegistry::get().getBlock(p->block_id).onNeighborBlockChange(*this, x, y + 1))
 	{
 		getChunkM(Chunk::getChunkIDFromWorldPos(x, y + 1))->markDirty(true);
 		onBlocksChange(x, y + 1, deep);
 	}
 	p = getBlockM(x, y - 1);
-	if (p && BlockRegistry::get().getBlock(p->block_id).onNeighbourBlockChange(*this, x, y - 1))
+	if (p && BlockRegistry::get().getBlock(p->block_id).onNeighborBlockChange(*this, x, y - 1))
 	{
 		getChunkM(Chunk::getChunkIDFromWorldPos(x, y - 1))->markDirty(true);
 		onBlocksChange(x, y - 1, deep);
 	}
 	p = getBlockM(x + 1, y);
-	if (p && BlockRegistry::get().getBlock(p->block_id).onNeighbourBlockChange(*this, x + 1, y))
+	if (p && BlockRegistry::get().getBlock(p->block_id).onNeighborBlockChange(*this, x + 1, y))
 	{
 		getChunkM(Chunk::getChunkIDFromWorldPos(x + 1, y))->markDirty(true);
 		onBlocksChange(x + 1, y, deep);
 	}
 	p = getBlockM(x - 1, y);
-	if (p && BlockRegistry::get().getBlock(p->block_id).onNeighbourBlockChange(*this, x - 1, y))
+	if (p && BlockRegistry::get().getBlock(p->block_id).onNeighborBlockChange(*this, x - 1, y))
 	{
 		getChunkM(Chunk::getChunkIDFromWorldPos(x - 1, y))->markDirty(true);
 		onBlocksChange(x - 1, y, deep);
@@ -1204,7 +1204,7 @@ void World::spawnBlockBreakParticles(int x, int y)
 		for (int yy = 0; yy < particleBlockDivision; ++yy) {
 			float xxx = xx / (float)particleBlockDivision;
 			float yyy = yy / (float)particleBlockDivision;
-			float mutt = 0.5;
+			float mutt = 0.5f;
 			auto velocity = (glm::vec2(xxx, yyy) - middle)*0.3f* mutt;
 			velocity += glm::vec2(std::rand() % 2048 / 2048.f-0.5f, std::rand() % 2048 / 2048.f-0.5f) * 0.15f* mutt;
 			m_particle_manager->createBlockParticle(offset, xx, yy, { x + xxx,y +yyy}, velocity, { -velocity.x/35* mutt,-0.011f* mutt }, 30, 0);

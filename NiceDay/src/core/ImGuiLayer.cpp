@@ -194,8 +194,12 @@ void ImGuiLayer::onAttach()
 	registerWindow("Demo", &showDemoWindow);
 	registerWindow("NavBar", &dynamic_cast<FakeWindow*>(APwin())->m_enableNavigationBar);
 	
+	NBT currentLayout;
+	if (NBT::loadFromFile("current_layout.nbt", currentLayout))
+		m_layout_type = getLayoutFromName(currentLayout["layout"].c_str());
+	
 	m_iniConfigToLoad = std::string(getLayoutName(m_layout_type)) + ".ini";
-	m_freshLayoutChange = !std::filesystem::exists(std::string(getLayoutName(m_layout_type)) + ".ini");
+	m_freshLayoutChange = !std::filesystem::exists(m_iniConfigToLoad);
 	m_wins_past = NBT();
 	NBT::loadFromFile(m_iniConfigToLoad + ".nbt", m_wins_past);
 	
@@ -209,6 +213,9 @@ void ImGuiLayer::onDetach()
 	for (auto& win : m_wins)
 		m_wins_past[win.name] = *win.opened;
 	NBT::saveToFile(std::string(getLayoutName(m_layout_type)) + ".ini.nbt", m_wins_past);
+	NBT currentLayout;
+	currentLayout["layout"] = getLayoutName(m_layout_type);
+	NBT::saveToFile("current_layout.nbt", currentLayout);
 
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui_ImplGlfw_Shutdown();

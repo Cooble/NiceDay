@@ -5,7 +5,7 @@
 //
 // defines not to use sol (lua binder library) (some things will not work)
 // used because some versions of compiler seems to have problem compiling sol
-//#define NOO_SOOL
+#define NOO_SOOL
 
 //streams
 #include <filesystem>

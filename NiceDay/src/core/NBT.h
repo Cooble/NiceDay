@@ -592,6 +592,7 @@ public:
   
 	static void saveToFile(const Stringo& filePath, const NBT& nbt);
 	// loads nbt from json file (comments in file are allowed, ignored)
+	// return false if cannot load
 	static bool loadFromFile(const Stringo& filePath, NBT& nbt);
 
 	template <typename Arg>

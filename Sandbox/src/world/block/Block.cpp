@@ -83,7 +83,7 @@ bool Block::isInGroup(BlockID blockID, int group) const
 	return bl.isInConnectGroup(group) || bl.getID() == m_id;
 }
 
-bool Block::onNeighbourBlockChange(BlockAccess& world, int x, int y) const
+bool Block::onNeighborBlockChange(BlockAccess& world, int x, int y) const
 {
 	int mask = 0;
 	mask |= ((!isInGroup(world, x, y + 1, m_block_connect_group)) & 1) << 0;
@@ -185,7 +185,7 @@ int MultiBlock::getTextureOffset(int x, int y, const BlockStruct& b) const
 	return m_texture_pos + half_int(d.x, d.y);
 }
 
-bool MultiBlock::onNeighbourBlockChange(BlockAccess& world, int x, int y) const
+bool MultiBlock::onNeighborBlockChange(BlockAccess& world, int x, int y) const
 {
 	return false;
 }
