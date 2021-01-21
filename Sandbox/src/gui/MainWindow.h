@@ -28,7 +28,7 @@ public:
 };
 
 
-class PlayWindow :public GUIWindow
+class SelectWorldWindow :public GUIWindow
 {
 private:
 	std::vector<WorldInfoData> m_worlds;
@@ -36,7 +36,7 @@ private:
 	GUIVSlider* m_world_slider;
 	MessageConsumer m_messenger;
 public:
-	PlayWindow(const MessageConsumer& c);
+	SelectWorldWindow(const MessageConsumer& c);
 
 	void setWorlds(const std::vector<WorldInfoData>& m_worlds);
 };
@@ -53,5 +53,19 @@ class ControlsWindow :public GUIWindow
 	MessageConsumer m_messenger;
 public:
 	ControlsWindow(const MessageConsumer& c);
+
+};
+class SettingsWindow :public GUIWindow
+{
+	MessageConsumer m_messenger;
+public:
+	SettingsWindow(const MessageConsumer& c);
+
+};
+class LanguageWindow :public GUIWindow
+{
+	MessageConsumer m_messenger;
+public:
+	LanguageWindow(const MessageConsumer& c);
 
 };

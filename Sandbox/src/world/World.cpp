@@ -464,8 +464,7 @@ void World::updateLight(defaultable_map<int, int, 0>& toUpdateChunks)
 		{
 			ChunkPack res(chunkID, {
 				              nullptr, getChunkM(chunkID.x, chunkID.y + 1), nullptr,
-				              getChunkM(chunkID.x - 1, chunkID.y), getChunkM(chunkID),
-				              getChunkM(chunkID.x + 1, chunkID.y),
+				              getChunkM(chunkID.x - 1, chunkID.y), getChunkM(chunkID),getChunkM(chunkID.x + 1, chunkID.y),
 				              nullptr, getChunkM(chunkID.x, chunkID.y - 1), nullptr,
 			              });
 			res.assignLightJob();
@@ -485,6 +484,7 @@ void World::loadEntFinal(defaultable_map<int, int, 0>& toUpdateChunks, std::vect
 			header.getJob()->markDone(); //unlock all chunks
 			header.setState(GENERATED);
 			m_chunks[getChunkInaccessibleIndex(chunkID)].markDirty(true);
+			m_first_chunks_generated = true;
 		}
 		m_has_chunk_changed = true;
 	};

@@ -7,12 +7,14 @@ class TileEntityChest;
 
 class GUISlots :public GUIElement
 {
+	std::vector<GUIItemContainer*> m_slots;
 public:
 	GUISlots(Inventory* inv, HUD& hud,int fromIndex,int toIndex,int rowSize);
 
 	//changes containers to point at different slots
 	//if toIndex-fromIndex < container size  -> the rest of containers will be invalidated
 	void updateIndexes(int fromIndex, int toIndex);
+	auto& getSlots() { return m_slots; }
 };
 
 class GUIEntityChest :public GUIEntity

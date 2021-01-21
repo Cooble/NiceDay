@@ -62,6 +62,10 @@ static void* playerBuff;
 static EntityID playerID;
 static SpriteSheetResource* res;
 
+// how much dark to apply to default fbo
+// alpha
+static float fadeInStateAlpha = 0;
+
 static bool m_is_world_ready = false;
 static bool s_no_save = false;
 
@@ -94,6 +98,9 @@ void WorldLayer::loadResources()
 
 void WorldLayer::loadWorld(nd::temp_string& worldname, bool regen)
 {
+	//set fbo to dark
+	fadeInStateAlpha = 0;
+	
 	m_has_world = true;
 
 	m_cam = new Camera();
@@ -198,7 +205,7 @@ void WorldLayer::onWorldLoaded()
 		TextureInfo("res/images/blockAtlas/atlas.png")
 		.filterMode(TextureFilterMode::NEAREST)
 		.format(TextureFormat::RGBA));
-	*m_world->particleManager() = new ParticleManager(5000, particleAtlasT, particleAtlasSize, blockAtlas,
+	*m_world->particleManager() = new ParticleManager(10000, particleAtlasT, particleAtlasSize, blockAtlas,
 	                                                  BLOCK_TEXTURE_ATLAS_SIZE);
 
 	//load entity manager
@@ -329,6 +336,7 @@ void WorldLayer::afterPlayerLoaded()
 
 void WorldLayer::onDetach()
 {
+	m_has_world = false;
 	if (m_world == nullptr)
 		return;
 	m_world->getLightCalculator().stop();
@@ -354,7 +362,7 @@ void WorldLayer::onDetach()
 	APsched().update(); //this is really nasty and bad and disgusting
 	APsched().update(); //this is really nasty and bad and disgusting
 	ND_INFO("Waiting for save 2 seconds");
-	std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 	delete m_chunk_loader;
 	delete m_world;
 	delete m_batch_renderer;
@@ -388,14 +396,17 @@ void WorldLayer::onUpdate()
 	m_cam->m_light_intensity = Stats::player_light_intensity;
 	fpsCount++;
 	static int lightCalcDelay = 0;
-	if (lightCalcDelay)
-	{
-		lightCalcDelay--;
-	}
-	else
-	{
-		m_world->getLightCalculator().snapshot();
-		lightCalcDelay = 1;
+	//we start snapshots only after we have some chunks ready
+	if (m_world->areFirstChunksGenerated()) {
+		if (lightCalcDelay)
+		{
+			lightCalcDelay--;
+		}
+		else
+		{
+			m_world->getLightCalculator().snapshot();
+			lightCalcDelay = 1;
+		}
 	}
 	auto pair = APin().getMouseLocation();
 	CURSOR_X = pair.x - APwin()->getWidth() / 2;
@@ -472,6 +483,7 @@ void WorldLayer::onCreativeUpdate()
 	bool tntenable = true;
 	constexpr int maxDeltaBum = 2;
 	static int deltaBum = 0;
+	
 	if (!GUIContext::isAnyItemActive())
 	{
 		if (APin().isKeyPressed(Controls::SPAWN_TNT))
@@ -525,21 +537,7 @@ void WorldLayer::onCreativeUpdate()
 
 		if (isDragging)
 		{
-			if (Stats::gun_enable)
-			{
-				constexpr int BULLET_CADENCE_DELAY = 3;
-				static int counter = 0;
-				if (counter++ == BULLET_CADENCE_DELAY)
-				{
-					counter = 0;
-					auto bullet = (EntityRoundBullet*)EntityAllocator::createEntity(ENTITY_TYPE_ROUND_BULLET);
-					bullet->getPosition() = m_cam->getPosition() + glm::vec2(0, 1.f);
-					bullet->fire({CURSOR_X, CURSOR_Y}, 50.f / 60);
-					bullet->setOwner(getPlayer().getID());
-					m_world->spawnEntity(bullet);
-				}
-			}
-			else if (BLOCK_OR_WALL_SELECTED)
+			if (BLOCK_OR_WALL_SELECTED)
 			{
 				auto& str = *m_world->getBlockOrAir(CURSOR_X, CURSOR_Y);
 				if (str.block_id != BLOCK_PALLETE_SELECTED && BlockRegistry::get()
@@ -651,6 +649,28 @@ void WorldLayer::onSurvivalUpdate()
 	}
 }
 
+
+// applies fade to default fbo based on world->areFirstChunksGenerated() and set time constant
+// random texture can be anything as long as its not nullptr
+static void fadeInEffect(World* w, const Texture* randomTexture)
+{
+	if (fadeInStateAlpha == 1.f)
+		return;
+	
+	static float fadeInSeconds = 1.f;
+	// fade in effect we take random fbo lets say entityFbo
+	if (w && w->areFirstChunksGenerated() && fadeInStateAlpha != 1.f) {
+		fadeInStateAlpha += 1.f / fadeInSeconds / App::get().getFPS();
+		if (fadeInStateAlpha > 1.f)
+			fadeInStateAlpha = 1.f;
+	}
+	Gcon.setBlendFuncSeparate(Blend::ZERO, Blend::CONSTANT_ALPHA, Blend::ZERO, Blend::ONE);
+	Gcon.setBlendConstant(0, 0, 0, fadeInStateAlpha);
+	Effect::render(randomTexture, Renderer::getDefaultFBO());
+	Gcon.setBlendFunc(Blend::SRC_ALPHA, Blend::ONE_MINUS_SRC_ALPHA);
+	
+}
+
 void WorldLayer::onRender()
 {
 	ND_PROFILE_METHOD();
@@ -659,18 +679,16 @@ void WorldLayer::onRender()
 	Gcon.enableDepthTest(false);
 	if (!m_is_world_ready)
 		return;
-	{
-		ND_PROFILE_SCOPE("rendeerupdate");
-		m_render_manager->update();
-	}
+
+	ND_PROFILE_CALL(m_render_manager->update());
 	//world
-	m_render_manager->render(*m_batch_renderer, Renderer::getDefaultFBO());
+	ND_PROFILE_CALL(m_render_manager->render(*m_batch_renderer, Renderer::getDefaultFBO()));
 	
 	//entities
 	auto entityFbo = m_render_manager->getEntityFBO();
 	entityFbo->bind();
 	entityFbo->clear(BuffBit::COLOR);
-	
+
 	Gcon.enableBlend();
 	Gcon.setBlendFunc(Blend::SRC_ALPHA, Blend::ONE_MINUS_SRC_ALPHA);
 	auto worldMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(-m_cam->getPosition().x, -m_cam->getPosition().y, 0));
@@ -688,28 +706,28 @@ void WorldLayer::onRender()
 
 	m_batch_renderer->pop();
 	m_batch_renderer->flush();
-	m_render_manager->applyLightMap(m_render_manager->getLightTextureBlur(),entityFbo);
+	m_render_manager->applyLightMap(m_render_manager->getLightTextureBlur(), entityFbo);
 	entityFbo->unbind();
 
 	Gcon.enableBlend();
 	Gcon.enableDepthTest(false);
 	Gcon.setBlendFunc(Blend::SRC_ALPHA, Blend::ONE_MINUS_SRC_ALPHA);
-	Effect::render(m_render_manager->getEntityFBO()->getAttachment(),Renderer::getDefaultFBO());
+	Effect::render(m_render_manager->getEntityFBO()->getAttachment(), Renderer::getDefaultFBO());
 
 	{
 		ND_PROFILE_SCOPE("particle render");
 		//particles
-		m_particle_renderer->begin(Renderer::getDefaultFBO());
+		ND_PROFILE_CALL(m_particle_renderer->begin(Renderer::getDefaultFBO()));
 		//m_particle_renderer->submit({ -1,-1,0 }, { 2,2 }, UVQuad::elementary(), UVQuad::elementary(), m_render_manager->getLightTextureSmooth(),0);
-		
+
 		m_particle_renderer->push(m_render_manager->getProjMatrix() * worldMatrix);
-		(*m_world->particleManager())->render(*m_particle_renderer);
+		ND_PROFILE_CALL((*m_world->particleManager())->render(*m_particle_renderer));
 		m_particle_renderer->pop();
-		m_particle_renderer->flush();
-		}
+		ND_PROFILE_CALL(m_particle_renderer->flush());
+	}
+	fadeInEffect(m_world, m_render_manager->getEntityFBO()->getAttachment());
 }
 
-static bool showTelem = false;
 static bool showChunks = false;
 
 void WorldLayer::onImGuiRender()
@@ -718,29 +736,10 @@ void WorldLayer::onImGuiRender()
 		return;
 	onImGuiRenderWorld();
 
-	if (showTelem)
-	{
-		onImGuiRenderTelemetrics();
-	}
 	if (showChunks)
 	{
 		onImGuiRenderChunks();
 	}
-}
-
-void WorldLayer::onImGuiRenderTelemetrics()
-{
-	static bool showTelemetrics = false;
-	if (!ImGui::Begin("Telemetrics", &showTelemetrics, ImGuiWindowFlags_NoNav))
-	{
-		ImGui::End();
-		return;
-	}
-	if (Stats::light_enable)
-	{
-		ImGui::PlotVar("Light millis", Stats::light_millis, true);
-	}
-	ImGui::End();
 }
 
 void WorldLayer::onImGuiRenderWorld()
@@ -754,7 +753,6 @@ void WorldLayer::onImGuiRenderWorld()
 		ImGui::End();
 		return;
 	}
-	ImGui::Checkbox("Show Telemetrics", &showTelem);
 	ImGui::Checkbox("Show Chunks", &showChunks);
 	ImGui::Checkbox("Show CollisionBox", &Stats::show_collisionBox);
 	/*BiomeDistances d = Stats::biome_distances;
@@ -788,7 +786,6 @@ void WorldLayer::onImGuiRenderWorld()
 	ImGui::Checkbox(BLOCK_OR_WALL_SELECTED ? "BLOCK mode" : "WALL mode", &BLOCK_OR_WALL_SELECTED);
 	if (l != BLOCK_OR_WALL_SELECTED)
 		BLOCK_PALLETE_SELECTED = 0;
-	ImGui::Checkbox(Stats::gun_enable ? "Gun Enabled" : "Gun Disabled", &Stats::gun_enable);
 	ImGui::InputFloat("Player speed: ", &Stats::player_speed);
 	ImGui::InputFloat("Light Intensity: ", &Stats::player_light_intensity);
 
@@ -938,6 +935,7 @@ void WorldLayer::onImGuiRenderChunks()
 	ImGui::Value("Tasksize ", App::get().getScheduler().size());
 	auto& t = m_world->getHeaders();
 	int offset = 0;
+	ImGui::Text("(idx): (finished/all), name, accessible, chunkid");
 	for (auto& header : t)
 	{
 		if (offset < 10)

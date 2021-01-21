@@ -24,9 +24,9 @@ LightCalculator::LightCalculator(World* world)
 	  m_world(world),
 	  m_big_buffer(nullptr),
 	  m_map(nullptr),
-	  m_done_map(nullptr),
+	  m_map_done(nullptr),
 	  m_map_sky(nullptr),
-	  m_done_map_sky_out(nullptr),
+	  m_map_sky_out_done(nullptr),
 	  m_map_sky_out(nullptr)
 {
 }
@@ -193,13 +193,13 @@ void LightCalculator::runInnerLT()
 			computeLT(snap);
 
 			//swap buffers
-			auto t = m_done_map;
-			m_done_map = m_map;
+			auto t = m_map_done;
+			m_map_done = m_map;
 			m_map = t;
 
 			//swap sky buffers
-			t = m_done_map_sky_out;
-			m_done_map_sky_out = m_map_sky_out;
+			t = m_map_sky_out_done;
+			m_map_sky_out_done = m_map_sky_out;
 			m_map_sky_out = t;
 
 			m_done_ch_offset = std::make_pair(snap.offsetX, snap.offsetY);
@@ -354,8 +354,8 @@ void LightCalculator::runFloodLocal(int minX, int minY, int width, int height,
 				}
 			}
 		}
+		current_list->clear();
 		auto t = current_list;
-		t->clear();
 		current_list = new_list;
 		new_list = t;
 	}
@@ -922,7 +922,7 @@ void LightCalculator::computeLT(Snapshot& sn)
 		runFloodSky(minX, minY, width, height, current_list, new_list);
 	}
 
-	//first we need to updatre all cached light because that has priority
+	//first we need to update all cached light because that has priority
 	m_cached_light_assign_mutex.lock();
 	bool goOn = !m_cached_light_assignments.empty();
 	m_cached_light_assign_mutex.unlock();
@@ -1035,13 +1035,13 @@ void LightCalculator::setDimensionsInnerLT()
 	m_big_buffer = new half[oneSize * 5];
 
 	m_map = m_big_buffer;
-	m_done_map = m_big_buffer + oneSize * 1;
+	m_map_done = m_big_buffer + oneSize * 1;
 	m_map_sky = m_big_buffer + oneSize * 2;
 	m_map_sky_out = m_big_buffer + oneSize * 3;
-	m_done_map_sky_out = m_big_buffer + oneSize * 4;
+	m_map_sky_out_done = m_big_buffer + oneSize * 4;
 
-	/*m_done_map = new half[oneSize];
+	/*m_map_done = new half[oneSize];
 	m_map_sky = new half[oneSize];
 	m_map_sky_out = new half[oneSize];
-	m_done_map_sky_out = new half[oneSize];*/
+	m_map_sky_out_done = new half[oneSize];*/
 }

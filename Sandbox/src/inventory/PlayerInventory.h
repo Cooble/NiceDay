@@ -10,8 +10,9 @@ enum InventorySlot :int
 	ARMOR_LEGGINS = 3,
 	ARMOR_BOOTS = 4,
 
-	INVENTORY_SLOT_ACTION_FIRST = 5,
-	INVENTORY_SLOT_RANDOM_FIRST = INVENTORY_SLOT_ACTION_FIRST + 10,
+	ACTION_FIRST = 5,
+	RANDOM_FIRST = ACTION_FIRST + 10,
+	
 };
 
 class PlayerInventory:public Inventory
@@ -22,7 +23,7 @@ private:
 	WorldEntity* m_player;
 public:
 	PlayerInventory(WorldEntity* player);
-
+	int trashSlot() { return m_items.size() - 1; }
 	void callEquipped(ItemStack* itemStack);
 	void callUnequipped(ItemStack* itemStack);
 	ItemStack* putAtRandomIndex(ItemStack* stack) override;

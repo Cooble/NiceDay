@@ -109,6 +109,7 @@ void ChunkLoader::unregisterEntity(IChunkLoaderEntity * e)
 	for (const EntityWrapper& w : m_loader_entities) {
 		if (w.e == e) {//todo does it work?
 			m_loader_entities.erase(m_loader_entities.begin() + i);
+			m_dirty = true;
 			return;
 		}
 		i++;
@@ -118,6 +119,6 @@ void ChunkLoader::unregisterEntity(IChunkLoaderEntity * e)
 void ChunkLoader::clearEntities()
 {
 	m_loader_entities.clear();
-	tickInner();
+	m_dirty = true;
 }
 

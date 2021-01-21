@@ -3,6 +3,8 @@
 #include <GLFW/glfw3.h>
 #include <glad/glad.h>
 
+
+#include "AppGlobals.h"
 #include "event/MouseEvent.h"
 #include "event/MessageEvent.h"
 #include "event/KeyEvent.h"

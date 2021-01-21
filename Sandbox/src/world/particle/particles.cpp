@@ -25,11 +25,11 @@ namespace ParticleList {
 				int ticksPerFrame = 10000;
 				float rotationSpeed = 0;
 				glm::vec2 s(1);
-				item.loadIfExists("size", s);
+				item.load("size", s);
 				
-				item.loadIfExists("frameCount",frameCount);
-				item.loadIfExists("ticksPerFrame", ticksPerFrame);
-				item.loadIfExists("rotationSpeed", rotationSpeed);
+				item.load("frameCount",frameCount);
+				item.load("ticksPerFrame", ticksPerFrame);
+				item.load("rotationSpeed", rotationSpeed);
 				ParticleRegistry::get().registerTemplate(ParticleRegistry::ParticleTemplate(name, half_int(s.x,s.y), frameCount, ticksPerFrame, rotationSpeed));
 			}
 		}

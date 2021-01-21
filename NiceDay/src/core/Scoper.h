@@ -51,7 +51,7 @@ public:
 class ScoperTimer
 {
 private:
-	const char* m_name;
+	std::string m_name;
 	long long m_startTimepoint;
 	bool m_stopped;
 	

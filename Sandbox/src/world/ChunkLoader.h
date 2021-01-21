@@ -14,7 +14,7 @@ public:
 
 struct EntityWrapper{
 	IChunkLoaderEntity* e;
-	int last_chunk_id;
+	int last_chunk_id=-1;
 	half_int last_chunk_radius;
 
 

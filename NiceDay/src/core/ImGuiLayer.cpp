@@ -14,6 +14,7 @@
 #include "scene/GlobalAccess.h"
 #include <entt/entt.hpp>
 #include "FakeWindow.h"
+#include "files/FUtil.h"
 
 static void setImGuiCinema4DStyle()
 {
@@ -611,6 +612,56 @@ void ImGuiLayer::updateTelemetry()
 			showTelemetrics = !showTelemetrics;
 }
 
+static void imguiProfile()
+{
+	ImGui::TextColored({0.f,1.f,0.f,1.f},"PROFILING");
+	static bool isProfiling = false;
+	static char profilingNameBuff[256]{};
+	ImGui::InputText("Profiling name", profilingNameBuff, 256, ImGuiInputTextFlags_CharsUppercase | (isProfiling? ImGuiInputTextFlags_ReadOnly:0));
+
+
+	if (!isProfiling && ImGui::Button("Start Profiling") && strlen(profilingNameBuff))
+	{
+		isProfiling = true;
+		ND_PROFILE_BEGIN_SESSION(profilingNameBuff, profilingNameBuff);
+	}
+	else if (isProfiling && ImGui::Button("Stop Profiling"))
+	{
+		ND_PROFILE_END_SESSION();
+		isProfiling = false;
+	}
+	if (isProfiling)
+		ImGui::TextColored({ 0.f,1.f,0.f,1.f }, "Profiling: %s", profilingNameBuff);
+	if (!isProfiling)
+	{
+		if (ImGui::Button("Open last Profile"))
+		{
+			//check if file specified in textfield exists
+			auto fileName = FUtil::getExecutableFolderPath() + "/profiles/" + profilingNameBuff;
+			//if not pick the newest profile
+			if (!FUtil::exists(fileName) || strlen(profilingNameBuff) == 0)
+			{
+				auto list = FUtil::fileList(FUtil::getExecutableFolderPath() + "/profiles/", FUtil::FileSearchFlags_OnlyFiles | FUtil::FileSearchFlags_Newest);
+				if (!list.empty())
+					fileName = list[0];
+			}
+			if (FUtil::exists(fileName)) {
+				//copy trace file to index.html
+				std::ofstream out = std::ofstream(ND_RESLOC("res/tracing/") + "currentProfileTemp.js");
+				std::ifstream in(fileName);
+				out << "var bigSourceName =" << std::filesystem::path(fileName).filename() << ";\nvar bigSource = `";
+				out << in.rdbuf();
+				out << " \n`;";
+				out.close();
+				in.close();
+
+				auto location = ND_RESLOC("res/tracing/index.html");
+				system(("start chrome \"" + location + "\"").c_str());
+			}
+		}
+	}
+}
+
 void ImGuiLayer::drawTelemetry()
 {
 	if (!ImGui::Begin("Telemetrics", &showTelemetrics,
@@ -636,20 +687,18 @@ void ImGuiLayer::drawTelemetry()
 		ImGui::PlotVar("Updates per Frame", App::get().getUpdatesPerFrame());
 		ImGui::TreePop();
 	}
+	ImGui::Spacing();
 	ImGui::Separator();
 	ImGui::InputInt("Max val reset delay (ticks)", &maxValResetDelay);
-	ImGui::Separator();
 	ImGui::Value("Scheduled Tasks: ", APsched().size());
-	ImGui::Separator();
-	/*static bool shouldOpen;
-	if (ImGui::Checkbox("Soundlayer", &shouldOpen))
-	{
-		if (shouldOpen)
-			App::get().fireEvent(MessageEvent("openSoundLayer"));
-		else App::get().fireEvent(MessageEvent("closeSoundLayer"));
-	}*/
 	auto mouseLoc = APin().getMouseLocation();
 	ImGui::Text("Mouse[%d, %d]", (int)mouseLoc.x, (int)mouseLoc.y);
+
+	ImGui::Spacing();
+	ImGui::Separator();
+	imguiProfile();
+	ImGui::Separator();
+	ImGui::Spacing();
 	drawGlobals();
 	ImGui::End();
 }

@@ -47,7 +47,6 @@ public:
 	void onSurvivalUpdate();
 	void onRender() override;
 	void onImGuiRender() override;
-	void onImGuiRenderTelemetrics();
 	void onImGuiRenderWorld();
 	void onImGuiRenderChunks();
 	virtual void onEvent(Event& e) override;

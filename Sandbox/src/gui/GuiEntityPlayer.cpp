@@ -1,4 +1,5 @@
 ﻿#include "GUIEntityPlayer.h"
+#include "Translator.h"
 #include "world/entity/EntityPlayer.h"
 #include "event/KeyEvent.h"
 #include "GLFW/glfw3.h"
@@ -22,7 +23,7 @@ GUIActionSlots::GUIActionSlots(PlayerInventory* player, HUD& hud)
 	for (int i = 0; i < slotCount; ++i)
 	{
 		auto c = new GUIItemContainer();
-		c->setContainer(player,InventorySlot::INVENTORY_SLOT_ACTION_FIRST+i);
+		c->setContainer(player,InventorySlot::ACTION_FIRST+i);
 		c->onContainerEventConsumer = hud.getContainerConsumer();
 		c->onContainerEventConsumer = [this](const std::string& s, int i,Inventory* inv, Event& e)
 		{
@@ -107,7 +108,7 @@ void GUIActionSlots::setMainSlot(int slot)
 {
 	if (slot>getFirstChild()->getFirstChild()->getChildren().size())
 		return;//invalid slot
-	m_inventory->setHandIndex(InventorySlot::INVENTORY_SLOT_ACTION_FIRST + slot);
+	m_inventory->setHandIndex(InventorySlot::ACTION_FIRST + slot);
 	if(old_slot!=-1)
 	{
 		((GUIItemContainer*)getFirstChild()->getFirstChild()->getChildren()[old_slot])->slotScale = 0;
@@ -129,8 +130,11 @@ void GUIActionSlots::showTitleInternal(bool show)
 			m_title->setText("");
 		}
 		else {
-			auto stack = m_inventory->getItemStack(InventorySlot::INVENTORY_SLOT_ACTION_FIRST + main_slot);
-			m_title->setText(stack ? stack->getItem().getTitle(stack) : "");
+			auto stack = m_inventory->getItemStack(InventorySlot::ACTION_FIRST + main_slot);
+			auto title = stack ? stack->getItem().getTitle(stack) : "";
+			if (title.empty() && stack)
+				title = ND_TRANSLATE("item.", stack->getItem().toString());
+			m_title->setText(title);
 		}
 	}
 }
@@ -167,6 +171,7 @@ void GUIEntityPlayer::onAttachedToHUD(HUD& hud)
 	m_col->setAlignment(GUIAlign::LEFT_UP);
 	
 	m_gui_action_slots = new GUIActionSlots(&m_disgusting_player->getInventory(),hud);
+
 	m_col->appendChild(m_gui_action_slots);
 
 	hud.appendChild(m_col, getID());
@@ -195,7 +200,8 @@ void GUIEntityPlayer::openInventory(bool open)
 		m_col->appendChild(filler);
 		
 		m_gui_slots = new GUISlots(&m_disgusting_player->getInventory(), *HUD::get(), 
-			InventorySlot::INVENTORY_SLOT_RANDOM_FIRST, InventorySlot::INVENTORY_SLOT_RANDOM_FIRST + 39, 10);
+			InventorySlot::RANDOM_FIRST, InventorySlot::RANDOM_FIRST + 39, 10);
+		m_gui_slots->getSlots().at(m_gui_slots->getSlots().size() - 1)->clas = "trash";
 		m_col->appendChild(m_gui_slots);
 		m_gui_action_slots->showTitle(false);
 	}

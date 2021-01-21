@@ -15,6 +15,22 @@ namespace FUtil
 	// executable path
 	const std::string& getExecutablePath();
 
+	typedef int FileSearchFlags;
+	enum FileSearchFlags_
+	{
+		FileSearchFlags_None = 0,
+		FileSearchFlags_Recursive = 1 << 0,
+		FileSearchFlags_OnlyDirectories = 1 << 1,
+		FileSearchFlags_OnlyFiles = 1 << 2,
+		// return newest folder/file with in folder
+		FileSearchFlags_Newest = 1 << 3,
+		// return oldest folder/file with in folder
+		FileSearchFlags_Oldest = 1 << 4,
+	
+	};
+	
+	std::vector<std::string> fileList(std::string_view folder_path, FileSearchFlags flags = FileSearchFlags_None);
+
 	// absolute path of fileName in the same folder as executable
 	// or "" if filename doesn't exist
 	std::string getAbsolutePath(const char* fileName);
@@ -36,5 +52,11 @@ namespace FUtil
 		auto out = std::string(s);
 		removeSuffix(out);
 		return out;
+	}
+
+	inline bool copyFile(std::string_view src, std::string_view dest)
+	{
+		std::filesystem::copy(src, dest);
+		return true;
 	}
 }

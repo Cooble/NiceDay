@@ -1,4 +1,6 @@
 ﻿#include "Sandbox.h"
+
+#include "Translator.h"
 #include "layer/MainLayer.h"
 #include "layer/WorldLayer.h"
 #include "graphics/Sprite2D.h"
@@ -25,6 +27,14 @@ App()
 	Controls::init();
 	m_LayerStack.pushLayer(new MainLayer());
 
+	//language setup
+	AppLanguages::registerLanguage("English", "en");
+	AppLanguages::registerLanguage("Cestina", "cs");
+	AppLanguages::addLanguageFolder(ND_RESLOC("res/lang"));
+	std::string l;
+	getSettings().load("language", l, "en");
+	AppLanguages::loadLanguage(l);
+	
 	m_guiLayer = new GUILayer();
 	auto worudo = new WorldLayer();
 	m_guiLayer->setWorldLayer(worudo);
@@ -33,3 +43,4 @@ App()
 
 	//m_LayerStack.pushLayer(new PriorGenLayer());
 }
+

@@ -105,8 +105,8 @@ void ParticleRenderer::begin(FrameBuffer* fbo)
 	m_indices_count = 0;
 	m_textures.clear();
 #if USE_MAP_BUF
-	m_vbo->bind();
-	m_vertex_data = (VertexData*)m_vbo->mapPointer();
+	ND_PROFILE_CALL(m_vbo->bind());
+	ND_PROFILE_CALL(m_vertex_data = (VertexData*)m_vbo->mapPointer());
 #else
 	m_vertex_data = m_buff;
 #endif

@@ -72,14 +72,14 @@ static NBT settings;
 void MandelBrotLayer::onAttach()
 {
 	NBT::loadFromFile("mandelbrot.settings", settings);
-	settings.loadIfExists("x", flatCam.pos.x);
-	settings.loadIfExists("y", flatCam.pos.y);
-	settings.loadIfExists("zoom", flatCam.unitsPerPixel);
-	settings.loadIfExists("iterations", mandelSteps);
-	settings.loadIfExists("wrapAfter", wrapAfter);
-	settings.loadIfExists("z", dimensions[0]);
-	settings.loadIfExists("w", dimensions[1]);
-	settings.loadIfExists("quats",quats);
+	settings.load("x", flatCam.pos.x);
+	settings.load("y", flatCam.pos.y);
+	settings.load("zoom", flatCam.unitsPerPixel);
+	settings.load("iterations", mandelSteps);
+	settings.load("wrapAfter", wrapAfter);
+	settings.load("z", dimensions[0]);
+	settings.load("w", dimensions[1]);
+	settings.load("quats",quats);
 	if(quats)
 	{
 		mandelShader = ShaderLib::loadOrGetShader(ND_RESLOC("res/shaders/MandelBulb.shader"));

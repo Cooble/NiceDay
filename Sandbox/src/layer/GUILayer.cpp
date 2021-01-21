@@ -1,4 +1,10 @@
 ﻿#include "GUILayer.h"
+
+#include <imguifiledialog/ImGuiFileDialog.h>
+
+
+#include "imgui.h"
+#include "Translator.h"
 #include "gui/GUIContext.h"
 #include "event/WindowEvent.h"
 #include "core/App.h"
@@ -6,6 +12,7 @@
 #include "event/MessageEvent.h"
 #include "WorldLayer.h"
 #include "core/AppGlobals.h"
+#include "core/ImGuiLayer.h"
 #include "gui/window_messeages.h"
 #include "event/KeyEvent.h"
 #include "GLFW/glfw3.h"
@@ -13,6 +20,8 @@
 #include "world/entity/EntityPlayer.h"
 #include "event/SandboxControls.h"
 #include "gui/GUIEntityCreativeTab.h"
+
+#include <stack>
 
 GUILayer::GUILayer()
 {
@@ -34,131 +43,143 @@ void GUILayer::setWorldLayer(WorldLayer* l)
 {
 	m_world = l;
 	m_gui_renderer.setItemAtlas(16,
-	                            Texture::create(
-		                            TextureInfo("res/images/itemAtlas/atlas.png").
-		                            filterMode(TextureFilterMode::NEAREST)));
+		Texture::create(
+			TextureInfo("res/images/itemAtlas/atlas.png").
+			filterMode(TextureFilterMode::NEAREST)));
 }
 
 void GUILayer::updateWorldList()
 {
 	WorldsProvider::get().rescanWorlds();
-	m_play_window->setWorlds(WorldsProvider::get().getAvailableWorlds());
+	((SelectWorldWindow*)m_currentWindow)->setWorlds(WorldsProvider::get().getAvailableWorlds());
 }
+
+
+static std::stack<WindowMess> windows;
+void GUILayer::openWindow(WindowMess mess) {
+
+	if (m_currentWindow) {
+		GUIContext::get().destroyWindow(m_currentWindow->id);
+		m_currentWindow = nullptr;
+	}
+
+	if (mess != OpenBack&& mess!= OpenBackToMain)
+		windows.push(mess);
+
+	switch (mess) {
+	case OpenMain:
+		m_currentWindow = new MainWindow(m_bound_func);
+		break;
+	case OpenWorldSelection:
+		m_currentWindow = new SelectWorldWindow(m_bound_func);
+		break;
+	case OpenPlayWorld:
+		m_hud = new HUD();
+		m_currentWindow = m_hud;
+		break;
+	case OpenExit:
+		App::get().fireEvent(WindowCloseEvent());
+		return;
+	case OpenSettings:
+		m_currentWindow = new SettingsWindow(m_bound_func);
+		break;
+	case OpenControls:
+		m_currentWindow = new ControlsWindow(m_bound_func);
+		break;
+	case OpenLanguage:
+		m_currentWindow = new LanguageWindow(m_bound_func);
+		break;
+	case OpenPause:
+		m_currentWindow = new PauseWindow(m_bound_func);
+		break;
+	case OpenBack: {
+		windows.pop();//pop current window
+		auto mess = windows.top();//get parent window
+		windows.pop();//go level up
+		openWindow(mess);
+		return;
+	}
+	case OpenBackToMain: {
+		while (!windows.empty())
+			windows.pop();
+		openWindow(OpenMain);
+		return;
+	}
+	default:;
+	}
+	GUIContext::get().openWindow(m_currentWindow);
+}
+
 
 void GUILayer::proccessWindowEvent(const MessageEvent& e)
 {
-	auto worldData = (WindowMessageData::World *)e.getData();
+
+	auto message = (WindowMess)e.getID();
+	if (WindowMessageData::isOpenMessage(message))
+		openWindow(message);
+
+
+	auto worldData = (WindowMessageData::World*)e.getData();
 	switch (e.getID())
 	{
-	case WindowMess::MenuPlay:
-		{
-			GUIContext::get().destroyWindow(m_main_window->id);
-			m_main_window = nullptr;
-			m_play_window = new PlayWindow(m_bound_func);
-			updateWorldList();
-			GUIContext::get().openWindow(m_play_window);
-		}
+	case WindowMess::OpenWorldSelection:
+		updateWorldList();
 		break;
-	case WindowMess::MenuPlayWorld:
+	case WindowMess::OpenPlayWorld:
+	{
+		m_game_screen = GameScreen::World;
+		m_world->loadWorld(worldData->worldName, false);
+		m_background_enable = false;
+	}
+	break;
+	case WindowMess::OpenBack:
+	{
+		if (m_game_screen == GameScreen::Pause)
 		{
-			GUIContext::get().destroyWindow(m_play_window->id);
-			m_play_window = nullptr;
-
 			m_game_screen = GameScreen::World;
-			m_world->loadWorld(worldData->worldName, false);
-
-			m_hud = new HUD();
-			GUIContext::get().openWindow(m_hud);
-			m_background_enable = false;
+			m_world->pause(false);
 		}
+	}
+	break;
+	case WindowMess::OpenPause:
+		m_world->pause(true);
+		m_game_screen = GameScreen::Pause;
 		break;
-	case WindowMess::MenuGenerateWorld:
+	case WindowMess::ActionGenerateWorld:
+	{
+		bool duplicate = false;
+		for (auto& data : WorldsProvider::get().getAvailableWorlds())
 		{
-			bool duplicate = false;
-			for (auto& data : WorldsProvider::get().getAvailableWorlds())
+			if (strcmp(data.name.c_str(), worldData->worldName.c_str()) == 0)
 			{
-				if (strcmp(data.name.c_str(), worldData->worldName.c_str()) == 0)
-				{
-					duplicate = true;
-					break;
-				}
-			}
-			if (duplicate)
+				duplicate = true;
 				break;
-
-			GUIContext::get().destroyWindow(m_play_window->id);
-			m_play_window = nullptr;
-
-			m_game_screen = GameScreen::World;
-			m_background_enable = false;
-			m_world->loadWorld(worldData->worldName, true);
-			m_hud = new HUD();
-			GUIContext::get().openWindow(m_hud);
+			}
 		}
-		break;
-	case WindowMess::MenuDeleteWorld:
+		if (duplicate)
+			break;
+		m_game_screen = GameScreen::World;
+		m_background_enable = false;
+		m_world->loadWorld(worldData->worldName, true);
+		openWindow(WindowMess::OpenPlayWorld);
+	}
+	break;
+	case WindowMess::ActionDeleteWorld:
 		WorldsProvider::get().deleteWorld(std::string(worldData->worldName));
 		updateWorldList();
 		break;
-	case WindowMess::MenuExit:
-		App::get().fireEvent(WindowCloseEvent());
-		break;
-	case WindowMess::MenuBack:
-		{
-			if (m_game_screen == GameScreen::GUI)
-			{
-				if (m_play_window)
-					GUIContext::get().destroyWindow(m_play_window->id);
-				if (m_controls_window)
-					GUIContext::get().destroyWindow(m_controls_window->id);
-				m_play_window = nullptr;
-				m_controls_window = nullptr;
-				m_main_window = new MainWindow(m_bound_func);
-				GUIContext::get().openWindow(m_main_window);
-			}
-			else if (m_game_screen == GameScreen::Pause)
-			{
-				m_game_screen = GameScreen::World;
-				m_world->pause(false);
-				GUIContext::get().closeWindow(m_pause_window->id);
-			}
-		}
-		break;
 
-	case WindowMess::MenuSettings:
-		{
-			if (m_game_screen == GameScreen::GUI)
-			{
-				GUIContext::get().destroyWindow(m_main_window->id);
-				m_main_window = nullptr;
-				m_controls_window = new ControlsWindow(m_bound_func);
-				GUIContext::get().openWindow(m_controls_window);
-			}
-			else if (m_game_screen == GameScreen::Pause)
-			{
-				/*m_game_screen = GameScreen::World;
-				m_world->pause(false);
-				GUIContext::get().closeWindow(m_pause_window->id);*/
-			}
-		}
-		break;
-	case WindowMess::WorldQuit:
-		{
-			ND_INFO("World unloading:::");
-			m_world->onDetach();
-			m_world->onAttach();
-			ND_INFO("World unloading:::done");
-
-			GUIContext::get().destroyWindow(m_hud->id);
-			GUIContext::get().closeWindow(m_pause_window->id);
-
-			m_play_window = nullptr;
-			m_main_window = new MainWindow(m_bound_func);
-			m_background_enable = true;
-			m_game_screen = GameScreen::GUI;
-			GUIContext::get().openWindow(m_main_window);
-		}
-		break;
+	case WindowMess::ActionWorldQuit:
+	{
+		ND_INFO("World unloading:::");
+		m_world->onDetach();
+		m_world->onAttach();
+		ND_INFO("World unloading:::done");
+		m_background_enable = true;
+		m_game_screen = GameScreen::GUI;
+		openWindow(WindowMess::OpenBackToMain);
+	}
+	break;
 	}
 }
 
@@ -167,14 +188,14 @@ void GUILayer::consumeWindowEvent(const MessageEvent& e)
 	m_window_event_buffer.push_back(e);
 }
 
+static bool ImGUIopen = false;
 void GUILayer::onAttach()
 {
+	REGISTER_IMGUI_WIN("GUILayer", &ImGUIopen);
 	ND_PROFILE_METHOD();
 	m_game_screen = GameScreen::GUI;
 	GUIContext::setContext(m_gui_context);
-	m_main_window = new MainWindow(m_bound_func);
-	m_pause_window = new PauseWindow(m_bound_func);
-	GUIContext::get().getWindows().push_back(m_main_window);
+	openWindow(WindowMess::OpenMain);
 }
 
 void GUILayer::onDetach()
@@ -196,15 +217,15 @@ void GUILayer::onRender()
 	m_renderer.begin(Renderer::getDefaultFBO());
 	Gcon.enableDepthTest(true);
 	if (m_background_enable)
-		m_renderer.submitTextureQuad({-1, -1.f, 0.9}, {2.f, 2}, UVQuad::elementary(), m_background);
+		m_renderer.submitTextureQuad({ -1, -1.f, 0.9 }, { 2.f, 2 }, UVQuad::elementary(), m_background);
 	m_renderer.push(
 		glm::translate(
 			glm::mat4(1.f),
-			{-1.f, -1.f, 0}));
+			{ -1.f, -1.f, 0 }));
 	m_renderer.push(
 		glm::scale(
 			glm::mat4(1.f),
-			{2.f / APwin()->getWidth(), 2.f / APwin()->getHeight(), 1}));
+			{ 2.f / APwin()->getWidth(), 2.f / APwin()->getHeight(), 1 }));
 	//todo gui renderer does not need depth test possibly?
 	m_gui_renderer.render(m_renderer);
 	m_renderer.flush();
@@ -248,19 +269,12 @@ void GUILayer::onEvent(Event& e)
 		if (m.getKey() == GLFW_KEY_ESCAPE)
 		{
 			e.handled = true;
-
 			if (m_game_screen == GameScreen::World)
-			{
-				m_game_screen = GameScreen::Pause;
-				m_world->pause(true);
-				GUIContext::get().openWindow(m_pause_window);
-			}
+				proccessWindowEvent(MessageEvent(OpenPause));
+
 			else if (m_game_screen == GameScreen::Pause)
-			{
-				m_game_screen = GameScreen::World;
-				m_world->pause(false);
-				GUIContext::get().closeWindow(m_pause_window->id);
-			}
+				proccessWindowEvent(MessageEvent(OpenBack));
+
 		}
 		if (m.getKey() == Controls::OPEN_INVENTORY && m_game_screen == GameScreen::World)
 		{
@@ -313,5 +327,38 @@ void GUILayer::onEvent(Event& e)
 		m_gui_renderer.setScreenDimensions(m.getWidth(), m.getHeight());
 	}
 
-	
+
+}
+
+void GUILayer::onImGuiRender()
+{
+	if (!ImGUIopen)
+		return;
+
+	if (ImGui::Begin("GUILayer", &ImGUIopen))
+	{
+		if (Translator::getNumberOfUnknowns() == 0)
+			ImGui::TextColored({ 0.f,1.f,0.f,1.f }, "No unknown entries :D");
+		else {
+			static std::string s;
+			s = "Save Unknown Dictionary Entries (" + std::to_string(Translator::getNumberOfUnknowns()) + ")";
+			if (ImGui::Button(s.c_str()))
+			{
+				ImGuiFileDialog::Instance()->OpenDialog("ChooseDictDump", "Save to", ".lang\0\0", ".");
+			}
+			// display
+			if (ImGuiFileDialog::Instance()->FileDialog("ChooseDictDump"))
+			{
+				// action if OK
+				if (ImGuiFileDialog::Instance()->IsOk == true)
+				{
+					std::string filePathName = ImGuiFileDialog::Instance()->GetFilepathName();
+					Translator::saveUnknownEntries(filePathName.c_str());
+				}
+				// close
+				ImGuiFileDialog::Instance()->CloseDialog("ChooseDictDump");
+			}
+		}
+	}
+	ImGui::End();
 }

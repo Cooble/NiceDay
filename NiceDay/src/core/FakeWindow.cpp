@@ -6,6 +6,7 @@
 #include "graphics/API/FrameBuffer.h"
 #include "event/WindowEvent.h"
 #include "App.h"
+#include "AppGlobals.h"
 #include "scene/GlobalAccess.h"
 #include "scene/components_imgui_access.h"
 
@@ -171,17 +172,18 @@ void FakeWindow::renderView()
 	
 	
 	ImGui::PopStyleVar(2);
-	auto off = ImGui::GetWindowPos();
+	m_real_window_offset = glm::vec2(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y);
 
-	float offset = 0;
+	//add offset for navigationBar
 	if (m_enableNavigationBar)
 	{
 		drawNavBar();
-		offset=ImGui::GetItemRectMax().y;
+		m_real_window_offset.y += ImGui::GetItemRectMax().y - m_real_window_offset.y;	
 	}
-
-	m_real_window_offset = { off.x,offset };
+	
+	
 	m_relative_offset = m_real_window_offset - m_window->getPos();
+	
 	auto lastDim = m_dim;
 	m_dim = { ImGui::GetContentRegionAvail().x,ImGui::GetContentRegionAvail().y };
 	m_data.width = m_dim.x;

@@ -8,6 +8,7 @@
 #include "gui/MainWindow.h"
 #include "gui/HUD.h"
 
+enum WindowMess : int;
 class MessageEvent;
 class WorldLayer;
 class GUIEntityPlayer;
@@ -29,14 +30,7 @@ private:
 	std::vector<MessageEvent> m_window_event_buffer;
 	MessageConsumer m_bound_func;
 
-	
-	//shows list of worlds to play
-	PlayWindow* m_play_window=nullptr;
-	//play, settings, quit
-	MainWindow* m_main_window=nullptr;
-	//world is paused
-	PauseWindow* m_pause_window=nullptr;
-	ControlsWindow* m_controls_window = nullptr;
+	GUIWindow* m_currentWindow=nullptr;
 	
 	//all ingame gui: inventory, health bar ...
 	HUD* m_hud;
@@ -53,6 +47,7 @@ public:
 
 	inline HUD& getHUD() { return *m_hud; }
 	void updateWorldList();
+	void openWindow(WindowMess mess);
 	void proccessWindowEvent(const MessageEvent& e);
 	void consumeWindowEvent(const MessageEvent& e);
 	virtual void onAttach() override;
@@ -60,5 +55,6 @@ public:
 	virtual void onUpdate() override;
 	virtual void onRender() override;
 	virtual void onEvent(Event& e) override;
+	void onImGuiRender() override;
 
 };

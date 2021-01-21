@@ -13,7 +13,12 @@ GUICustomRenderer::GUICustomRenderer(glm::vec2 windowSize)
 	static SpriteSheetResource* res = new SpriteSheetResource(
 		Texture::create(TextureInfo("res/images/gui_atlas.png").filterMode(TextureFilterMode::NEAREST)),
 		8, 8);
-
+	static SpriteSheetResource* resBig = new SpriteSheetResource(
+		Texture::create(TextureInfo("res/images/gui_atlas.png").filterMode(TextureFilterMode::NEAREST)),
+		4,4);
+	m_trash = Sprite(resBig);
+	m_trash.setSpriteIndex(2, 1);
+	
 	if (!m_corn_left_down.isEnabled())
 	{
 		m_corn_left_down = Sprite(res);
@@ -97,10 +102,15 @@ void GUICustomRenderer::renderWindow(BatchRenderer2D& renderer, GUIWindow& e)
 void GUICustomRenderer::renderItemContainer(BatchRenderer2D& renderer, GUIItemContainer& e)
 {
 	float scale = e.slotScale;
-
 	//background for slot
 	if (e.isSlotRendered) {
-		renderRectangle(renderer, m_stackPos.x-scale, m_stackPos.y- scale, e.width+ scale*2, e.height + scale*2);
+		if(e.clas=="trash")
+		{
+			renderer.submitTextureQuad(
+				glm::vec3(m_stackPos.x - scale, m_stackPos.y - scale, m_z_pos),
+				glm::vec2(e.width + scale * 2, e.height + scale * 2), m_trash.getUV(), m_trash.getTexture());
+		}else
+			renderRectangle(renderer, m_stackPos.x-scale, m_stackPos.y- scale, e.width+ scale*2, e.height + scale*2);
 		incrementZ();
 	}
 
@@ -111,6 +121,7 @@ void GUICustomRenderer::renderItemContainer(BatchRenderer2D& renderer, GUIItemCo
 	auto& item = stack->getItem();
 
 	half_int txtOffset = item.getTextureOffset(*stack);
+
 	
 	renderer.submitTextureQuad(
 		{ m_stackPos.x + e.padding[GUI_LEFT]- scale, m_stackPos.y + e.padding[GUI_RIGHT]- scale ,m_z_pos },
@@ -119,11 +130,12 @@ void GUICustomRenderer::renderItemContainer(BatchRenderer2D& renderer, GUIItemCo
 	incrementZ();
 
 	//dont draw number zero
-	if (stack->size() == 0)
+	if (stack->size() == 0||stack->getItem().getMaxStackSize()==1)
 		return;
 	//number of items
 	static TextMesh mesh(5);
-	std::string number = std::to_string(stack->size());
+	std::string number = stack->size()==-1? "#":std::to_string(stack->size());
+
 	TextBuilder::buildMesh(number, 100000, *m_small_font->font, mesh, TextBuilder::ALIGN_RIGHT);
 
 	renderer.push(glm::translate(glm::mat4(1.0), {

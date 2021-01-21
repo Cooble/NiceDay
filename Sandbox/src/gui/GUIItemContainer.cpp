@@ -72,5 +72,5 @@ void GUIItemTitle::setTitle(const std::string& s)
 
 void GUIItemTitle::setMeta(const std::string& s)
 {
-	m_meta->setText(">"+s);
+	m_meta->setText(s);
 }

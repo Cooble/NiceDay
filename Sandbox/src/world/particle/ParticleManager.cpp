@@ -147,8 +147,6 @@ void ParticleManager::createBlockParticle(half_int textureOffset, int xPos, int 
 void ParticleManager::render(ParticleRenderer& renderer)
 {
 	ND_PROFILE_METHOD();
-	//TimerStaper t("rp");//todo this method is incredibly slow
-	//TimerStaper t(std::string("render of particles took (")+std::to_string(m_particleCount));
 
 	float piece1 = 1.f / m_atlas_segment_count;
 	float piece2 = 1.f / m_block_atlas_segment_count / particleBlockDivision;

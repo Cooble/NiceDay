@@ -1,6 +1,7 @@
 ﻿#include "HUD.h"
 #include "core/App.h"
 #include "GUIItemContainer.h"
+#include "Translator.h"
 #include "core/Stats.h"
 #include "event/Event.h"
 #include "GLFW/glfw3.h"
@@ -123,7 +124,7 @@ void HUD::onMyEvent(Event& e)
 	{
 		auto m = static_cast<MouseMoveEvent&>(e);
 		m_hand->pos = m.getPos() - (m_hand->dim / 2.f) - glm::vec2(-m_hand->dim.x / 4, m_hand->dim.x / 4);
-		m_title->pos = m.getPos() - glm::vec2(0,m_title->height/4);
+		m_title->pos = m.getPos() - glm::vec2(0,m_title->height/2);
 	}
 	for (auto& entity : m_entities)
 	{
@@ -163,8 +164,9 @@ void HUD::consumeContainerEvent(const std::string& id, int slot, Inventory* inv,
 		auto item = inv->getItemStack(slot);
 		if (item != nullptr) {
 			m_title->isEnabled = true;
-			m_title->setTitle(Font::colorize(Font::BLACK, Font::DARK_AQUA) + item->getItem().toString());
-			m_title->setMeta(Font::colorize(Font::WHITE, Font::DARK_PURPLE) + std::to_string(item->getMetadata()));
+			m_title->setTitle(Font::colorize(Font::BLACK, Font::DARK_AQUA) + ND_TRANSLATE("item.",item->getItem().toString(),item->getItem().getMaxMeta()!=0?":"+std::to_string(item->getMetadata()):""));
+			
+			m_title->setMeta(item->getItem().getMaxMeta()>0?(Font::colorize(Font::DARK_GREY, Font::GREY) + std::to_string(item->getMetadata())):"");
 		}
 
 		m_focused_slot = slot;
@@ -198,12 +200,22 @@ void HUD::consumeContainerEvent(const std::string& id, int slot, Inventory* inv,
 	//we have nothing in hand
 	if(inHand==nullptr)
 	{
+		auto slotItem = c->getItemStack(slot);
+		auto slotSize = 0;
+		if (slotItem)
+			slotSize = slotItem->size();
+		
+		
 		//take all from slot
 		if(left)
 		{
 			if(APin().isKeyPressed(KeyCode::LEFT_SHIFT))
 			{
-				inHand = c->takeFromIndex(slot,c->getItemStack(slot)!=nullptr?(int)std::ceil(c->getItemStack(slot)->size()/2.f):-1);
+				if (slotSize == Item::INFINITE_SIZE) {
+					inHand = slotItem->copy();
+					inHand->setSize(inHand->getItem().getMaxStackSize());
+				}else
+					inHand = c->takeFromIndex(slot, slotItem ?(int)std::ceil(slotSize/2.f):-1);
 				
 			}else
 				inHand = c->takeFromIndex(slot);
@@ -211,7 +223,12 @@ void HUD::consumeContainerEvent(const std::string& id, int slot, Inventory* inv,
 		//take one from slot
 		else
 		{
-			inHand = c->takeFromIndex(slot,1);
+			if (slotSize == Item::INFINITE_SIZE) {
+				inHand = slotItem->copy();
+				inHand->setSize(1);
+			}
+			else
+				inHand = c->takeFromIndex(slot, 1);
 		}
 		if (inHand && m_hand_inventory->putAtIndex(inHand, m_hand->getSlot()) != nullptr)
 			ND_ERROR("This shouldnot happen because the slot is free");

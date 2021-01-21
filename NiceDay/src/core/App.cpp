@@ -222,8 +222,10 @@ void App::render()
 	m_Window->swapBuffers();
 	Renderer::getDefaultFBO()->bind();
 	Renderer::getDefaultFBO()->clear(BuffBit::COLOR|BuffBit::DEPTH|(m_io.enableSCENE? BuffBit::STENCIL:0));
-	for (Layer* l : m_LayerStack)
+	for (Layer* l : m_LayerStack) {
+		ND_PROFILE_SCOPE(("Profiling render of: "+l->getName()).c_str());
 		l->onRender();
+	}
 
 	m_Window->getFBO()->bind();
 	if (m_io.enableSCENE)

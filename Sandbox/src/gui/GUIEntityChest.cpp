@@ -22,6 +22,7 @@ GUISlots::GUISlots(Inventory* inv, HUD& hud, int fromIndex, int toIndex, int row
 			row->isAlwaysPacked = true;
 		}
 		auto c = new GUIItemContainer();
+		m_slots.push_back(c);
 		c->setContainer(inv, i);
 		c->onContainerEventConsumer = hud.getContainerConsumer();
 		row->appendChild(c);

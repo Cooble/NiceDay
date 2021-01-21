@@ -46,8 +46,8 @@ public:
 
 	void snapshot();//saves current light states to be computed to lightmap later
 
-	inline half* getCurrentLightMap() const { return m_done_map; }
-	inline half* getCurrentLightMapChunkBack() const { return m_done_map_sky_out; }
+	inline half* getCurrentLightMap() const { return m_map_done; }
+	inline half* getCurrentLightMapChunkBack() const { return m_map_sky_out_done; }
 	inline ChunkPos getCurrentOffset() const { return m_done_ch_offset; }
 
 
@@ -163,11 +163,11 @@ private:
 
 	half* m_big_buffer;
 	half* m_map;//is being written to (by light thread)
-	half* m_done_map;//swapchain
+	half* m_map_done;//swapchain
 
 	half* m_map_sky;//is being written to (by light thread)
 	half* m_map_sky_out;//swapchain0
-	half* m_done_map_sky_out;//swapchain1
+	half* m_map_sky_out_done;//swapchain1
 
 	ChunkPos m_done_ch_offset;
 

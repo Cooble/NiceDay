@@ -86,7 +86,8 @@ void Item::onUnequipped(World& world, ItemStack& stack, WorldEntity& owner) cons
 
 std::string Item::getTitle(ItemStack* stack)const
 {
-	return Font::colorize(Font::DARK_GREY, Font::AQUA)+toString();
+	return "";
+	//return Font::colorize(Font::DARK_GREY, Font::AQUA)+toString();
 }
 
 ItemRegistry::~ItemRegistry()

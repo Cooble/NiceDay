@@ -38,6 +38,19 @@ void Scoper::endSession()
 	else { ND_WARN("Calling end session, but none is opened"); }
 }
 
+/*static void removeInvalidChars(std::string& s)
+{
+	for (int i = 0; i < s.size(); ++i)
+	{
+		auto& ss = s[i];
+		if (ss < 32 || ss>126 || s == '\\') {
+			ss = ' ';
+			ASSERT(false, "Gotcha");
+		}
+	}
+}*/
+// every n writes flush everything
+constexpr int FLUSH_INTERVAL = 30;
 void Scoper::writeProfile(const ProfileResult& result)
 {
 	if (!m_currentSession)
@@ -47,6 +60,7 @@ void Scoper::writeProfile(const ProfileResult& result)
 
 	std::string name = result.name;
 	std::replace(name.begin(), name.end(), '"', '\'');
+	//removeInvalidChars(name);
 
 	m_outputStream << "{";
 	m_outputStream << "\"cat\":\"function\",";
@@ -58,7 +72,11 @@ void Scoper::writeProfile(const ProfileResult& result)
 	m_outputStream << "\"ts\":" << result.start;
 	m_outputStream << "}";
 
-	m_outputStream.flush();
+	static int flushInterval = FLUSH_INTERVAL;
+	if (--flushInterval == 0) {
+		flushInterval = FLUSH_INTERVAL;
+		m_outputStream.flush();
+	}
 }
 
 void Scoper::writeHeader()

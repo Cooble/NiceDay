@@ -8,7 +8,7 @@ PlayerInventory::PlayerInventory(WorldEntity* player)
 	: m_player(player)
 {
 	m_special_hand_slot = -1;
-	constexpr int inventorySize = InventorySlot::INVENTORY_SLOT_ACTION_FIRST + 1 + 10 + 40;
+	constexpr int inventorySize = InventorySlot::ACTION_FIRST + 10 + 40;
 	//9 activeslots + 27 random items
 
 	m_items.resize(inventorySize);
@@ -34,7 +34,7 @@ ItemStack* PlayerInventory::putAtRandomIndex(ItemStack* stack)
 	int toAdd = stack->size();
 	int lastNullFreeIndex = -1;
 	bool isStackable = item.getMaxStackSize() > 1;
-	for (int i = InventorySlot::INVENTORY_SLOT_ACTION_FIRST; i < m_items.size(); ++i)
+	for (int i = InventorySlot::ACTION_FIRST; i < m_items.size()-1; ++i)//dont put to trash
 	{
 		auto currentStack = m_items[i];
 		if (currentStack == nullptr && lastNullFreeIndex == -1)
@@ -131,8 +131,15 @@ ItemStack* PlayerInventory::putAtIndex(ItemStack* stack, int index, int count)
 
 ItemStack* PlayerInventory::swap(ItemStack* stack, int index)
 {
+	
 	auto out = takeFromIndex(index, -1);
 	putAtIndex(stack, index, -1);
+	if(index==trashSlot())//dispose of item
+	{
+		if(out)
+			out->destroy();
+		return nullptr;
+	}
 	return out;
 
 	/*auto t = m_items[index];
@@ -217,7 +224,8 @@ ItemStack*& PlayerInventory::handSlot()
 
 bool PlayerInventory::isSpaceFor(const ItemStack* stack) const
 {
-	for (int i = InventorySlot::INVENTORY_SLOT_ACTION_FIRST; i < m_items.size(); ++i)
+	//ignore last slot which is trash
+	for (int i = InventorySlot::ACTION_FIRST; i < m_items.size()-1; ++i)
 	{
 		if (m_items[i] == nullptr)
 			return true;

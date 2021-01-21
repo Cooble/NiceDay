@@ -1,9 +1,9 @@
 ﻿#include "MainWindow.h"
 #include "core/App.h"
 #include "event/MessageEvent.h"
-#include "layer/CommonMessages.h"
 #include "gui/GUIContext.h"
 #include "GUICustomRenderer.h"
+#include "Translator.h"
 #include "world/WorldsProvider.h"
 #include "window_messeages.h"
 #include "event/ControlMap.h"
@@ -29,7 +29,7 @@ MainWindow::MainWindow(const MessageConsumer& c)
 	col->isAlwaysPacked = true;
 	col->setAlignment(GUIAlign::CENTER);
 
-	
+
 	long long micros = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
 	int rand = micros % 6;
 	auto logo = Texture::create(TextureInfo("res/images/logos/" + std::to_string(rand) + ".png").filterMode(TextureFilterMode::LINEAR));
@@ -42,25 +42,26 @@ MainWindow::MainWindow(const MessageConsumer& c)
 	m_logo->isAlwaysPacked = true;
 	m_logo->scale = 0;
 	col->appendChild(m_logo);
-	
+
 	auto dims = new GUIElement(GETYPE::Blank);
-	dims->dim = {0,25};
+	dims->dim = { 0,25 };
 	dims->isVisible = false;
 	col->appendChild(dims);
-	
-	auto playBtn = new GUISpecialTextButton(Font::colorizeBorder(Font::BLACK)+"&0P&1l&2a&3y &4P&5l&6a&7y &8P&9l&aa&by &cP&dl&ea&fy!", material);
+
+	//auto playBtn = new GUISpecialTextButton(Font::colorizeBorder(Font::BLACK)+"&0P&1l&2a&3y &4P&5l&6a&7y &8P&9l&aa&by &cP&dl&ea&fy!", material);
+	auto playBtn = new GUISpecialTextButton(ND_TRANSLATE("main.btn.play_play"), material);
 	//auto playBtn = new GUISpecialTextButton("Play", material);
-	playBtn->dim = {200,50};
+	playBtn->dim = { 200,50 };
 	playBtn->maxScale = 1.2;
 	playBtn->minScale = 0.7;
-	playBtn->onPressed=[this](GUIElement& e)
+	playBtn->onPressed = [this](GUIElement& e)
 	{
-		m_messenger(MessageEvent(WindowMess::MenuPlay));
+		m_messenger(MessageEvent(WindowMess::OpenWorldSelection));
 		logoTransient = -1;
 	};
 	col->appendChild(playBtn);
 
-	auto playNew = new GUISpecialTextButton("New", material);
+	auto playNew = new GUISpecialTextButton(ND_TRANSLATE("main.btn.play"), material);
 	playNew->dim = { 200,50 };
 	playNew->maxScale = 1.2;
 	playNew->minScale = 0.7;
@@ -69,24 +70,24 @@ MainWindow::MainWindow(const MessageConsumer& c)
 		logoTransient = -1;
 	};
 	col->appendChild(playNew);
-	
-	auto setBtn = new GUISpecialTextButton("Settings", material);
+
+	auto setBtn = new GUISpecialTextButton(ND_TRANSLATE("main.btn.settings"), material);
 	setBtn->dim = { 200,50 };
 	setBtn->maxScale = 1.2;
 	setBtn->minScale = 0.7;
 	setBtn->onPressed = [this](GUIElement& e)
 	{
-		m_messenger(MessageEvent(WindowMess::MenuSettings));
+		m_messenger(MessageEvent(WindowMess::OpenSettings));
 	};
 	col->appendChild(setBtn);
 
-	auto exitBtn = new GUISpecialTextButton("Exit", material);
+	auto exitBtn = new GUISpecialTextButton(ND_TRANSLATE("main.btn.exit"), material);
 	exitBtn->dim = { 200,50 };
 	exitBtn->maxScale = 1.2;
 	exitBtn->minScale = 0.7;
 	exitBtn->onPressed = [this](GUIElement& e)
 	{
-		m_messenger(MessageEvent(WindowMess::MenuExit));
+		m_messenger(MessageEvent(WindowMess::OpenExit));
 	};
 	col->appendChild(exitBtn);
 
@@ -106,24 +107,24 @@ void MainWindow::update()
 		logoTransient += 0.06;
 		scaleUp += 0.01;
 
-		m_logo->renderAngle = std::sin((scaleUp + 3.14159 / 2)/2) / 8;
+		m_logo->renderAngle = std::sin((scaleUp + 3.14159 / 2) / 2) / 8;
 
 		float s = std::clamp(logoTransient, 0.f, 1.5f);
 		if (s > 1.25f)
 			s = 1.25 - (s - 1.25);
-		m_logo->scale = (((1 + std::sin(scaleUp)) / 2) * 0.15 + 1)*s;
+		m_logo->scale = (((1 + std::sin(scaleUp)) / 2) * 0.15 + 1) * s;
 	}
-	
+
 }
 
-GUIWorldEntry::GUIWorldEntry(MessageConsumer* c):m_messenger(c)
+GUIWorldEntry::GUIWorldEntry(MessageConsumer* c) :m_messenger(c)
 {
 	auto material = FontMatLib::getMaterial("res/fonts/andrew.fnt");
 
 	static SpriteSheetResource* res = new SpriteSheetResource(
 		Texture::create(TextureInfo("res/images/gui_atlas.png").filterMode(TextureFilterMode::NEAREST)),
 		4, 4);
-	
+
 	setPadding(10);
 	isAlwaysPacked = false;
 	isVisible = true;
@@ -134,7 +135,7 @@ GUIWorldEntry::GUIWorldEntry(MessageConsumer* c):m_messenger(c)
 	color = { 1,0,1,1 };
 	appendChild(m_world_name);
 
-	
+
 	auto playBtn = new GUIImageButton(new Sprite(res));
 	playBtn->isVisible = false;
 	playBtn->dim = { 22,22 };
@@ -147,15 +148,15 @@ GUIWorldEntry::GUIWorldEntry(MessageConsumer* c):m_messenger(c)
 	};
 	playBtn->onFocusLost = [playBtn](GUIElement& e)
 	{
-		playBtn->getImageElement()->image->setSpriteIndex(2,0);
+		playBtn->getImageElement()->image->setSpriteIndex(2, 0);
 	};
-	playBtn->onPressed= [this](GUIElement& e)
+	playBtn->onPressed = [this](GUIElement& e)
 	{
 		auto data = ND_TEMP_EMPLACE(WindowMessageData::World);
 		data->worldName = this->getWorldName();
-		auto m = MessageEvent(WindowMess::MenuPlayWorld,0,data);
+		auto m = MessageEvent(WindowMess::OpenPlayWorld, 0, data);
 		(*m_messenger)(m);
-		
+
 		/*auto dat = App::get().getBufferedAllocator().emplace<CommonMessages::WorldMessage>();
 		dat->type = CommonMessages::WorldMessage::PLAY;
 		dat->worldName = m_world_name->getText();
@@ -180,21 +181,21 @@ GUIWorldEntry::GUIWorldEntry(MessageConsumer* c):m_messenger(c)
 
 		auto data = ND_TEMP_EMPLACE(WindowMessageData::World);
 		data->worldName = this->getWorldName();
-		auto m = MessageEvent(WindowMess::MenuDeleteWorld, 0, data);
+		auto m = MessageEvent(WindowMess::ActionDeleteWorld, 0, data);
 		(*m_messenger)(m);
 	};
-	
+
 	deleteBtn->setAlignment(GUIAlign::RIGHT_DOWN);
 
 	auto row = new GUIRow();
 	row->isAlwaysPacked = true;
 	row->setAlignment(GUIAlign::LEFT_DOWN);
 	row->appendChild(playBtn);
-	
+
 
 	appendChild(row);
 	appendChild(deleteBtn);
-	
+
 }
 
 void GUIWorldEntry::setWorldName(const std::string& name)
@@ -208,13 +209,13 @@ const std::string& GUIWorldEntry::getWorldName()
 }
 
 
-PlayWindow::PlayWindow(const MessageConsumer& c)
-:m_messenger(c){
+SelectWorldWindow::SelectWorldWindow(const MessageConsumer& c)
+	:m_messenger(c) {
 	width = APwin()->getWidth();
 	height = APwin()->getHeight();
 	setCenterPosition(APwin()->getWidth(), APwin()->getHeight());
 
-	
+
 	isVisible = false;
 	isMoveable = false;
 	isResizable = false;
@@ -229,7 +230,7 @@ PlayWindow::PlayWindow(const MessageConsumer& c)
 	mainCol->isAlwaysPacked = true;
 	mainCol->dimInherit = GUIDimensionInherit::WIDTH;
 	mainCol->setAlignment(GUIAlign::CENTER);
-	
+
 	auto centerBox = new GUIBlank();
 	centerBox->setPadding(10);
 	centerBox->isAlwaysPacked = false;
@@ -241,14 +242,14 @@ PlayWindow::PlayWindow(const MessageConsumer& c)
 	auto split = new GUIVerticalSplit(false);
 	split->dimInherit = GUIDimensionInherit::WIDTH;
 	split->height = 40;
-	
+
 	//createbtn
-	auto createNewBtn = new GUITextButton("Create", materialSmall);
+	auto createNewBtn = new GUITextButton(ND_TRANSLATE("btn.create_world"), materialSmall);
 	createNewBtn->setAlignment(GUIAlign::CENTER);
 	createNewBtn->isAlwaysPacked = true;
 	createNewBtn->setPadding(5);
 	split->getRightChild()->appendChild(createNewBtn);
-	split->height = createNewBtn->height+split->heightPadding();
+	split->height = createNewBtn->height + split->heightPadding();
 
 	//create txtbox
 	auto textBox = new GUITextBox();
@@ -257,16 +258,16 @@ PlayWindow::PlayWindow(const MessageConsumer& c)
 	textBox->height = materialSmall->font->lineHeight + textBox->heightPadding();
 	textBox->setAlignment(GUIAlign::CENTER);
 	split->getLeftChild()->appendChild(textBox);
-	
 
-	auto onWorldCrea = [textBox,this](GUIElement& e)
+
+	auto onWorldCrea = [textBox, this](GUIElement& e)
 	{
 		if (textBox->getValue().empty())
 			return;
-		
+
 		auto data = ND_TEMP_EMPLACE(WindowMessageData::World);
 		data->worldName = textBox->getValue();
-		auto m = MessageEvent(WindowMess::MenuGenerateWorld, 0, data);
+		auto m = MessageEvent(WindowMess::ActionGenerateWorld, 0, data);
 		m_messenger(m);
 	};
 	textBox->onValueEntered = onWorldCrea;
@@ -281,14 +282,14 @@ PlayWindow::PlayWindow(const MessageConsumer& c)
 
 	//Title
 	auto title = new GUIText(material);
-	title->setText("Choose the world");
+	title->setText(ND_TRANSLATE("title.choose_world"));
 	title->setAlignment(GUIAlign::CENTER);
 
 	auto blankTitle = new GUIBlank();
 	blankTitle->setPadding(10);
 	blankTitle->isAlwaysPacked = true;
 	blankTitle->isVisible = true;
-	
+
 	blankTitle->appendChild(title);
 	blankTitle->y = centerBox->height - blankTitle->height / 2;
 	blankTitle->x = centerBox->width / 2 - blankTitle->width / 2;
@@ -318,16 +319,16 @@ PlayWindow::PlayWindow(const MessageConsumer& c)
 	m_world_column->isAlwaysPacked = true;
 	m_world_column->setAlignment(GUIAlign::CENTER);
 
-	
+
 	src->getInside()->appendChild(m_world_column);
 
 	//back btn
-	auto bckBtn = new GUITextButton("Back", material);
+	auto bckBtn = new GUITextButton(ND_TRANSLATE("btn.back"), material);
 	bckBtn->dim = { 700, bckBtn->getTextElement()->height + bckBtn->heightPadding() };
-	
+
 	bckBtn->onPressed = [this](GUIElement& e)
 	{
-		m_messenger(MessageEvent(WindowMess::MenuBack));
+		m_messenger(MessageEvent(WindowMess::OpenBack));
 	};
 
 	mainCol->appendChild(centerBox);
@@ -335,7 +336,7 @@ PlayWindow::PlayWindow(const MessageConsumer& c)
 	appendChild(mainCol);
 }
 
-void PlayWindow::setWorlds(const std::vector<WorldInfoData>& worlds)
+void SelectWorldWindow::setWorlds(const std::vector<WorldInfoData>& worlds)
 {
 	m_world_column->clearChildren();
 	m_world_column->adaptToParent();
@@ -350,8 +351,8 @@ void PlayWindow::setWorlds(const std::vector<WorldInfoData>& worlds)
 }
 
 PauseWindow::PauseWindow(const MessageConsumer& c)
-:m_messenger(c){
-	
+	:m_messenger(c) {
+
 	width = APwin()->getWidth();
 	height = APwin()->getHeight();
 	setCenterPosition(APwin()->getWidth(), APwin()->getHeight());
@@ -370,8 +371,8 @@ PauseWindow::PauseWindow(const MessageConsumer& c)
 	mainCol->isAlwaysPacked = true;
 	mainCol->dimInherit = GUIDimensionInherit::WIDTH;
 	mainCol->setAlignment(GUIAlign::CENTER);
-	
-	
+
+
 
 	auto centerBox = new GUIBlank();
 	centerBox->setPadding(10);
@@ -381,7 +382,7 @@ PauseWindow::PauseWindow(const MessageConsumer& c)
 	centerBox->setAlignment(GUIAlign::CENTER);
 
 
-	
+
 	//Column
 	auto col = new GUIColumn();
 	col->dimInherit = GUIDimensionInherit::WIDTH_HEIGHT;
@@ -393,33 +394,34 @@ PauseWindow::PauseWindow(const MessageConsumer& c)
 	spacer->isAlwaysPacked = false;
 	spacer->height = 50;
 	col->appendChild(spacer);
-	
+
 	//createbtn
-	auto createNewBtn = new GUITextButton("Continue", materialSmall);
+	auto createNewBtn = new GUITextButton(ND_TRANSLATE("btn.continue"), materialSmall);
 	createNewBtn->setAlignment(GUIAlign::CENTER);
 	createNewBtn->isAlwaysPacked = true;
 	createNewBtn->setPadding(5);
 	createNewBtn->onPressed = [this](GUIElement& e)
 	{
-		m_messenger(MessageEvent(WindowMess::MenuBack));
+		m_messenger(MessageEvent(WindowMess::OpenBack));
 	};
 	col->appendChild(createNewBtn);
 
+
 	//goToMainScreenBtn
-	auto goToMainScreenBtn = new GUITextButton("Save and go to menu", materialSmall);
+	auto goToMainScreenBtn = new GUITextButton(ND_TRANSLATE("btn.save_go_menu"), materialSmall);
 	goToMainScreenBtn->setAlignment(GUIAlign::CENTER);
 	goToMainScreenBtn->isAlwaysPacked = true;
 	goToMainScreenBtn->setPadding(5);
 	goToMainScreenBtn->onPressed = [this](GUIElement& e)
 	{
-		m_messenger(MessageEvent(WindowMess::WorldQuit));
+		m_messenger(MessageEvent(WindowMess::ActionWorldQuit));
 	};
 	col->appendChild(goToMainScreenBtn);
 
-	
+
 	//Title
 	auto title = new GUIText(material);
-	title->setText("We are paused");
+	title->setText(ND_TRANSLATE("title.pause"));
 	title->setAlignment(GUIAlign::CENTER);
 
 	auto blankTitle = new GUIBlank();
@@ -431,7 +433,7 @@ PauseWindow::PauseWindow(const MessageConsumer& c)
 	blankTitle->y = centerBox->height - blankTitle->height / 2;
 	blankTitle->x = centerBox->width / 2 - blankTitle->width / 2;
 	centerBox->appendChild(blankTitle);
-	
+
 	mainCol->appendChild(centerBox);
 	appendChild(mainCol);
 
@@ -478,7 +480,7 @@ ControlsWindow::ControlsWindow(const MessageConsumer& c)
 	spacer->height = 50;
 	col->appendChild(spacer);
 
-	
+
 	//view
 	auto view = createGUISliderView(false);
 	view->dimInherit = GUIDimensionInherit::WIDTH;
@@ -496,22 +498,22 @@ ControlsWindow::ControlsWindow(const MessageConsumer& c)
 
 	for (auto& pair : ControlMap::getControlsList())
 	{
-		auto button = new GUISpecialTextButton(pair.first+": " + Font::colorize(Font::BLACK,"#013220")+ControlMap::getKeyName(*pair.second.pointer), materialSmall);
+		auto button = new GUISpecialTextButton(pair.first + ": " + Font::colorize(Font::BLACK, "#013220") + ControlMap::getKeyName(*pair.second.pointer), materialSmall);
 		button->minScale = 1;
 		button->maxScale = 1;
 		button->setPadding(10);
 		button->packDimensions();
 		keyColumn->appendChild(button);
-		button->onPressed = [button,titlo = pair.first](GUIElement& e)
+		button->onPressed = [button, titlo = pair.first](GUIElement& e)
 		{
 			if (GUIContext::get().getFocusedElement() != &e)
 			{
 				GUIContext::get().setFocusedElement(&e);
-				button->getTextElement()->setText(Font::BLUE+titlo + ": " + Font::colorize(Font::BLACK, "#013220") +ControlMap::getKeyName(*ControlMap::getButtonData(titlo)->pointer));
+				button->getTextElement()->setText(Font::BLUE + titlo + ": " + Font::colorize(Font::BLACK, "#013220") + ControlMap::getKeyName(*ControlMap::getButtonData(titlo)->pointer));
 			}
 			else {
 				auto loc = APin().getMouseLocation();
-				if (!e.contains(loc.x,loc.y))
+				if (!e.contains(loc.x, loc.y))
 				{
 					GUIContext::get().setFocusedElement(nullptr);
 					e.onMyEventFunc(MouseFocusLost(0, 0), e);
@@ -519,22 +521,24 @@ ControlsWindow::ControlsWindow(const MessageConsumer& c)
 
 			}
 		};
-		button->onMyEventFunc = [button, titlo = pair.first](Event& eve,GUIElement& e)
+		button->onMyEventFunc = [button, titlo = pair.first](Event& eve, GUIElement& e)
 		{
-			
+
 			if (GUIContext::get().getFocusedElement() == &e)
 			{
-				if(eve.getEventType()==Event::EventType::KeyPress)
+				if (eve.getEventType() == Event::EventType::KeyPress)
 				{
 					auto m = static_cast<KeyPressEvent&>(eve);
-					ControlMap::setValueAtPointer(titlo,(uint64_t)m.getKey());
+					ControlMap::setValueAtPointer(titlo, (uint64_t)m.getKey());
 					button->getTextElement()->setText(titlo + ": " + Font::colorize(Font::BLACK, "#013220") + ControlMap::getKeyName((uint64_t)m.getKey()));
 					GUIContext::get().setFocusedElement(nullptr);
 				}
-			}else if(eve.getEventType()==Event::EventType::MouseFocusGain)
+			}
+			else if (eve.getEventType() == Event::EventType::MouseFocusGain)
 			{
-				button->getTextElement()->setText(Font::GREEN+titlo + ": " + Font::colorize(Font::BLACK, "#013220") + ControlMap::getKeyName(*ControlMap::getButtonData(titlo)->pointer));
-			}else if(eve.getEventType() == Event::EventType::MouseFocusLost)
+				button->getTextElement()->setText(Font::GREEN + titlo + ": " + Font::colorize(Font::BLACK, "#013220") + ControlMap::getKeyName(*ControlMap::getButtonData(titlo)->pointer));
+			}
+			else if (eve.getEventType() == Event::EventType::MouseFocusLost)
 			{
 				button->getTextElement()->setText(titlo + ": " + Font::colorize(Font::BLACK, "#013220") + ControlMap::getKeyName(*ControlMap::getButtonData(titlo)->pointer));
 			}
@@ -590,33 +594,284 @@ ControlsWindow::ControlsWindow(const MessageConsumer& c)
 	}
 
 	src->getInside()->appendChild(keyColumn);
-	
+
 	//createbtn
-	auto createNewBtn = new GUITextButton("Back", materialSmall);
+	auto createNewBtn = new GUITextButton(ND_TRANSLATE("btn.back"), materialSmall);
 	createNewBtn->setAlignment(GUIAlign::CENTER);
 	createNewBtn->isAlwaysPacked = true;
 	createNewBtn->setPadding(5);
 	createNewBtn->onPressed = [this](GUIElement& e)
 	{
-		m_messenger(MessageEvent(WindowMess::MenuBack));
+		m_messenger(MessageEvent(WindowMess::OpenBack));
 	};
 	col->appendChild(createNewBtn);
 
 	//goToMainScreenBtn
-	auto goToMainScreenBtn = new GUITextButton("Save and back", materialSmall);
+	auto goToMainScreenBtn = new GUITextButton(ND_TRANSLATE("btn.save_back"), materialSmall);
 	goToMainScreenBtn->setAlignment(GUIAlign::CENTER);
 	goToMainScreenBtn->isAlwaysPacked = true;
 	goToMainScreenBtn->setPadding(5);
 	goToMainScreenBtn->onPressed = [this](GUIElement& e)
 	{
-		m_messenger(MessageEvent(WindowMess::MenuBack));
+		m_messenger(MessageEvent(WindowMess::OpenBack));
 	};
 	col->appendChild(goToMainScreenBtn);
 
 
 	//Title
 	auto title = new GUIText(material);
-	title->setText("Controls");
+	title->setText(ND_TRANSLATE("title.controls"));
+	title->setAlignment(GUIAlign::CENTER);
+
+	auto blankTitle = new GUIBlank();
+	blankTitle->setPadding(10);
+	blankTitle->isAlwaysPacked = true;
+	blankTitle->isVisible = true;
+
+	blankTitle->appendChild(title);
+	blankTitle->y = centerBox->height - blankTitle->height / 2;
+	blankTitle->x = centerBox->width / 2 - blankTitle->width / 2;
+	centerBox->appendChild(blankTitle);
+
+	mainCol->appendChild(centerBox);
+	appendChild(mainCol);
+}
+
+SettingsWindow::SettingsWindow(const MessageConsumer& c) :m_messenger(c) {
+
+	width = APwin()->getWidth();
+	height = APwin()->getHeight();
+	setCenterPosition(APwin()->getWidth(), APwin()->getHeight());
+
+	isVisible = false;
+	isMoveable = false;
+	isResizable = false;
+
+	setAlignment(GUIAlign::CENTER);
+	dimInherit = GUIDimensionInherit::WIDTH_HEIGHT;
+
+	auto material = FontMatLib::getMaterial("res/fonts/andrew_big.fnt");
+	auto materialSmall = FontMatLib::getMaterial("res/fonts/andrew.fnt");
+
+	auto mainCol = new GUIColumn();
+	mainCol->isAlwaysPacked = true;
+	mainCol->dimInherit = GUIDimensionInherit::WIDTH;
+	mainCol->setAlignment(GUIAlign::CENTER);
+
+	auto centerBox = new GUIBlank();
+	centerBox->setPadding(10);
+	centerBox->isAlwaysPacked = false;
+	centerBox->dim = { 700,600 };
+	centerBox->isVisible = true;
+	centerBox->setAlignment(GUIAlign::CENTER);
+
+	//Column
+	auto col = new GUIColumn();
+	col->dimInherit = GUIDimensionInherit::WIDTH_HEIGHT;
+	col->space = 15;
+	col->setAlignment(GUIAlign::CENTER);
+	centerBox->appendChild(col);
+
+	auto spacer = new GUIBlank();
+	spacer->isAlwaysPacked = false;
+	spacer->height = 50;
+	col->appendChild(spacer);
+
+
+	//view
+
+	auto view = createGUISliderView(false);
+	view->dimInherit = GUIDimensionInherit::WIDTH;
+	view->height = 400;
+	GUIView* src = dynamic_cast<GUIView*>(view->getLeftChild()->getFirstChild());
+	src->setPadding(0);
+	src->getInside()->color = guiCRColor;
+	col->appendChild(view);
+
+	//view column
+	auto keyColumn = new GUIColumn();
+	keyColumn->dimInherit = GUIDimensionInherit::WIDTH;
+	keyColumn->isAlwaysPacked = true;
+	keyColumn->setAlignment(GUIAlign::CENTER);
+
+	//nav controls button
+	auto navCon = new GUITextButton(ND_TRANSLATE("btn.controls"), materialSmall);
+	navCon->onPressed = [this](GUIElement& e)
+	{
+		m_messenger(MessageEvent(WindowMess::OpenControls));
+	};
+	navCon->setPadding(5);
+	navCon->isAlwaysPacked = true;
+	keyColumn->appendChild(navCon);
+	auto lang = new GUITextButton(ND_TRANSLATE("btn.lang"), materialSmall);
+	lang->setPadding(5);
+	lang->onPressed = [this](GUIElement& e)
+	{
+		m_messenger(MessageEvent(WindowMess::OpenLanguage));
+	};
+	lang->isAlwaysPacked = true;
+	keyColumn->appendChild(lang);
+
+	src->getInside()->appendChild(keyColumn);
+
+	auto createNewBtn = new GUITextButton(ND_TRANSLATE("btn.back"), materialSmall);
+	createNewBtn->setAlignment(GUIAlign::CENTER);
+	createNewBtn->isAlwaysPacked = true;
+	createNewBtn->setPadding(5);
+	createNewBtn->onPressed = [this](GUIElement& e)
+	{
+		m_messenger(MessageEvent(WindowMess::OpenBack));
+	};
+	col->appendChild(createNewBtn);
+
+	//goToMainScreenBtn
+	auto goToMainScreenBtn = new GUITextButton(ND_TRANSLATE("btn.save_back"), materialSmall);
+	goToMainScreenBtn->setAlignment(GUIAlign::CENTER);
+	goToMainScreenBtn->isAlwaysPacked = true;
+	goToMainScreenBtn->setPadding(5);
+	goToMainScreenBtn->onPressed = [this](GUIElement& e)
+	{
+		m_messenger(MessageEvent(WindowMess::OpenBack));
+	};
+	col->appendChild(goToMainScreenBtn);
+
+
+	//Title
+	auto title = new GUIText(material);
+	title->setText(ND_TRANSLATE("title.settings"));
+	title->setAlignment(GUIAlign::CENTER);
+
+	auto blankTitle = new GUIBlank();
+	blankTitle->setPadding(10);
+	blankTitle->isAlwaysPacked = true;
+	blankTitle->isVisible = true;
+
+	blankTitle->appendChild(title);
+	blankTitle->y = centerBox->height - blankTitle->height / 2;
+	blankTitle->x = centerBox->width / 2 - blankTitle->width / 2;
+	centerBox->appendChild(blankTitle);
+
+	mainCol->appendChild(centerBox);
+	appendChild(mainCol);
+}
+LanguageWindow::LanguageWindow(const MessageConsumer& c)
+	:m_messenger(c) {
+
+	//App::get().getSettings().
+	width = APwin()->getWidth();
+	height = APwin()->getHeight();
+	setCenterPosition(APwin()->getWidth(), APwin()->getHeight());
+
+
+	isVisible = false;
+	isMoveable = false;
+	isResizable = false;
+
+	setAlignment(GUIAlign::CENTER);
+	dimInherit = GUIDimensionInherit::WIDTH_HEIGHT;
+
+	auto material = FontMatLib::getMaterial("res/fonts/andrew_big.fnt");
+	auto materialSmall = FontMatLib::getMaterial("res/fonts/andrew.fnt");
+
+	auto mainCol = new GUIColumn();
+	mainCol->isAlwaysPacked = true;
+	mainCol->dimInherit = GUIDimensionInherit::WIDTH;
+	mainCol->setAlignment(GUIAlign::CENTER);
+
+	auto centerBox = new GUIBlank();
+	centerBox->setPadding(10);
+	centerBox->isAlwaysPacked = false;
+	centerBox->dim = { 700,600 };
+	centerBox->isVisible = true;
+	centerBox->setAlignment(GUIAlign::CENTER);
+
+	//Column
+	auto col = new GUIColumn();
+	col->dimInherit = GUIDimensionInherit::WIDTH_HEIGHT;
+	col->space = 15;
+	col->setAlignment(GUIAlign::CENTER);
+	centerBox->appendChild(col);
+
+	auto spacer = new GUIBlank();
+	spacer->isAlwaysPacked = false;
+	spacer->height = 50;
+	col->appendChild(spacer);
+
+
+	//view
+	auto view = createGUISliderView(false);
+	view->dimInherit = GUIDimensionInherit::WIDTH;
+	view->height = 400;
+	GUIView* src = dynamic_cast<GUIView*>(view->getLeftChild()->getFirstChild());
+	src->setPadding(0);
+	src->getInside()->color = guiCRColor;
+	col->appendChild(view);
+
+	//view column
+	auto keyColumn = new GUIColumn();
+	keyColumn->dimInherit = GUIDimensionInherit::WIDTH;
+	keyColumn->isAlwaysPacked = true;
+	keyColumn->setAlignment(GUIAlign::CENTER);
+
+
+	auto& list = AppLanguages::getLanguages();
+	for (auto& lang : list)
+	{
+		bool selected = lang.abbrev == AppLanguages::getCurrentLanguage();
+
+		auto btn = new GUITextButton((selected ? Font::colorizeBorder(Font::BLACK) + Font::GREEN : "") + lang.name, materialSmall);
+		if (!selected) {
+			btn->onPressed = [this, abbrev = lang.abbrev](GUIElement& e)
+			{
+				AppLanguages::loadLanguage(abbrev);
+				m_messenger(MessageEvent(WindowMess::OpenBack));//go up
+				m_messenger(MessageEvent(WindowMess::OpenLanguage));//go back again
+			};
+			/*btn->onFocusGain = [this, name=lang.name](GUIElement& e)
+			{
+				auto ee=(GUITextButton&)e;
+				ee.getTextElement()->setText(Font::colorizeBorder(Font::BLACK) + Font::GOLD + name);
+			};
+			btn->onFocusLost = [this, name = lang.name](GUIElement& e)
+			{
+				auto ee = (GUITextButton&)e;
+				ee.getTextElement()->setText(name);
+			};*/
+			
+		}
+		
+		btn->setPadding(5);
+		btn->isAlwaysPacked = true;
+		keyColumn->appendChild(btn);
+	}
+	src->getInside()->appendChild(keyColumn);
+
+	//createbtn
+	auto createNewBtn = new GUITextButton(ND_TRANSLATE("btn.back"), materialSmall);
+	createNewBtn->setAlignment(GUIAlign::CENTER);
+	createNewBtn->isAlwaysPacked = true;
+	createNewBtn->setPadding(5);
+	createNewBtn->onPressed = [this](GUIElement& e)
+	{
+		m_messenger(MessageEvent(WindowMess::OpenBack));
+	};
+	col->appendChild(createNewBtn);
+
+	//goToMainScreenBtn
+	auto goToMainScreenBtn = new GUITextButton(ND_TRANSLATE("btn.save_back"), materialSmall);
+	goToMainScreenBtn->setAlignment(GUIAlign::CENTER);
+	goToMainScreenBtn->isAlwaysPacked = true;
+	goToMainScreenBtn->setPadding(5);
+	goToMainScreenBtn->onPressed = [this](GUIElement& e)
+	{
+		m_messenger(MessageEvent(WindowMess::OpenBack));
+	};
+	col->appendChild(goToMainScreenBtn);
+
+
+	//Title
+	auto title = new GUIText(material);
+	title->setText(ND_TRANSLATE("title.language"));
 	title->setAlignment(GUIAlign::CENTER);
 
 	auto blankTitle = new GUIBlank();

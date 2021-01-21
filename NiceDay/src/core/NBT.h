@@ -589,12 +589,14 @@ public:
 
 	json toJson() const;
 	static NBT fromJson(const json& j);
-  
+
+	// saves nbt as json file
 	static void saveToFile(const Stringo& filePath, const NBT& nbt);
 	// loads nbt from json file (comments in file are allowed, ignored)
 	// return false if cannot load
 	static bool loadFromFile(const Stringo& filePath, NBT& nbt);
 
+	// same function as nbt["name"]=val;
 	template <typename Arg>
 	void save(const Stringo& name,const Arg& val)
 	{
@@ -602,7 +604,10 @@ public:
 			return;
 		access_map(name) = val;
 	}
+	
 	//=================Load new================================
+	// sets val to nbt value at name or defaultVal if such item does not exist
+	// does not modify nbt
 	template <typename Arg0, typename Arg1>
 	bool load(const Stringo& key, Arg0& val, Arg1 defaultVal) const
 	{
@@ -617,6 +622,8 @@ public:
 		else val = defaultVal;
 		return found;
 	}
+	// sets val to nbt value at name or defaultVal if such item does not exist
+	// does not modify nbt
 	template <typename Arg1>
 	bool load(const Stringo& key, Stringo& val, Arg1 defaultVal) const
 	{
@@ -632,6 +639,8 @@ public:
 		return found;
 	}
 	//specialization for same types
+	// sets val to nbt value at name or defaultVal if such item does not exist
+	// also saves defaultVal if such value does not exist
 	template <typename Arg>
 	bool loadSet(const Stringo& key, Arg& val, Arg defaultVal)
 	{
@@ -644,148 +653,37 @@ public:
 		if (found)
 			val = (Arg)it->second;
 		else {
-      val = defaultVal;
-      val_map[key]=defaultVal;
-    }
-		return found;
-	}
-	/*template <>
-	bool loadNew(const& key, Stringo& val, const char* defaultVal) const
-	{
-		if (!isMap()) {
-			val = defaultVal;
-			return false;
-		}
-		auto& it = val_map->find(key);
-		bool found = it != val_map->end();
-		if (found)
-			val = it->second.string();
-		else val = defaultVal;
-		return found;
-	}*/
-	//=================Load new==end===========================
-
-	/*template <typename Arg>
-	bool load(const Stringo& key, Arg& val, Arg defaultVal) const
-	{
-		if (!isMap()) {
-			val = defaultVal;
-			return false;
-		}
-		auto& it = val_map->find(key);
-		bool found = it != val_map->end();
-		if (found)
-			val = Arg(it->second);
-		else {
-			val = defaultVal;
-			operator[](key) = val;
+			access_map(key) = defaultVal;
+			val = access_map(key);
 		}
 		return found;
 	}
-
-
-	template <>
-	bool loadSet(const Stringo& key, Stringo& val, Stringo defaultVal)
-	{
-		if (!isMap()) {
-			val = defaultVal;
-			return false;
-		}
-		auto& it = val_map->find(key);
-		bool found = it != val_map->end();
-		if (found)
-			val = it->second.string();
-		else {
-			val = defaultVal;
-			operator[](key) = val;
-		}
-		return found;
-	}
-
-
-	// If data exists, val=data, if not, val=default_val
-	// if exists -> loads data to val
-	// if does not exist -> sets val to default
-	template <typename Arg>
-	bool load(const Stringo& key, Arg& val, Arg defaultVal) const
-	{
-		if (!isMap()) {
-			val = defaultVal;
-			return false;
-		}
-
-	*/
-	/*template <typename Arg>
-	bool loadIfExists(const Stringo& key, Arg& val) const
-	{
-		if (!isMap()) return false;
-
-		auto& it = val_map->find(key);
-		bool found = it != val_map->end();
-		val = found?Arg(it->second):defaultVal;
-		return found;
-	}
-	template <>
-	bool load(const Stringo& key, Stringo& val, Stringo defaultVal) const
-	{
-		if (!isMap()) {
-			val = defaultVal;
-			return false;
-		}
-		auto& it = val_map->find(key);
-		bool found = it != val_map->end();
-		val = found ? it->second.string(): defaultVal;
-		return found;
-	}*/
-	template <typename Arg>
-	bool loadIfExists(const Stringo& key, Arg& val) const
-	{
-		if (!isMap()) return false;
-
-		auto& it = val_map->find(key);
-		bool found = it != val_map->end();
-		if (found)
-			val = (Arg)it->second;
-		return found;
-	}
-	template <>
-	bool loadIfExists(const Stringo& key, Stringo& val) const
-	{
-		if (!isMap()) return false;
-
-		auto& it = val_map->find(key);
-		bool found = it != val_map->end();
-		if (found)
-			val = it->second.string();
-		return found;
-	}
-
-	
-	// If data exists -> val=data
+	// sets val if value exists or returns false
 	template <typename Arg>
 	bool load(const Stringo& key, Arg& val) const
 	{
-		if (!isMap()) {
-			return false;
-		}
+		if (!isMap()) return false;
+
 		auto& it = val_map->find(key);
 		bool found = it != val_map->end();
 		if (found)
 			val = (Arg)it->second;
 		return found;
 	}
+	// sets val if value exists or returns false
 	template <>
 	bool load(const Stringo& key, Stringo& val) const
 	{
-		if (!isMap()) {
-			return false;
-		}
+		if (!isMap()) return false;
+
 		auto& it = val_map->find(key);
 		bool found = it != val_map->end();
 		if (found && it->second.isString())
 			val = it->second.string();
 		return found;
 	}
+
+
 
 	void write(const IBinaryStream::RWStream& write) const;
 	void read(const IBinaryStream::RWStream& read);

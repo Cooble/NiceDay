@@ -10,7 +10,7 @@ EntityPlayer::EntityPlayer()
 	m_is_item_consumer = true;
 	m_velocity = vec2(0.0f);
 	m_acceleration = { 0.f, -9.8f / 60 };
-	m_max_velocity = vec2(50.f / 60);
+	m_max_velocity = vec2(40.f / 60);
 
 	static SpriteSheetResource res(Texture::create(
 		TextureInfo("res/images/player3.png")
@@ -105,6 +105,7 @@ void EntityPlayer::update(World& w)
 		}
 	
 	auto lastPos = m_pos;
+	auto lastFacingLeft = m_is_facing_left;
 	if (!Stats::move_through_blocks_enable)
 		PhysEntity::computePhysics(w);
 	else
@@ -141,12 +142,16 @@ void EntityPlayer::update(World& w)
 				m_animation.setSpriteFrame(1, 0);
 		}
 	}
+	if (lastFacingLeft != m_is_facing_left)
+		m_animation.updateAfterFlip();
+	
 	constexpr float animationBlocksPerFrame = 1;
 	m_pose += abs(lastPos.x - m_pos.x);
 	if (m_pose - m_last_pose > animationBlocksPerFrame)
 	{
 		m_pose = m_last_pose;
-		m_animation.nextFrame();
+		if (!w.isAir(m_pos.x, m_pos.y - 1.f) || lastFacingLeft!=m_is_facing_left|| Stats::move_through_blocks_enable)//no walking while jumping through air
+			m_animation.nextFrame();
 	}
 
 

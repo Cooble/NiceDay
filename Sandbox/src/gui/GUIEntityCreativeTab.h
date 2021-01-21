@@ -11,7 +11,7 @@ class GUICreativeTab :public GUIElement
 protected:
 	Inventory* m_inv;
 	int m_item_index_offset = 0;
-	int m_item_line_count;
+	int m_item_per_line_count;
 	int m_item_lines_count;
 	GUISlots* m_slots;
 public:

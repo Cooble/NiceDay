@@ -1,0 +1,129 @@
+# Dictionary language file 
+# you can use # or // for line comment
+# use: "<keyname> =<Very interesting translation a.k.a. value>
+# 	-keyname must not contain spaces
+#   -value can have spaces
+#
+# It's customary to include 
+# game.current_lang=EsperantoOrSomething
+# entry to specify language of this file
+#
+#
+#
+# to add prefix for multiple lines:
+#
+# "
+# ->some_prefix.nested_pref
+# btn.open=Open
+# btn.close =Closing Button
+# <- 
+# "
+#
+# will expand to:
+#
+# "
+# some_prefix.nested_pref.btn.open=Open
+# some_prefix.nested_pref.btn.close =Closing Button
+# "
+#	
+
+game.current_lang="Cestina"
+game.name	=NiceDay
+
+
+true		=Ano
+false		=Ne
+language	=Jazyk
+back		=Zpet
+
+# basic block items
+->item
+
+stone		=Sutr
+dirt		=Hlina
+gold		=Zlato
+adamantite	=Adamantite
+platform	=Platforma
+grass		=Trava
+glass		=Sklo
+torch		=Louc
+door		=Dvere
+painting	=Obraz
+sapling		=Rostlinka
+
+# flowers
+flower:0	=Sedmikraska
+flower:1	=Pampeliska
+flower:2	=Fialka
+flower:3	=Ruze
+flower:4	=Lilie
+flower:5	=Chrisanthena
+flower:6	=Hyacinth
+flower:7	=Mesicni Hyacinth
+
+grass_plant	=Vysoka Trava
+snow		=Snih
+snow_brick	=Snehova Cihla
+ice			=Led
+pumpkin		=Dyne
+chest		=Truhla
+radio		=Radio
+
+grass_plant:0	=Trava
+grass_plant:1	=Trava
+grass_plant:2	=Trava
+grass_plant:3	=Trava
+
+# basic tools items
+
+pickaxe			=El Krumpaco
+shotgun			=Brokovnice Extreme
+
+# miscellaneous
+tnt:0			=Male Bum
+tnt:1			=Stredni Bum
+tnt:2			=Mega TNT
+tree			=Drevo
+tree_sapling	=Rostlinka
+<-
+
+
+# main_screen
+->main
+btn.exit=Konec
+btn.play=Znova
+btn.play_play=b&f&0H&1r&2a&3t &4H&5r&6a&7t &8H&9r&aa&bt &cH&dr&ea&ft!
+btn.settings=Ovladani
+<-
+
+# choose world screen
+title.choose_world	=Vyber sveta
+btn.create_world	=Novy svet
+
+# pause screen
+title.pause=Pozastaveno
+
+# controls screen
+title.controls=Ovladani
+
+
+# navigation gui buttons
+->btn
+back			=Zpet
+continue		=Pokracovat
+save_back		=Uloz a zpet
+save_go_menu	=Uloz a do Menu
+<-
+
+
+
+
+
+
+
+
+// This is start of automatically generated unknown list:
+btn.controls=Ovladani
+btn.lang=Jazyk
+title.language=Jazyk
+title.settings=Nastaveni

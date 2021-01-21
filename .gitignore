@@ -21,6 +21,7 @@ res/audio/
 res/engine/lua/temp
 res/lua/temp
 res/registry/headers
+res/tracing/currentProfileTemp.js
 
 # Files
 .mat #material files of the engine
@@ -33,6 +34,7 @@ res/registry/headers
 *settings.json
 *log.*.txt
 *log.txt
+*.dll
 
 # CMake
 CMakeLists.txt.user

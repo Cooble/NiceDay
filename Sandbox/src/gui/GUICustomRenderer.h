@@ -18,6 +18,8 @@ private:
 	Sprite m_right;
 	Sprite m_down;
 	Sprite m_center;
+	//====trash
+	Sprite m_trash;
 	//====window sprites
 	int m_item_atlas_size;
 	float m_item_atlas_bit;

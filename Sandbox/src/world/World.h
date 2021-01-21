@@ -193,6 +193,8 @@ private:
 	LightCalculator m_light_calc;
 	WorldGen m_gen;
 	std::vector<Chunk> m_chunks;
+	// will be set to true after first batch of chunks is generated (used to start light snapshots)
+	bool m_first_chunks_generated=false;
 	std::vector<ChunkHeader> m_chunk_headers;
 	NBT m_world_nbt;
 	IChunkProvider* m_chunk_provider;
@@ -274,6 +276,7 @@ public:
 		m_has_chunk_changed = false;
 		return out;
 	}
+	inline bool areFirstChunksGenerated() { return m_first_chunks_generated; }
 
 	inline bool isBlockValid(int x, int y) const
 	{

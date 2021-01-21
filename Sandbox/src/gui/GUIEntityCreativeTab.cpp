@@ -8,8 +8,10 @@ GUICreativeTab::GUICreativeTab(HUD& hud) :GUIElement(GETYPE::Other)
 	isAlwaysPacked = false;
 	width = 500;
 	height = 400;
-	m_item_line_count = 6;
-	m_item_lines_count = 3;
+	// size per line
+	m_item_per_line_count = 6;
+	//how many lines
+	m_item_lines_count = 6;
 	//isVisible = true;
 	/*
 	auto view = createGUISliderView(false);
@@ -23,7 +25,7 @@ GUICreativeTab::GUICreativeTab(HUD& hud) :GUIElement(GETYPE::Other)
 	appendChild(view);*/
 	m_inv = new CreativeInventory();
 
-	m_slots = new GUISlots(m_inv, hud, 0, m_item_lines_count*m_item_line_count -1, m_item_line_count);
+	m_slots = new GUISlots(m_inv, hud, 0, m_item_lines_count*m_item_per_line_count -1, m_item_per_line_count);
 	m_slots->setAlignment(GUIAlign::LEFT_UP);
 
 	
@@ -31,13 +33,14 @@ GUICreativeTab::GUICreativeTab(HUD& hud) :GUIElement(GETYPE::Other)
 	slider->dimInherit = GUIDimensionInherit::HEIGHT;
 	slider->setAlignment(GUIAlign::RIGHT);
 	slider->width = 20;
-	slider->setQuantization(glm::ceil((float)m_inv->getItemsSize() / m_item_line_count / m_item_lines_count));
-	slider->on_changed = [slider,slots = m_slots, inventorySize = m_inv->getItemsSize(),linesCount = m_item_lines_count,lineCount = m_item_line_count](GUIElement& e)
+	int totalLines = glm::ceil((float)m_inv->getItemsSize() / m_item_per_line_count);
+	slider->setQuantization(totalLines);
+	slider->on_changed = [slider, totalLines,slots = m_slots, inventorySize = m_inv->getItemsSize(),linesCount = m_item_lines_count,perLineCount = m_item_per_line_count](GUIElement& e)
 	{
-		int i = slider->getValue() * inventorySize;
-		slots->updateIndexes(slider->getValue() * linesCount * lineCount, (slider->getValue()+1) * linesCount * lineCount- 1);
+		int i = (totalLines-slider->getValue()-1) * perLineCount;
+		slots->updateIndexes(i, i+linesCount*perLineCount-1);
 	};
-	slider->setValue(1);
+	slider->setValue(0);
 
 	appendChild(m_slots);
 	appendChild(slider);

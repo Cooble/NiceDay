@@ -149,7 +149,7 @@ void BlockRegistry::updateBlockFromJSON(const std::string& id, NBT& nbt)
 {
 	Block* block = m_blocks[m_blockIDs[id]];
 	nbt.load("hardness", block->m_hardness);
-	//nbt.loadIfExists("maxStackSize", block->m_ma);
+	//nbt.load("maxStackSize", block->m_ma);
 	if(nbt.exists("opacity"))
 	{
 		auto& t = nbt["opacity"];

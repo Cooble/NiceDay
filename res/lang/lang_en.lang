@@ -1,0 +1,123 @@
+# Dictionary language file 
+# you can use # or // for line comment
+# use: "<keyname> =<Very interesting translation a.k.a. value>
+# 	-keyname must not contain spaces
+#   -value can have spaces
+#
+# It's customary to include 
+# game.current_lang=EsperantoOrSomething
+# entry to specify language of this file
+#
+#
+#
+# to add prefix for multiple lines:
+#
+# "
+# ->some_prefix.nested_pref
+# btn.open=Open
+# btn.close =Closing Button
+# <- 
+# "
+#
+# will expand to:
+#
+# "
+# some_prefix.nested_pref.btn.open=Open
+# some_prefix.nested_pref.btn.close =Closing Button
+# "
+#	
+
+game.current_lang="English"
+game.name	=NiceDay
+
+
+true		=Yes
+false		=No
+language	=Language
+back		=Back
+
+# basic block items
+->item
+
+stone		=Stone
+dirt		=Dirt
+gold		=Gold
+adamantite	=Adamantite
+platform	=Platform
+grass		=Grass
+glass		=Glass
+torch		=Torch
+door		=Door
+painting	=Painting
+sapling		=Sapling
+
+# flowers
+flower:0	=Whitey
+flower:1	=Dandelion
+flower:2	=Violet
+flower:3	=Rose
+flower:4	=Lily
+flower:5	=Chrisanthemum
+flower:6	=Hyacinth
+flower:7	=Moon Hyacinth
+
+grass_plant	=Grass Plant
+snow		=Snow
+snow_brick	=Snow Brick
+ice			=Ice
+pumpkin		=Pumpkin
+chest		=Chest
+radio		=Radio
+
+grass_plant:0	=Grass
+grass_plant:1	=Grass
+grass_plant:2	=Grass
+grass_plant:3	=Grass
+
+# basic tools items
+
+pickaxe			=El Pickaxo
+shotgun			=ShotGun Extreme
+
+# miscellaneous
+tnt:0			=Small Bum
+tnt:1			=Medium Bum
+tnt:2			=Great TNT
+tree			=Tree Wood
+tree_sapling	=Sapling
+<-
+
+
+# main_screen
+->main
+btn.exit=Quit
+btn.play=ReRe
+btn.play_play=b&f&0P&1l&2a&3y &4P&5l&6a&7y &8P&9l&aa&by &cP&dl&ea&fy!
+btn.settings=Controls
+<-
+
+# choose world screen
+title.choose_world	=Choose World
+btn.create_world	=Create World
+
+# pause screen
+title.pause=Paused
+
+# controls screen
+title.controls=Controls
+
+
+# navigation gui buttons
+->btn
+back			=Back
+continue		=Continue
+save_back		=Save and Back
+save_go_menu	=Save and Main Menu
+<-
+
+
+
+btn.controls=Controls
+btn.lang=Language
+title.settings=Settings
+title.language=Language Selection

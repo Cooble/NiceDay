@@ -198,7 +198,7 @@ void Material::serialize(NBT& nbt)
 	}
 }
 
-#define LODD(tyyye) list.loadIfExists(element.name.substr(offsetSize), *(tyyye*)(m_ubo + element.offset));break;
+#define LODD(tyyye) list.load(element.name.substr(offsetSize), *(tyyye*)(m_ubo + element.offset));break;
 
 MaterialPtr Material::deserialize(NBT& nbt)
 {

@@ -178,6 +178,17 @@ namespace NDUtil
 		t[indexToErase] = tt;
 		t.erase(t.end() - 1);
 	}
+
+	template <typename T>
+	bool contains(const T& element,std::vector<T>& v)
+	{
+		for (auto & a : v)
+		{
+			if (a == element)
+				return true;
+		}
+		return false;
+	}
 }
 
 struct half_int
@@ -516,9 +527,14 @@ class JobAssignment
 public:
 	static const int64_t JOB_SUCCESS = 0;
 	static const int64_t JOB_FAILURE = std::numeric_limits<int64_t>::max();
+	// total number of assignments
 	std::atomic<int64_t> m_main;
+	// number of finished assignments
 	std::atomic<int64_t> m_worker;
 public:
+	// custom atomic variable to store some job state in
+	// normally used to store job success
+	// usually is equal to JOB_SUCCESS or JOB_FAILURE
 	std::atomic <int64_t> m_variable;
 
 public:
