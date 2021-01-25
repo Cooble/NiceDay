@@ -41,9 +41,7 @@ void GUISlots::updateIndexes(int fromIndex, int toIndex)
 			auto c = (GUIItemContainer*)i;
 			c->setContainerSlot(fromIndex + currentIndex > toIndex?-1:fromIndex + currentIndex);
 			currentIndex++;
-
 		}
-		
 	}
 }
 

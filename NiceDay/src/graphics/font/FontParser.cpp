@@ -1,7 +1,7 @@
 #include "ndpch.h"
 #include "FontParser.h"
 
-uint32_t Font::entityToColor(const std::string& s)
+uint32_t Font::entityToColor(std::string_view s)
 {
 	const char c = s[0];
 	const char cc = s[1];
@@ -12,20 +12,20 @@ uint32_t Font::entityToColor(const std::string& s)
 			return 0;
 		if (cc >= '0' && cc <= '9')
 			return colorTemplates[cc - '0'];
-		else if (cc >= 'a' && cc <= 'f')
+		if (cc >= 'a' && cc <= 'f')
 			return colorTemplates[(cc - 'a') + 10];
-		else if (cc >= 'A' && cc <= 'F')
+		if (cc >= 'A' && cc <= 'F')
 			return colorTemplates[(cc - 'A') + 10];
 		return 0;
 	case '#':
 		if (s.size() < 7)
 			return 0;
-		return (std::stoi(s.substr(1), nullptr, 16) << 8) & 0xffffff00;
+		return (std::stoi(std::string(s.substr(1)), nullptr, 16) << 8) & 0xffffff00;
 	}
 	return 0;
 }
 
-std::optional<uint32_t> Font::tryEntityToColor(const std::string& s)
+std::optional<uint32_t> Font::tryEntityToColor(std::string_view s)
 {
 	const char c = s[0];
 	switch (c)
@@ -37,9 +37,9 @@ std::optional<uint32_t> Font::tryEntityToColor(const std::string& s)
 			return std::optional<uint32_t>();
 		if (cc >= '0' && cc <= '9')
 			return colorTemplates[cc - '0'];
-		else if (cc >= 'a' && cc <= 'f')
+		if (cc >= 'a' && cc <= 'f')
 			return colorTemplates[(cc - 'a') + 10];
-		else if (cc >= 'A' && cc <= 'F')
+		if (cc >= 'A' && cc <= 'F')
 			return colorTemplates[(cc - 'A') + 10];
 		return std::optional<uint32_t>();
 	}
@@ -48,7 +48,7 @@ std::optional<uint32_t> Font::tryEntityToColor(const std::string& s)
 			return std::optional<uint32_t>();
 		try
 		{
-			return (std::stoi(s.substr(1, 6), nullptr, 16) << 8) & 0xffffff00;
+			return (std::stoi(std::string(s.substr(1, 6)), nullptr, 16) << 8) & 0xffffff00;
 		}
 		catch (...)
 		{
@@ -58,7 +58,7 @@ std::optional<uint32_t> Font::tryEntityToColor(const std::string& s)
 	return std::optional<uint32_t>();
 }
 
-std::string Font::removeColorEntities(const std::string& s)
+std::string Font::removeColorEntities(std::string_view s)
 {
 	std::string out;
 	out.reserve(s.size());
@@ -109,11 +109,63 @@ std::string Font::removeColorEntities(const std::string& s)
 	return out;
 }
 
+std::u32string Font::removeColorEntities(std::u32string_view s)
+{
+	std::u32string out;
+	out.reserve(s.size());
+	for (int i = 0; i < s.size(); ++i)
+	{
+		auto c = s[i];
+		bool isBorderPrefix = false;
+		bool isIgnorePrefix = false;
+		if ((c == '&' || c == '#') && i != 0)
+		{
+			isBorderPrefix = s[i - 1] == Font::BORDER_PREFIX;
+			isIgnorePrefix = s[i - 1] == Font::IGNORE_PREFIX;
+		}
+		if (c == '&')
+		{
+			auto o = tryEntityToColor(SUtil::u32StringToString(s.substr(i)));
+			if (o.has_value())
+			{
+				if (isBorderPrefix || isIgnorePrefix)
+					out = out.substr(0, out.size() - 2); //remvoe even the borderprefix
+				if (!isIgnorePrefix)
+				{
+					if (i > s.size() - 2)
+						return out;
+					i += 1;
+					continue;
+				}
+			}
+		}
+		else if (c == '#')
+		{
+			auto o = tryEntityToColor(SUtil::u32StringToString(s.substr(i)));
+			if (o.has_value())
+			{
+				if (isBorderPrefix || isIgnorePrefix)
+					out = out.substr(0, out.size() - 2); //remvoe even the borderprefix
+				if (!isIgnorePrefix)
+				{
+					if (i > s.size() - 7)
+						return out;
+					i += 6;
+					continue;
+				}
+			}
+		}
+		out += c;
+	}
+	return out;
+}
+
 void Font::bakeUVChars()
 {
 	//flips Y axis and calculates UV
-	for (auto& ch : chars)
+	for (auto& pair : chars)
 	{
+		auto& ch = pair.second;
 		ch.u1 = (ch.u + ch.width) / scaleW;
 		ch.v1 = (ch.v + ch.height) / scaleH;
 
@@ -251,7 +303,8 @@ bool FontParser::parse(Font& font, const std::string& filePath)
 				else if (SUtil::startsWith(var, "xadvance="))
 					ch.xadvance = std::stoi(arg);
 			}
-			font.chars.push_back(ch);
+			//font.chars.push_back(ch);
+			font.chars[ch.id] = ch;
 		}
 		else if (title == "kernings")
 		{
@@ -289,3 +342,4 @@ bool FontParser::parse(Font& font, const std::string& filePath)
 	font.bakeUVChars();
 	return true;
 }
+

@@ -3,6 +3,12 @@
 #include "world/WorldsProvider.h"
 #include "event/MessageEvent.h"
 
+class GameFonts {
+public:
+	static FontMaterial* bigFont;
+	static FontMaterial* smallFont;
+};
+
 class MainWindow:public GUIWindow
 {
 private:

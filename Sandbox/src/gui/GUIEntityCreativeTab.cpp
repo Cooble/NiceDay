@@ -47,6 +47,11 @@ GUICreativeTab::GUICreativeTab(HUD& hud) :GUIElement(GETYPE::Other)
 	
 }
 
+GUICreativeTab::~GUICreativeTab()
+{
+	delete m_inv;
+}
+
 Inventory* GUIEntityCreativeTab::getInventory()
 {
 	return m_element->getInventory();

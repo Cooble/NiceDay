@@ -8,6 +8,15 @@
 #include "window_messeages.h"
 #include "event/ControlMap.h"
 #include "event/KeyEvent.h"
+#include "core/NBT.h"
+
+
+
+FontMaterial* GameFonts::bigFont;
+FontMaterial* GameFonts::smallFont;
+
+
+
 
 static float logoTransient = -1.3;
 
@@ -23,7 +32,7 @@ MainWindow::MainWindow(const MessageConsumer& c)
 
 	setCenterPosition(APwin()->getWidth(), APwin()->getHeight());
 
-	auto material = FontMatLib::getMaterial("res/fonts/andrew_big.fnt");
+	auto material = GameFonts::bigFont;
 
 	auto col = new GUIColumn();
 	col->isAlwaysPacked = true;
@@ -48,12 +57,19 @@ MainWindow::MainWindow(const MessageConsumer& c)
 	dims->isVisible = false;
 	col->appendChild(dims);
 
+	//scale japanese
+	auto gengo = App::get().getSettings()["language"];
+	float maxScale = 1.2 + (gengo.string()=="jp"?0.2:0);
+	float minScale = 0.7 + (gengo.string() == "jp" ? 0.3 : 0);
+	
+	
+
 	//auto playBtn = new GUISpecialTextButton(Font::colorizeBorder(Font::BLACK)+"&0P&1l&2a&3y &4P&5l&6a&7y &8P&9l&aa&by &cP&dl&ea&fy!", material);
 	auto playBtn = new GUISpecialTextButton(ND_TRANSLATE("main.btn.play_play"), material);
 	//auto playBtn = new GUISpecialTextButton("Play", material);
 	playBtn->dim = { 200,50 };
-	playBtn->maxScale = 1.2;
-	playBtn->minScale = 0.7;
+	playBtn->maxScale = maxScale;
+	playBtn->minScale = minScale;
 	playBtn->onPressed = [this](GUIElement& e)
 	{
 		m_messenger(MessageEvent(WindowMess::OpenWorldSelection));
@@ -63,8 +79,8 @@ MainWindow::MainWindow(const MessageConsumer& c)
 
 	auto playNew = new GUISpecialTextButton(ND_TRANSLATE("main.btn.play"), material);
 	playNew->dim = { 200,50 };
-	playNew->maxScale = 1.2;
-	playNew->minScale = 0.7;
+	playNew->maxScale = maxScale;
+	playNew->minScale = minScale;
 	playNew->onPressed = [](GUIElement& e)
 	{
 		logoTransient = -1;
@@ -73,8 +89,8 @@ MainWindow::MainWindow(const MessageConsumer& c)
 
 	auto setBtn = new GUISpecialTextButton(ND_TRANSLATE("main.btn.settings"), material);
 	setBtn->dim = { 200,50 };
-	setBtn->maxScale = 1.2;
-	setBtn->minScale = 0.7;
+	setBtn->maxScale = maxScale;
+	setBtn->minScale = minScale;
 	setBtn->onPressed = [this](GUIElement& e)
 	{
 		m_messenger(MessageEvent(WindowMess::OpenSettings));
@@ -83,8 +99,8 @@ MainWindow::MainWindow(const MessageConsumer& c)
 
 	auto exitBtn = new GUISpecialTextButton(ND_TRANSLATE("main.btn.exit"), material);
 	exitBtn->dim = { 200,50 };
-	exitBtn->maxScale = 1.2;
-	exitBtn->minScale = 0.7;
+	exitBtn->maxScale = maxScale;
+	exitBtn->minScale = minScale;
 	exitBtn->onPressed = [this](GUIElement& e)
 	{
 		m_messenger(MessageEvent(WindowMess::OpenExit));
@@ -119,7 +135,7 @@ void MainWindow::update()
 
 GUIWorldEntry::GUIWorldEntry(MessageConsumer* c) :m_messenger(c)
 {
-	auto material = FontMatLib::getMaterial("res/fonts/andrew.fnt");
+	auto material = GameFonts::smallFont;
 
 	static SpriteSheetResource* res = new SpriteSheetResource(
 		Texture::create(TextureInfo("res/images/gui_atlas.png").filterMode(TextureFilterMode::NEAREST)),
@@ -223,8 +239,8 @@ SelectWorldWindow::SelectWorldWindow(const MessageConsumer& c)
 	setAlignment(GUIAlign::CENTER);
 	dimInherit = GUIDimensionInherit::WIDTH_HEIGHT;
 
-	auto material = FontMatLib::getMaterial("res/fonts/andrew_big.fnt");
-	auto materialSmall = FontMatLib::getMaterial("res/fonts/andrew.fnt");
+	auto material = GameFonts::bigFont;
+	auto materialSmall = GameFonts::smallFont;
 
 	auto mainCol = new GUIColumn();
 	mainCol->isAlwaysPacked = true;
@@ -364,8 +380,8 @@ PauseWindow::PauseWindow(const MessageConsumer& c)
 	setAlignment(GUIAlign::CENTER);
 	dimInherit = GUIDimensionInherit::WIDTH_HEIGHT;
 
-	auto material = FontMatLib::getMaterial("res/fonts/andrew_big.fnt");
-	auto materialSmall = FontMatLib::getMaterial("res/fonts/andrew.fnt");
+	auto material = GameFonts::bigFont;
+	auto materialSmall = GameFonts::smallFont;
 
 	auto mainCol = new GUIColumn();
 	mainCol->isAlwaysPacked = true;
@@ -453,8 +469,8 @@ ControlsWindow::ControlsWindow(const MessageConsumer& c)
 	setAlignment(GUIAlign::CENTER);
 	dimInherit = GUIDimensionInherit::WIDTH_HEIGHT;
 
-	auto material = FontMatLib::getMaterial("res/fonts/andrew_big.fnt");
-	auto materialSmall = FontMatLib::getMaterial("res/fonts/andrew.fnt");
+	auto material = GameFonts::bigFont;
+	auto materialSmall = GameFonts::smallFont; 
 
 	auto mainCol = new GUIColumn();
 	mainCol->isAlwaysPacked = true;
@@ -650,8 +666,8 @@ SettingsWindow::SettingsWindow(const MessageConsumer& c) :m_messenger(c) {
 	setAlignment(GUIAlign::CENTER);
 	dimInherit = GUIDimensionInherit::WIDTH_HEIGHT;
 
-	auto material = FontMatLib::getMaterial("res/fonts/andrew_big.fnt");
-	auto materialSmall = FontMatLib::getMaterial("res/fonts/andrew.fnt");
+	auto material = GameFonts::bigFont;
+	auto materialSmall = GameFonts::smallFont;
 
 	auto mainCol = new GUIColumn();
 	mainCol->isAlwaysPacked = true;
@@ -770,8 +786,8 @@ LanguageWindow::LanguageWindow(const MessageConsumer& c)
 	setAlignment(GUIAlign::CENTER);
 	dimInherit = GUIDimensionInherit::WIDTH_HEIGHT;
 
-	auto material = FontMatLib::getMaterial("res/fonts/andrew_big.fnt");
-	auto materialSmall = FontMatLib::getMaterial("res/fonts/andrew.fnt");
+	auto material = GameFonts::bigFont;
+	auto materialSmall = GameFonts::smallFont;
 
 	auto mainCol = new GUIColumn();
 	mainCol->isAlwaysPacked = true;
@@ -824,6 +840,16 @@ LanguageWindow::LanguageWindow(const MessageConsumer& c)
 			btn->onPressed = [this, abbrev = lang.abbrev](GUIElement& e)
 			{
 				AppLanguages::loadLanguage(abbrev);
+
+				if (abbrev == "jp")//todo font change should not be here
+				{
+					GameFonts::smallFont = FontMatLib::getMaterial("res/fonts/umeboshi.fnt");
+					GameFonts::bigFont = FontMatLib::getMaterial("res/fonts/umeboshi_big.fnt");
+				}
+				else {
+					GameFonts::smallFont = FontMatLib::getMaterial("res/fonts/andrew_czech.fnt");
+					GameFonts::bigFont = FontMatLib::getMaterial("res/fonts/andrew_big_czech.fnt");
+				}
 				m_messenger(MessageEvent(WindowMess::OpenBack));//go up
 				m_messenger(MessageEvent(WindowMess::OpenLanguage));//go back again
 			};

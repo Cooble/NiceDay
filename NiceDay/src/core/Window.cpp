@@ -2,6 +2,7 @@
 #include "Window.h"
 #include <GLFW/glfw3.h>
 #include <glad/glad.h>
+#include <clocale>
 
 
 #include "AppGlobals.h"
@@ -23,10 +24,10 @@ extern "C" {
 	_declspec(dllexport) DWORD NvOptimusEnablement = 1;
 }
 
-Window::Window(int width, int height, const std::string& title,bool fullscreen) :
+Window::Window(int width, int height, const std::string& title, bool fullscreen) :
 	m_window(nullptr)
 {
-	
+
 	m_data.width = width;
 	m_data.height = height;
 	m_data.title = title;
@@ -37,33 +38,22 @@ Window::Window(int width, int height, const std::string& title,bool fullscreen) 
 		glfwInit();
 	}
 
-	
+
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	
+
 	glfwWindowHint(GLFW_SAMPLES, 4);
-	
+
 	m_window = glfwCreateWindow(width, height, title.c_str(), NULL, NULL);
 
 	// load icons
 	// --------------------
 	{
-		stbi_set_flip_vertically_on_load(false);
 
-		int w, h, mbbpp;
-		GLFWimage icons[1];
-		auto resIcon = ND_RESLOC("res/engine/images/nd_icon2.png");
-		if (FUtil::exists(resIcon)) {
-			icons->pixels = stbi_load(resIcon.c_str(), &w, &h, &mbbpp, 4);
-			icons->width = w;
-			icons->height = h;
-
-			glfwSetWindowIcon(m_window, 1, icons);
-			stbi_image_free((void*)icons[0].pixels);
-		}
+		setIcon(ND_RESLOC("res/engine/images/nd_icon2.png"));
 	}
-	
+
 	if (m_window == NULL)
 	{
 		ND_ERROR("Failed to create GLFW window");
@@ -79,31 +69,31 @@ Window::Window(int width, int height, const std::string& title,bool fullscreen) 
 		ND_ERROR("Failed to initialize GLAD");
 		return;
 	}
-	
+
 	glfwSetWindowUserPointer(m_window, &m_data);
 
 	//window events
-	glfwSetFramebufferSizeCallback(m_window, [](GLFWwindow * window, int width, int height) {
+	glfwSetFramebufferSizeCallback(m_window, [](GLFWwindow* window, int width, int height) {
 		WindowData& d = *(WindowData*)glfwGetWindowUserPointer(window);
 		GLCall(glViewport(0, 0, width, height));
 		d.width = width;
 		d.height = height;
 		WindowResizeEvent e(width, height);
 		d.eventCallback(e);
-	});
-	glfwSetWindowCloseCallback(m_window, [](GLFWwindow * window) {
+		});
+	glfwSetWindowCloseCallback(m_window, [](GLFWwindow* window) {
 		WindowData& d = *(WindowData*)glfwGetWindowUserPointer(window);
 		WindowCloseEvent e;
 		d.eventCallback(e);
-	});
-	glfwSetWindowFocusCallback(m_window, [](GLFWwindow* window,int focused) {
+		});
+	glfwSetWindowFocusCallback(m_window, [](GLFWwindow* window, int focused) {
 		WindowData& d = *(WindowData*)glfwGetWindowUserPointer(window);
 		d.focused = focused;
 		});
 
 
 	//key events
-	glfwSetKeyCallback(m_window, [](GLFWwindow * window, int key, int scancode, int action, int mods) {
+	glfwSetKeyCallback(m_window, [](GLFWwindow* window, int key, int scancode, int action, int mods) {
 		WindowData& d = *(WindowData*)glfwGetWindowUserPointer(window);
 		if (action == GLFW_PRESS) {
 			KeyPressEvent e(key, mods);
@@ -113,19 +103,19 @@ Window::Window(int width, int height, const std::string& title,bool fullscreen) 
 			KeyReleaseEvent e(key);
 			d.eventCallback(e);
 		}
-		else if(action==GLFW_REPEAT)
+		else if (action == GLFW_REPEAT)
 		{
-			KeyPressEvent e(key, mods,true);
+			KeyPressEvent e(key, mods, true);
 			d.eventCallback(e);
 		}
-	});
-	glfwSetCharCallback(m_window, [](GLFWwindow * window, unsigned int key) {
+		});
+	glfwSetCharCallback(m_window, [](GLFWwindow* window, unsigned int key) {
 		WindowData& d = *(WindowData*)glfwGetWindowUserPointer(window);
 		KeyTypeEvent e(key);
 		d.eventCallback(e);
-	});
+		});
 	//mouse events
-	glfwSetMouseButtonCallback(m_window, [](GLFWwindow * window, int button, int action, int mods) {
+	glfwSetMouseButtonCallback(m_window, [](GLFWwindow* window, int button, int action, int mods) {
 		WindowData& d = *(WindowData*)glfwGetWindowUserPointer(window);
 		double x, y;
 		glfwGetCursorPos(window, &x, &y);
@@ -139,33 +129,33 @@ Window::Window(int width, int height, const std::string& title,bool fullscreen) 
 			d.eventCallback(e);
 		}
 
-	});
-	glfwSetCursorPosCallback(m_window, [](GLFWwindow * window, double x, double y) {
+		});
+	glfwSetCursorPosCallback(m_window, [](GLFWwindow* window, double x, double y) {
 		WindowData& d = *(WindowData*)glfwGetWindowUserPointer(window);
 		MouseMoveEvent e(x, y);
 		d.eventCallback(e);
-	});
-	glfwSetScrollCallback(m_window, [](GLFWwindow * window, double xx, double yy) {
+		});
+	glfwSetScrollCallback(m_window, [](GLFWwindow* window, double xx, double yy) {
 		WindowData& d = *(WindowData*)glfwGetWindowUserPointer(window);
 		double x, y;
 		glfwGetCursorPos(window, &x, &y);
 		MouseScrollEvent e(x, y, xx, yy);
 		d.eventCallback(e);
-	});
+		});
 	glfwSetCursorEnterCallback(m_window, [](GLFWwindow* window, int entered) {
 		WindowData& d = *(WindowData*)glfwGetWindowUserPointer(window);
 		d.hovered = entered;
 		double x, y;
 		glfwGetCursorPos(window, &x, &y);
-		MouseEnteredEvent e(x,y,(bool)entered);
+		MouseEnteredEvent e(x, y, (bool)entered);
 		d.eventCallback(e);
 		});
-	glfwSetDropCallback(m_window, [](GLFWwindow* window, int count, const char** paths){
+	glfwSetDropCallback(m_window, [](GLFWwindow* window, int count, const char** paths) {
 		//warning paths are valid until this function returns
 		WindowData& d = *(WindowData*)glfwGetWindowUserPointer(window);
-		DropFilesEvent e(count,paths);
+		DropFilesEvent e(count, paths);
 		d.eventCallback(e);
-	});
+		});
 
 
 	//GLint i = 0;
@@ -183,14 +173,14 @@ Window::Window(int width, int height, const std::string& title,bool fullscreen) 
 	ND_TRACE("GL version: {}", gl);
 	ND_TRACE("GLSL version: {}", glsl);
 	ND_TRACE("MaxVertexAttribs: {}", maxVertAttrib);
-	
 
-	if(fullscreen)
+
+	if (fullscreen)
 		setFullScreen(true);
-	
-	ND_TRACE("Window created with dimensions: [{}, {}], fullscreen: {}",width,height,fullscreen);
+
+	ND_TRACE("Window created with dimensions: [{}, {}], fullscreen: {}", width, height, fullscreen);
 	m_raw_mouse_enabled = glfwRawMouseMotionSupported();
-	if(!m_raw_mouse_enabled)
+	if (!m_raw_mouse_enabled)
 	{
 		ND_WARN("Window does not support raw mouse input!");
 	}
@@ -233,7 +223,7 @@ void Window::setFullScreen(bool fullscreen)
 	}
 	else
 	{
-		glfwSetWindowMonitor(m_window, nullptr, m_data.lastX, m_data.lastY, m_data.lastWidth, m_data.lastHeight,60);
+		glfwSetWindowMonitor(m_window, nullptr, m_data.lastX, m_data.lastY, m_data.lastWidth, m_data.lastHeight, 60);
 		m_data.width = m_data.lastWidth;
 		m_data.height = m_data.lastHeight;
 		m_data.x = m_data.lastX;
@@ -242,7 +232,7 @@ void Window::setFullScreen(bool fullscreen)
 	m_data.fullscreen = fullscreen;
 }
 
-void Window::setTitle(const char * title)
+void Window::setTitle(const char* title)
 {
 	m_data.title = title;
 	glfwSetWindowTitle(m_window, title);
@@ -257,7 +247,7 @@ void Window::setCursorPolicy(WindowCursor state)
 		s = GLFW_CURSOR_HIDDEN;
 	glfwSetInputMode(m_window, GLFW_CURSOR, s);
 	if (m_raw_mouse_enabled)
-		glfwSetInputMode(m_window, GLFW_RAW_MOUSE_MOTION, (int)(s==GLFW_CURSOR_DISABLED));
+		glfwSetInputMode(m_window, GLFW_RAW_MOUSE_MOTION, (int)(s == GLFW_CURSOR_DISABLED));
 	m_cursor_policy = state;
 }
 
@@ -293,6 +283,27 @@ void Window::pollEvents()
 bool Window::shouldClose()
 {
 	return m_window != nullptr && glfwWindowShouldClose(m_window);
+}
+
+void Window::setIcon(std::string_view image_path)
+{
+	stbi_set_flip_vertically_on_load(false);
+
+	int w, h, mbbpp;
+	GLFWimage icons[1];
+	if (FUtil::exists(image_path)) {
+		icons->pixels = stbi_load(std::string(image_path).c_str(), &w, &h, &mbbpp, 4);
+		icons->width = w;
+		icons->height = h;
+
+		glfwSetWindowIcon(m_window, 1, icons);
+		stbi_image_free((void*)icons[0].pixels);
+	}
+}
+
+void Window::setClipboard(const wchar_t* c)
+{
+	ASSERT(false, "cliboard from wchar not implemented yet");
 }
 
 const char* Window::getClipboard() const
@@ -396,7 +407,7 @@ bool RealInput::isMouseFreshlyReleased(MouseCode button)
 
 glm::vec2 RealInput::getDragging()
 {
-	return getMouseLocation()-m_drag_offset;
+	return getMouseLocation() - m_drag_offset;
 }
 
 glm::vec2 RealInput::getMouseLocation()

@@ -1,0 +1,123 @@
+# Dictionary language file 
+# you can use # or // for line comment
+# use: "<keyname> =<Very interesting translation a.k.a. value>
+# 	-keyname must not contain spaces
+#   -value can have spaces
+#
+# It's customary to include 
+# game.current_lang=EsperantoOrSomething
+# entry to specify language of this file
+#
+#
+#
+# to add prefix for multiple lines:
+#
+# "
+# ->some_prefix.nested_pref
+# btn.open=Open
+# btn.close =Closing Button
+# <- 
+# "
+#
+# will expand to:
+#
+# "
+# some_prefix.nested_pref.btn.open=Open
+# some_prefix.nested_pref.btn.close =Closing Button
+# "
+#	
+
+game.current_lang="Japanese"
+game.name	=NiceDay
+
+
+true		=はい
+false		=いええ
+language	=言語
+back		=戻る
+
+# basic block items
+->item
+
+stone		=石
+dirt		=地
+gold		=金
+adamantite	=アダマンチウム
+platform	=プラト
+grass		=草
+glass		=ガラス
+torch		=ト一チ
+door		=ドアー
+painting	=写真
+sapling		=苗木
+# flowers
+flower:0	=Whitey
+flower:1	=Dandelion
+flower:2	=Violet
+flower:3	=Rose
+flower:4	=Lily
+flower:5	=Chrisanthemum
+flower:6	=Hyacinth
+flower:7	=Moon Hyacinth
+
+grass_plant	=Grass Plant
+snow		=雪
+snow_brick	=雪のレンガ
+ice			=アイス
+pumpkin		=カボチャ
+chest		=チェスト
+radio		=ラジオ
+
+grass_plant:0	=草
+grass_plant:1	=草
+grass_plant:2	=草
+grass_plant:3	=草
+
+# basic tools items
+
+pickaxe			=銅ピック
+el_pickaxo		=エル　ピック
+shotgun			=ShotGun Extreme
+
+# miscellaneous
+tnt:0			=小さな爆弾
+tnt:1			=中爆弾
+tnt:2			=大きな爆弾
+tree			=木
+tree_sapling	=苗木
+<-
+
+
+# main_screen
+->main
+btn.exit=終了
+btn.play=レレ
+btn.play_play=b&f&0は&1じ&2め&3ま&4し&5ぉ&6ぅ&f!
+btn.settings=設定
+<-
+
+# choose world screen
+title.choose_world	=世界の選択
+btn.create_world	=世界を作る
+
+# pause screen
+title.pause=ポーズされます
+
+# controls screen
+title.controls=キイイイイイ
+
+
+# navigation gui buttons
+->btn
+back			=戻る
+continue		=続ける
+save_back		=セーブと戻る
+save_go_menu	=セーブとメニューに戻る
+<-
+
+
+
+btn.controls=キイス
+btn.lang=言語
+title.settings=設定
+title.language=言語の選択

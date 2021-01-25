@@ -1,6 +1,12 @@
 ﻿#include "Inventory.h"
 
 
+BasicInventory::~BasicInventory()
+{
+	for (auto item : m_items)
+		if (item)item->destroy();
+}
+
 void BasicInventory::setInventorySize(int size)
 {
 	m_items.resize(size);
@@ -61,7 +67,7 @@ ItemStack* BasicInventory::putAtIndex(ItemStack* stack, int index, int count)
 	if (target != nullptr && stack->equals(target))
 	{
 		int freeSpace = target->getItem().getMaxStackSize() - target->size();
-		int toAdd = std::min(freeSpace, count == -1 ? stack->size() : count);
+		int toAdd = std::min(freeSpace, count == ALL ? stack->size() : count);
 		target->addSize(toAdd);
 		stack->addSize(-toAdd);
 		if (stack->isEmpty())
@@ -112,7 +118,7 @@ ItemStack* BasicInventory::takeFromIndex(int index, int number)
 	auto& target = m_items[index];
 	if (target == nullptr)
 		return nullptr;
-	if (target->size() <= number || number == -1)
+	if (target->size() <= number || number == ALL)
 	{
 		auto out = target;
 		target = nullptr;

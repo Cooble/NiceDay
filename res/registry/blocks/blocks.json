@@ -9,6 +9,7 @@
     "opacity": 1,
     "lightSrc": 0,
     "needsWall": true,
+	"replaceable":true,
     "cannotFloat":true,
     //solid if block can be placed on top of it
     "solid":false,
@@ -39,19 +40,19 @@
  "corners":false
 */
   "stone": {
-    "hardness": 2,
+    "hardness": 1.2,
     "hasBigTexture": true,
     "connectGroups": "dirt",
     "corners": "dirt"
   },
   "snow": {
-    "hardness": 1,
+    "hardness": 0.6,
     "hasBigTexture": true,
     "connectGroups": "dirt",
     "corners": "dirt"
   },
   "snow_brick": {
-    "hardness": 1,
+    "hardness": 2,
     "hasBigTexture": true,
     "connectGroups": "dirt",
     "corners": "glass"
@@ -75,7 +76,7 @@
     "corners": "dirt"
   },
   "adamantite": {
-    "hardness": 1,
+    "hardness": 3,
     "hasBigTexture": true,
     "connectGroups": [ "ore", "dirt" ],
     "corners": "dirt"
@@ -92,20 +93,21 @@
     "corners": "dirt"
   },
   "glass": {
-    "hardness": 1,
+    "hardness": 0,
     "connectGroups": "glass",
     "corners": "glass",
     "opacity": "air",
     "hasBigTexture": true
   },
   "torch": {
-    "hardness": 1,
+    "hardness": 0,
     "lightSrc": 16,
     "opacity": 0,
     "solid": false,
     "collision": false
   },
   "painting": {
+	"hardness": 0,
     "opacity": "air",
     "collision": false,
     "needsWall": true,
@@ -155,13 +157,16 @@
     "flags": [ "burnable" ]
   },
   "flower": {
+	"hardness": 0,
     "plant": true,
     "cannotFloat": true,
     "metaTexturesInRow": true,
     "maxMeta": 8
   },
   "grass_plant": {
+	"hardness": 0,
     "plant": true,
+	"replaceable":true,
     "cannotFloat": true,
     "metaTexturesInRow": true,
     "maxMeta": 4

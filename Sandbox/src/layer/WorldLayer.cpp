@@ -10,8 +10,6 @@
 #include "core/Stats.h"
 #include <GLFW/glfw3.h>
 
-#include "world/biome/BiomeForest.h"
-
 #include <imgui.h>
 #include "world/block/Block.h"
 
@@ -21,9 +19,7 @@
 #include "world/entity/entity_datas.h"
 #include "world/entity/entities.h"
 #include "graphics/TextureManager.h"
-#include "world/particle/particles.h"
 #include "world/ChunkMesh.h"
-#include "core/imgui_utils.h"
 #include "inventory/Item.h"
 #include "graphics/GContext.h"
 #include "core/AppGlobals.h"
@@ -33,8 +29,6 @@
 #include <lua.hpp>
 #include "world/entity/EntityPlayer.h"
 #include "world/entity/EntityAllocator.h"
-#include "inventory/ItemBlock.h"
-#include "world/block/block_datas.h"
 #include "graphics/BlockTextureCreator.h"
 #include "event/SandboxControls.h"
 #include "audio/player.h"
@@ -78,6 +72,8 @@ WorldLayer::WorldLayer()
 	loadResources();
 }
 
+Texture* blockSelectorTexture;
+
 void WorldLayer::loadResources()
 {
 	ND_PROFILE_METHOD();
@@ -86,9 +82,11 @@ void WorldLayer::loadResources()
 
 
 	static SpriteSheetResource res(Texture::create(
-		                               TextureInfo("res/images/borderBox.png")
-		                               .filterMode(TextureFilterMode::NEAREST)
-		                               .format(TextureFormat::RGBA)), 1, 1);
+		TextureInfo("res/images/borderBox.png")
+		.filterMode(TextureFilterMode::NEAREST)
+		.format(TextureFormat::RGBA)), 1, 1);
+
+	blockSelectorTexture = Texture::create(TextureInfo(ND_RESLOC("res/images/block_selector.png")).filterMode(TextureFilterMode::NEAREST));
 
 	Stats::bound_sprite = new Sprite(&res);
 	Stats::bound_sprite->setSpriteIndex(0, 0);
@@ -100,11 +98,11 @@ void WorldLayer::loadWorld(nd::temp_string& worldname, bool regen)
 {
 	//set fbo to dark
 	fadeInStateAlpha = 0;
-	
+
 	m_has_world = true;
 
 	m_cam = new Camera();
-	m_cam->setChunkRadius({6, 6});
+	m_cam->setChunkRadius({ 6, 6 });
 
 
 	m_batch_renderer = new BatchRenderer2D();
@@ -206,12 +204,12 @@ void WorldLayer::onWorldLoaded()
 		.filterMode(TextureFilterMode::NEAREST)
 		.format(TextureFormat::RGBA));
 	*m_world->particleManager() = new ParticleManager(10000, particleAtlasT, particleAtlasSize, blockAtlas,
-	                                                  BLOCK_TEXTURE_ATLAS_SIZE);
+		BLOCK_TEXTURE_ATLAS_SIZE);
 
 	//load entity manager
 	if (m_world->getWorldNBT().exists("playerID"))
 	{
-		m_world->getWorldNBT().load("playerID",playerID);
+		m_world->getWorldNBT().load("playerID", playerID);
 		ChunkID chunk = m_world->getWorldNBT()["player_chunkID"];
 		m_world->loadChunk( //load chunk where player is
 			half_int::X(chunk),
@@ -273,7 +271,7 @@ static WorldEntity& luaGetPlayerRef()
 void WorldLayer::loadLuaWorldLibs()
 {
 	auto L = App::get().getLua()->getSolState();
-	lua_binder_particles::bindEverything(*L,m_world,&getPlayer());
+	lua_binder_particles::bindEverything(*L, m_world, &getPlayer());
 
 	/*luabridge::getGlobalNamespace(L)
 		.beginNamespace("Particle")
@@ -310,11 +308,11 @@ void WorldLayer::loadLuaWorldLibs()
 	App::get().getLua()->runScriptInConsole(L, "world = World()");
 	App::get().getLua()->runScriptInConsole(L, "player = Player()");
 	App::get().getLua()->runScriptInConsole(L,
-	                                        "function playerPos() "
-	                                        "	local po = player:getPosition() "
-	                                        "	return VEC2(po.x,po.y)"
-	                                        "end");
-											
+											"function playerPos() "
+											"	local po = player:getPosition() "
+											"	return VEC2(po.x,po.y)"
+											"end");
+
 	ND_TRACE("Loaded world lua bindings");*/
 }
 
@@ -428,7 +426,8 @@ void WorldLayer::onUpdate()
 		return;
 	if (getPlayer().hasCreative())
 		onCreativeUpdate();
-	else onSurvivalUpdate();
+	else
+		onSurvivalUpdate();
 
 
 	//camera movement===================================================================
@@ -438,7 +437,7 @@ void WorldLayer::onUpdate()
 	float acc = 0.3f;
 	float moveThroughBlockSpeed = 6;
 
-	if (!GUIContext::isAnyItemActive()&&APwin()->isFocused())
+	if (!GUIContext::isAnyItemActive() && APwin()->isFocused())
 	{
 		if (Stats::move_through_blocks_enable)
 		{
@@ -483,7 +482,7 @@ void WorldLayer::onCreativeUpdate()
 	bool tntenable = true;
 	constexpr int maxDeltaBum = 2;
 	static int deltaBum = 0;
-	
+
 	if (!GUIContext::isAnyItemActive())
 	{
 		if (APin().isKeyPressed(Controls::SPAWN_TNT))
@@ -495,7 +494,7 @@ void WorldLayer::onCreativeUpdate()
 					deltaBum = maxDeltaBum;
 					auto bullet = (EntityRoundBullet*)EntityAllocator::createEntity(ENTITY_TYPE_TNT);
 					bullet->getPosition() = getPlayer().getPosition() + glm::vec2(0, 1.5);
-					bullet->fire({CURSOR_X, CURSOR_Y}, 60.f / 60);
+					bullet->fire({ CURSOR_X, CURSOR_Y }, 60.f / 60);
 					bullet->setOwner(getPlayer().getID());
 					m_world->spawnEntity(bullet);
 				}
@@ -540,9 +539,9 @@ void WorldLayer::onCreativeUpdate()
 			if (BLOCK_OR_WALL_SELECTED)
 			{
 				auto& str = *m_world->getBlockOrAir(CURSOR_X, CURSOR_Y);
-				if (str.block_id != BLOCK_PALLETE_SELECTED && BlockRegistry::get()
-				                                              .getBlock(BLOCK_PALLETE_SELECTED).canBePlaced(
-					                                              *m_world, CURSOR_X, CURSOR_Y))
+				if (str.block_id != BLOCK_PALLETE_SELECTED /*&& BlockRegistry::get()
+					.getBlock(BLOCK_PALLETE_SELECTED).canBePlaced(
+						*m_world, CURSOR_X, CURSOR_Y)*/)
 					m_world->setBlockWithNotify(CURSOR_X, CURSOR_Y, BLOCK_PALLETE_SELECTED);
 			}
 
@@ -560,48 +559,29 @@ void WorldLayer::onCreativeUpdate()
 	}
 }
 
+static int pressedTicks = 0;
+static int lastPressedTicks = 0;
+
 void WorldLayer::onSurvivalUpdate()
 {
 	if (isDragging)
 	{
+		pressedTicks++;
+		lastPressedTicks = pressedTicks;
+
 		auto& inHand = getPlayer().getInventory().itemInHand();
-		getPlayer().setItemSwinging(false);
 
 		if (inHand)
 		{
-			auto& item = inHand->getItem();
-			if (item.isBlock())
-			{
-				auto& itemBlock = dynamic_cast<const ItemBlock&>(item);
-				auto blok = m_world->getBlockM(CURSOR_X, CURSOR_Y);
-				if (blok == nullptr)
-					return;
+			inHand->getItem().onInteraction(*m_world, *inHand, getPlayer().getInventory().getItemDataBox(), getPlayer(), CURSOR_X, CURSOR_Y, Item::PRESSED, pressedTicks - 1);
 
-				auto blokid = item.getBlockID();
-				if (blokid >= 0)
-				{
-					if (blok->block_id == item.getBlockID())
-						return;
-					if (!BlockRegistry::get().getBlock(blokid).canBePlaced(*m_world, CURSOR_X, CURSOR_Y))
-						return;
-					BlockStruct stru = {};
-					stru.block_id = itemBlock.getBlockID();
-					stru.block_metadata = itemBlock.getBlockMetadata(inHand);
-					m_world->setBlockWithNotify(CURSOR_X, CURSOR_Y, stru);
-
-					inHand->addSize(-1);
-					if (inHand->size() == 0)
-					{
-						inHand->destroy();
-						inHand = nullptr;
-					}
-					m_world->getBlockM(CURSOR_X, CURSOR_Y)->block_metadata = stru.block_metadata;
-					return;
-				}
+			if (inHand->size() == 0) {
+				inHand->destroy();
+				inHand = nullptr;
 			}
 
 
-			item.onBlockBeingDigged(*m_world, *inHand, getPlayer(), CURSOR_X, CURSOR_Y);
+			/*item.onBlockBeingDigged(*m_world, *inHand, getPlayer(), CURSOR_X, CURSOR_Y);
 			getPlayer().setItemSwinging(true);
 			getPlayer().setFacingDir(getPlayer().getFacingDirection().x < 0);
 			auto structInWorld = m_world->getBlockM(CURSOR_X, CURSOR_Y);
@@ -625,27 +605,43 @@ void WorldLayer::onSurvivalUpdate()
 			itemEntity->getVelocity() = {0, 5 / 60.f};
 			m_world->spawnBlockBreakParticles(CURSOR_X, CURSOR_Y);
 			m_world->setBlockWithNotify(CURSOR_X, CURSOR_Y, 0);
-			m_world->spawnEntity(itemEntity);
+			m_world->spawnEntity(itemEntity);*/
 			return;
 
 
-			auto& entities = m_world->getLoadedEntities();
+			/*auto& entities = m_world->getLoadedEntities();
 			bool foundEntity = false;
 			for (auto e : entities)
 			{
 				auto entity = dynamic_cast<PhysEntity*>(m_world->getEntityManager().entity(e));
 				if (entity)
 					if (Phys::contains(entity->getCollisionBox(), {
-						                   CURSOR_X - entity->getPosition().x, CURSOR_Y - entity->getPosition().y
-					                   }))
+										   CURSOR_X - entity->getPosition().x, CURSOR_Y - entity->getPosition().y
+									   }))
 					{
 						item.hitEntity(*m_world, inHand, getPlayer(), *entity);
 						foundEntity = true;
 						break;
 					}
-			}
+			}*/
 		}
 		getPlayer().setItemSwinging(false);
+	}
+}
+
+void WorldLayer::onSurvivalEvent(Event& e)
+{
+	auto ee = dynamic_cast<MouseReleaseEvent*> (&e);
+	if (ee) {
+		auto& inHand = getPlayer().getInventory().itemInHand();
+		if (inHand && lastPressedTicks != 0)//check if this release had pressed first (there cannot be released with lastPressedTicks==0)
+		{
+			inHand->getItem().onInteraction(*m_world, *inHand, getPlayer().getInventory().getItemDataBox(), getPlayer(), CURSOR_X, CURSOR_Y, Item::RELEASED, lastPressedTicks);
+			if (inHand->size() == 0) {
+				inHand->destroy();
+				inHand = nullptr;
+			}
+		}
 	}
 }
 
@@ -656,7 +652,7 @@ static void fadeInEffect(World* w, const Texture* randomTexture)
 {
 	if (fadeInStateAlpha == 1.f)
 		return;
-	
+
 	static float fadeInSeconds = 1.f;
 	// fade in effect we take random fbo lets say entityFbo
 	if (w && w->areFirstChunksGenerated() && fadeInStateAlpha != 1.f) {
@@ -668,7 +664,7 @@ static void fadeInEffect(World* w, const Texture* randomTexture)
 	Gcon.setBlendConstant(0, 0, 0, fadeInStateAlpha);
 	Effect::render(randomTexture, Renderer::getDefaultFBO());
 	Gcon.setBlendFunc(Blend::SRC_ALPHA, Blend::ONE_MINUS_SRC_ALPHA);
-	
+
 }
 
 void WorldLayer::onRender()
@@ -683,7 +679,7 @@ void WorldLayer::onRender()
 	ND_PROFILE_CALL(m_render_manager->update());
 	//world
 	ND_PROFILE_CALL(m_render_manager->render(*m_batch_renderer, Renderer::getDefaultFBO()));
-	
+
 	//entities
 	auto entityFbo = m_render_manager->getEntityFBO();
 	entityFbo->bind();
@@ -702,6 +698,24 @@ void WorldLayer::onRender()
 		auto ren = dynamic_cast<IBatchRenderable2D*>(entity);
 		if (ren)
 			ren->render(*m_batch_renderer);
+	}
+
+	float textureSize = 24;
+	float upscale = textureSize / 16;
+
+	NBT n = AppGlobals::get().nbt["diggingPos"];
+	/*if (!n.isNull()) {
+		for (int i = 0; i < n.size(); ++i)
+		{
+			glm::vec2 po = n[i];
+			po -= (upscale - 1.f) / 2;
+			m_batch_renderer->submitTextureQuad(glm::vec3(po.x,po.y,0), glm::vec2(upscale, upscale), UVQuad::elementary(), blockSelectorTexture);
+		}
+	}*/
+	if (!n.isNull()) {
+		glm::vec2 po = n;
+		po -= (upscale - 1.f) / 2;
+		m_batch_renderer->submitTextureQuad(glm::vec3(po.x, po.y, 0), glm::vec2(upscale, upscale), UVQuad::elementary(), blockSelectorTexture);
 	}
 
 	m_batch_renderer->pop();
@@ -781,7 +795,7 @@ void WorldLayer::onImGuiRenderWorld()
 	}
 
 	ImGui::Checkbox(Stats::move_through_blocks_enable ? "Move through Blocks Enabled" : "Move through Blocks Disabled",
-	                &Stats::move_through_blocks_enable);
+		&Stats::move_through_blocks_enable);
 	l = BLOCK_OR_WALL_SELECTED;
 	ImGui::Checkbox(BLOCK_OR_WALL_SELECTED ? "BLOCK mode" : "WALL mode", &BLOCK_OR_WALL_SELECTED);
 	if (l != BLOCK_OR_WALL_SELECTED)
@@ -795,7 +809,7 @@ void WorldLayer::onImGuiRenderWorld()
 
 	ImGui::Text("World filepath: %s", m_world->getFilePath());
 	ImGui::Text("WorldTime: (%d) %d:%d", m_world->getWorldTime().m_ticks, (int)m_world->getWorldTime().hour(),
-	            (int)m_world->getWorldTime().minute());
+		(int)m_world->getWorldTime().minute());
 	ImGui::SliderFloat("Time speed", &m_world->m_time_speed, 0.f, 25.0f, "ratio = %.2f");
 	ImGui::Text("Cam X: %.2f \t(%d)", CAM_POS_X, (int)CAM_POS_X >> WORLD_CHUNK_BIT_SIZE);
 	ImGui::Text("Cam Y: %.2f \t(%d)", CAM_POS_Y, (int)CAM_POS_Y >> WORLD_CHUNK_BIT_SIZE);
@@ -816,21 +830,21 @@ void WorldLayer::onImGuiRenderWorld()
 		CURRENT_BLOCK = current;
 		quarter_int metaSections = CURRENT_BLOCK->block_metadata;
 		ImGui::Text("Current Block: %s (id: %d, corner: %d, meta: %d ->[%d,%d,%d,%d])", CURRENT_BLOCK_ID.c_str(),
-		            CURRENT_BLOCK->block_id,
-		            CURRENT_BLOCK->block_corner, CURRENT_BLOCK->block_metadata, metaSections.x, metaSections.y,
-		            metaSections.z, metaSections.w);
+			CURRENT_BLOCK->block_id,
+			CURRENT_BLOCK->block_corner, CURRENT_BLOCK->block_metadata, metaSections.x, metaSections.y,
+			metaSections.z, metaSections.w);
 		int wallid = CURRENT_BLOCK->wall_id[0];
 		if (!CURRENT_BLOCK->isWallOccupied())
 			wallid = -1;
 		ImGui::Text("Current Wall: %s (id: %d)",
-		            BlockRegistry::get().getWall(CURRENT_BLOCK->wall_id[0]).getStringID().c_str(), wallid);
+			BlockRegistry::get().getWall(CURRENT_BLOCK->wall_id[0]).getStringID().c_str(), wallid);
 
 		for (int i = 0; i < 2; ++i)
 			for (int j = 0; j < 2; ++j)
 			{
 				const Wall& w = BlockRegistry::get().getWall(CURRENT_BLOCK->wall_id[i * 2 + j]);
 				ImGui::Text(" -> (%d, %d): corner:%d, %s ", j, i, CURRENT_BLOCK->wall_corner[i * 2 + j],
-				            w.getStringID().c_str());
+					w.getStringID().c_str());
 			}
 		int ccx = CURSOR_X;
 		int ccy = CURSOR_Y;
@@ -838,7 +852,7 @@ void WorldLayer::onImGuiRenderWorld()
 		int i = CURSOR_Y - ccy < 0.5f ? 0 : 1;
 		const Wall& w = BlockRegistry::get().getWall(CURRENT_BLOCK->wall_id[i * 2 + j]);
 		ImGui::Text("Selected Wall -> (%d, %d): corner:%d, %s ", j, i, CURRENT_BLOCK->wall_corner[i * 2 + j],
-		            w.getStringID().c_str());
+			w.getStringID().c_str());
 	}
 
 	ImGui::Separator();
@@ -941,24 +955,24 @@ void WorldLayer::onImGuiRenderChunks()
 		if (offset < 10)
 		{
 			ImGui::Text("0%d: (%d/%d), %s, ac:%d, ID:%d",
-			            offset++,
-			            (int)header.getJobConst().m_worker,
-			            (int)header.getJobConst().m_main,
-			            toString(header.getState()).c_str(),
-			            header.isAccessible(),
-			            header.getChunkID()
+				offset++,
+				(int)header.getJobConst().m_worker,
+				(int)header.getJobConst().m_main,
+				toString(header.getState()).c_str(),
+				header.isAccessible(),
+				header.getChunkID()
 
 			);
 		}
 		else
 		{
 			ImGui::Text("%d: (%d/%d), %s, ac:%d, ID:%d",
-			            offset++,
-			            (int)header.getJobConst().m_worker,
-			            (int)header.getJobConst().m_main,
-			            toString(header.getState()).c_str(),
-			            header.isAccessible(),
-			            header.getChunkID()
+				offset++,
+				(int)header.getJobConst().m_worker,
+				(int)header.getJobConst().m_main,
+				toString(header.getState()).c_str(),
+				header.isAccessible(),
+				header.getChunkID()
 
 			);
 		}
@@ -990,11 +1004,14 @@ void WorldLayer::onEvent(Event& e)
 	}
 	//if (!ImGui::IsMouseHoveringAnyWindow())
 
-	if (e.getEventType() == Event::EventType::MouseRelease)
+	if (e.getEventType() == Event::EventType::MouseRelease) {
 		isDragging = false;
+		pressedTicks = 0;
+	}
 
 	if (e.getEventType() == Event::EventType::MousePress)
 	{
+		pressedTicks = 0;
 		auto event = dynamic_cast<MousePressEvent*>(&e);
 
 		if (event->getButton() == MouseCode::LEFT)
@@ -1021,7 +1038,7 @@ void WorldLayer::onEvent(Event& e)
 			auto inHand = getPlayer().getInventory().itemInHand();
 			if (inHand)
 			{
-				auto t = m_world->getEntitiesAtLocation({CURSOR_X, CURSOR_Y});
+				auto t = m_world->getEntitiesAtLocation({ CURSOR_X, CURSOR_Y });
 				if (!t.empty())
 				{
 					inHand->getItem().onRightClickOnEntity(*m_world, *inHand, getPlayer(), CURSOR_X, CURSOR_Y, *t[0]);
@@ -1030,14 +1047,14 @@ void WorldLayer::onEvent(Event& e)
 				{
 					auto& stru = *m_world->getBlockM(CURSOR_X, CURSOR_Y);
 					if (!inHand->getItem().onRightClickOnBlock(*m_world, *inHand, getPlayer(), CURSOR_X, CURSOR_Y, stru)
-					)
+						)
 						BlockRegistry::get().getBlock(stru.block_id).onBlockClicked(
 							*m_world, &getPlayer(), CURSOR_X, CURSOR_Y, stru);
 				}
-				if(inHand->isEmpty())
+				if (inHand->isEmpty())
 				{
 					//destroy inHandItem
-					getPlayer().getInventory().takeFromIndex(getPlayer().getInventory().itemInHandSlot(),-1)->destroy();
+					getPlayer().getInventory().takeFromIndex(getPlayer().getInventory().itemInHandSlot(), -1)->destroy();
 				}
 			}
 			else
@@ -1048,17 +1065,14 @@ void WorldLayer::onEvent(Event& e)
 			}
 			event->handled = true;
 		}
-		if (getPlayer().hasCreative())
-			onCreativeEvent(e);
-		else onSurvivalEvent(e);
 	}
+	if (getPlayer().hasCreative())
+		onCreativeEvent(e);
+	else onSurvivalEvent(e);
 }
 
 void WorldLayer::onCreativeEvent(Event& e)
 {
-	
+
 }
 
-void WorldLayer::onSurvivalEvent(Event& e)
-{
-}

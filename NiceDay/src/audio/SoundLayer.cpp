@@ -31,7 +31,7 @@ typedef struct
 	int sampleIndex = 0;
 	float samples[SAMPLE_SIZE * 2]; //one tenth of second
 	int bufferIndex = 0;
-	RingBufferLite* buffer;
+	NDUtil::RingBufferLite* buffer;
 	int valuesReadInCurrentFrame = 0;
 	bool error = false;
 	int channels = 1;

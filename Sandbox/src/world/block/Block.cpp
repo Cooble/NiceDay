@@ -35,7 +35,7 @@ Phys::Vecti Block::getTileEntityCoords(int x, int y, const BlockStruct& b) const
 const Phys::Polygon& Block::getCollisionBox(int x, int y, const BlockStruct& b) const
 {
 	auto i = m_collision_box_size >= 3 ? 1 : 0;
-	switch (b.block_corner)
+	switch (BLOCK_STATE_PURE_MASK & b.block_corner)
 	{
 	case BLOCK_STATE_CORNER_UP_LEFT:
 		return m_collision_box[1* i];
@@ -86,10 +86,10 @@ bool Block::isInGroup(BlockID blockID, int group) const
 bool Block::onNeighborBlockChange(BlockAccess& world, int x, int y) const
 {
 	int mask = 0;
-	mask |= ((!isInGroup(world, x, y + 1, m_block_connect_group)) & 1) << 0;
-	mask |= ((!isInGroup(world, x - 1, y, m_block_connect_group)) & 1) << 1;
-	mask |= ((!isInGroup(world, x, y - 1, m_block_connect_group)) & 1) << 2;
-	mask |= ((!isInGroup(world, x + 1, y, m_block_connect_group)) & 1) << 3;
+	mask |= (!isInGroup(world, x, y + 1, m_block_connect_group) & 1) << 0;
+	mask |= (!isInGroup(world, x - 1, y, m_block_connect_group) & 1) << 1;
+	mask |= (!isInGroup(world, x, y - 1, m_block_connect_group) & 1) << 2;
+	mask |= (!isInGroup(world, x + 1, y, m_block_connect_group) & 1) << 3;
 
 
 	BlockStruct& block = *world.getBlockM(x, y);
@@ -136,11 +136,18 @@ void Block::onBlockClicked(World& w, WorldEntity* e, int x, int y, BlockStruct& 
 
 bool Block::canBePlaced(World& w, int x, int y) const
 {
+	// can be hanged only on wall
 	if(needsWall() && w.getBlock(x, y)->isWallFree())
 		return false;
-	//todo make every block flags that would inform if block is solid or not and others
+
+	// block is already occupied with another block
+	if (!w.getBlockInstance(x, y).isReplaceable())
+		return false;
+	
+	// can be put only on ground
 	if(cannotFloat() && !w.getBlockInstance(x, y - 1).isSolid())
 		return false;
+	
 	return true;
 }
 

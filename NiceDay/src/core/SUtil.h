@@ -5,6 +5,7 @@
 typedef std::string Stringo;
 typedef std::string_view Viewo;
 
+
 namespace SUtil
 {
 	inline bool startsWith(Viewo s,Viewo prefix)
@@ -201,6 +202,7 @@ namespace SUtil
 			}
 		}
 	}
+	
 
 	/*inline void splitString(const std::string_view& line, std::vector<std::string_view>& words, const char* divider = " \n\t")
 	{
@@ -416,6 +418,18 @@ namespace SUtil
 			else return;
 		}
 	}
+	// converts utf8 encoded string to zero terminated int array of codePoints
+	// transfers ownership of returned array (don't forget free())
+	// length will be set to size returned array (excluding zero terminator)
+	const int* utf8toCodePointsArray(const char* c, int* length=nullptr);
+	
+	std::u32string utf8toCodePoints(const char* c);
+	
+	inline std::u32string utf8toCodePoints(const std::string& c) { return utf8toCodePoints(c.c_str()); }
+
+	// converts ascii u32 string to string
+	// use only if you know that there are only ascii characters
+	std::string u32StringToString(std::u32string_view s);
 }
 
 

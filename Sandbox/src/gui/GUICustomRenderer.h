@@ -27,6 +27,7 @@ private:
 	FontMaterial* m_small_font;
 	
 public:
+	
 	GUICustomRenderer(glm::vec2 windowSize = { 1280,720 });
 
 	void setItemAtlas(int atlasSize,Texture* t);
@@ -39,6 +40,8 @@ public:
 	void renderImage(BatchRenderer2D& renderer, GUIImage& e) override;
 	void renderButton(BatchRenderer2D& renderer, GUIButton& e) override;
 	void renderTextBox(BatchRenderer2D& renderer, GUITextBox& e) override;
+
+	
 };
 
 

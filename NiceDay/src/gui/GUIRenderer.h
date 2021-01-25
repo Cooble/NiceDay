@@ -15,7 +15,7 @@ protected:
 	bool is_view_render_mode;
 	FrameBuffer* m_view_fbo;
 	
-	inline void incrementZ()
+	void incrementZ()
 	{
 		m_z_pos -= Z_DIR_STEP;
 	}
@@ -40,7 +40,7 @@ protected:
 	virtual void renderElements(BatchRenderer2D& renderer, GUIElement& e);
 public:
 	GUIRenderer(glm::vec2 windowSize = {1280,720});
-	inline void setContext(GUIContext* context) { m_context = context; }
+	void setContext(GUIContext* context) { m_context = context; }
 	FontMaterial* m_font_material;
 
 	virtual void setScreenDimensions(int w,int h);

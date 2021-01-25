@@ -43,7 +43,7 @@ inline static bool findBlockIntersection(World& w, const glm::vec2& entityPos, c
 				continue;
 			auto blockBounds = block.getCollisionBox((int)blockPos.x, (int)blockPos.y, *stru).copy();
 
-			blockBounds.plus({x - (entityPos.x - (int)entityPos.x), y - (entityPos.y - (int)entityPos.y)});
+			blockBounds.plus({ x - (entityPos.x - (int)entityPos.x), y - (entityPos.y - (int)entityPos.y) });
 			if (Phys::isIntersects(blockBounds, entityBound))
 				return true;
 		}
@@ -165,7 +165,7 @@ bool PhysEntity::moveOrCollide(World& w, float dt)
 	m_is_on_floor = false;
 
 	bool isSlippery = (w.getBlock(m_pos.x, m_pos.y - 1) != nullptr && w.getBlock(m_pos.x, m_pos.y - 1)->block_id ==
-			BLOCK_ICE)
+		BLOCK_ICE)
 		|| (w.getBlock(m_pos.x, m_pos.y) != nullptr && w.getBlock(m_pos.x, m_pos.y)->block_id == BLOCK_ICE);
 	float floorResistance = isSlippery ? 0.005 : 0.2; //negative numbers mean conveyor belt Yeah!
 
@@ -231,7 +231,7 @@ bool PhysEntity::moveOrCollide(World& w, float dt)
 					m_pos.y = (int)m_pos.y + 0.01f;
 				}
 				possibleEntityPos = m_pos;
-				m_velocity = {0, 0};
+				m_velocity = { 0, 0 };
 			}
 			else
 			{
@@ -284,7 +284,7 @@ bool PhysEntity::moveOrCollideOnlyBlocksNoBounds(World& w)
 		{
 			auto& blockBounds = block.getCollisionBox((int)possiblePos.x, (int)possiblePos.y, *b);
 			if (Phys::contains(blockBounds,
-			                   {(possiblePos.x - (int)possiblePos.x), (possiblePos.y - (int)possiblePos.y)}))
+				{ (possiblePos.x - (int)possiblePos.x), (possiblePos.y - (int)possiblePos.y) }))
 				return false;
 		}
 	}
@@ -348,7 +348,7 @@ bool Bullet::checkCollisions(World& w, float dt)
 			auto& blokTemplate = BlockRegistry::get().getBlock(blok.block_id);
 			if (blokTemplate.hasCollisionBox() &&
 				Phys::contains(blokTemplate.getCollisionBox(m_pos.x, m_pos.y, blok),
-				               glm::vec2(m_pos.x - (int)m_pos.x, m_pos.y - (int)m_pos.y)))
+					glm::vec2(m_pos.x - (int)m_pos.x, m_pos.y - (int)m_pos.y)))
 			{
 				if (onBlockHit(w, m_pos.x, m_pos.y))
 					return true;
@@ -467,14 +467,25 @@ EntityItem::EntityItem()
 {
 	m_max_live_ticks = 60 * 60;
 	m_max_velocity = glm::vec2(entityItemMaxVelocityNormal);
-	m_acceleration = {0, entityItemGravityLower};
+	m_acceleration = { 0, entityItemGravityLower };
 
-	m_bound = Phys::toPolygon({-0.25, -0.5, 0.5, 0.5});
+	m_bound = Phys::toPolygon({ -0.25, -0.5, 0.5, 0.5 });
 	loadItemAtlas();
+}
+
+EntityItem::~EntityItem()
+{
+	ND_BUG("destroyed item");
+	if (m_item_stack)
+		m_item_stack->destroy();
+	m_item_stack = nullptr;
 }
 
 void EntityItem::setItemStack(ItemStack* stack)
 {
+	if (m_item_stack)
+		m_item_stack->destroy();
+	
 	m_item_stack = stack;
 
 	if (stack == nullptr)
@@ -483,7 +494,7 @@ void EntityItem::setItemStack(ItemStack* stack)
 
 	half_int txtOffset = item.getTextureOffset(*stack);
 
-	m_sprite = UVQuad::build({txtOffset.x * atlasBit, txtOffset.y * atlasBit}, {atlasBit, atlasBit});
+	m_sprite = UVQuad::build({ txtOffset.x * atlasBit, txtOffset.y * atlasBit }, { atlasBit, atlasBit });
 }
 
 
@@ -496,21 +507,43 @@ void EntityItem::update(World& w)
 	constexpr float maxDistance = 5;
 	constexpr float minDistance = 1;
 	constexpr float accelerationTowardsOwner = 0.1;
+	constexpr float maxItemMergeDistance = 1;
 	//if there is no one we can go to
 	if (m_target == ENTITY_ID_INVALID)
 	{
-		m_acceleration = {0, entityItemGravityLower};
+		m_acceleration = { 0, entityItemGravityLower };
 		m_ticks_to_new_search--;
 		if (m_ticks_to_new_search == 0)
 		{
 			m_ticks_to_new_search = 15;
 			auto& entities = w.getEntitiesInRadius(m_pos, maxDistance);
-			for (auto entity : entities)
-				if (entity->getID() != m_ignore_target && entity->isItemConsumer() && entity->wantsItem(m_item_stack))
+			for (auto entity : entities) {
+				if (entity->getEntityType() == this->getEntityType() 
+					&& ((void*)entity != (void*)this) 
+					&& glm::distance2(entity->getPosition(), getPosition()) <= maxItemMergeDistance * maxItemMergeDistance)
+				{
+					auto tonari = dynamic_cast<EntityItem*>(entity);
+					if (*tonari->m_item_stack == *m_item_stack
+						&& !m_item_stack->getItem().hasNBT()
+						&& tonari->m_item_stack->size() >= m_item_stack->size())// merge two same items together if i am smaller than the other one
+					{
+						int remainder = m_item_stack->size() + tonari->m_item_stack->size() - m_item_stack->getItem().getMaxStackSize();
+						if (remainder<=0)//we have room in target itemstack
+						{
+							tonari->m_item_stack->addSize(m_item_stack->size());
+							m_item_stack->destroy();
+							m_item_stack = nullptr;
+							markDead();
+							return;
+						}
+					}
+				}
+				else if (entity->getID() != m_ignore_target && entity->isItemConsumer() && entity->wantsItem(m_item_stack))
 				{
 					m_target = entity->getID();
 					goto FROWARD;
 				}
+			}
 		}
 	}
 	else
@@ -538,7 +571,7 @@ void EntityItem::update(World& w)
 					markDead();
 					return;
 				}
-					//owner didnt take everything :(
+				//owner didnt take everything :(
 				else
 				{
 					m_target = ENTITY_ID_INVALID;
@@ -576,7 +609,7 @@ void EntityItem::update(World& w)
 void EntityItem::render(BatchRenderer2D& renderer)
 {
 	renderer.push(glm::translate(glm::mat4(1.0f), glm::vec3(m_pos.x, m_pos.y, 0)));
-	renderer.submitTextureQuad({-1.f, -0.5f, 0}, {2.f, 2.f}, m_sprite, s_atlas_texture);
+	renderer.submitTextureQuad({ -1.f, -0.5f, 0 }, { 2.f, 2.f }, m_sprite, s_atlas_texture);
 	renderer.pop();
 }
 
@@ -606,9 +639,9 @@ void EntityItem::onSpawned(World& w)
 
 Bullet::Bullet()
 	: m_damage(0),
-	  m_live_ticks(0),
-	  m_max_live_ticks(60 * 30),
-	  m_angle(0)
+	m_live_ticks(0),
+	m_max_live_ticks(60 * 30),
+	m_angle(0)
 {
 	m_flags |= EFLAG_TEMPORARY;
 }
@@ -628,12 +661,12 @@ void Bullet::fire(const glm::vec2& target, float velocity)
 EntityRoundBullet::EntityRoundBullet()
 {
 	m_max_live_ticks = 60 * 60;
-	m_max_velocity = {100.f / 60, 100.f / 60};
-	m_acceleration = {0, -1.f / 60.f};
+	m_max_velocity = { 100.f / 60, 100.f / 60 };
+	m_acceleration = { 0, -1.f / 60.f };
 	static SpriteSheetResource res(Texture::create(
-		                               TextureInfo("res/images/player.png")
-		                               .filterMode(TextureFilterMode::LINEAR)
-		                               .format(TextureFormat::RGBA)), 4, 4);
+		TextureInfo("res/images/player.png")
+		.filterMode(TextureFilterMode::LINEAR)
+		.format(TextureFormat::RGBA)), 4, 4);
 	m_sprite = Sprite(&res);
 	m_sprite.setSpriteIndex(3, 0);
 	float size = 1.5f;
@@ -678,9 +711,9 @@ bool EntityRoundBullet::onBlockHit(World& w, int blockX, int blockY)
 		constexpr float radiusCheck = 0.8f;
 		if (!BlockRegistry::get().getBlock(
 			w.getBlockOrAir(m_pos.x + partX * radiusCheck, m_pos.y + partY * radiusCheck)->
-			  block_id).hasCollisionBox())
+			block_id).hasCollisionBox())
 			w.spawnParticle(ParticleList::bulletShatter, m_pos + glm::vec2(partX, partY) * 0.1f,
-			                glm::vec2(partX, partY) * 0.15f, {0, -0.55f / 60}, -1);
+				glm::vec2(partX, partY) * 0.15f, { 0, -0.55f / 60 }, -1);
 	}
 	return Bullet::onBlockHit(w, blockX, blockY);
 }
@@ -787,7 +820,7 @@ void Creature::render(BatchRenderer2D& renderer)
 						continue;
 					auto rect = b.getCollisionBox(x + m_pos.x, y + m_pos.y, *str).getBounds();
 					auto mat = glm::translate(glm::mat4(1.0f),
-					                          glm::vec3((int)m_pos.x + x + rect.x0, (int)m_pos.y + y + rect.y0, 0));
+						glm::vec3((int)m_pos.x + x + rect.x0, (int)m_pos.y + y + rect.y0, 0));
 					mat = glm::scale(mat, glm::vec3(rect.width(), rect.height(), 0));
 					renderer.push(mat);
 					renderer.submit(*Stats::bound_sprite);
@@ -828,13 +861,13 @@ void TileEntityTorch::update(World& w)
 		w.spawnParticle(
 			ParticleList::torch_fire,
 			m_pos + glm::vec2(0.5f + randDispersedFloat(0.05f), 1),
-			{randDispersedFloat(0.001f), randFloat(0.001f) + 0.001f},
+			{ randDispersedFloat(0.001f), randFloat(0.001f) + 0.001f },
 			vec2(0));
 
 		w.spawnParticle(
 			ParticleList::torch_smoke,
 			m_pos + glm::vec2(0.5f + randDispersedFloat(0.05f), 1),
-			{randDispersedFloat(0.01f), randFloat(0.005f) + 0.01f},
+			{ randDispersedFloat(0.01f), randFloat(0.005f) + 0.01f },
 			vec2(0));
 	}
 }
@@ -928,7 +961,7 @@ void TileEntityRadio::onUnloaded(World& w)
 void TileEntityRadio::onLoaded(World& w)
 {
 	m_music.open("res/audio/neon.ogg");
-	m_music.updateSpatialData({m_pos, {25, 45}});
+	m_music.updateSpatialData({ m_pos, {25, 45} });
 	if (m_is_playing)
 		m_music.play();
 }
@@ -945,15 +978,15 @@ void TileEntityRadio::onClicked(World& w, WorldEntity* entity)
 void TileEntityRadio::save(NBT& src)
 {
 	TileEntity::save(src);
-	if(m_disc)
+	if (m_disc)
 		m_disc->serialize(src["disc"]);
 }
 
 void TileEntityRadio::load(NBT& src)
 {
 	TileEntity::load(src);
-	if(src.exists("disc"))
-		m_disc=ItemStack::deserialize(src["disc"]);
+	if (src.exists("disc"))
+		m_disc = ItemStack::deserialize(src["disc"]);
 }
 
 void TileEntityRadio::update(World& w)
@@ -966,16 +999,16 @@ void TileEntityRadio::update(World& w)
 		w.spawnParticle(
 			ParticleList::note,
 			m_pos + glm::vec2(1.f + randDispersedFloat(0.05f), 1.5f),
-			{randDispersedFloat(0.001f), randFloat(0.001f) + 0.001f},
+			{ randDispersedFloat(0.001f), randFloat(0.001f) + 0.001f },
 			vec2(0),
 			0,
-			half_int(std::rand()&3, 0)
-			);
+			half_int(std::rand() & 3, 0)
+		);
 
 		w.spawnParticle(
 			ParticleList::note,
 			m_pos + glm::vec2(0.5f + randDispersedFloat(0.05f), 1),
-			{randDispersedFloat(0.01f), randFloat(0.005f) + 0.01f},
+			{ randDispersedFloat(0.01f), randFloat(0.005f) + 0.01f },
 			vec2(0),
 			0,
 			half_int(std::rand() & 3, 0));
@@ -1006,20 +1039,20 @@ EntityTNT::EntityTNT()
 	m_timeToBoom = 60 * 2;
 	m_blinkTime = 0;
 	m_velocity = vec2(0);
-	m_acceleration = {0.f, -1.f / 60};
+	m_acceleration = { 0.f, -1.f / 60 };
 	m_max_velocity = vec2(50.0f / 60);
 
 	static SpriteSheetResource res(Texture::create(
-		                               TextureInfo("res/images/player.png")
-		                               .filterMode(TextureFilterMode::LINEAR)
-		                               .format(TextureFormat::RGBA)), 4, 4);
+		TextureInfo("res/images/player.png")
+		.filterMode(TextureFilterMode::LINEAR)
+		.format(TextureFormat::RGBA)), 4, 4);
 	m_animation = Animation(&res);
 	m_animation.setSpriteIndex(0, 0);
 
 	m_animation.setPosition(glm::vec3(-1, 0, 0));
 	m_animation.setSize(glm::vec2(2, 2));
 
-	m_bound = Phys::toPolygon({-1, 0, 1, 2});
+	m_bound = Phys::toPolygon({ -1, 0, 1, 2 });
 }
 
 
@@ -1105,20 +1138,20 @@ EntityBomb::EntityBomb()
 	m_timeToBoom = 60 * 2;
 	m_blinkTime = 0;
 	m_velocity = vec2(0);
-	m_acceleration = {0.f, -1.f / 60};
+	m_acceleration = { 0.f, -1.f / 60 };
 	m_max_velocity = vec2(50.0f / 60);
 
 	static SpriteSheetResource res(Texture::create(
-		                               TextureInfo("res/images/tnt.png")
-		                               .filterMode(TextureFilterMode::LINEAR)
-		                               .format(TextureFormat::RGBA)), 3, 1);
+		TextureInfo("res/images/tnt.png")
+		.filterMode(TextureFilterMode::LINEAR)
+		.format(TextureFormat::RGBA)), 3, 1);
 	m_animation = Animation(&res);
 	m_animation.setSpriteIndex(0, 0);
 
 	m_animation.setPosition(glm::vec3(-1, 0, 0));
 	m_animation.setSize(glm::vec2(2, 2));
 
-	m_bound = Phys::toPolygon({-1, 0, 1, 2});
+	m_bound = Phys::toPolygon({ -1, 0, 1, 2 });
 }
 
 void EntityBomb::setBombType(int blastRadius, bool deleteWalls, int meta)
@@ -1213,14 +1246,14 @@ EntityZombie::EntityZombie()
 
 	m_flags |= EFLAG_COLLIDER;
 	m_velocity = vec2(0);
-	m_acceleration = {0.f, -9.8f / 60};
+	m_acceleration = { 0.f, -9.8f / 60 };
 	m_max_velocity = vec2(50.f / 60);
 
 	static SpriteSheetResource res(Texture::create(
-		                               TextureInfo("res/images/zombie.png")
-		                               .filterMode(TextureFilterMode::LINEAR)
-		                               .format(TextureFormat::RGBA)), 16, 1);
-	m_animation = Animation(&res, {0, 1, 2, 1, 0, 4, 3, 4});
+		TextureInfo("res/images/zombie.png")
+		.filterMode(TextureFilterMode::LINEAR)
+		.format(TextureFormat::RGBA)), 16, 1);
+	m_animation = Animation(&res, { 0, 1, 2, 1, 0, 4, 3, 4 });
 	m_animation.setSpriteIndex(0, 2);
 	m_animation.setPosition(glm::vec3(-1, 0, 0));
 	m_animation.setSize(glm::vec2(2, 4));
@@ -1247,8 +1280,8 @@ void EntityZombie::update(World& w)
 					{
 						auto TPS = App::get().getTPS();
 						m_tracer.init(&w, getID(),
-						              {4.f / TPS, -9.f / TPS},
-						              {10.f / TPS, 50.f / TPS});
+							{ 4.f / TPS, -9.f / TPS },
+							{ 10.f / TPS, 50.f / TPS });
 						m_tracer.setTarget(e);
 						break;
 					}
@@ -1309,14 +1342,14 @@ EntitySnowman::EntitySnowman()
 	setMaxHealth(15);
 
 	m_velocity = vec2(0);
-	m_acceleration = {0.f, -9.8f / 60};
+	m_acceleration = { 0.f, -9.8f / 60 };
 	m_max_velocity = vec2(50.f / 60);
 
 	static SpriteSheetResource res(Texture::create(
-		                               TextureInfo("res/images/snowman.png")
-		                               .filterMode(TextureFilterMode::LINEAR)
-		                               .format(TextureFormat::RGBA)), 8, 1);
-	m_animation = Animation(&res, {2, 3, 4, 3, 2, 5, 6, 5});
+		TextureInfo("res/images/snowman.png")
+		.filterMode(TextureFilterMode::LINEAR)
+		.format(TextureFormat::RGBA)), 8, 1);
+	m_animation = Animation(&res, { 2, 3, 4, 3, 2, 5, 6, 5 });
 	m_animation.setSpriteIndex(0, 2);
 	m_animation.setPosition(glm::vec3(-2, 0, 0));
 	m_animation.setSize(glm::vec2(4, 5));
@@ -1343,8 +1376,8 @@ void EntitySnowman::update(World& w)
 					{
 						auto TPS = App::get().getTPS();
 						m_tracer.init(&w, getID(),
-						              {4.f / TPS, -9.f / TPS},
-						              {10.f / TPS, 50.f / TPS});
+							{ 4.f / TPS, -9.f / TPS },
+							{ 10.f / TPS, 50.f / TPS });
 						m_tracer.setTarget(e);
 						break;
 					}

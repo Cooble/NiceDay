@@ -26,6 +26,8 @@ public:
 	void swapBuffers()override;
 	void pollEvents()override;
 	bool shouldClose()override;
+	void setIcon(std::string_view image_path) override;
+	void setClipboard(const wchar_t* c) override;
 	
 	bool isFocused() const override { return m_data.focused; }
 	bool isHovered() const override { return m_data.hovered; }

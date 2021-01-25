@@ -80,8 +80,18 @@ void FakeWindow::setClipboard(const char* c)
 	m_window->setClipboard(c);
 }
 
+void FakeWindow::setClipboard(const wchar_t* c)
+{
+	m_window->setClipboard(c);
+}
+
 void FakeWindow::close()
 {
+}
+
+void FakeWindow::setIcon(std::string_view image_path)
+{
+	// no icon handling
 }
 
 FrameBuffer* FakeWindow::getFBO()

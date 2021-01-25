@@ -49,7 +49,9 @@ public:
 	void setCursorPolicy(WindowCursor state)override;
 	void setCursorPos(glm::vec2 pos)override;
 	void setClipboard(const char* c)override;
+	void setClipboard(const wchar_t* c) override;
 	void close()override;
+	void setIcon(std::string_view image_path) override;
 
 
 	FrameBuffer* getFBO() override;

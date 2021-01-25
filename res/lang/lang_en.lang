@@ -76,7 +76,8 @@ grass_plant:3	=Grass
 
 # basic tools items
 
-pickaxe			=El Pickaxo
+pickaxe			=Copper Pickaxe
+el_pickaxo		=El Pickaxo
 shotgun			=ShotGun Extreme
 
 # miscellaneous

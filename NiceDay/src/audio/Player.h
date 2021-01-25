@@ -46,7 +46,7 @@ struct MusicData
 
 
 	MusicStream file_stream;
-	RingBufferLite* ring_buffer;
+	NDUtil::RingBufferLite* ring_buffer;
 	std::atomic<float> volume;
 	std::atomic<float> pitch;
 	float logVolume;
@@ -144,7 +144,7 @@ constexpr int SOUNDER_SOUND_BUFF_COUNT = 32;
 
 constexpr int SOUNDER_RING_BUFF_SIZE = 1024 * 32;
 constexpr int SOUNDER_RING_BUFF_FRAME_COUNT = 32;
-typedef RingBuffer<SOUNDER_RING_BUFF_SIZE, SOUNDER_RING_BUFF_FRAME_COUNT> RingBufferSounder;
+typedef NDUtil::RingBuffer<SOUNDER_RING_BUFF_SIZE, SOUNDER_RING_BUFF_FRAME_COUNT> RingBufferSounder;
 
 struct AudioState
 {

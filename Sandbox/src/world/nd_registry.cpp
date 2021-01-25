@@ -88,9 +88,15 @@ void nd_registry::registerItemBlocks()
 void nd_registry::registerItems()
 {
 	//items
-	ND_REGISTER_ITEM(new ItemPickaxe());
+	ND_REGISTER_ITEM(new ItemPickaxeCopper());
+	ND_REGISTER_ITEM(new ItemElPickaxo());
 	ND_REGISTER_ITEM(new ItemShotgun());
 	ND_REGISTER_ITEM(new ItemTnt());
+	ND_REGISTER_ITEM(new ItemIronHelmet());
+	ND_REGISTER_ITEM(new ItemWoodHelmet());
+	ND_REGISTER_ITEM(new ItemWoodChestplate());
+	ND_REGISTER_ITEM(new ItemWoodLeggins());
+	ND_REGISTER_ITEM(new ItemWoodBoots());
 	ND_REGISTER_ITEM(
 		&(new ItemBlock(SID("door"), BlockRegistry::get().getBlockID("door_close"), "door"))->setNoBlockTexture(true));
 	registerItemBlocks();

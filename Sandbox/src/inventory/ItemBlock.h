@@ -17,4 +17,9 @@ public:
 
 	int getBlockMetadata(ItemStack* stack)const;
 	int getBlockID() const override;
+
+	void* instantiateDataBox() const override;
+	void destroyDataBox(void* dataBox) const override;
+
+	void onInteraction(World& w, ItemStack& stack, void* dataBox, WorldEntity& owner, float x, float y, Interaction interaction, int ticksPressed) const override;
 };

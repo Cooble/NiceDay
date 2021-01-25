@@ -29,7 +29,19 @@ GUILayer::GUILayer()
 	m_bound_func = std::bind(&GUILayer::consumeWindowEvent, this, std::placeholders::_1);
 	m_gui_context = GUIContext::create();
 	m_gui_renderer.setContext(&GUIContext::get());
-	m_gui_renderer.m_font_material = FontMatLib::getMaterial("res/fonts/andrew_big.fnt");
+	//m_gui_renderer.m_font_material = FontMatLib::getMaterial("res/fonts/andrew_big.fnt");
+	std::string lang;
+	App::get().getSettings().loadSet("language", lang, "en");
+	if (lang == "jp")
+	{
+		GameFonts::smallFont = FontMatLib::getMaterial("res/fonts/umeboshi.fnt");
+		GameFonts::bigFont = FontMatLib::getMaterial("res/fonts/umeboshi_big.fnt");
+	}
+	else {
+		GameFonts::smallFont = FontMatLib::getMaterial("res/fonts/andrew_czech.fnt");
+		GameFonts::bigFont = FontMatLib::getMaterial("res/fonts/andrew_big_czech.fnt");
+	}
+	m_gui_renderer.m_font_material = GameFonts::smallFont;
 	m_background = Texture::create(
 		TextureInfo("res/images/logos/back_logo.png").wrapMode(TextureWrapMode::CLAMP_TO_EDGE));
 }
@@ -63,7 +75,7 @@ void GUILayer::openWindow(WindowMess mess) {
 		m_currentWindow = nullptr;
 	}
 
-	if (mess != OpenBack&& mess!= OpenBackToMain)
+	if (mess != OpenBack && mess != OpenBackToMain)
 		windows.push(mess);
 
 	switch (mess) {

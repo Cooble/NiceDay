@@ -45,16 +45,16 @@ public:
 
 	void setWorldLayer(WorldLayer* l);
 
-	inline HUD& getHUD() { return *m_hud; }
+	HUD& getHUD() { return *m_hud; }
 	void updateWorldList();
 	void openWindow(WindowMess mess);
 	void proccessWindowEvent(const MessageEvent& e);
 	void consumeWindowEvent(const MessageEvent& e);
-	virtual void onAttach() override;
-	virtual void onDetach() override;
-	virtual void onUpdate() override;
-	virtual void onRender() override;
-	virtual void onEvent(Event& e) override;
+	void onAttach() override;
+	void onDetach() override;
+	void onUpdate() override;
+	void onRender() override;
+	void onEvent(Event& e) override;
 	void onImGuiRender() override;
 
 };

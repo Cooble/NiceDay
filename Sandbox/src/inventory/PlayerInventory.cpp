@@ -4,11 +4,17 @@
 #include "core/NBT.h"
 #include <stack>
 
+PlayerInventory::~PlayerInventory()
+{
+	for (auto item : m_items)
+		if (item)item->destroy();
+}
+
 PlayerInventory::PlayerInventory(WorldEntity* player)
 	: m_player(player)
 {
 	m_special_hand_slot = -1;
-	constexpr int inventorySize = InventorySlot::ACTION_FIRST + 10 + 40;
+	constexpr int inventorySize = ACTION_FIRST + 10 + 40;
 	//9 activeslots + 27 random items
 
 	m_items.resize(inventorySize);
@@ -17,14 +23,43 @@ PlayerInventory::PlayerInventory(WorldEntity* player)
 
 void PlayerInventory::callEquipped(ItemStack* itemStack)
 {
-	if (itemStack)
+	if (itemStack) {
+		m_item_data_box = itemStack->getItem().instantiateDataBox();
 		itemStack->getItem().onEquipped(*Stats::world, *itemStack, *m_player);
+	}
 }
 
 void PlayerInventory::callUnequipped(ItemStack* itemStack)
 {
-	if (itemStack)
+	if (itemStack) {
 		itemStack->getItem().onUnequipped(*Stats::world, *itemStack, *m_player);
+		if (m_item_data_box)
+			itemStack->getItem().destroyDataBox(m_item_data_box);
+		m_item_data_box = nullptr;
+	}
+}
+
+bool PlayerInventory::canPutAtIndex(ItemStack* itemStack, int index)
+{
+	// we can always throw away trash or nullptr
+	if (index == trashSlot() || !itemStack)
+		return true;
+	auto& item = itemStack->getItem();
+	if (index == ARMOR_HELMET && !item.hasFlag(ITEM_FLAG_ARMOR_HEAD))
+		return false;
+	if (index == ARMOR_CHEST && !item.hasFlag(ITEM_FLAG_ARMOR_CHEST))
+		return false;
+	if (index == ARMOR_LEGGINS && !item.hasFlag(ITEM_FLAG_ARMOR_LEGGINS))
+		return false;
+	if (index == ARMOR_BOOTS && !item.hasFlag(ITEM_FLAG_ARMOR_BOOTS))
+		return false;
+	
+	// free slot
+	if(!m_items[index])
+		return true;
+	
+	// same item and there is still some space 
+	return m_items[index]->equals(itemStack) && item.getMaxStackSize() != m_items[index]->size();
 }
 
 ItemStack* PlayerInventory::putAtRandomIndex(ItemStack* stack)
@@ -34,7 +69,7 @@ ItemStack* PlayerInventory::putAtRandomIndex(ItemStack* stack)
 	int toAdd = stack->size();
 	int lastNullFreeIndex = -1;
 	bool isStackable = item.getMaxStackSize() > 1;
-	for (int i = InventorySlot::ACTION_FIRST; i < m_items.size()-1; ++i)//dont put to trash
+	for (int i = ACTION_FIRST; i < m_items.size() - 1; ++i)//dont put to trash
 	{
 		auto currentStack = m_items[i];
 		if (currentStack == nullptr && lastNullFreeIndex == -1)
@@ -79,11 +114,28 @@ ItemStack* PlayerInventory::putAtRandomIndex(ItemStack* stack)
 
 ItemStack* PlayerInventory::putAtIndex(ItemStack* stack, int index, int count)
 {
+	if (!stack)
+		return nullptr;
+	
+	if (!canPutAtIndex(stack, index))
+		return stack;
+
 	auto& target = m_items[index];
+
+	if (index == trashSlot())// destroy thing currently in trash and add stack to trash slot
+	{
+		// todo throwing in trash ignores count and expects count to be -1 (everything)
+		// todo add partial destroy maybe
+		if (target != nullptr)
+			target->destroy();
+		target = stack;
+		return nullptr;
+	}
+
 	if (target != nullptr && stack->equals(target))
 	{
 		int freeSpace = target->getItem().getMaxStackSize() - target->size();
-		int toAdd = std::min(freeSpace, count == -1 ? stack->size() : count);
+		int toAdd = std::min(freeSpace, count == ALL ? stack->size() : count);
 		target->addSize(toAdd);
 		stack->addSize(-toAdd);
 		if (stack->isEmpty())
@@ -92,15 +144,16 @@ ItemStack* PlayerInventory::putAtIndex(ItemStack* stack, int index, int count)
 			return nullptr;
 		}
 	}
+
 	else if (target == nullptr)
 	{
-		int toAdd = count == -1 ? stack->size() : count;
+		int toAdd = count == ALL ? stack->size() : count;
 		if (toAdd == stack->size())
 		{
 			target = stack;
 			if (index == m_special_hand_slot)
 				callEquipped(stack);
-			else if (index == (int)InventorySlot::HAND)
+			else if (index == (int)HAND)
 			{
 				if (m_special_hand_slot != -1)
 				{
@@ -108,14 +161,13 @@ ItemStack* PlayerInventory::putAtIndex(ItemStack* stack, int index, int count)
 				}
 				callEquipped(stack);
 			}
-
 			return nullptr;
 		}
 		target = stack->copy();
 		target->setSize(toAdd);
 		if (index == m_special_hand_slot)
 			callEquipped(target);
-		else if (index == (int)InventorySlot::HAND)
+		else if (index == (int)HAND)
 		{
 			if (m_special_hand_slot != -1)
 			{
@@ -131,27 +183,27 @@ ItemStack* PlayerInventory::putAtIndex(ItemStack* stack, int index, int count)
 
 ItemStack* PlayerInventory::swap(ItemStack* stack, int index)
 {
-	
-	auto out = takeFromIndex(index, -1);
-	putAtIndex(stack, index, -1);
-	if(index==trashSlot())//dispose of item
+	if(index==trashSlot())
 	{
-		if(out)
-			out->destroy();
+		if(m_items[index])
+			m_items[index]->destroy();
+		m_items[index] = stack;
 		return nullptr;
 	}
-	return out;
+	auto taken = takeFromIndex(index, -1);
+	auto remains = putAtIndex(stack, index, -1);
 
-	/*auto t = m_items[index];
-	if (index == m_special_hand_slot)
+	if (remains != nullptr) // something is still at that slot
 	{
-		if (t)
-			t->getItem().onUnequipped(*Stats::world, *t, *m_player);
-		if(stack)
-			stack->getItem().onEquipped(*Stats::world, *stack, *m_player);
+		// put back what we have taken
+		auto e = putAtIndex(taken, index, -1);
+		if (e) {
+			ND_WARN("cannot put item back to slot during unsuccessful item swap!");
+			e->destroy(); // we have no other option but to delete the item
+		}
+		return remains;
 	}
-	m_items[index] = stack;
-	return t;*/
+	return taken;
 }
 
 ItemStack* PlayerInventory::getItemStack(int index)
@@ -175,10 +227,10 @@ ItemStack* PlayerInventory::takeFromIndex(int index, int number)
 	auto& target = m_items[index];
 	if (target == nullptr)
 		return nullptr;
-	if (target->size() <= number || number == -1)
+	if (target->size() <= number || number == ALL)
 	{
 		auto out = target;
-		if (index == (int)InventorySlot::HAND)
+		if (index == (int)HAND)
 		{
 			callUnequipped(out);
 			if (m_special_hand_slot != -1)
@@ -203,29 +255,29 @@ ItemStack* PlayerInventory::takeFromIndex(int index, int number)
 
 ItemStack*& PlayerInventory::itemInHand()
 {
-	if (m_items[InventorySlot::HAND] != nullptr)
-		return m_items[InventorySlot::HAND];
+	if (m_items[HAND] != nullptr)
+		return m_items[HAND];
 
-	return m_items[m_special_hand_slot == -1 ? InventorySlot::HAND : m_special_hand_slot];
+	return m_items[m_special_hand_slot == -1 ? HAND : m_special_hand_slot];
 }
 
 int PlayerInventory::itemInHandSlot() const
 {
-	if (m_items[InventorySlot::HAND] != nullptr)
-		return InventorySlot::HAND;
+	if (m_items[HAND] != nullptr)
+		return HAND;
 
-	return m_special_hand_slot == -1 ? InventorySlot::HAND : m_special_hand_slot;
+	return m_special_hand_slot == -1 ? HAND : m_special_hand_slot;
 }
 
 ItemStack*& PlayerInventory::handSlot()
 {
-	return m_items[InventorySlot::HAND];
+	return m_items[HAND];
 }
 
 bool PlayerInventory::isSpaceFor(const ItemStack* stack) const
 {
 	//ignore last slot which is trash
-	for (int i = InventorySlot::ACTION_FIRST; i < m_items.size()-1; ++i)
+	for (int i = ACTION_FIRST; i < m_items.size() - 1; ++i)
 	{
 		if (m_items[i] == nullptr)
 			return true;
@@ -240,6 +292,7 @@ void PlayerInventory::setHandIndex(int index)
 	if (itemInHandSlot() == m_special_hand_slot)
 	{
 		{
+
 			auto& inHand = itemInHand();
 			callUnequipped(inHand);
 			m_special_hand_slot = index;

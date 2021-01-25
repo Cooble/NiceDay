@@ -202,13 +202,15 @@ void ChunkMeshInstance::updateMesh(const World& world, const Chunk& chunk)
 	float co = 1.0f / BLOCK_TEXTURE_ATLAS_SIZE;
 	float co_corner = 1.0f / BLOCK_CORNER_ATLAS_SIZE;
 	
+	auto& blockRegistry = BlockRegistry::get();//just to make it faster
+	
 	for (int y = 0; y < WORLD_CHUNK_SIZE; y++)
 	{
 		int ylevel = y * WORLD_CHUNK_SIZE;
 		for (int x = 0; x < WORLD_CHUNK_SIZE; x++)
 		{
 			const BlockStruct& bs = chunk.block(x, y);
-			const Block& blok = BlockRegistry::get().getBlock(bs.block_id);
+			const Block& blok = blockRegistry.getBlock(bs.block_id);
 			half_int t_offset = blok.getTextureOffset(x, y, bs);
 			half_int t_corner_offset = blok.getCornerOffset(x, y, bs);
 			auto point = (ChunkMesh::PosVertexData*)&m_block_buff[(sizeof(ChunkMesh::PosVertexData)*(y*WORLD_CHUNK_SIZE+x))*6];

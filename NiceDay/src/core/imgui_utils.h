@@ -50,4 +50,15 @@ namespace ImGui {
 		}
 		return out;
 	}
+	// creates utf-16 encoded string of characters in the specified range
+	// the string starts with BOM (0xEFFF) which specifies endianness
+	// transfers ownership of returned array
+	// call free() once you're done with the returned array!
+	// byteSizePtr is set with size of the returned array (byte size! not wchar size!)
+	const ImWchar16* FontRangeToUTF_16(const ImWchar* range, size_t* byteSizePtr);
+
+	// creates wchar string of characters in the specified range
+	// transfers ownership of returned array
+	// call free() once you're done with the returned array!
+	const ImWchar16* FontRangeToWChar(const ImWchar* range);
 }

@@ -1190,18 +1190,18 @@ void World::spawnParticle(ParticleID id, const glm::vec2& pos, const glm::vec2& 
 	else m_particle_manager->createParticle(id, pos, speed, acc, 0, rotation, texturePos);
 }
 
-void World::spawnBlockBreakParticles(int x, int y)
+void World::spawnBlockBreakParticles(int x, int y, int amount)
 {
 	auto blok = getBlock(x, y);
 	if (blok == nullptr||blok->isAir())
 		return;
 	auto offset = BlockRegistry::get().getBlock(blok->block_id).getTextureOffset(x, y, *blok);
-
 	
-
 	glm::vec2 middle(0.5f,0);
 	for (int xx = 0; xx < particleBlockDivision; ++xx)
 		for (int yy = 0; yy < particleBlockDivision; ++yy) {
+			if( (std::rand() & 31) >= amount)
+				continue;
 			float xxx = xx / (float)particleBlockDivision;
 			float yyy = yy / (float)particleBlockDivision;
 			float mutt = 0.5f;
@@ -1222,7 +1222,7 @@ nd::temp_vector<WorldEntity*> World::getEntitiesInRadius(const glm::vec2& pos, f
 		{
 			ND_ERROR("Invalid entity id in m_entity_array");
 		}
-		if (glm::distance2(t->getPosition(), pos) < (radius * radius))
+		if (glm::distance2(t->getPosition(), pos) < (radius * radius)&&!t->isMarkedDead())
 		{
 			out.push_back(t);
 		}
@@ -1240,7 +1240,7 @@ nd::temp_vector<WorldEntity*> World::getEntitiesAtLocation(const glm::vec2& pos)
 		ASSERT(t, "Invalid entity id in m_entity_array");
 		
 		constexpr float maxDistance = 10;//from pos
-		if (glm::distance2(t->getPosition(), pos) < (maxDistance * maxDistance))
+		if (glm::distance2(t->getPosition(), pos) < (maxDistance * maxDistance)&&!t->isMarkedDead())
 		{
 			auto eee = dynamic_cast<PhysEntity*>(t);
 			if(eee && contains(eee->getCollisionBox(), pos - eee->getPosition()))

@@ -586,7 +586,7 @@ bool MusicStream::initFromFileOld(const char* filePath)
 	return false;
 }
 
-bool MusicStream::readNext(int maxFrames, RingBufferLite& ringBuffer, SoundBuffer* optionalConsumer)
+bool MusicStream::readNext(int maxFrames, NDUtil::RingBufferLite& ringBuffer, SoundBuffer* optionalConsumer)
 {
 	if (m_is_done)
 		return true;
@@ -674,7 +674,7 @@ bool MusicStream::readNext(int maxFrames, RingBufferLite& ringBuffer, SoundBuffe
 	}
 }
 
-bool MusicStream::readNextOld(int maxFrames, RingBufferLite& ringBuffer)
+bool MusicStream::readNextOld(int maxFrames, NDUtil::RingBufferLite& ringBuffer)
 {
 	return true;
 	/*if (ringBuffer.isFull())

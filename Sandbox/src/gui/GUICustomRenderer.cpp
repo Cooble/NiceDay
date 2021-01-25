@@ -8,7 +8,8 @@
 GUICustomRenderer::GUICustomRenderer(glm::vec2 windowSize)
 :GUIRenderer(windowSize)
 {
-	m_small_font = FontMatLib::getMaterial("res/fonts/andrew.fnt");
+	// this will always font for itemslot size numbers
+	m_small_font = FontMatLib::getMaterial("res/fonts/andrew_czech.fnt");
 	
 	static SpriteSheetResource* res = new SpriteSheetResource(
 		Texture::create(TextureInfo("res/images/gui_atlas.png").filterMode(TextureFilterMode::NEAREST)),
@@ -202,8 +203,9 @@ void GUICustomRenderer::renderTextBox(BatchRenderer2D& renderer, GUITextBox& e)
 		}
 
 
-		e.textMesh.reserve(e.getValue().size());
-		TextBuilder::buildMesh({ e.getValue() }, *e.fontMaterial->font, e.textMesh, TextBuilder::ALIGN_LEFT,
+		auto utf = SUtil::utf8toCodePoints(e.getValue());
+		e.textMesh.reserve(utf.size());
+		TextBuilder::buildMesh({ utf }, *e.fontMaterial->font, e.textMesh, TextBuilder::ALIGN_LEFT,
 			{ -e.textClipOffset, -1000, -e.textClipOffset + trueWidth, 2000 }, &prop);
 	}
 

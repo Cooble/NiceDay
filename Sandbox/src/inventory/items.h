@@ -2,12 +2,41 @@
 #include "Item.h"
 #include "ItemTool.h"
 
-class ItemPickaxe:public ItemTool
+class ItemPickaxeCopper:public ItemTool
 {
 public:
-	ItemPickaxe();
+	ItemPickaxeCopper();
+};
+class ItemElPickaxo :public ItemTool
+{
+public:
+	ItemElPickaxo();
+};
 
-	float getEfficiencyOnBlock(const Block& blok, ItemStack* stack) const override;
+class ItemWoodHelmet :public Item
+{
+public:
+	ItemWoodHelmet();
+};
+class ItemIronHelmet :public Item
+{
+public:
+	ItemIronHelmet();
+};
+class ItemWoodChestplate :public Item
+{
+public:
+	ItemWoodChestplate();
+};
+class ItemWoodLeggins :public Item
+{
+public:
+	ItemWoodLeggins();
+};
+class ItemWoodBoots :public Item
+{
+public:
+	ItemWoodBoots();
 };
 
 class ItemShotgun: public Item

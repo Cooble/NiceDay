@@ -35,7 +35,7 @@ GUIActionSlots::GUIActionSlots(PlayerInventory* player, HUD& hud)
 	}
 	m_col->appendChild(row);
 
-	m_title = new GUIText(FontMatLib::getMaterial("res/fonts/andrew.fnt"));
+	m_title = new GUIText(GameFonts::smallFont);
 	m_title->dim = { 0,15 };
 	m_title->isAlwaysPacked = false;
 	m_col->appendChild(m_title);
@@ -106,7 +106,7 @@ void GUIActionSlots::update()
 
 void GUIActionSlots::setMainSlot(int slot)
 {
-	if (slot>getFirstChild()->getFirstChild()->getChildren().size())
+	if (slot > getFirstChild()->getFirstChild()->getChildren().size())
 		return;//invalid slot
 	m_inventory->setHandIndex(InventorySlot::ACTION_FIRST + slot);
 	if(old_slot!=-1)
@@ -169,6 +169,7 @@ void GUIEntityPlayer::onAttachedToHUD(HUD& hud)
 	m_col = new GUIColumn();
 	m_col->isAlwaysPacked = true;
 	m_col->setAlignment(GUIAlign::LEFT_UP);
+	m_col->child_alignment = GUIAlign::LEFT;
 	
 	m_gui_action_slots = new GUIActionSlots(&m_disgusting_player->getInventory(),hud);
 
@@ -198,12 +199,25 @@ void GUIEntityPlayer::openInventory(bool open)
 		filler->dim = { 0,15 };
 		filler->isAlwaysPacked = false;
 		m_col->appendChild(filler);
-		
+		auto horizont = new GUIRow();
+		horizont->isAlwaysPacked = true;
+		m_col->appendChild(horizont);
 		m_gui_slots = new GUISlots(&m_disgusting_player->getInventory(), *HUD::get(), 
 			InventorySlot::RANDOM_FIRST, InventorySlot::RANDOM_FIRST + 39, 10);
 		m_gui_slots->getSlots().at(m_gui_slots->getSlots().size() - 1)->clas = "trash";
-		m_col->appendChild(m_gui_slots);
+		horizont->appendChild(m_gui_slots);
 		m_gui_action_slots->showTitle(false);
+
+		//space between normal slots and armor slot column
+		filler = new GUIBlank();
+		filler->dim = { 0,5 };
+		filler->isAlwaysPacked = false;
+		horizont->appendChild(filler);
+		
+		auto armorSlots = new GUISlots(&m_disgusting_player->getInventory(), *HUD::get(),
+			InventorySlot::ARMOR_HELMET, InventorySlot::ARMOR_BOOTS, 1);
+		
+		horizont->appendChild(armorSlots);
 	}
 	else{
 		auto& inHand = m_disgusting_player->getInventory().handSlot();
@@ -221,7 +235,7 @@ void GUIEntityPlayer::openInventory(bool open)
 		}
 		for (auto& cs : ids)
 		{
-			if(cs._Starts_with("player_"))
+			if(SUtil::startsWith(cs,"player_"))
 				HUD::get()->unregisterGUIEntity(cs);
 
 			//remove all except our entity
@@ -232,12 +246,9 @@ void GUIEntityPlayer::openInventory(bool open)
 
 GUIEntityConsole::GUIEntityConsole()
 {
-
-	auto materialSmall = FontMatLib::getMaterial("res/fonts/andrew.fnt");
-	
 	for (int i = 0; i < m_max_lines; ++i)
 	{
-		auto templat = new GUIText(materialSmall);
+		auto templat = new GUIText(GameFonts::smallFont);
 		templat->dim = { 300,50 };
 		templat->isAlwaysPacked = false;
 		
@@ -299,8 +310,7 @@ void GUIEntityConsole::onAttachedToHUD(HUD& hud)
 	
 	entryBox->width = 300;
 	entryBox->height= 100;
-	auto materialSmall = FontMatLib::getMaterial("res/fonts/andrew.fnt");
-	entryBox->fontMaterial = materialSmall;
+	entryBox->fontMaterial = GameFonts::smallFont;
 	m_col->width = 300;
 	m_col->height = 500;
 

@@ -27,63 +27,64 @@
 # "
 #	
 
-game.current_lang="Cestina"
+game.current_lang="Čeština"
 game.name	=NiceDay
 
 
 true		=Ano
 false		=Ne
 language	=Jazyk
-back		=Zpet
+back		=Zpět
 
 # basic block items
 ->item
 
-stone		=Sutr
-dirt		=Hlina
+stone		=Šutr
+dirt		=Hlína
 gold		=Zlato
 adamantite	=Adamantite
 platform	=Platforma
-grass		=Trava
+grass		=Tráva
 glass		=Sklo
-torch		=Louc
-door		=Dvere
+torch		=Louč
+door		=Dveře
 painting	=Obraz
 sapling		=Rostlinka
 
 # flowers
-flower:0	=Sedmikraska
-flower:1	=Pampeliska
+flower:0	=Sedmikráska
+flower:1	=Pampeliška
 flower:2	=Fialka
-flower:3	=Ruze
+flower:3	=Růže
 flower:4	=Lilie
 flower:5	=Chrisanthena
 flower:6	=Hyacinth
-flower:7	=Mesicni Hyacinth
+flower:7	=Mesíční Hyacinth
 
-grass_plant	=Vysoka Trava
-snow		=Snih
-snow_brick	=Snehova Cihla
+grass_plant	=Vysoká Tráva
+snow		=Sníh
+snow_brick	=Sněhova Cihla
 ice			=Led
-pumpkin		=Dyne
+pumpkin		=Dýně
 chest		=Truhla
-radio		=Radio
+radio		=Rádio
 
-grass_plant:0	=Trava
-grass_plant:1	=Trava
-grass_plant:2	=Trava
-grass_plant:3	=Trava
+grass_plant:0	=Tráva
+grass_plant:1	=Tráva
+grass_plant:2	=Tráva
+grass_plant:3	=Tráva
 
 # basic tools items
 
-pickaxe			=El Krumpaco
+pickaxe			=Měděný Krumpáč
+el_pickaxo		=El Krumpáčo
 shotgun			=Brokovnice Extreme
 
 # miscellaneous
-tnt:0			=Male Bum
-tnt:1			=Stredni Bum
+tnt:0			=Malé Bum
+tnt:1			=Střední Bum
 tnt:2			=Mega TNT
-tree			=Drevo
+tree			=Dřevo
 tree_sapling	=Rostlinka
 <-
 
@@ -92,38 +93,32 @@ tree_sapling	=Rostlinka
 ->main
 btn.exit=Konec
 btn.play=Znova
-btn.play_play=b&f&0H&1r&2a&3t &4H&5r&6a&7t &8H&9r&aa&bt &cH&dr&ea&ft!
-btn.settings=Ovladani
+btn.play_play=b&f&0H&1r&2á&3t &4H&5r&6e&7j &8H&9r&aa&bj &cH&dr&eu&fj!
+btn.settings=Ovládání
 <-
 
 # choose world screen
-title.choose_world	=Vyber sveta
-btn.create_world	=Novy svet
+title.choose_world	=Výběr světa
+btn.create_world	=Nový svět
 
 # pause screen
 title.pause=Pozastaveno
 
 # controls screen
-title.controls=Ovladani
+title.controls=Ovládání
 
 
 # navigation gui buttons
 ->btn
-back			=Zpet
-continue		=Pokracovat
-save_back		=Uloz a zpet
-save_go_menu	=Uloz a do Menu
+back			=Zpět
+continue		=Pokračovat
+save_back		=Ulož a zpět
+save_go_menu	=Ulož a do Menu
 <-
 
 
 
-
-
-
-
-
-// This is start of automatically generated unknown list:
-btn.controls=Ovladani
+btn.controls=Ovládání
 btn.lang=Jazyk
 title.language=Jazyk
-title.settings=Nastaveni
+title.settings=Nastavení

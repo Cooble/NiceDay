@@ -17,6 +17,7 @@ protected:
 public:
 	
 	GUICreativeTab(HUD& hud);
+	~GUICreativeTab() override;
 	auto getInventory() { return m_inv; }
 };
 

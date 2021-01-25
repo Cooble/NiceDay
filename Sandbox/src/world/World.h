@@ -54,55 +54,55 @@ public:
 	friend class WorldGen;
 
 	long long last_save_time;
-	inline int getCX() const { return m_x; }
-	inline int getCY() const { return m_y; }
-	inline ChunkID chunkID() const { return half_int(m_x, m_y); }
+	int getCX() const { return m_x; }
+	int getCY() const { return m_y; }
+	ChunkID chunkID() const { return half_int(m_x, m_y); }
 
 	// cannot unload locked chunk
-	inline bool isLocked() const
+	bool isLocked() const
 	{
 		return (m_flags & CHUNK_LOCKED_FLAG) != 0 || (!m_light_job.isDone());
 	}
 
-	inline bool isDirty() const { return m_flags & CHUNK_DIRTY_FLAG; }
-	inline bool isGenerated() const { return last_save_time != 0; } //worldgen has generated it
-	inline void lock(bool lock)
+	bool isDirty() const { return m_flags & CHUNK_DIRTY_FLAG; }
+	bool isGenerated() const { return last_save_time != 0; } //worldgen has generated it
+	void lock(bool lock)
 	{
 		if (lock) m_flags |= CHUNK_LOCKED_FLAG;
 		else m_flags &= ~CHUNK_LOCKED_FLAG;
 	}
 
-	inline JobAssignment& getLightJob() { return m_light_job; }
+	JobAssignment& getLightJob() { return m_light_job; }
 
-	inline BlockStruct& block(int x, int y)
+	BlockStruct& block(int x, int y)
 	{
 		ASSERT(x >= 0 && x < WORLD_CHUNK_SIZE&&y >= 0 && y < WORLD_CHUNK_SIZE, "Invalid chunk coords!");
 		return m_blocks[y << WORLD_CHUNK_BIT_SIZE | x];
 	}
 
-	inline const BlockStruct& block(int x, int y) const { return m_blocks[y << WORLD_CHUNK_BIT_SIZE | x]; }
+	const BlockStruct& block(int x, int y) const { return m_blocks[y << WORLD_CHUNK_BIT_SIZE | x]; }
 
-	inline uint8_t& lightLevel(int x, int y)
+	uint8_t& lightLevel(int x, int y)
 	{
 		ASSERT(x >= 0 && x < WORLD_CHUNK_SIZE&&y >= 0 && y < WORLD_CHUNK_SIZE, "Invalid chunk coords!");
 		return m_light_levels[y << WORLD_CHUNK_BIT_SIZE | x];
 	}
 
-	inline uint8_t lightLevel(int x, int y) const
+	uint8_t lightLevel(int x, int y) const
 	{
 		ASSERT(x >= 0 && x < WORLD_CHUNK_SIZE&&y >= 0 && y < WORLD_CHUNK_SIZE, "Invalid chunk coords!");
 		return m_light_levels[y << WORLD_CHUNK_BIT_SIZE | x];
 	}
 
-	inline void markDirty(bool dirty)
+	void markDirty(bool dirty)
 	{
 		if (dirty) m_flags |= CHUNK_DIRTY_FLAG;
 		else m_flags &= ~CHUNK_DIRTY_FLAG;
 	}
 
-	inline int getBiome() const { return m_biome; }
+	int getBiome() const { return m_biome; }
 
-	inline void setBiome(int biome_id) { m_biome = biome_id; }
+	void setBiome(int biome_id) { m_biome = biome_id; }
 
 	/*inline Phys::Rectangle getChunkRectangle() const
 	{
@@ -110,7 +110,7 @@ public:
 		                                             WORLD_CHUNK_SIZE);
 	}*/
 
-	static inline int getChunkIDFromWorldPos(int wx, int wy)
+	static int getChunkIDFromWorldPos(int wx, int wy)
 	{
 		return half_int(wx >> WORLD_CHUNK_BIT_SIZE, wy >> WORLD_CHUNK_BIT_SIZE);
 	}
@@ -167,25 +167,25 @@ public:
 		{
 		}
 		
-		inline ChunkID getChunkID() const { return m_chunkId; }
-		inline JobAssignmentP getJob() { return &m_job; }
-		inline const JobAssignment& getJobConst() const { return m_job; }
+		ChunkID getChunkID() const { return m_chunkId; }
+		JobAssignmentP getJob() { return &m_job; }
+		const JobAssignment& getJobConst() const { return m_job; }
 
-		inline bool isFree() const
+		bool isFree() const
 		{
 			return m_chunkId == std::numeric_limits<int>::max();
 		}
 
-		inline bool operator==(const ChunkHeader& h) { return m_chunkId == h.m_chunkId; }
-		inline bool operator!=(const ChunkHeader& h) { return !(m_chunkId == h.m_chunkId); }
-		inline void setState(ChunkState state) { m_state = state; }
-		inline ChunkState getState() const { return m_state; }
-		inline void setAccessible(bool a) { m_is_accessible = a; }
-		inline bool isAccessible() const { return m_is_accessible; }
+		bool operator==(const ChunkHeader& h) { return m_chunkId == h.m_chunkId; }
+		bool operator!=(const ChunkHeader& h) { return !(m_chunkId == h.m_chunkId); }
+		void setState(ChunkState state) { m_state = state; }
+		ChunkState getState() const { return m_state; }
+		void setAccessible(bool a) { m_is_accessible = a; }
+		bool isAccessible() const { return m_is_accessible; }
 	};
 
-	inline static int toChunkCoord(float x) { return toChunkCoord((int)x); }
-	inline static int toChunkCoord(int x) { return x >> WORLD_CHUNK_BIT_SIZE; }
+	static int toChunkCoord(float x) { return toChunkCoord((int)x); }
+	static int toChunkCoord(int x) { return x >> WORLD_CHUNK_BIT_SIZE; }
 	float m_time_speed = 1;
 	bool m_dayNightCycleEnable = true;
 private:
@@ -239,7 +239,7 @@ private:
 	JobAssignmentP updateBounds2(defaultable_map<int, int, 0>& toUpdateChunks);
 	void loadLightResources(int x, int y);
 
-	inline ChunkState getChunkState(int chunkID)
+	ChunkState getChunkState(int chunkID)
 	{
 		auto it = m_local_offset_header_map.find(chunkID);
 		if (it == m_local_offset_header_map.end())
@@ -247,14 +247,14 @@ private:
 		return m_chunk_headers[it->second].getState();
 	}
 
-	inline void setChunkState(int chunkID, ChunkState state)
+	void setChunkState(int chunkID, ChunkState state)
 	{
 		auto it = m_local_offset_header_map.find(chunkID);
 		ASSERT(it != m_local_offset_header_map.end(), "setting chunk state to chunk whose header is missing");
 		m_chunk_headers[it->second].setState(state);
 	}
 
-	inline bool isValidLocation(float wx, float wy) const
+	bool isValidLocation(float wx, float wy) const
 	{
 		return !((wx) < 0 || (wy) < 0 || (wx) >= getInfo().chunk_width * WORLD_CHUNK_SIZE || (wy) >= getInfo().chunk_height * WORLD_CHUNK_SIZE);
 	}
@@ -263,33 +263,33 @@ public:
 	World(std::string file_path, const WorldInfo& info);
 	~World();
 
-	inline LightCalculator& getLightCalculator() { return m_light_calc; }
+	LightCalculator& getLightCalculator() { return m_light_calc; }
 	void onUpdate();
 	void tick();
 
 
 	//returns if a chunk was loaded or unloaded and resets
-	inline bool hasChunkChanged()
+	bool hasChunkChanged()
 	{
 		bool out = m_has_chunk_changed;
 
 		m_has_chunk_changed = false;
 		return out;
 	}
-	inline bool areFirstChunksGenerated() { return m_first_chunks_generated; }
+	bool areFirstChunksGenerated() { return m_first_chunks_generated; }
 
-	inline bool isBlockValid(int x, int y) const
+	bool isBlockValid(int x, int y) const
 	{
 		return x >= 0 && y >= 0 && x < getInfo().chunk_width * WORLD_CHUNK_SIZE && y < getInfo().chunk_height *
 			WORLD_CHUNK_SIZE;
 	}
 
-	inline bool isChunkValid(int x, int y) const
+	bool isChunkValid(int x, int y) const
 	{
 		return isChunkValid(half_int(x, y));
 	}
 
-	inline bool isChunkValid(half_int chunkid) const
+	bool isChunkValid(half_int chunkid) const
 	{
 		return chunkid.x >= 0 && chunkid.x < getInfo().chunk_width && chunkid.y >= 0 && chunkid.y < getInfo().
 			chunk_height;
@@ -298,11 +298,11 @@ public:
 	glm::vec4 getSkyLight();
 	bool isChunkGenerated(int chunkId);
 
-	inline int getChunkSaveOffset(int id) const
+	int getChunkSaveOffset(int id) const
 	{
 		return getChunkSaveOffset(half_int::X(id),half_int::Y(id));
 	};
-	inline int getChunkSaveOffset(int cx,int cy) const
+	int getChunkSaveOffset(int cx,int cy) const
 	{
 		return cx + cy*m_info.chunk_width;
 	};
@@ -312,7 +312,7 @@ public:
 	//(won't cause chunk load)
 	const Chunk* getChunk(int x, int y) const;
 	Chunk* getChunkM(int cx, int cy) override;
-	inline Chunk* getChunkM(half_int chunkID) { return getChunkM(chunkID.x, chunkID.y); }
+	Chunk* getChunkM(half_int chunkID) { return getChunkM(chunkID.x, chunkID.y); }
 
 	// return index if chunk is in memory and accessible or -1
 	int getChunkIndex(int id) const;
@@ -323,7 +323,7 @@ public:
 	void loadChunk(int x, int y);
 
 	// returns if chunk can be normally accessed (it is not in being loaded state)
-	inline bool isChunkFullyLoaded(int id) const { return getChunkIndex(id) != -1; }
+	bool isChunkFullyLoaded(int id) const { return getChunkIndex(id) != -1; }
 
 	void unloadChunks(nd::temp_set<int>& chunk_ids);
 	static void updateChunkBounds(BlockAccess& world, int cx, int cy, int bitBounds);
@@ -346,7 +346,7 @@ public:
 
 	//return is block at coords is air and true if outside the map
 	//(may cause chunk load)
-	inline bool isAir(int x, int y)
+	bool isAir(int x, int y)
 	{
 		auto b = getBlockM(x, y);
 		return b == nullptr || b->isAir();
@@ -357,8 +357,8 @@ public:
 
 	// just changes block value of blockstruct (no notification)
 	void setBlock(int x, int y, BlockStruct& block) override;
-	inline void setBlock(int x, int y, int blockid) { setBlock(x, y, BlockStruct(blockid)); }
-	inline void setBlockWithNotify(int x, int y, int blockid) { setBlockWithNotify(x, y, BlockStruct(blockid)); }
+	void setBlock(int x, int y, int blockid) { setBlock(x, y, BlockStruct(blockid)); }
+	void setBlockWithNotify(int x, int y, int blockid) { setBlockWithNotify(x, y, BlockStruct(blockid)); }
 
 
 	//automatically calls chunk.markdirty() to update graphics and call onNeighbourWallChange()
@@ -368,7 +368,7 @@ public:
 	//opens block set session
 	//you can call many setblock()
 	//then you need to flush changes flushBlockSet()
-	inline void beginBlockSet()
+	void beginBlockSet()
 	{
 		ASSERT(!m_edit_buffer_enable, "Called beginedit without calling flushEdit() beforehand");
 		m_edit_buffer_enable = true;
@@ -379,34 +379,38 @@ public:
 
 	//==========INFO==================================================
 
-	inline std::unordered_map<int, int>& getMap() { return m_local_offset_header_map; }
-	inline auto& getHeaders() const { return m_chunk_headers; }
-	inline long long getWorldTicks() const { return m_info.time; }
-	inline WorldTime getWorldTime() const { return WorldTime(m_info.time); }
-	inline std::string getName() const { return m_info.name; }
-	inline const WorldInfo& getInfo() const { return m_info; };
-	inline const std::string& getFilePath() const { return m_file_path; }
-	inline auto& modifyInfo() { return m_info; }
-	inline NBT& getWorldNBT() { return m_world_nbt; }
-	inline WorldGen& getWorldGen() { return m_gen; }
+	std::unordered_map<int, int>& getMap() { return m_local_offset_header_map; }
+	auto& getHeaders() const { return m_chunk_headers; }
+	long long getWorldTicks() const { return m_info.time; }
+	WorldTime getWorldTime() const { return WorldTime(m_info.time); }
+	std::string getName() const { return m_info.name; }
+	const WorldInfo& getInfo() const { return m_info; };
+	const std::string& getFilePath() const { return m_file_path; }
+	auto& modifyInfo() { return m_info; }
+	NBT& getWorldNBT() { return m_world_nbt; }
+	WorldGen& getWorldGen() { return m_gen; }
 
 	//================ENTITY========================================
 
-	inline auto& getNBTSaver() { return m_nbt_saver; }
-	inline EntityManager& getEntityManager() { return m_entity_manager; }
-	inline ParticleManager** particleManager() { return &m_particle_manager; }
+	auto& getNBTSaver() { return m_nbt_saver; }
+	EntityManager& getEntityManager() { return m_entity_manager; }
+	ParticleManager** particleManager() { return &m_particle_manager; }
 	
 	void spawnParticle(ParticleID id, const glm::vec2& pos, const glm::vec2& speed, const glm::vec2& acc, float rotation = 0, half_int texturePos = half_int(-1, -1));
-	
-	void spawnBlockBreakParticles(int x, int y);
+
+	// spawn break particles around block
+	// amount in interval 1 - 32 is probability of spawning one particle
+	//		- 1 means smallest probability of spawning
+	//		- 32 means every particle is spawned
+	void spawnBlockBreakParticles(int x, int y,int amount=32);
 
 
-	inline WorldEntity* getLoadedEntity(EntityID id)
+	WorldEntity* getLoadedEntity(EntityID id)
 	{
 		return m_entity_manager.entity(id);
 	}
 
-	inline WorldEntity* getLoadedTileEntity(int x, int y)
+	WorldEntity* getLoadedTileEntity(int x, int y)
 	{
 		auto f = m_tile_entity_map.find(Phys::toInt64(x,y));
 		if (f == m_tile_entity_map.end())
@@ -415,8 +419,8 @@ public:
 	}
 	nd::temp_vector<WorldEntity*> getEntitiesInRadius(const glm::vec2& pos,float radius);
 	nd::temp_vector<WorldEntity*> getEntitiesAtLocation(const glm::vec2& pos);
-	inline const auto& getLoadedEntities() { return m_entity_array; }
-	inline const auto& getLoadedTileEntities() { return m_tile_entity_map; }
+	const auto& getLoadedEntities() { return m_entity_array; }
+	const auto& getLoadedTileEntities() { return m_tile_entity_map; }
 
 	void loadEntity(WorldEntity* pEntity);
 
@@ -442,22 +446,22 @@ public:
 	// to kill yourself safely use entity.markDead() instead (~() will be called after update() of that entity)
 	void killTileEntity(EntityID id);
 
-	inline std::vector<EntityID>::const_iterator beginEntities()
+	std::vector<EntityID>::const_iterator beginEntities()
 	{
 		return m_entity_array.begin();
 	}
 
-	inline std::vector<EntityID>::const_iterator endEntities()
+	std::vector<EntityID>::const_iterator endEntities()
 	{
 		return m_entity_array.end();
 	}
 
-	inline std::vector<EntityID>::const_reverse_iterator rbeginEntities()
+	std::vector<EntityID>::const_reverse_iterator rbeginEntities()
 	{
 		return m_entity_array.rbegin();
 	}
 
-	inline std::vector<EntityID>::const_reverse_iterator rendEntities()
+	std::vector<EntityID>::const_reverse_iterator rendEntities()
 	{
 		return m_entity_array.rend();
 	}
@@ -477,12 +481,12 @@ public:
 	// return true if success
 	void genWorld();
 
-	inline bool isChunkGenerated(int cx, int cy) const
+	bool isChunkGenerated(int cx, int cy) const
 	{
 		return m_is_chunk_gen_map[getChunkSaveOffset(cx, cy)];
 	}
 
-	inline void markChunkGenerated(int cx, int cy)
+	void markChunkGenerated(int cx, int cy)
 	{
 		m_is_chunk_gen_map.set(getChunkSaveOffset(cx, cy), true);
 	}

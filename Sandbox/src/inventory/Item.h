@@ -8,6 +8,8 @@
 	ItemRegistry::get().registerItem(item);
 
 
+constexpr int ITEMSTACK_POOL_SIZE = 1000;
+
 class WorldEntity;
 class World;
 class ItemRegistry;
@@ -17,45 +19,75 @@ typedef uint64_t ItemID;
 
 class Block;
 struct BlockStruct;
+
+
+constexpr int ITEM_FLAG_IS_BLOCK = 0;
+constexpr int ITEM_FLAG_HAS_NBT = 1;
+
+// if the texture metadata is determined by metadata
+constexpr int ITEM_FLAG_USE_META_AS_TEXTURE = 2;
+
+constexpr int ITEM_FLAG_ARMOR_HEAD = 3;
+constexpr int ITEM_FLAG_ARMOR_CHEST = 4;
+constexpr int ITEM_FLAG_ARMOR_LEGGINS = 5;
+constexpr int ITEM_FLAG_ARMOR_BOOTS = 6;
+constexpr int ITEM_FLAG_AMMO = 7;
+
+
+
+
+
 class Item
 {
 protected:
 	const ItemID m_id;
-	int m_maxStackSize;
+	int m_max_stack_size;
 	const std::string m_text_name;
 	half_int m_texture_pos;
-	bool m_has_nbt;
-	bool m_is_block;
-	
-	// if the texture metadata is determined by metadata
-	bool m_use_meta_as_texture = false;
+	int m_flags = 0;
 	
 	// how many types of the same exists (tells creative tab to list all possibilities)
 	int m_max_metadata = 0;
 
-	
+	constexpr void setFlag(int flag, bool value = true) {
+		if (value)
+			m_flags |= (1 << flag);
+		else
+			m_flags &= ~(1 << flag);
+	}
 public:
+	
+	enum Interaction
+	{
+		PRESSED,RELEASED
+	};
 	inline const static int INFINITE_SIZE=-1;
 	virtual ~Item() = default;
 	Item(ItemID id,const std::string& textName);
 
-	Item& setMaxStackSize(int size) { m_maxStackSize = size; return *this; }
-	int isUseMetaAsTexture()const { return m_use_meta_as_texture; }
+	
+	Item& setMaxStackSize(int size) { m_max_stack_size = size; return *this; }
+
 	int getMaxMeta()const { return m_max_metadata; }
 
 	virtual void onTextureLoaded(const TextureAtlas& atlas);
 	virtual int getTextureOffset(const ItemStack& b) const;
 
-	int getMaxStackSize() const { return m_maxStackSize; }
+	int getMaxStackSize() const { return m_max_stack_size; }
 	ItemID getID() const { return m_id; }
 	const std::string& toString() const { return m_text_name; }
-	bool isBlock() const { return m_is_block; }
-	bool hasNBT() const { return m_has_nbt; }
+
+	// flags
+	constexpr bool hasFlag(int flag) const {
+		return m_flags & (1 << flag);
+	}
+	constexpr int isUseMetaAsTexture () const { return hasFlag(ITEM_FLAG_USE_META_AS_TEXTURE); }
+	constexpr int hasNBT () const { return hasFlag(ITEM_FLAG_HAS_NBT); }
+	constexpr int isBlock() const { return hasFlag(ITEM_FLAG_IS_BLOCK); }
+	
 	virtual int getBlockID() const;
 
-	// how fast the blok can be dig out
-	// 0 means cannot be dig out
-	virtual float getEfficiencyOnBlock(const Block& blok, ItemStack* stack) const { return 0; }
+
 
 	//=============================EVENTS=============================
 
@@ -87,6 +119,20 @@ public:
 	// Called each tick when item is held in hand = active slot
 	virtual void onItemHeldInHand(World& w, WorldEntity& owner, ItemStack& stack) const {}
 
+	// returns pointer to new custom structure that will hold temporary data of item or nullptr
+	// is called before onEquipped
+	virtual void* instantiateDataBox() const { return nullptr; }
+	
+	// destroys created dataBox returned by instantiateDataBox()
+	virtual void destroyDataBox(void* dataBox) const {}
+	
+	// called when clicked with held item somewhere at world location x,y
+	// Params:
+	//		ticksPressed number of ticks this item is pressed. When clicked first ticksPressed is 0
+	//		stack held item, if stack.size() is zero stack will be automatically destroyed. -> don't destroy the item!
+	//		dataBox custom data structure pointer returned by instantiateDataBox() call (will be reset each onEquipped())
+	virtual void onInteraction(World& w, ItemStack& stack, void* dataBox, WorldEntity& owner, float x, float y, Interaction interaction,int ticksPressed) const {}
+	
 	virtual std::string getTitle(ItemStack* stack)const;
 };
 
@@ -134,19 +180,20 @@ public:
 	ItemStack(const ItemStack& s);
 	~ItemStack();
 
-	inline uint64_t getMetadata() const { return m_metadata; }
-	inline void setMetadata(uint64_t meta) { m_metadata = meta; }
-	inline void setSize(int size) { m_size = size; }
-	inline int size()const { return m_size; }
-	inline bool isEmpty() const { return m_size == 0; }
-	inline ItemID getItemID() const { return m_item; }
-	inline const Item& getItem() const { return ItemRegistry::get().getItem(m_item); }
-	inline const NBT& getNBT() const { return m_nbt; }
-	inline NBT& getNBT() { return m_nbt; }
-	inline void destroy() { ItemStack::destroy(this); }
-	inline ItemStack* copy() const { return ItemStack::create(this); }
+	uint64_t getMetadata() const { return m_metadata; }
+	void setMetadata(uint64_t meta) { m_metadata = meta; }
+	void setSize(int size) { m_size = size; }
+	int size()const { return m_size; }
+	bool isEmpty() const { return m_size == 0; }
+	ItemID getItemID() const { return m_item; }
+	const Item& getItem() const { return ItemRegistry::get().getItem(m_item); }
+	const NBT& getNBT() const { return m_nbt; }
+	NBT& getNBT() { return m_nbt; }
+	void destroy() { ItemStack::destroy(this); }
+	ItemStack* copy() const { return ItemStack::create(this); }
 	bool equals(const ItemStack* stack) const;
-	inline void addSize(int count)
+	
+	void addSize(int count)
 	{
 		if (m_size == Item::INFINITE_SIZE)//ignore change if item has infinite size
 			return;

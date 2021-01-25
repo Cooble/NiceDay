@@ -30,7 +30,7 @@ class GUIEntityPlayer:public GUIEntity
 private:
 	EntityID m_player;
 	GUIActionSlots* m_gui_action_slots;
-	GUISlots* m_gui_slots;
+	GUISlots* m_gui_slots=nullptr;
 	GUIColumn* m_col;
 	//this is really nasty solution.. nevertheless it works
 	EntityPlayer* m_disgusting_player;

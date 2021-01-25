@@ -1,4 +1,6 @@
 ﻿#include "Item.h"
+
+#include "core/AppGlobals.h"
 #include "graphics/TextureAtlas.h"
 #include "graphics/font/FontParser.h"
 
@@ -55,7 +57,7 @@ bool operator==(const ItemStack& a, const ItemStack& b)
 }
 
 Item::Item(ItemID id, const std::string& textName)
-:m_id(id),m_maxStackSize(999),m_text_name(textName),m_has_nbt(false),m_is_block(false)
+:m_id(id),m_max_stack_size(999),m_text_name(textName)
 {
 }
 
@@ -66,7 +68,7 @@ void Item::onTextureLoaded(const TextureAtlas& atlas)
 
 int Item::getTextureOffset(const ItemStack& b) const
 {
-	return m_texture_pos+(m_use_meta_as_texture?half_int(b.getMetadata(),0):half_int(0,0));
+	return m_texture_pos+(isUseMetaAsTexture()?half_int(b.getMetadata(),0):half_int(0,0));
 }
 
 int Item::getBlockID() const
@@ -116,17 +118,19 @@ const Item& ItemRegistry::getItem(ItemID id) const
 
 Pool<ItemStack>& ItemStack::s_stack_pool()
 {
-	static Pool<ItemStack> pool(1000);
+	static Pool<ItemStack> pool(ITEMSTACK_POOL_SIZE);
 	return pool;
 }
 
 ItemStack* ItemStack::create(ItemID id, int count)
 {
+	AppGlobals::get().nbt["item_stack_pool_size"] = s_stack_pool().getCurrentSize();
 	return s_stack_pool().allocate(id, count);
 }
 
 ItemStack* ItemStack::create(const ItemStack* itemstack)
 {
+	AppGlobals::get().nbt["item_stack_pool_size"] = s_stack_pool().getCurrentSize();
 	return s_stack_pool().allocate(*itemstack);
 }
 
@@ -134,5 +138,8 @@ ItemStack* ItemStack::create(const ItemStack* itemstack)
 
 void ItemStack::destroy(ItemStack* stack)
 {
+	
 	s_stack_pool().deallocate(stack);
+	AppGlobals::get().nbt["item_stack_pool_size"] = s_stack_pool().getCurrentSize();
+
 }

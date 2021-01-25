@@ -658,6 +658,26 @@ public:
 		}
 		return found;
 	}
+	//specialization for same types
+	// sets val to nbt value at name or defaultVal if such item does not exist
+	// also saves defaultVal if such value does not exist
+	template <typename Arg>
+	bool loadSet(const Stringo& key, Stringo& val, Arg defaultVal)
+	{
+		if (!isMap()) {
+			val = defaultVal;
+			return false;
+		}
+		auto& it = val_map->find(key);
+		bool found = it != val_map->end();
+		if (found && it->second.isString())
+			val = it->second.string();
+		else {
+			access_map(key) = defaultVal;
+			val = access_map(key);
+		}
+		return found;
+	}
 	// sets val if value exists or returns false
 	template <typename Arg>
 	bool load(const Stringo& key, Arg& val) const

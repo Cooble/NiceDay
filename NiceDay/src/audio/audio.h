@@ -164,10 +164,10 @@ public:
 	// fills the ring buffer until its full or maxFrames is reached
 	// it can also fill the optional consumer with the same data if not nullptr
 	// returns true end of stream
-	bool readNext(int maxFrames, RingBufferLite& ringBuffer, SoundBuffer* optionalConsumer = nullptr);
+	bool readNext(int maxFrames, NDUtil::RingBufferLite& ringBuffer, SoundBuffer* optionalConsumer = nullptr);
 	// not implemented
 	// worked without VorbisFile
-	bool readNextOld(int maxFrames, RingBufferLite& ringBuffer);
+	bool readNextOld(int maxFrames, NDUtil::RingBufferLite& ringBuffer);
 
 	inline bool isOpened() const { return m_is_opened; }
 	inline bool isDone() const { return m_is_done; }

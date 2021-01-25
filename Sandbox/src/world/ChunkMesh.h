@@ -7,7 +7,7 @@
 
 
 constexpr unsigned int BLOCK_TEXTURE_ATLAS_SIZE =32;//icons in row
-constexpr unsigned int BLOCK_CORNER_ATLAS_SIZE = 8;//icons in row
+constexpr unsigned int BLOCK_CORNER_ATLAS_SIZE = 16;//icons in row
 
 constexpr unsigned int WALL_TEXTURE_ATLAS_SIZE = BLOCK_TEXTURE_ATLAS_SIZE *2;//icons in row
 constexpr unsigned int WALL_CORNER_ATLAS_SIZE = BLOCK_CORNER_ATLAS_SIZE *2;//icons in row

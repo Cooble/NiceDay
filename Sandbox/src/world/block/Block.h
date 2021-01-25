@@ -19,6 +19,11 @@ constexpr int BLOCK_STATE_LINE_UP = BIT(0);
 constexpr int BLOCK_STATE_LINE_DOWN = BIT(2);
 constexpr int BLOCK_STATE_LINE_LEFT = BIT(1);
 constexpr int BLOCK_STATE_LINE_RIGHT = BIT(3);
+constexpr int BLOCK_STATE_CRACKED = BIT(4);
+
+//all bits except for cracked
+constexpr int BLOCK_STATE_PURE_MASK = BLOCK_STATE_LINE_UP | BLOCK_STATE_LINE_DOWN | BLOCK_STATE_LINE_LEFT | BLOCK_STATE_LINE_RIGHT;
+
 
 //     ____
 //    |      \     
@@ -108,13 +113,22 @@ constexpr uint8_t OPACITY_AIR = 1;
 constexpr uint8_t OPACITY_SOLID = 3;
 
 constexpr int BLOCK_FLAG_HAS_ITEM_VERSION = 0;
+
+// automatically get texture uv offset by adding meta to x coordinate of texture uv
 constexpr int BLOCK_FLAG_HAS_METATEXTURES_IN_ROW = 1;
 //block needs wall behind it (e.g Painting)
 constexpr int BLOCK_FLAG_NEEDS_WALL = 2;
 //block cannot float in the air
-constexpr int BLOCK_FLAG_CANNOT_FLOAT= 3;
-constexpr int BLOCK_FLAG_HAS_BIG_TEXTURE= 4;
-constexpr int BLOCK_FLAG_SOLID= 5;
+constexpr int BLOCK_FLAG_CANNOT_FLOAT = 3;
+
+constexpr int BLOCK_FLAG_HAS_BIG_TEXTURE = 4;
+
+//on block can be placed candle or something
+constexpr int BLOCK_FLAG_SOLID = 5;
+
+//can be replaced by another block for example flowers
+constexpr int BLOCK_FLAG_REPLACEABLE = 6;
+
 
 class ItemBlock;
 class Block
@@ -124,8 +138,9 @@ private:
 	int m_id;
 	const std::string m_string_id;
 protected:
-	int m_flags=0;
-	int m_hardness = 1;
+	int m_flags = 0;
+	float m_hardness = 1;
+	int m_tier = 1;
 	int m_required = 0;
 	//bool m_has_item_version=true;
 	//bool m_has_metatextures_in_row=true;
@@ -138,8 +153,8 @@ protected:
 	 * when one block has for example more flower species this number tells us how many
 	 * used by itemblock
 	 */
-	int m_max_metadata=0;
-	
+	int m_max_metadata = 0;
+
 	//offset in block texture atlas
 	half_int m_texture_pos;
 	//array[BLOCK_STATE]=TEXTURE_OFFSET
@@ -171,9 +186,9 @@ protected:
 		m_collision_box = nullptr;
 		m_collision_box_size = 0;
 	}
-	void setFlag(int flag, bool value)
+	void setFlag(int flag, bool value=true)
 	{
-		if(value)
+		if (value)
 			m_flags |= (1 << flag);
 		else
 			m_flags &= ~(1 << flag);
@@ -182,8 +197,15 @@ public:
 	Block(std::string id);
 	Block(const Block& c) = delete;
 	void operator=(Block const&) = delete;
-	virtual ~Block()= default;
-	int getHardness() const { return m_hardness; }
+	virtual ~Block() = default;
+	
+	// the bigger the number the more time it will take to dig it
+	// 0 means insta dig
+	float getHardness() const { return m_hardness; }
+	
+	// lowest necessary tool tier to be able to dig it
+	int getTier() const { return m_tier; }
+	
 	int getID() const { return m_id; };
 	int getConnectGroup() const { return m_block_connect_group; }
 	int getMaxMetadata() const { return m_max_metadata; }
@@ -191,7 +213,7 @@ public:
 	{
 		return m_light_src;
 	}
-	uint8_t getOpacity()const {return m_opacity;}
+	uint8_t getOpacity()const { return m_opacity; }
 	bool hasTileEntity()const { return m_tile_entity != ENTITY_TYPE_NONE; }
 	virtual Phys::Vecti getTileEntityCoords(int x, int y, const BlockStruct& b) const;
 	EntityType getTileEntity() const { return m_tile_entity; }
@@ -200,7 +222,7 @@ public:
 	bool hasCollisionBox() const;
 
 	bool isInConnectGroup(int groups) const { return (groups & m_block_connect_group) != 0; }//they have group in common 
-	
+
 	//basic flags
 	constexpr bool hasItemVersion() const {
 		return m_flags & (1 << BLOCK_FLAG_HAS_ITEM_VERSION);
@@ -220,6 +242,13 @@ public:
 	constexpr bool isSolid() const {
 		return m_flags & (1 << BLOCK_FLAG_SOLID);
 	}
+	constexpr bool isReplaceable() const {
+		return m_flags & (1 << BLOCK_FLAG_REPLACEABLE);
+	}
+	constexpr bool hasFlag(int flag) const {
+		
+		return m_flags & (1 << flag);
+	}
 
 
 	virtual void onTextureLoaded(const BlockTextureAtlas& atlas);
@@ -238,7 +267,7 @@ public:
 	virtual void onBlockClicked(World& w, WorldEntity* e, int x, int y, BlockStruct& b) const;
 
 	virtual bool canBePlaced(World& w, int x, int y) const;
-	
+
 
 	virtual const ItemBlock& getItemFromBlock() const;
 	virtual std::string getItemIDFromBlock() const;
@@ -247,7 +276,7 @@ public:
 	const std::string& getStringID() const { return m_string_id; }
 };
 
-class MultiBlock:public Block
+class MultiBlock :public Block
 {
 	friend BlockRegistry;
 protected:
@@ -255,10 +284,10 @@ protected:
 	int m_width;
 	int m_height;
 
-	template<int Width,int Height>
+	template<int Width, int Height>
 	void generateCollisionBoxFromDimensions()
 	{
-		static Phys::Polygon p = Phys::toPolygon(Phys::Rectangle::createFromDimensions(0,0,Width,Height));
+		static Phys::Polygon p = Phys::toPolygon(Phys::Rectangle::createFromDimensions(0, 0, Width, Height));
 		m_collision_box = &p;
 	}
 

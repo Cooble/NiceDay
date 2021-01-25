@@ -56,36 +56,7 @@ void TextMesh::reserve(int size)
 		resize(size);
 }
 
-void TextBuilder::convertToLines(const std::string& text, const Font& font, int maxLineWidth,
-                                 std::vector<std::string>& lines)
-{
-	std::vector<std::string> separatedLines;
-	SUtil::splitString(Font::removeColorEntities(text), separatedLines, "\n");
 
-	for (auto& sepLine : separatedLines)
-	{
-		int currentWidth = 0;
-		std::string currentLine;
-		std::vector<std::string> words;
-		SUtil::splitString(sepLine, words);
-		for (auto& word : words)
-		{
-			auto wordSize = font.getTextWidth(word);
-			if (currentWidth + wordSize <= maxLineWidth)
-			{
-				currentLine += " " + word;
-			}
-			else
-			{
-				lines.push_back(currentLine);
-				currentWidth = wordSize;
-				currentLine = word;
-			}
-		}
-		if (!currentLine.empty())
-			lines.push_back(currentLine);
-	}
-}
 
 struct clipper
 {
@@ -120,10 +91,11 @@ static void setCursorData(float currentX, float yLoc, float pixelRat, clipper& c
 	cursor->uvs = {u0, v0, u1, v1};
 }
 
-bool TextBuilder::buildMesh(const std::vector<std::string>& lines, const Font& font, TextMesh& mesh, int alignment,
-                            glm::vec<4, int> clipRect, CursorProp* cursor)
+
+bool TextBuilder::buildMesh(const std::vector<std::u32string>& lines, const Font& font, TextMesh& mesh, int alignment,
+	glm::vec<4, int> clipRect, CursorProp* cursor)
 {
-	clipper clip = {(float)clipRect.x, (float)clipRect.y, (float)clipRect.z, (float)clipRect.w};
+	clipper clip = { (float)clipRect.x, (float)clipRect.y, (float)clipRect.z, (float)clipRect.w };
 
 	float pixelRat = font.getPixelRatio();
 
@@ -135,7 +107,7 @@ bool TextBuilder::buildMesh(const std::vector<std::string>& lines, const Font& f
 	float defaultXPos;
 
 	uint32_t color = 0xffffff00;
-	uint32_t borderColor = Font::colorToInt({0, 0.1, 0.7, 1});
+	uint32_t borderColor = Font::colorToInt({ 0, 0.1, 0.7, 1 });
 
 	for (auto& line : lines)
 	{
@@ -156,10 +128,10 @@ bool TextBuilder::buildMesh(const std::vector<std::string>& lines, const Font& f
 			ASSERT(false, "Invalid ALIGNMENT");
 			break;
 		}
-		char lastC = 0;
+		int lastC = 0;
 		int ignoreColorChar = 0;
 		int currentLineIndex = 0;
-		for (char c : line)
+		for (int c : line)
 		{
 			bool isBorderPrefix = false;
 			bool isIgnorePrefix = false;
@@ -172,7 +144,7 @@ bool TextBuilder::buildMesh(const std::vector<std::string>& lines, const Font& f
 			if (c == '&')
 			{
 				auto col = Font::tryEntityToColor(line.substr(currentLineIndex));
-				if (col.has_value()&&!isIgnorePrefix)
+				if (col.has_value() && !isIgnorePrefix)
 				{
 					if (!isBorderPrefix)
 						color = col.value();
@@ -184,7 +156,7 @@ bool TextBuilder::buildMesh(const std::vector<std::string>& lines, const Font& f
 			else if (c == '#')
 			{
 				auto col = Font::tryEntityToColor(line.substr(currentLineIndex));
-				if (col.has_value()&&!isIgnorePrefix)
+				if (col.has_value() && !isIgnorePrefix)
 				{
 					if (!isBorderPrefix)
 						color = col.value();
@@ -192,10 +164,11 @@ bool TextBuilder::buildMesh(const std::vector<std::string>& lines, const Font& f
 						borderColor = col.value();
 					ignoreColorChar = 7;
 				}
-				
-			}else if((c==Font::BORDER_PREFIX||c==Font::IGNORE_PREFIX)&& currentLineIndex+1<line.size())//check if in future the color is valid
+
+			}
+			else if ((c == Font::BORDER_PREFIX || c == Font::IGNORE_PREFIX) && currentLineIndex + 1 < line.size())//check if in future the color is valid
 			{
-				auto col = Font::tryEntityToColor(line.substr(currentLineIndex+1));
+				auto col = Font::tryEntityToColor(line.substr(currentLineIndex + 1));
 				if (col.has_value())
 				{
 					ignoreColorChar = 1;
@@ -260,4 +233,36 @@ bool TextBuilder::buildMesh(const std::vector<std::string>& lines, const Font& f
 	}
 
 	return true;
+}
+
+
+void TextBuilder::convertToLines(const std::string& text, const Font& font, int maxLineWidth,
+	std::vector<std::u32string>& lines)
+{
+	std::vector<std::string> separatedLines;
+	SUtil::splitString(Font::removeColorEntities(text), separatedLines, "\n");
+
+	for (auto& sepLine : separatedLines)
+	{
+		int currentWidth = 0;
+		std::string currentLine;
+		std::vector<std::string> words;
+		SUtil::splitString(sepLine, words);
+		for (auto& word : words)
+		{
+			auto wordSize = font.getTextWidth(word);
+			if (currentWidth + wordSize <= maxLineWidth)
+			{
+				currentLine += " " + word;
+			}
+			else
+			{
+				lines.push_back(SUtil::utf8toCodePoints(currentLine));
+				currentWidth = wordSize;
+				currentLine = word;
+			}
+		}
+		if (!currentLine.empty())
+			lines.push_back(SUtil::utf8toCodePoints(currentLine));
+	}
 }

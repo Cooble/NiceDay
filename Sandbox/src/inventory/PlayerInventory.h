@@ -21,13 +21,18 @@ private:
 	int m_special_hand_slot;
 	std::vector<ItemStack*> m_items;
 	WorldEntity* m_player;
+	void* m_item_data_box=nullptr;
 public:
+	~PlayerInventory() override;
+
 	PlayerInventory(WorldEntity* player);
 	int trashSlot() { return m_items.size() - 1; }
 	void callEquipped(ItemStack* itemStack);
 	void callUnequipped(ItemStack* itemStack);
+	// returns if an item can be placed at the slot
+	bool canPutAtIndex(ItemStack* itemStack,int index);
 	ItemStack* putAtRandomIndex(ItemStack* stack) override;
-	ItemStack* putAtIndex(ItemStack* stack, int index,int count=-1) override;
+	ItemStack* putAtIndex(ItemStack* stack, int index,int count= ALL) override;
 	ItemStack* swap(ItemStack* stack, int index) override;
 	ItemStack* getItemStack(int index) override;
 	const std::string& getID() const override;
@@ -49,4 +54,9 @@ public:
 
 	void save(NBT& src);
 	void load(NBT& src);
+
+	void* getItemDataBox() const
+	{
+		return m_item_data_box;
+	}
 };

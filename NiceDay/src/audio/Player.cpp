@@ -302,7 +302,7 @@ void Sounder::prepareMusic(Music** musi, const SoundAssignment& command, bool bu
 {
 	//try to obtain ringbuffer
 	//forgive me but I know what I am doing (I hope)
-	auto ring = reinterpret_cast<RingBufferLite*>(m_rings.allocate());
+	auto ring = reinterpret_cast<NDUtil::RingBufferLite*>(m_rings.allocate());
 	if (!ring)
 	{
 		//we don't have enough ringbuffers

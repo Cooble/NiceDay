@@ -149,6 +149,7 @@ void BlockRegistry::updateBlockFromJSON(const std::string& id, NBT& nbt)
 {
 	Block* block = m_blocks[m_blockIDs[id]];
 	nbt.load("hardness", block->m_hardness);
+	nbt.load("tier", block->m_tier);
 	//nbt.load("maxStackSize", block->m_ma);
 	if(nbt.exists("opacity"))
 	{
@@ -174,6 +175,9 @@ void BlockRegistry::updateBlockFromJSON(const std::string& id, NBT& nbt)
 	auto& needsWall = nbt["needsWall"];
 	if (needsWall.isBool())
 		block->setFlag(BLOCK_FLAG_NEEDS_WALL, needsWall);
+	auto& isReplaceable = nbt["replaceable"];
+	if (isReplaceable.isBool())
+		block->setFlag(BLOCK_FLAG_REPLACEABLE, isReplaceable);
 	auto& cannotFloat = nbt["cannotFloat"];
 	if (cannotFloat.isBool())
 		block->setFlag(BLOCK_FLAG_CANNOT_FLOAT, cannotFloat);

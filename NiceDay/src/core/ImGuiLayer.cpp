@@ -699,6 +699,7 @@ void ImGuiLayer::drawTelemetry()
 	imguiProfile();
 	ImGui::Separator();
 	ImGui::Spacing();
+	
 	drawGlobals();
 	ImGui::End();
 }

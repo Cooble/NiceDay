@@ -161,4 +161,99 @@ namespace ImGui{
 
 		return s;
 	}
+
+	const ImWchar16* FontRangeToUTF_16(const ImWchar* range,size_t* byteSizePtr)
+	{
+		auto oldRange = range;
+		if (!range)
+			return nullptr;
+		int size = 0;
+		//first iteration to get the size
+		while (true)
+		{
+			auto from = *range++;
+			if (from == 0)
+				break;
+			auto to = *range++;
+			size+=1+to-from;
+		}
+		if (!size)
+			return nullptr;
+		
+		*byteSizePtr = (1 + size + 1) * sizeof(ImWchar16);// bom + size + null terminator
+		
+		ImWchar16* out = (ImWchar16*)malloc(*byteSizePtr);
+		ImWchar16* buff = out;
+		
+		*buff++ = 0xFEFF;
+
+		//reset range
+		range = oldRange;
+		
+		// lets fill the array
+		while (true)
+		{
+			auto from = *range++;
+			if (from == 0)
+				break;
+			auto to = *range++;
+
+			for (int i = from; i <= to; ++i) 
+				*buff++ = (ImWchar16)i;
+		}
+		
+		//null terminator
+		*buff = 0;
+
+		return out;
+	}
+
+	const ImWchar16* FontRangeToWChar(const ImWchar* range)
+	{
+		auto oldRange = range;
+		if (!range)
+			return nullptr;
+		int size = 0;
+		//first iteration to get the size
+		while (true)
+		{
+			auto from = *range++;
+			if (from == 0)
+				break;
+			auto to = *range++;
+			size += 1 + to - from;
+		}
+		if (!size)
+			return nullptr;
+
+		ImWchar16* out = (ImWchar16*)malloc(size*2+2);//size + terminator
+		ImWchar16* buff = out;
+		
+		//reset range
+		range = oldRange;
+
+		// lets fill the array
+		while (true)
+		{
+			auto from = *range++;
+			if (from == 0)
+				break;
+			auto to = *range++;
+
+			for (int i = from; i <= to; ++i) {
+				char* c = (char*)buff;
+
+				// flip bytes to achieve lsb
+				c[0] = *(((char*)&i) + 1);
+				c[1] = *(((char*)&i) + 0);
+
+				buff++;
+			}
+		}
+
+		//null terminator
+		*buff = 0;
+
+		return out;
+	}
 }

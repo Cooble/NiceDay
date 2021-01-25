@@ -2,22 +2,63 @@
 #include "world/block/block_datas.h"
 #include "world/entity/EntityPlayer.h"
 
-ItemPickaxe::ItemPickaxe()
+ItemPickaxeCopper::ItemPickaxeCopper()
 	:ItemTool(SID("pickaxe"),"pickaxe",TOOL_TYPE_PICKAXE)
 {
-	m_maxStackSize = 1;
+	m_tier = 1;
+	m_efficiency = 0.5f;
 }
 
-float ItemPickaxe::getEfficiencyOnBlock(const Block& blok, ItemStack* stack) const
+ItemElPickaxo::ItemElPickaxo()
+	:ItemTool(SID("el_pickaxo"), "el_pickaxo", TOOL_TYPE_PICKAXE)
 {
-	return 1;
+	m_tier = 10000;
+	m_efficiency =100.f;
+	m_dig_interval = 1;
+}
+
+ItemWoodHelmet::ItemWoodHelmet()
+	:Item(SID("wood_helmet"), "wood_helmet")
+{
+	setFlag(ITEM_FLAG_ARMOR_HEAD);
+	m_max_stack_size = 1;
+}
+
+ItemIronHelmet::ItemIronHelmet()
+	:Item(SID("iron_helmet"), "iron_helmet")
+{
+	setFlag(ITEM_FLAG_ARMOR_HEAD);
+	m_max_stack_size = 1;
+}
+
+ItemWoodChestplate::ItemWoodChestplate()
+	: Item(SID("wood_chestplate"), "wood_chestplate")
+{
+	setFlag(ITEM_FLAG_ARMOR_CHEST);
+	m_max_stack_size = 1;
+
+}
+
+ItemWoodLeggins::ItemWoodLeggins()
+	: Item(SID("wood_leggins"), "wood_leggins")
+{
+	setFlag(ITEM_FLAG_ARMOR_LEGGINS);
+	m_max_stack_size = 1;
+
+}
+
+ItemWoodBoots::ItemWoodBoots()
+	: Item(SID("wood_boots"), "wood_boots")
+{
+	setFlag(ITEM_FLAG_ARMOR_BOOTS);
+	m_max_stack_size = 1;
 }
 
 ItemShotgun::ItemShotgun()
 	:Item(SID("shotgun"), "shotgun")
 {
 	//m_has_nbt = true;
-	m_maxStackSize = 1;
+	m_max_stack_size = 1;
 }
 
 bool ItemShotgun::onRightClick(World& world, ItemStack& stack, WorldEntity& owner, int x, int y) const
@@ -51,8 +92,8 @@ std::string ItemShotgun::getTitle(ItemStack* stack) const
 ItemTnt::ItemTnt()
 	:Item(SID("tnt"),"tnt")
 {
-	m_maxStackSize = 111;
-	m_use_meta_as_texture = true;
+	m_max_stack_size = 111;
+	setFlag(ITEM_FLAG_USE_META_AS_TEXTURE);
 	m_max_metadata = 3;
 }
 
@@ -73,8 +114,8 @@ static std::array<const char*,2 > vinylPlaysPath = { "neon.ogg", "tower_clock.og
 ItemVinyl::ItemVinyl()
 	:Item(SID("vinyl"),"vinyl")
 {
-	m_maxStackSize = 1;
-	m_has_nbt = true;
+	m_max_stack_size = 1;
+	setFlag(ITEM_FLAG_HAS_NBT);
 	m_max_metadata = 2;
 }
 

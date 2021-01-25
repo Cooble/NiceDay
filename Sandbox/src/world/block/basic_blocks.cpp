@@ -20,6 +20,7 @@ BlockAir::BlockAir()
 	m_texture_pos = -1;
 	setFlag(BLOCK_FLAG_HAS_ITEM_VERSION, false);
 	setFlag(BLOCK_FLAG_SOLID, false);
+	setFlag(BLOCK_FLAG_REPLACEABLE, true);
 }
 
 int BlockAir::getTextureOffset(int x, int y, const BlockStruct&) const { return -1; }
@@ -106,8 +107,11 @@ bool BlockGrass::onNeighborBlockChange(BlockAccess& world, int x, int y) const
 	auto& block = *world.getBlockM(x, y);
 	int lastid = block.block_id;
 	int lastCorner = block.block_corner;
-	bool custombit = (lastCorner & BIT(4)); //perserve custombit
-	block.block_corner &= ~BIT(4);
+	//bool custombit = (lastCorner & BIT(4)); //perserve custombit
+	//block.block_corner &= ~BIT(4);
+	bool custombit = (lastCorner & BLOCK_STATE_CRACKED); //perserve custombit
+	block.block_corner &= ~BLOCK_STATE_CRACKED;
+
 
 	Block::onNeighborBlockChange(world, x, y); //update corner state
 	if (block.block_corner == BLOCK_STATE_FULL
@@ -119,7 +123,8 @@ bool BlockGrass::onNeighborBlockChange(BlockAccess& world, int x, int y) const
 		|| block.block_corner == BLOCK_STATE_LINE_END_DOWN
 		|| block.block_corner == BLOCK_STATE_LINE_VERTICAL)
 	{
-		block.block_id = BLOCK_DIRT;
+		block.block_id = BLOCK_DIRT;//no air around
+		custombit = false;//we dont care about cracks anymore
 	}
 	else if (block.block_corner == BLOCK_STATE_CORNER_UP_LEFT
 		|| block.block_corner == BLOCK_STATE_LINE_END_LEFT)
@@ -129,7 +134,7 @@ bool BlockGrass::onNeighborBlockChange(BlockAccess& world, int x, int y) const
 		block.block_metadata = half_int((x & 1) + 2, 0);
 	else
 		block.block_metadata = half_int(x & 3, 1);
-	block.block_corner |= custombit << 4; //put back custombit
+	block.block_corner |= BLOCK_STATE_CRACKED*custombit; //put back custombit
 	return lastCorner != block.block_corner || lastid != block.block_id; //we have a change (or not)
 }
 

@@ -48,7 +48,7 @@ public:
 
 	void onClicked(World& w, WorldEntity* entity) override;
 	void update(World& w) override;
-	inline Inventory& getInventory() { return m_inventory; }
+	Inventory& getInventory() { return m_inventory; }
 	EntityType getEntityType() const override;
 	
 	void save(NBT& src) override;
@@ -116,11 +116,11 @@ public:
 	void load(NBT& src) override;
 
 public:
-	inline glm::vec2& getAcceleration() { return m_acceleration; }
-	inline glm::vec2& getVelocity() { return m_velocity; }
-	inline const Phys::Polygon& getCollisionBox() const { return m_bound; }
-	inline bool isOnFloor() const { return m_is_on_floor; }
-	inline Blockage getBlockageState() const { return m_blockage; }
+	glm::vec2& getAcceleration() { return m_acceleration; }
+	glm::vec2& getVelocity() { return m_velocity; }
+	const Phys::Polygon& getCollisionBox() const { return m_bound; }
+	bool isOnFloor() const { return m_is_on_floor; }
+	Blockage getBlockageState() const { return m_blockage; }
 };
 
 
@@ -133,19 +133,20 @@ protected:
 protected:
 	UVQuad m_sprite;
 	float m_angle;
-	ItemStack* m_item_stack;
+	ItemStack* m_item_stack=nullptr;
 	EntityID m_target=ENTITY_ID_INVALID;
 	EntityID m_ignore_target=ENTITY_ID_INVALID;
 	long long lastTime = 0;
 	int m_ticks_to_new_search=10;
 public:
 	EntityItem();
+	~EntityItem() override;
 	void setItemStack(ItemStack* stack);
 	/***
 	 * will ignore this entity for a short while after throwing it
 	 * used to forbid the item to come back to the thrower
 	 */
-	inline void setThrowerEntity(EntityID id) { m_ignore_target = id; }
+	void setThrowerEntity(EntityID id) { m_ignore_target = id; }
 	void update(World & w) override;
 	void render(BatchRenderer2D & renderer) override;
 	EntityType getEntityType() const override;

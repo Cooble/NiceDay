@@ -9,7 +9,7 @@ EntityPlayer::EntityPlayer()
 {
 	m_is_item_consumer = true;
 	m_velocity = vec2(0.0f);
-	m_acceleration = { 0.f, -9.8f / 60 };
+	m_acceleration = { 0.f, -9.8f / 60 / 2 };
 	m_max_velocity = vec2(40.f / 60);
 
 	static SpriteSheetResource res(Texture::create(
@@ -21,23 +21,23 @@ EntityPlayer::EntityPlayer()
 	m_animation.setPosition({ -1, 0, 0 });
 	m_animation.setSize({ 2, 3 });
 	m_bound = Phys::toPolygon(Phys::Rectangle::createFromDimensions(-0.75f, 0, 1.5f, 2.9f));
+	m_inventory.putAtRandomIndex(ItemStack::create(SID("el_pickaxo")));
 	m_inventory.putAtRandomIndex(ItemStack::create(SID("pickaxe")));
-	m_inventory.putAtRandomIndex(ItemStack::create(SID("pickaxe")));
-	m_inventory.putAtRandomIndex(ItemStack::create(SID("stone"),7));
-	m_inventory.putAtRandomIndex(ItemStack::create(SID("stone"),5));
+	m_inventory.putAtRandomIndex(ItemStack::create(SID("stone"),999));
+	m_inventory.putAtRandomIndex(ItemStack::create(SID("stone"),-1));
 	m_inventory.putAtRandomIndex(ItemStack::create(SID("shotgun")));
 }
 
 void EntityPlayer::render(BatchRenderer2D& renderer)
 {
-	constexpr float ITEM_ATLAS_SIZE_BIT = 1.f/16;
-	
+	constexpr float ITEM_ATLAS_SIZE_BIT = 1.f / 16;
+
 	renderer.push(glm::translate(glm::mat4(1.0f), glm::vec3(m_pos.x, m_pos.y, 0)));
 	renderer.submit(m_animation);
 
 	//item
 	auto stack = getInventory().itemInHand();
-	if (stack&&m_is_swinging) {
+	if (stack && m_is_swinging) {
 		auto& item = stack->getItem();
 
 		half_int txtOffset = item.getTextureOffset(*stack);
@@ -62,15 +62,15 @@ void EntityPlayer::render(BatchRenderer2D& renderer)
 	m_health_bar.render(renderer);
 
 	renderer.pop();
-	
-	
 
-	
+
+
+
 }
 
 void EntityPlayer::setItemSwinging(bool swing)
 {
-	if(!swing&&m_is_swinging&&!m_is_last_swing)
+	if (!swing && m_is_swinging && !m_is_last_swing)
 	{
 		m_is_last_swing = true;
 		m_item_angle = (int)m_item_angle % 360;
@@ -96,21 +96,24 @@ void EntityPlayer::update(World& w)
 
 	constexpr float swingSpeed = 10;
 	if (m_is_swinging)
-		m_item_angle += m_is_facing_left?swingSpeed:-swingSpeed;
-	if(m_is_last_swing)
-		if(m_item_angle>=360||m_item_angle<=-360)
+		m_item_angle += m_is_facing_left ? swingSpeed : -swingSpeed;
+	if (m_is_last_swing)
+		if (m_item_angle >= 360 || m_item_angle <= -360)
 		{
 			m_is_swinging = false;
 			m_is_last_swing = false;
 		}
-	
+
 	auto lastPos = m_pos;
 	auto lastFacingLeft = m_is_facing_left;
 	if (!Stats::move_through_blocks_enable)
 		PhysEntity::computePhysics(w);
 	else
 	{
-		m_velocity = glm::clamp(m_velocity, -m_max_velocity, m_max_velocity);
+		float len = glm::length(m_velocity);
+		if(len>m_max_velocity.x)
+			m_velocity = glm::normalize(m_velocity) * m_max_velocity.x;
+		//m_velocity = glm::clamp(m_velocity, -m_max_velocity, m_max_velocity);
 		m_pos += m_velocity;
 	}
 
@@ -142,15 +145,15 @@ void EntityPlayer::update(World& w)
 				m_animation.setSpriteFrame(1, 0);
 		}
 	}
-	if (lastFacingLeft != m_is_facing_left)
-		m_animation.updateAfterFlip();
-	
+	//if (lastFacingLeft != m_is_facing_left)
+	//	m_animation.updateAfterFlip();
+
 	constexpr float animationBlocksPerFrame = 1;
 	m_pose += abs(lastPos.x - m_pos.x);
 	if (m_pose - m_last_pose > animationBlocksPerFrame)
 	{
 		m_pose = m_last_pose;
-		if (!w.isAir(m_pos.x, m_pos.y - 1.f) || lastFacingLeft!=m_is_facing_left|| Stats::move_through_blocks_enable)//no walking while jumping through air
+		if (!w.isAir(m_pos.x, m_pos.y - 1.f) || lastFacingLeft != m_is_facing_left || Stats::move_through_blocks_enable)//no walking while jumping through air
 			m_animation.nextFrame();
 	}
 
@@ -181,6 +184,44 @@ void EntityPlayer::onHit(World& w, WorldEntity* e, float damage)
 {
 }
 
+glm::ivec2 EntityPlayer::pickBlockToDig(World& w, glm::vec2 pos, glm::vec2 cursorPos, float radius)
+{
+	std::vector<glm::ivec2> out;
+	pos.y += 1.5f;
+	glm::vec2 normal = glm::normalize(cursorPos - pos);
+
+	for (int i = 0; i < glm::ceil(radius); ++i)
+		for (int j = -1; j < 2; ++j)
+		{
+			glm::vec2 blockToPick1 = pos + glm::vec2(0.5f, j) + (float)i * normal;
+			glm::vec2 blockToPick2 = pos + glm::vec2(-0.5f, j) + (float)i * normal;
+
+			if (!w.isAir(blockToPick1.x, blockToPick1.y))
+				return blockToPick1;
+			if (!w.isAir(blockToPick2.x, blockToPick2.y))
+				return blockToPick2;
+		}
+	return glm::ivec2(-1, -1);
+}
+std::vector<glm::ivec2> EntityPlayer::pickBlocksToDig(World& w, glm::vec2 pos, glm::vec2 cursorPos, float radius)
+{
+	std::vector<glm::ivec2> out;
+	pos.y += 1.5f;
+	glm::vec2 normal = glm::normalize(cursorPos - pos);
+
+	for (int i = 0; i < glm::ceil(radius); ++i)
+		for (int j = -1; j < 2; ++j)
+		{
+			glm::vec2 blockToPick1 = pos + glm::vec2(0.5f, j) + (float)i * normal;
+			glm::vec2 blockToPick2 = pos + glm::vec2(-0.5f, j) + (float)i * normal;
+
+			out.emplace_back(glm::ivec2(blockToPick1));
+			out.emplace_back(glm::ivec2(blockToPick2));
+		}
+
+	return out;
+}
+
 void EntityPlayer::save(NBT& src)
 {
 	Creature::save(src);
@@ -193,6 +234,6 @@ void EntityPlayer::save(NBT& src)
 void EntityPlayer::load(NBT& src)
 {
 	Creature::load(src);
-	src.load("playerName", m_name,std::string("Karel"));
+	src.load("playerName", m_name, std::string("Karel"));
 	m_inventory.load(src["inventory"]);
 }

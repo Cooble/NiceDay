@@ -45,12 +45,14 @@ public:
 	virtual void setCursorPolicy(WindowCursor state) = 0;
 	virtual void setCursorPos(glm::vec2 pos) = 0;
 	virtual void setClipboard(const char* c) = 0;
+	virtual void setClipboard(const wchar_t* c) = 0;
 	virtual void close() = 0;
 	virtual void swapBuffers() {}
 	virtual void pollEvents() {}
 	virtual void setEventCallback(const EventCallbackFn& func) { m_data.eventCallback = func; }
 	glm::vec2 getDimensions() const { return glm::vec2(m_data.width,m_data.height); }
 	virtual bool shouldClose() = 0;
+	virtual void setIcon(std::string_view image_path) = 0;
 	virtual FrameBuffer* getFBO()=0;
 
 	virtual bool isFocused() const = 0;

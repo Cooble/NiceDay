@@ -41,6 +41,7 @@ struct WorldTime
 		auto hou = hour();
 		return hou > 19.5 || hou < 5.5;
 	}
+	auto ticks()const { return m_ticks; }
 	inline long long operator()() const { return m_ticks; }
 	inline WorldTime operator+(const WorldTime& t) const
 	{

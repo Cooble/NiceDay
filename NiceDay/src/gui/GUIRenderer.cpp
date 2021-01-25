@@ -104,9 +104,14 @@ void GUIRenderer::updateTextMeshIfNec(const std::string& val, FontMaterial* mat,
 	if (isDirty)
 	{
 		isDirty = false;
-		if (mesh.getMaxCharCount() < val.size() + 1)
+		auto valId = SID(val);
+		if (mesh.id == valId)//same text no need to rebuild
+			return;
+		auto codePoints = SUtil::utf8toCodePoints(val);
+		if (mesh.getMaxCharCount() < codePoints.size() + 1)
 			mesh.resize(val.size() + 1);
-		TextBuilder::buildMesh({val}, *mat->font, mesh, alignment);
+		mesh.id = valId;
+		TextBuilder::buildMesh({ codePoints }, *mat->font, mesh, alignment);
 	}
 }
 
@@ -258,9 +263,9 @@ void GUIRenderer::renderTextBox(BatchRenderer2D& renderer, GUITextBox& e)
 			e.textClipOffset += -neededOffset + 20;
 		}
 
-
-		e.textMesh.reserve(e.getValue().size());
-		TextBuilder::buildMesh({e.getValue()}, *e.fontMaterial->font, e.textMesh, TextBuilder::ALIGN_LEFT,
+		auto utf = SUtil::utf8toCodePoints(e.getValue());
+		e.textMesh.reserve(utf.size());
+		TextBuilder::buildMesh({ utf }, *e.fontMaterial->font, e.textMesh, TextBuilder::ALIGN_LEFT,
 		                       {-e.textClipOffset, -1000, -e.textClipOffset + trueWidth, 2000}, &prop);
 	}
 

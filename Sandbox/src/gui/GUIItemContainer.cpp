@@ -1,4 +1,6 @@
 ﻿#include "GUIItemContainer.h"
+
+#include "MainWindow.h"
 #include "gui/GUIBasic.h"
 
 constexpr int GUI_ITEM_CONTAINER_SIZE = 60;
@@ -48,7 +50,7 @@ GUIItemTitle::GUIItemTitle():GUIElement(GETYPE::Other)
 	isVisible = true;
 	isNotSpatial = true;
 
-	auto mat = FontMatLib::getMaterial("res/fonts/andrew.fnt");
+	auto mat = GameFonts::smallFont;
 	auto row = new GUIColumn();
 	row->space = -10;
 	row->isAlwaysPacked = true;
