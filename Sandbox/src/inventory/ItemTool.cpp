@@ -103,7 +103,7 @@ void ItemTool::onInteraction(World& w, ItemStack& stack, void* dataBox, WorldEnt
 	}
 	else {
 		data->ticksForNextSwing = 0;
-		player.setItemSwinging(false);
+		//player.setItemSwinging(false);
 		return;
 	}
 
