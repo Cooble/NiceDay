@@ -3,14 +3,15 @@
 #include "IBinaryStream.h"
 
 typedef std::string Stringo;
-class NBT;
-typedef std::unordered_map<Stringo, NBT> NBTMap;
-typedef std::vector<NBT> NBTVector;
+
 static Stringo NBT_INVALID_STRING = "invalidstring";
 
 class NBT
 {
 public:
+	using NBTVector = std::vector<NBT>;
+	using NBTMap = std::unordered_map<Stringo, NBT>;
+
 	enum NBTType : uint8_t
 	{
 		T_NUMBER_FLOAT = 1,
@@ -80,10 +81,11 @@ private:
 			type = T_NULL;
 		}
 	}
-	template<int vecSize,typename Type>
+	template<int vecSize, typename Type>
 	void buildVec(const glm::vec<vecSize, Type>& v)
 	{
-		ASSERT(type == T_NULL || type == T_ARRAY, "");
+	   if (type != T_NULL || type != T_ARRAY)
+		  destruct();
 		checkForArray();
 		for (int i = 0; i < vecSize; ++i)
 			access_array(i) = glm::value_ptr(v)[i];
@@ -197,7 +199,7 @@ public:
 		val_string = new Stringo(std::move(i));
 		type = T_STRING;
 	}
-	NBT(const char* i):NBT(Stringo(i)){}
+	NBT(const char* i) :NBT(Stringo(i)) {}
 	NBT& operator=(bool i)
 	{
 		destruct();
@@ -275,7 +277,7 @@ public:
 		type = T_NUMBER_FLOAT;
 		return *this;
 	}
-  template <int vecSize, typename Type>
+	template <int vecSize, typename Type>
 	NBT& operator=(const glm::vec<vecSize, Type>& i)
 	{
 		//todo this should probably be inverted
@@ -308,13 +310,28 @@ public:
 		return *this;
 	}
 
+	constexpr bool canCast() const { return isString() && string().size(); }
+
 	int invalidCast() const { /*ASSERT(false, "invalid nbt type cast");*/ return 0; }
 	NBT& operator=(const char* i)
 	{
 		return this->operator=(Stringo(i));
 	}
-	operator bool() const { return isBool() ? (bool)val_int : false; }
-	operator char() const { return isInt() ? (char)val_int : 0; }
+	operator bool() const {
+		if (canCast()) {
+			if (strcmp(c_str(), "true")==0)
+				return true;
+			if (strcmp(c_str(), "false")==0)
+				return false;
+			return (bool)stoi(string());
+		}
+		return isBool() ? (bool)val_int : false;
+	}
+	operator char() const {
+		if (canCast())
+			return c_str()[0];
+		return isInt() ? (char)val_int : 0;
+	}
 	operator uint8_t() const
 	{
 		return operator uint32_t();
@@ -329,18 +346,26 @@ public:
 	}
 	operator int() const
 	{
+		if (canCast())
+			return stoi(string());
 		return isInt() ? val_int : (isUInt() ? val_uint : invalidCast());
 	}
 	operator uint32_t() const
 	{
+		if (canCast())
+			return stoi(string());
 		return isInt() ? val_int : (isUInt() ? val_uint : invalidCast());
 	}
 	operator int64_t() const
 	{
+		if (canCast())
+			return stoi(string());
 		return isInt() ? val_int : (isUInt() ? val_uint : invalidCast());
 	}
 	operator uint64_t() const
 	{
+		if (canCast())
+			return stoi(string());
 		return isUInt() ? val_uint : (isInt() ? val_int : invalidCast());
 	}
 
@@ -374,13 +399,21 @@ public:
 		ASSERT(isVec<4>(), "invalid cast");
 		return glm::ivec4((*this)[0], (*this)[1], (*this)[2], (*this)[3]);
 	}
-	
-	
 
-	
 
-	operator float() const { return isFloat() ? val_float : (isInt() ? val_int : invalidCast()); }
-	operator double() const { return isFloat() ? val_float : (isInt() ? val_int : invalidCast()); }
+
+
+
+	operator float() const {
+		if (canCast())
+			return stof(string());
+		return isFloat() ? val_float : (isInt() ? val_int : invalidCast());
+	}
+	operator double() const {
+		if (canCast())
+			return stod(string());
+		return isFloat() ? val_float : (isInt() ? val_int : invalidCast());
+	}
 
 	//will try to return number, if not number -> zero
 	double toNumber() const
@@ -391,11 +424,12 @@ public:
 			return val_uint;
 		if (isFloat())
 			return val_float;
+		if (canCast())
+			return stod(string());
 		return 0;
 	}
 	Stringo& string() { return isString() ? *val_string : NBT_INVALID_STRING; }
 	const Stringo& string() const { return isString() ? *val_string : NBT_INVALID_STRING; }
-
 
 	//move
 	NBT(NBT&& o) noexcept : type(o.type)
@@ -492,7 +526,7 @@ public:
 			return val_map->insert_or_assign(name, NBT()).first->second;
 		return it->second;
 	}
-	 const NBT& access_map_const(const Stringo& name) const
+	const NBT& access_map_const(const Stringo& name) const
 	{
 		if (!isMap())
 		{
@@ -521,7 +555,7 @@ public:
 
 
 	void reserve(int size) { if (checkForArray())val_array->reserve(size); }
-	void resize(size_t size){ if (checkForArray())val_array->resize(size); }
+	void resize(size_t size) { if (checkForArray())val_array->resize(size); }
 	bool exists(const Stringo& key) const
 	{
 		return isMap() && (val_map->find(key) != val_map->end());
@@ -598,13 +632,13 @@ public:
 
 	// same function as nbt["name"]=val;
 	template <typename Arg>
-	void save(const Stringo& name,const Arg& val)
+	void save(const Stringo& name, const Arg& val)
 	{
 		if (!checkForMap())
 			return;
 		access_map(name) = val;
 	}
-	
+
 	//=================Load new================================
 	// sets val to nbt value at name or defaultVal if such item does not exist
 	// does not modify nbt

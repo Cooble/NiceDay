@@ -13,6 +13,7 @@ enum WindowMess :int {
 	OpenBack,
 	OpenBackToMain,
   OpenPause,
+  OpenSkin,
 	OpensLast,
 
 

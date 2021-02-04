@@ -1,7 +1,47 @@
 ﻿#pragma once
 #include "event/Event.h"
 #include "event/MouseEvent.h"
+#include <optional>
 
+struct GUIStyle;
+
+//very simple optional implementation for small types (uses too much copy)
+template <typename T>
+class nd_optional
+{
+	bool m_hasValue;
+	T m_value;
+
+public:
+	nd_optional() :m_hasValue(false) {}
+	nd_optional(T value) :m_hasValue(true), m_value(value) {}
+	nd_optional(nd_optional<T>&& v) = default;
+	nd_optional(const nd_optional<T>& v) = default;
+	constexpr bool hasValue() const { return m_hasValue; }
+	constexpr void clear() { m_hasValue = false; }
+	T& value() const
+	{
+		ASSERT(m_hasValue, "attempt to get value where there is none");
+		return  m_value;
+	}
+
+	nd_optional<T>& operator=(const T& value)
+	{
+		m_hasValue = true;
+		m_value = value;
+		return *this;
+	}
+	nd_optional<T>& operator=(const nd_optional<T>& value)
+	{
+		m_hasValue = value.m_hasValue;
+		m_value = value.m_value;
+		return *this;
+	}
+	//operator T ()() const {return m_value; }
+	operator T () const {return m_value; }
+};
+
+struct FontMaterial;
 constexpr int GUI_LEFT = 0;
 constexpr int GUI_TOP = 1;
 constexpr int GUI_RIGHT = 2;
@@ -56,18 +96,17 @@ enum class GUIAlign : int
 };
 enum class GUIDimensionInherit : int
 {
-	WIDTH,
-	HEIGHT,
-	WIDTH_HEIGHT,
-	INVALID
+   WIDTH,
+   HEIGHT,
+   WIDTH_HEIGHT,
+   INVALID,
 };
+constexpr bool isWidth(GUIDimensionInherit dim) { return dim == GUIDimensionInherit::WIDTH || dim == GUIDimensionInherit::WIDTH_HEIGHT; }
+constexpr bool isHeight(GUIDimensionInherit dim) { return dim == GUIDimensionInherit::HEIGHT || dim == GUIDimensionInherit::WIDTH_HEIGHT; }
 
 constexpr float GUIElement_InvalidNumber = -100000;
 class GUIElement
 {
-
-private:
-	GUIAlign m_alignment=GUIAlign::INVALID;
 protected:
 #ifdef ND_DEBUG
 	bool m_has_parent = false;
@@ -78,12 +117,8 @@ protected:
 	// is mouse over the element
 	bool m_has_focus = false;
 	
-	//if should be rendered (children will be rendered regardless)
-	
-	//has no dimensions on its own
 	//usually some column,row grid or something which is fully embedded in its parent
 	bool m_is_pressed = false;
-
 
 	//checks if element gained or lost focus
 	void checkFocus(MouseMoveEvent& e);
@@ -95,77 +130,95 @@ protected:
 #endif
 
 public:
-	/**
-	 * if not -> no render and no render of children
-	 */
+	//===FLAGS=========================================
+	// if not -> no render and no render of children
 	bool isEnabled = true;
-	float renderAngle=0;
+	//if should be rendered (children will be rendered regardless)
 	bool isVisible = true;
+	//has no dimensions on its own
 	bool isNotSpatial = false;
-	ActionF onDimChange;
-	EventF onMyEventFunc;
-
 	// always adapts dimensions based on the sizes of children
 	bool isAlwaysPacked = false;
-	glm::vec4 color={0,0,0,0};
+	bool isDirty;
+	
+	//===ALIGNMENT=====================================
+	GUIAlign alignment = GUIAlign::INVALID;
+	union {
+		float margin[4];
+		glm::vec4 marginVec;
+	};
+	union {
+		float padding[4];
+		glm::vec4 paddingVec;
+	};
 	float space=0;
-
-	//every element gets unique id in constructor
-	const GEID id;
-	GECLASS clas;
-	GETYPE type;
-
-	union
-	{
+	float renderAngle=0;
+	GUIDimensionInherit dimInherit = GUIDimensionInherit::INVALID;
+	union{
 		struct
 		{
 			float x, y;
 		};
-
 		glm::vec2 pos;
 	};
-
-	union
-	{
+	union{
 		struct
 		{
 			float width, height;
 		};
-
 		glm::vec2 dim;
 	};
+	
+	//===EVENTS========================================
+	ActionF onDimChange;
+	EventF onMyEventFunc;
 
-	float margin[4];
-	float padding[4];
-	bool isDirty;
-	GUIDimensionInherit dimInherit = GUIDimensionInherit::INVALID;
 
+	//===IDS===========================================
+	//every element gets unique id in constructor
+	const GEID serialID;
+	GECLASS clas;
+	GETYPE type;
+
+	//===OTHER=========================================
+	glm::vec4 color = { 0,0,0,0 };
+	
+	// unique identificator of element
+	std::string id;
+
+
+	// every guiElement must have at least non parametric constructor
 	GUIElement(GETYPE type);
 	virtual ~GUIElement();
 
-	inline void setPadding(float paddin)
+	
+	constexpr bool hasFocus() const { return m_has_focus; }
+	constexpr bool isPressed() const { return m_is_pressed; }
+	float widthPadding()const { return padding[GUI_LEFT] + padding[GUI_RIGHT]; }
+	float heightPadding()const { return padding[GUI_BOTTOM] + padding[GUI_TOP]; }
+	
+	
+	void setAlignment(GUIAlign align) { alignment = align; }
+	void setPadding(float p)
 	{
 		for (float& i : padding)
-			i = paddin;
+			i = p;
 	}
-	inline bool hasFocus() const { return m_has_focus; }
-	inline bool isNotSpaci() const { return isNotSpatial; }
-	inline bool isPressed() const { return m_is_pressed; }
-	inline void setParent(GUIElement* parent) { this->m_parent = parent; }
-	
-	inline GUIAlign getAlignment() const { return m_alignment; }
-	inline void setAlignment(GUIAlign align) { m_alignment = align; }
+	//will center element to the center of width and height
+	void setCenterPosition(float width, float height)
+	{
+		x = (width - this->width) / 2;
+		y = (height - this->height) / 2;
+	}
+	void markDirty() { isDirty = true; }
 
-
-	inline void markDirty() { isDirty = true; }
-
-	inline GUIElement* getParent() const
+	void setParent(GUIElement* parent) { this->m_parent = parent; }
+	GUIElement* getParent() const
 	{
 		return m_parent;
 	}
-
-	inline auto& getChildren() { return m_children; }
-	inline GUIElement* getFirstChild()
+	auto& getChildren() { return m_children; }
+	GUIElement* getFirstChild()
 	{
 		ASSERT(!m_children.empty(), "no children");
 		return m_children[0];
@@ -205,17 +258,11 @@ public:
 	
 	bool contains(float xx, float yy) const;
 
-	//will center element to the center of width and height
-	inline void setCenterPosition(float width,float height)
-	{
-		x = (width - this->width) / 2;
-		y = (height - this->height) / 2;
-	}
+	
 	//will be called each tick if is_updatable
 	virtual void update();
 	
-	inline float widthPadding()const { return padding[GUI_LEFT] + padding[GUI_RIGHT]; }
-	inline float heightPadding()const { return padding[GUI_BOTTOM] + padding[GUI_TOP]; }
+
 
 	inline virtual void onEvent(Event& e);
 
@@ -225,9 +272,65 @@ public:
 	//called when no child has consumed it
 	inline virtual void onMyEvent(Event& e);
 	void clearChildren();
+	//searches through all grand..children and returns child with the id or nullptr
+	GUIElement* getChildWithID(const std::string& id)
+	{
+		for (auto child : m_children)
+		{
+			if (child->id == id)
+				return child;
+			auto grand = child->getChildWithID(id);
+			if (grand)
+				return grand;
+		}
+		return nullptr;
+	}
 
 	bool hasChild(GEID id);
 	//removes child but doesnt call destructor
 	GUIElement* takeChild(GEID id);
 
+	virtual void applyStyle(GUIStyle& style);
+
+	template<typename ElementType>
+	ElementType* get(const std::string& id) { return (ElementType*)this->getChildWithID(id); }
+};
+
+
+#define ND_GUI_STYLE_BUILD(att) if (!target.att.hasValue()) target.att = att;
+struct GUIStyle
+{
+	nd_optional<FontMaterial*> textMaterial;
+	nd_optional<GUIDimensionInherit> dimInherit;
+	nd_optional<bool> isEnabled;
+	nd_optional<float> renderAngle;
+	nd_optional<bool> isVisible;
+	nd_optional<bool> isNotSpatial;
+	nd_optional<bool> isAlwaysPacked;
+	nd_optional<glm::vec4> color;
+	nd_optional<float> space;
+	nd_optional<float> width;
+	nd_optional<float> height;
+	nd_optional<GUIAlign> alignment;
+	nd_optional<glm::vec4> margin;
+	nd_optional<glm::vec4> padding;
+
+	//fill missing attribs of target with this
+	void apply(GUIStyle& target) const
+	{
+		ND_GUI_STYLE_BUILD(textMaterial);
+		ND_GUI_STYLE_BUILD(dimInherit);
+		ND_GUI_STYLE_BUILD(isEnabled);
+		ND_GUI_STYLE_BUILD(renderAngle);
+		ND_GUI_STYLE_BUILD(isVisible);
+		ND_GUI_STYLE_BUILD(isNotSpatial);
+		ND_GUI_STYLE_BUILD(isAlwaysPacked);
+		ND_GUI_STYLE_BUILD(color);
+		ND_GUI_STYLE_BUILD(space);
+		ND_GUI_STYLE_BUILD(width);
+		ND_GUI_STYLE_BUILD(height);
+		ND_GUI_STYLE_BUILD(alignment);
+		ND_GUI_STYLE_BUILD(margin);
+		ND_GUI_STYLE_BUILD(padding);
+	}
 };

@@ -75,3 +75,11 @@ public:
 	LanguageWindow(const MessageConsumer& c);
 
 };
+class SkinWindow :public GUIWindow
+{
+	MessageConsumer m_messenger;
+public:
+	SkinWindow(const MessageConsumer& c);
+	void onMyEvent(Event& e) override;
+
+};

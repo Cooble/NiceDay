@@ -103,6 +103,14 @@ const std::string* Translator::translateTry(StringId id)
 	return nullptr;
 }
 
+const std::string& Translator::translateTryWithKey(const std::string& id)
+{
+   auto it = s_dictionary.find(SID(id));
+   if (it != s_dictionary.end())
+	  return (it->second);
+   return id;
+}
+
 AppLanguages::S AppLanguages::s_data;
 
 void AppLanguages::addLanguageFolder(const std::string& folderPath)

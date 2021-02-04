@@ -120,9 +120,9 @@ void GUIActionSlots::setMainSlot(int slot)
 
 void GUIActionSlots::showTitleInternal(bool show)
 {
-	if (m_col->hasChild(m_title->id) && !show)
-		m_col->takeChild(m_title->id);
-	else if (!m_col->hasChild(m_title->id) && show)
+	if (m_col->hasChild(m_title->serialID) && !show)
+		m_col->takeChild(m_title->serialID);
+	else if (!m_col->hasChild(m_title->serialID) && show)
 		m_col->appendChild(m_title);
 	if (show)
 	{

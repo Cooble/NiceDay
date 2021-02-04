@@ -2,7 +2,6 @@
 #include "GUIElement.h"
 #include "graphics/font/TextBuilder.h"
 #include "graphics/Sprite.h"
-#include "graphics/FontMaterial.h"
 
 class GUIAnimation
 {
@@ -30,10 +29,11 @@ public:
 	TextMesh textMesh;
 	float textScale = 1;
 public:
-	GUIText(FontMaterial* mat);
+	GUIText();
+	GUIText(FontMaterial* m);
 	bool packDimensions() override;
 	virtual void setText(const std::string& val);
-	inline auto& getText() const { return m_text; }
+	auto& getText() const { return m_text; }
 };
 class GUIButton :public GUIElement
 {
@@ -100,6 +100,7 @@ public:
 	virtual void onValueModified();
 	inline auto& getValue() const { return m_text; }
 	virtual void moveCursor(int delta);
+	bool packDimensions() override;
 
 	void onMyEvent(Event& e) override;
 	void setGainFocus(bool cond);
@@ -117,12 +118,12 @@ public:
 public:
 	GUICheckBox();
 	virtual void setText(const std::string& trueText, const std::string& falseText);
-	inline void setText(const std::string& text)
+	void setText(const std::string& text)
 	{
 		setText(text, text);
 	}
-	inline auto& getTrueText() const { return m_textTrue; }
-	inline auto& getFalseText() const { return m_textFalse; }
+	auto& getTrueText() const { return m_textTrue; }
+	auto& getFalseText() const { return m_textFalse; }
 	virtual void setValue(bool b);
 	virtual bool getValue()const { return value; }
 	void onMyEvent(Event& e) override;
@@ -133,8 +134,7 @@ class GUIColumn :public GUIElement
 {
 public:
 	GUIAlign child_alignment;
-	GUIColumn(GUIAlign childAlignment);
-	GUIColumn();
+	GUIColumn(GUIAlign childAlignment=GUIAlign::CENTER);
 
 	void repositionChildren() override;
 };
@@ -142,7 +142,7 @@ class GUIRow :public GUIElement
 {
 public:
 	GUIAlign child_alignment;
-	GUIRow(GUIAlign childAlignment = GUIAlign::UP);
+	GUIRow(GUIAlign childAlignment = GUIAlign::CENTER);
 	void repositionChildren() override;
 
 };
@@ -158,17 +158,17 @@ public:
 class GUIHorizontalSplit :public GUIElement
 {
 protected:
-	bool m_is_up_main;
+	bool m_is_up_main=true;
 	
 public:
 	GUIHorizontalSplit(GUIElement* eUp, GUIElement* eDown,bool isUpMain=true);
-	GUIHorizontalSplit(bool isUpMain=true);
-
+	GUIHorizontalSplit();
+	void setPrimaryUp(bool isUpMain);
 	void repositionChildren() override;
 	void onDimensionChange() override;
 
-	inline GUIElement* getUpChild() { return getChildren()[0]; }
-	inline GUIElement* getDownChild() { return getChildren()[1]; }
+	GUIElement* getUp() { return getChildren()[0]; }
+	GUIElement* getDown() { return getChildren()[1]; }
 	
 	void appendChild(GUIElement* element) override;
 	void destroyChild(int index) override;
@@ -176,16 +176,20 @@ public:
 class GUIVerticalSplit :public GUIElement
 {
 protected:
-	bool m_is_left_main;
+	bool m_is_left_main=true;
 
 public:
-	GUIVerticalSplit(bool isLeftMain = true);
+	GUIVerticalSplit(bool isLeftMain);
+	GUIVerticalSplit();
+	
+	void setPrimaryLeft(bool left);
+	constexpr bool isPrimaryLeft() const { return m_is_left_main; }
 
 	void repositionChildren() override;
 	void onDimensionChange() override;
 
-	inline GUIElement* getRightChild() { return getChildren()[0]; }
-	inline GUIElement* getLeftChild() { return getChildren()[1]; }
+	GUIElement* getLeft() { return getChildren()[0]; }
+	GUIElement* getRight() { return getChildren()[1]; }
 
 	void appendChild(GUIElement* element) override;
 	void destroyChild(int index) override;
@@ -214,7 +218,7 @@ public:
 	void onMyEvent(Event& e) override;
 	virtual void setValue(float v);
 	virtual float getValue() const { return m_value; }
-	inline void prepare(float minValue, float maxValue, float step) { this->minValue = minValue; this->maxValue = maxValue; this->step = step; }
+	void prepare(float minValue, float maxValue, float step) { this->minValue = minValue; this->maxValue = maxValue; this->step = step; }
 	// enables quantization: minVal = 0, maxValue=(possibleStates-1), step=1
 	void setQuantization(int possibleStates);
 	// enables quantization: minVal = 0, maxValue=1, step=1/(possibleStates-1)
@@ -299,7 +303,7 @@ class GUIView :public GUIElement
 public:
 	GUIView();
 
-	inline GUIElement* getInside() { return getChildren()[0]; }
+	GUIElement* getInside() { return getChildren()[0]; }
 
 	void appendChild(GUIElement* element) override;
 	void destroyChild(int index) override;
@@ -309,14 +313,18 @@ public:
 class GUITextButton :public GUIButton
 {
 public:
+	GUITextButton();
 	GUITextButton(const std::string& text, FontMaterial* material);
-	inline GUIText* getTextElement() { return static_cast<GUIText*>(getChildren()[0]); }
+	void setMaterial(FontMaterial* material);
+	GUIText* getTextElement() { return static_cast<GUIText*>(getChildren()[0]); }
 };
 class GUIImageButton :public GUIButton
 {
 public:
+	GUIImageButton();
 	GUIImageButton(Sprite* image);
-	inline GUIImage* getImageElement() { return static_cast<GUIImage*>(getChildren()[0]); }
+	void setImage(Sprite* image);
+	GUIImage* getImageElement() { return static_cast<GUIImage*>(getChildren()[0]); }
 };
 
 class GUISpecialTextButton :public GUITextButton
@@ -328,6 +336,7 @@ public:
 	float animationSpeed=0.1f;
 public:
 	GUISpecialTextButton(const std::string& text, FontMaterial* material);
+	GUISpecialTextButton();
 	void update() override;
 };
 

@@ -50,6 +50,7 @@ LIST( APPEND CMAKE_MODULE_PATH
         "vendor/sol2/include"
         "vendor/json/include"
         "vendor/entt/include"
+        "vendor/rapidxml/include"
 
         #MONO_BRANCH
         "C:/Program Files/Mono/include/mono-2.0"

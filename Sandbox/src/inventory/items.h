@@ -2,68 +2,68 @@
 #include "Item.h"
 #include "ItemTool.h"
 
-class ItemPickaxeCopper:public ItemTool
+class ItemPickaxeCopper :public ItemTool
 {
 public:
-	ItemPickaxeCopper();
+   ItemPickaxeCopper();
 };
 class ItemElPickaxo :public ItemTool
 {
 public:
-	ItemElPickaxo();
+   ItemElPickaxo();
 };
 
 class ItemWoodHelmet :public Item
 {
 public:
-	ItemWoodHelmet();
+   ItemWoodHelmet();
 };
 class ItemIronHelmet :public Item
 {
 public:
-	ItemIronHelmet();
+   ItemIronHelmet();
 };
 class ItemWoodChestplate :public Item
 {
 public:
-	ItemWoodChestplate();
+   ItemWoodChestplate();
 };
 class ItemWoodLeggins :public Item
 {
 public:
-	ItemWoodLeggins();
+   ItemWoodLeggins();
 };
 class ItemWoodBoots :public Item
 {
 public:
-	ItemWoodBoots();
+   ItemWoodBoots();
 };
 
-class ItemShotgun: public Item
+class ItemShotgun : public Item
 {
 public:
-	ItemShotgun();
+   ItemShotgun();
 
-	bool onRightClick(World& world, ItemStack& stack, WorldEntity& owner, int x, int y) const override;
+   bool onRightClick(World& world, ItemStack& stack, WorldEntity& owner, int x, int y) const override;
 
-	std::string getTitle(ItemStack* stack) const override;
+   std::string getTitle(ItemStack* stack) const override;
 };
 class ItemTnt : public Item
 {
 public:
-	ItemTnt();
+   ItemTnt();
 
-	bool onRightClick(World& world, ItemStack& stack, WorldEntity& owner, int x, int y) const override;
+   bool onRightClick(World& world, ItemStack& stack, WorldEntity& owner, int x, int y) const override;
 };
 
 class ItemVinyl : public Item
 {
 public:
-	ItemVinyl();
+   ItemVinyl();
 
-	std::string getTitle(ItemStack* stack) const override;
-	bool onRightClickOnBlock(World& world, ItemStack& stack, WorldEntity& owner, int x, int y, BlockStruct& block) const override;
-	
+   std::string getTitle(ItemStack* stack) const override;
+   bool onRightClickOnBlock(World& world, ItemStack& stack, WorldEntity& owner, int x, int y, BlockStruct& block) const override;
 
-	
+
+
 };

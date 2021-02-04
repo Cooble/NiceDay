@@ -80,6 +80,9 @@ public:
 	// return nullptr if word does not exist
 	static const std::string* translateTry(StringId id);
 
+	// return key if word does not exist
+	static const std::string& translateTryWithKey(const std::string& id);
+
 	// if true any unsuccessful lookup with call to translate(const std::string& id) will be saved
 	static void enableUnknownRemember(bool remember) { s_unknown_remember = remember; }
 	

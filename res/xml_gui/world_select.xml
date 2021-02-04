@@ -1,0 +1,42 @@
+
+<style name="btn" parent="smallFont" packed="1" pad="5" align="CENTER"/>
+
+<Window inherit="WIDTH_HEIGHT" align="CENTER"
+        isVisible="0"
+        isMoveable="0"
+        isResizable="0">
+  <Column id="mainColumn" align="CENTER" inherit="WIDTH">
+    <Blank id="centerBox" pad="20,0,20,0" dim="700,500" isVisible="1" align="CENTER" >
+      <Blank align="UP">
+        <Blank align="CENTER" isVisible="true" pad="10" packed="1">
+          <Text id="title.choose_world" style="bigFont" align="CENTER" packed="1"/>
+        </Blank>
+      </Blank>
+      <Column id="c" align="CENTER" inherit="WIDTH_HEIGHT" space="15">
+        <Blank id="spacer" height="50"/>
+        <VerticalSplit primary="RIGHT" height="40" inherit="WIDTH">
+          <TextBox id="txtBox" style="smallFont" inherit="WIDTH" packed="1" height="40" align="CENTER"/>
+          <TextButton id="btn.create_world" align="CENTER" packed="1" pad="10" height="40" style="smallFont"/>
+        </VerticalSplit>
+
+
+        <SliderView
+          slider="RIGHT"
+          inherit="WIDTH"
+          height="350">
+          <View pad="0" insideColor="0.286, 0.369, 0.671">
+            <Column id="keyColumn" inherit="WIDTH" align="CENTER"/>
+          </View>
+          <VSlider id="slider"/>
+        </SliderView>
+
+      </Column>
+    </Blank>
+    <Blank width="700">
+      <TextButton id="btn.back" style="bigFont" align="UP" inherit="WIDTH" packed="1"/>
+    </Blank>
+  </Column>
+</Window>
+
+
+

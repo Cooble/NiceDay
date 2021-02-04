@@ -2,6 +2,7 @@
 
 
 #include "core/AppGlobals.h"
+#include "audio/Player.h"
 #include "world/entity/EntityPlayer.h"
 
 std::vector<glm::vec3> ItemTool::s_dug_blocks;
@@ -121,12 +122,14 @@ void ItemTool::onInteraction(World& w, ItemStack& stack, void* dataBox, WorldEnt
 		{//spawn particles and update block cracks
 			w.spawnBlockBreakParticles(x, y, 4);
 			//flip cracks
-			if (structInWorld->block_corner & BLOCK_STATE_CRACKED)
-				structInWorld->block_corner &= ~BLOCK_STATE_CRACKED;
-			else
-				structInWorld->block_corner |= BLOCK_STATE_CRACKED;
+			structInWorld->block_corner ^= BLOCK_STATE_CRACKED;
 			// mark chunk dirty for graphical update
 			w.getChunkM(World::toChunkCoord(x), World::toChunkCoord(y))->markDirty(true);
+		}
+		{
+			auto audioPath = ND_RESLOC("res/audio/temp/a/dig_") + std::to_string(std::rand()%4)+".ogg";
+			//play dig sound
+			Sounder::get().playSound(audioPath,0.5f);
 		}
 
 

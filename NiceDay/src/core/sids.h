@@ -81,17 +81,17 @@ public:
 
 };
 
-static std::ostream& operator<<(std::ostream& out, StringId sid)
+inline std::ostream& operator<<(std::ostream& out, StringId sid)
 {
 	return out << "sid:" << sid.getValue();
 }
 
-static bool operator==(const StringId& lhs, const StringId& rhs)
+inline bool operator==(const StringId& lhs, const StringId& rhs)
 {
 	return lhs.getValue() == rhs.getValue();
 }
 
-static bool operator!=(const StringId& lhs, const StringId& rhs)
+inline bool operator!=(const StringId& lhs, const StringId& rhs)
 {
 	return lhs.getValue() != rhs.getValue();
 }

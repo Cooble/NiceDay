@@ -71,7 +71,7 @@ static std::stack<WindowMess> windows;
 void GUILayer::openWindow(WindowMess mess) {
 
 	if (m_currentWindow) {
-		GUIContext::get().destroyWindow(m_currentWindow->id);
+		GUIContext::get().destroyWindow(m_currentWindow->serialID);
 		m_currentWindow = nullptr;
 	}
 
@@ -103,6 +103,9 @@ void GUILayer::openWindow(WindowMess mess) {
 		break;
 	case OpenPause:
 		m_currentWindow = new PauseWindow(m_bound_func);
+		break;
+	case OpenSkin:
+		m_currentWindow = new SkinWindow(m_bound_func);
 		break;
 	case OpenBack: {
 		windows.pop();//pop current window

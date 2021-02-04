@@ -1,0 +1,33 @@
+
+<style name="btn" parent="smallFont" packed="1" pad="5" align="CENTER"/>
+
+<Window inherit="WIDTH_HEIGHT" align="CENTER"
+        isVisible="0"
+        isMoveable="0"
+        isResizable="0">
+  <Column id="mainColumn" align="CENTER" inherit="WIDTH">
+    <Blank id="centerBox" pad="20,0,20,0" dim="700,600" isVisible="1" align="CENTER" >
+      <Blank align="UP">
+        <Blank align="CENTER" isVisible="true" pad="10" packed="1">
+          <Text id="template.title" style="bigFont" align="CENTER" packed="1"/>
+        </Blank>
+      </Blank>
+      <Column id="c" align="CENTER" inherit="WIDTH_HEIGHT" space="15">
+        <Blank id="spacer" height="50"/>
+        <SliderView 
+          slider="RIGHT" 
+          inherit="WIDTH"
+          height="400">
+          <View pad="0" insideColor="0.286, 0.369, 0.671">
+            <Column id="keyColumn" inherit="WIDTH" align="CENTER"/>
+          </View>
+        </SliderView>
+        <TextButton id="btn.back" style="btn"/>
+        <TextButton id="btn.save_back" style="btn"/>
+      </Column> 
+    </Blank>
+  </Column>
+</Window>
+
+
+

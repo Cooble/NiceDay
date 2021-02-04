@@ -121,7 +121,7 @@ public:
 		for (int i = 0; i < m_windows.size(); ++i)
 		{
 			auto win = m_windows[i];
-			if (win->id == winid)
+			if (win->serialID == winid)
 			{
 				m_windows.erase(m_windows.begin() + i);
 				delete win;
@@ -139,7 +139,7 @@ public:
 		for (int i = 0; i < m_windows.size(); ++i)
 		{
 			auto win = m_windows[i];
-			if (win->id == winid)
+			if (win->serialID == winid)
 			{
 				m_windows.erase(m_windows.begin() + i);
 				return;

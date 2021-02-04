@@ -989,7 +989,7 @@ void WorldLayer::onEvent(Event& e)
 	if (e.getEventType() == Event::EventType::Message)
 	{
 		auto m = dynamic_cast<MessageEvent*>(&e);
-		if (strcmp(m->getTitle(), CommonMessages::WorldMessage::NAME) == 0)
+		if (m->isTitle(CommonMessages::WorldMessage::NAME))
 		{
 			//todo maybe make each message as a class with inheritance and allocate it on stack
 		}

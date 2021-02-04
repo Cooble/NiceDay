@@ -1,6 +1,7 @@
 ﻿#include "ndpch.h"
 #include "GUIExampleWindow.h"
 #include "core/App.h"
+#include "graphics/FontMaterial.h"
 #include "graphics/API/Texture.h"
 
 GUIExampleWindow::GUIExampleWindow()
@@ -45,28 +46,28 @@ GUIExampleWindow::GUIExampleWindow()
 	auto upperLineSplit = new GUIHorizontalSplit();
 	auto lowerSettingSplit = new GUIVerticalSplit();
 
-	//upperLineSplit->getUpChild()->color = { 0,1,0,1 };
-	upperLineSplit->getUpChild()->appendChild(leftRow);
-	upperLineSplit->getUpChild()->appendChild(rightRow);
-	upperLineSplit->getDownChild()->appendChild(lowerSettingSplit);
-	//upperLineSplit->getDownChild()->color = { 0,0,1,1 };
+	//upperLineSplit->getUp()->color = { 0,1,0,1 };
+	upperLineSplit->getUp()->appendChild(leftRow);
+	upperLineSplit->getUp()->appendChild(rightRow);
+	upperLineSplit->getDown()->appendChild(lowerSettingSplit);
+	//upperLineSplit->getDown()->color = { 0,0,1,1 };
 
 	auto optionsColumn = new GUIColumn();
 	optionsColumn->setAlignment(GUIAlign::CENTER);
 	optionsColumn->setPadding(20);
 	optionsColumn->isAlwaysPacked = true;
-	lowerSettingSplit->getLeftChild()->appendChild(optionsColumn);
-	lowerSettingSplit->getLeftChild()->color = { 1, 1, 0, 1 };
-	lowerSettingSplit->getLeftChild()->isAlwaysPacked = false;
-	lowerSettingSplit->getLeftChild()->isVisible = true;
-	lowerSettingSplit->getLeftChild()->width = 200;
+	lowerSettingSplit->getLeft()->appendChild(optionsColumn);
+	lowerSettingSplit->getLeft()->color = { 1, 1, 0, 1 };
+	lowerSettingSplit->getLeft()->isAlwaysPacked = false;
+	lowerSettingSplit->getLeft()->isVisible = true;
+	lowerSettingSplit->getLeft()->width = 200;
 
 	auto textBox = new GUITextBox();
 	textBox->fontMaterial = g_fontMat;
 	textBox->dim = { 170, 50 };
 	textBox->setAlignment(GUIAlign::CENTER_UP);
 
-	//lowerSettingSplit->getRightChild()->appendChild(textBox);
+	//lowerSettingSplit->getRight()->appendChild(textBox);
 	for (int i = 0; i < 8; ++i)
 	{
 		auto btn = new GUISpecialTextButton("Aloha " + std::to_string(i) + "!", g_fontMat);
@@ -118,11 +119,11 @@ GUIExampleWindow::GUIExampleWindow()
 	};
 
 	auto split = createGUISliderView(false);
-	split->getRightChild()->getChildren()[0]->setPadding(5);
-	split->getRightChild()->getChildren()[0]->dim = { 30,0 };
-	split->getLeftChild()->getFirstChild()->getFirstChild()->appendChild(grid);
+	split->getRight()->getChildren()[0]->setPadding(5);
+	split->getRight()->getChildren()[0]->dim = { 30,0 };
+	split->getLeft()->getFirstChild()->getFirstChild()->appendChild(grid);
 
-	lowerSettingSplit->getRightChild()->appendChild(split);
+	lowerSettingSplit->getRight()->appendChild(split);
 
 	appendChild(upperLineSplit);
 }

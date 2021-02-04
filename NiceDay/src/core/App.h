@@ -113,6 +113,7 @@ protected:
 	Scheduler m_scheduler;
 	DoubleBuffStackAllocator m_dbuff_stackalloc;
 	bool m_running=false;
+
 	
 };
 

@@ -25,6 +25,7 @@ FontMaterial* FontMatLib::getMaterial(const std::string& name)
 
 		mat.color = { 1, 1, 1, 1 };
 		mat.border_color = { 0, 0.1, 0.7, 1 };
+		mat.name = name;
 
 		ND_TRACE("Loaded fontMaterial: {}", name);
 		return &mat;

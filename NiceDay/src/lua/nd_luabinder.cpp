@@ -705,14 +705,14 @@ static void bindGUIElements(sol::state& state)
 	ND_LUASOL_EXTERNAL_CON(GUIGrid);
 
 	state.new_usertype<GUIHorizontalSplit>("GUIHorizontalSplitClass", sol::no_constructor, sol::base_classes, sol::bases<GUIElement>(),
-		"getUpChild", &GUIHorizontalSplit::getUpChild,
-		"getDownChild", &GUIHorizontalSplit::getDownChild
+		"getUp", &GUIHorizontalSplit::getUp,
+		"getDown", &GUIHorizontalSplit::getDown
 		);
 	ND_LUASOL_EXTERNAL_CONS(GUIHorizontalSplit, bool);
 
 	state.new_usertype<GUIVerticalSplit>("GUIVerticalSplitClass", sol::no_constructor, sol::base_classes, sol::bases<GUIElement>(),
-		"getRightChild", &GUIVerticalSplit::getRightChild,
-		"getLeftChild", &GUIVerticalSplit::getLeftChild
+		"getRight", &GUIVerticalSplit::getRight,
+		"getLeft", &GUIVerticalSplit::getLeft
 		);
 	ND_LUASOL_EXTERNAL_CONS(GUIVerticalSplit, bool);
 

@@ -13,6 +13,7 @@ public:
 
 	Texture* texture;
 	Font* font;
+	std::string name;
 	
 	glm::vec4 color;
 	glm::vec4 border_color;

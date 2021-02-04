@@ -59,7 +59,7 @@ struct Font
 	{
 		auto it = chars.find(id);
 		if (it == chars.end()) {
-			ASSERT(false, "invalid character request: [{}] from font: {}",id,this->texturePath);
+			//ASSERT(false, "invalid character request: [{}] from font: {}",id,this->texturePath);
 			return nullChar;
 		}
 		return it->second;
@@ -78,6 +78,9 @@ struct Font
 
 		for(int codePoint :textt)
 		{
+			//skip blank characters
+			if(codePoint<32) continue;
+
 			out += getChar(codePoint).xadvance + xSpace + getKerning(lastC, codePoint);
 			lastC = codePoint;
 		}

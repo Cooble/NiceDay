@@ -51,3 +51,4 @@ For now the whole clone-and-run proccess should as simple as:
 - LUA https://www.lua.org/download.html
 - SOL2 https://github.com/ThePhD/sol2
 - NLOHMANN_JSON https://github.com/nlohmann/json
+- RAPID_XML http://rapidxml.sourceforge.net/

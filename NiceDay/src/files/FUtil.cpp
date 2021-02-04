@@ -15,6 +15,23 @@ void FUtil::cleanPathString(std::string& s)
 	SUtil::replaceWith(s, "//", "/", 2);
 }
 
+std::string FUtil::readFileString(std::string_view path)
+{
+   auto p = ND_RESLOC(path);
+   if (!exists(p))
+	  return "";
+   const std::ifstream input_stream(p, std::ios_base::binary);
+
+   if (input_stream.fail())
+   {
+	  ND_ERROR("Failed to open file {}", p);
+	  return "";
+   }
+
+   std::stringstream buffer;
+   buffer << input_stream.rdbuf();
+   return buffer.str();
+}
 
 
 std::string FUtil::getAbsolutePath(const char* fileName)

@@ -29,6 +29,8 @@ void GUIContext::openWindow(GUIWindow* win)
 		break;
 	}
 	win->onDimensionChange();
+	if(win->alignment==GUIAlign::CENTER)
+	   win->pos = dims / 2.f - win->dim / 2.f;
 	getWindows().push_back(win);
 }
 

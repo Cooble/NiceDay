@@ -525,9 +525,9 @@ void SoundLayer::onEvent(Event& e)
 	auto ee = dynamic_cast<MessageEvent*>(&e);
 	if(ee)
 	{
-		if (strcmp(ee->getTitle(), "openSoundLayer") == 0)
+		if (ee->isTitle("openSoundLayer"))
 			ImGUIopen = true;
-		else if (strcmp(ee->getTitle(), "closeSoundLayer") == 0)
+		else if (ee->isTitle("closeSoundLayer"))
 			ImGUIopen = false;
 	}
 }

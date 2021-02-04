@@ -3,6 +3,7 @@
 // assert fail if file does not exist
 // filePath is automatically transformed using ND_RESLOC
 #define FUTIL_ASSERT_EXIST(stringPath) ASSERT(FUtil::exists(stringPath), "FILE: {} does not exist", stringPath)
+
 namespace FUtil
 {
 	inline bool exists(std::string_view path) { return std::filesystem::exists(ND_RESLOC(path)); }
@@ -59,4 +60,5 @@ namespace FUtil
 		std::filesystem::copy(src, dest);
 		return true;
 	}
+	std::string readFileString(std::string_view path);
 }

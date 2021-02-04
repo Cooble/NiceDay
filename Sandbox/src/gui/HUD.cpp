@@ -142,7 +142,7 @@ void HUD::appendChild(GUIElement* element, const std::string& ownerID)
 	{
 		if(bundle.entity->getID()==ownerID)
 		{
-			bundle.children.push_back(element->id);
+			bundle.children.push_back(element->serialID);
 			success = true;
 			break;
 		}

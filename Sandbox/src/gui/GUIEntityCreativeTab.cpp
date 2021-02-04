@@ -17,8 +17,8 @@ GUICreativeTab::GUICreativeTab(HUD& hud) :GUIElement(GETYPE::Other)
 	auto view = createGUISliderView(false);
 	view->width = width;
 	view->height = height;
-	GUIView* src = dynamic_cast<GUIView*>(view->getLeftChild()->getFirstChild());
-	//m_world_slider = dynamic_cast<GUIVSlider*>(view->getRightChild()->getFirstChild());
+	GUIView* src = dynamic_cast<GUIView*>(view->getLeft()->getFirstChild());
+	//m_world_slider = dynamic_cast<GUIVSlider*>(view->getRight()->getFirstChild());
 	src->setPadding(0);
 	src->getInside()->color = {0,0,0,0};
 	src->getInside()->appendChild(slots);
