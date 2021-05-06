@@ -42,17 +42,17 @@ const ItemStack* GUIItemContainer::getItemStack() const
 	return m_container->getItemStack(m_slotIndex);
 }
 
-GUIItemTitle::GUIItemTitle():GUIElement(GETYPE::Other)
+GUIItemTitle::GUIItemTitle():GUIBlank()
 {
 	setPadding(10);
-	isAlwaysPacked = false;
+	isAlwaysPacked = true;
 	dim = { 100,50 };
 	isVisible = true;
 	isNotSpatial = true;
 
 	auto mat = GameFonts::smallFont;
-	auto row = new GUIColumn();
-	row->space = -10;
+	auto row = new GUIColumn(GUIAlign::LEFT);
+	row->space = -5;
 	row->isAlwaysPacked = true;
 	
 	m_title = new GUIText(mat);
@@ -60,6 +60,7 @@ GUIItemTitle::GUIItemTitle():GUIElement(GETYPE::Other)
 	row->appendChild(m_title);
 
 	m_meta = new GUIText(mat);
+	m_meta->packToZeroWhenEmpty = true;
 	m_meta->setText("Metadata");
 	row->appendChild(m_meta);
 

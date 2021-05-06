@@ -1,4 +1,5 @@
 ﻿#pragma once
+#include "gui/GUIBasic.h"
 #include "gui/GUIElement.h"
 #include "inventory/Inventory.h"
 
@@ -24,13 +25,15 @@ public:
 	int getSlot() const { return m_slotIndex; }
 };
 class GUIText;
-class GUIItemTitle:public GUIElement
+class GUIItemTitle:public GUIBlank
 {
 private:
 	GUIText* m_title;
 	GUIText* m_meta;
 	
 public:
+	// rectangle should be drawn under text
+	bool isBackgroundRendered = false;
 	GUIItemTitle();
 
 	void setTitle(const std::string& s);

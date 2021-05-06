@@ -35,6 +35,8 @@ class HUD :public GUIWindow
 
 	static HUD* s_hud;
 
+	// mouse position when hovering over some itemcontainer stopped
+	glm::vec2 m_mouse_pos_when_exit = glm::vec2(std::numeric_limits<float>().max());
 	int m_focused_slot;
 	std::string m_focused_owner;
 public:

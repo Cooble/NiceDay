@@ -28,6 +28,9 @@ public:
 	FontMaterial* fontMaterial;
 	TextMesh textMesh;
 	float textScale = 1;
+	//set dimensions to 0 when text is null
+	//otherwise there will be some inner margin in x and full font height
+	bool packToZeroWhenEmpty=false;
 public:
 	GUIText();
 	GUIText(FontMaterial* m);

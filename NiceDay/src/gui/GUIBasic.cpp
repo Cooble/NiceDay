@@ -23,9 +23,11 @@ GUIText::GUIText(FontMaterial* mat) : GUIText()
 
 bool GUIText::packDimensions()
 {
+	int packToZero = packToZeroWhenEmpty && m_text.empty();
+
    auto lastW = width;
-   width = widthPadding() + fontMaterial->font->getTextWidth(m_text);
-   height = fontMaterial->font->lineHeight + heightPadding();
+   width = (widthPadding() + fontMaterial->font->getTextWidth(m_text)) * (!packToZero);
+   height = (fontMaterial->font->lineHeight + heightPadding()) * (!packToZero);
    if (lastW != width)
 	  onDimensionChange();
    markDirty();

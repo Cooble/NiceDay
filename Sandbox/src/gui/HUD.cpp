@@ -124,7 +124,18 @@ void HUD::onMyEvent(Event& e)
 	{
 		auto m = static_cast<MouseMoveEvent&>(e);
 		m_hand->pos = m.getPos() - (m_hand->dim / 2.f) - glm::vec2(-m_hand->dim.x / 4, m_hand->dim.x / 4);
-		m_title->pos = m.getPos() - glm::vec2(0,m_title->height/2);
+		m_title->pos = m.getPos() - glm::vec2(0,std::max((float)(m.getPos().y+m_title->height-APwin()->getHeight()),0.f));
+
+
+		if (m_title->isEnabled && m_mouse_pos_when_exit.x != std::numeric_limits<float>::max()) {
+
+			if(glm::distance2(m_mouse_pos_when_exit,m.getPos())>5*5) {
+		        m_title->isEnabled = false;
+		        m_focused_slot = -1;
+		        m_focused_owner = "";
+			}
+
+		}
 	}
 	for (auto& entity : m_entities)
 	{
@@ -163,6 +174,7 @@ void HUD::consumeContainerEvent(const std::string& id, int slot, Inventory* inv,
 	{
 		auto item = inv->getItemStack(slot);
 		if (item != nullptr) {
+			m_mouse_pos_when_exit = glm::vec2(std::numeric_limits<float>().max());
 			m_title->isEnabled = true;
 			m_title->setTitle(Font::colorize(Font::BLACK, Font::DARK_AQUA) + ND_TRANSLATE("item.",item->getItem().toString(),item->getItem().getMaxMeta()!=0?":"+std::to_string(item->getMetadata()):""));
 			
@@ -175,11 +187,10 @@ void HUD::consumeContainerEvent(const std::string& id, int slot, Inventory* inv,
 	}
 	else if (e.getEventType() == Event::EventType::MouseFocusLost)
 	{
-		if (m_focused_slot == slot && m_focused_owner == id) {
-			m_title->isEnabled = false;
+		auto& eve = dynamic_cast<MouseFocusLost&>(e);
 
-			m_focused_slot = -1;
-			m_focused_owner = "";
+		if (m_focused_slot == slot && m_focused_owner == id) {
+			m_mouse_pos_when_exit = eve.getPos();
 		}
 		return;
 	}
