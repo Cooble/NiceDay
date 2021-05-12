@@ -10,7 +10,7 @@ jobs:
       - name: Installing Dependencies
         uses: actions/checkout@v2
       - run: echo "Installing Mono"
-      - run: wget -q "https://download.mono-project.com/archive/6.10.0/windows-installer/mono-6.10.0.104-x64-0.msi"
+      - run: curl -O -J "https://download.mono-project.com/archive/6.10.0/windows-installer/mono-6.10.0.104-x64-0.msi"
       - name: List files in the repository
         run: |
           ls ${{ github.workspace }}
