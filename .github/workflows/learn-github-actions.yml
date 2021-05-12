@@ -1,0 +1,21 @@
+name: learn-github-actions
+on: [push]
+jobs:
+  test_job:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Installing Dependencies
+      - run: echo "Installing Mono"
+      - run: wget -q https://download.mono-project.com/archive/6.10.0/windows-installer/mono-6.10.0.104-x64-0.msi
+      - run: msiexec -i "mono-6.10.0.104-x64-0.msi" -passive -qn -norestart
+
+      - name: Building Project
+      - run: echo "Building Project"
+      - run: cmake . -DCMAKE_GENERATOR_PLATFORM=x64
+      - run: cmake --build . --config Release --target Sandbox
+
+      - run: echo "Building and running tests"
+      - run: cmake --build . --config Release --target TestNiceDay
+      - run: cmake -DTT_TARGET_DIR="${{ github.repository }}/TestNiceDay/Release" -P CopyMonoDll.cmake
+      - run: ctest --output-on-failure
