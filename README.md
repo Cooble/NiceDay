@@ -1,4 +1,6 @@
 # NiceDay
+[![Win64-Build Actions Status](https://github.com/Cooble/NiceDay/workflows/build_sandbox_and_test_w64/badge.svg)](https://github.com/Cooble/NiceDay/actions)
+
 [![Build Status](https://travis-ci.com/Cooble/NiceDay.svg?branch=master)](https://travis-ci.com/Cooble/NiceDay)
 
 Let's make Terraria in C++!  
