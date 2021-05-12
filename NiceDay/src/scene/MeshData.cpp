@@ -273,7 +273,7 @@ namespace MeshDataFactory
 
 	MeshData* buildCube(float scale)
 	{
-		static const float cubeVertices[] = {
+		/*static const float cubeVertices[] = {
 	                -1.0f,-1.0f,-1.0f,
 	                -1.0f,-1.0f, 1.0f,
 	                -1.0f, 1.0f, 1.0f,
@@ -310,7 +310,8 @@ namespace MeshDataFactory
 	                1.0f, 1.0f, 1.0f,
 	                -1.0f, 1.0f, 1.0f,
 	                1.0f,-1.0f, 1.0f
-		};
+		};*/
+		auto cubeVertices = new float[50 * 3];//todo change back to static allocation after done with gh_actions compilation
 
 
 		MeshData* mesh = new MeshData;
