@@ -4,7 +4,7 @@ jobs:
   test_job:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v2
+        uses: actions/checkout@v2
       - name: Installing Dependencies
       - run: echo "Installing Mono"
       - run: wget -q https://download.mono-project.com/archive/6.10.0/windows-installer/mono-6.10.0.104-x64-0.msi
