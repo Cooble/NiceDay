@@ -19,7 +19,6 @@ if(${CMAKE_GENERATOR} MATCHES "Unix Makefiles")
        message(STATUS "Added arguments to CMAKE_BUILD_TOOL: ${CMAKE_MAKE_PROGRAM}")
 elseif(MSVC)
       #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP") #paralell 
-      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Zm10 /m:1") #give that poor little github actions msbuild guy some ram
       
       message(STATUS "Added parallel build arguments to CMAKE_CXX_FLAGS: ${CMAKE_CXX_FLAGS}")
 endif()
