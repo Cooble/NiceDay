@@ -1,0 +1,27 @@
+name: Testing Engine & Building Sandbox
+on: [push]
+jobs:
+  Test-Engine-Build-Sandbox:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository and submodules
+        uses: actions/checkout@v2
+        with:
+          submodules: 'true'
+      - name: Installing Mono
+        run: |
+          echo "Installing Mono"
+          curl -O -J "https://download.mono-project.com/archive/6.10.0/windows-installer/mono-6.10.0.104-x64-0.msi"
+          msiexec -i "mono-6.10.0.104-x64-0.msi" -passive -qn -norestart
+      - name: Building Sandbox
+        run: |
+          cmake . -DCMAKE_GENERATOR_PLATFORM=x64
+          cmake --build . --config Release --target Sandbox
+      - name: Building TestNiceDay
+        run: |
+          cmake --build . --config Release --target TestNiceDay
+      - name: Testing Engine
+        run: |
+          cmake -DTT_TARGET_DIR="${{ github.workspace }}/TestNiceDay/Release" -P CopyMonoDll.cmake
+          ctest --output-on-failure
+      - run: echo "JobStatus ${{ job.status }}."
