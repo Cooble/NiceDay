@@ -15,9 +15,9 @@ jobs:
           msiexec -i "mono-6.10.0.104-x64-0.msi" -passive -qn -norestart
       - name: Building Project
         run: |
-          cmake . -DCMAKE_GENERATOR_PLATFORM=x64 -DCMAKE_DISABLE_PRECOMPILE_HEADERS=true
-          cmake --build . --config Release --parallel 1 --target Sandbox
-          cmake --build . --config Release --parallel 1 --target TestNiceDay
+          cmake . -DCMAKE_GENERATOR_PLATFORM=x64
+          cmake --build . --config Release --target Sandbox
+          cmake --build . --config Release --target TestNiceDay
           cmake -DTT_TARGET_DIR="${{ github.workspace }}/TestNiceDay/Release" -P CopyMonoDll.cmake
       - name: Testing Engine
         run: |
