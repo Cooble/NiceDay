@@ -118,9 +118,9 @@ void ConsoleTestLayer::onAttach()
 
 	fontMat = FontMatLib::getMaterial("res/fonts/consolas.fnt");
 	textMesh.reserve(50000);
-	lines.emplace_back("#008800Line1 is nice");
-	lines.emplace_back("Line2 is nicer no doubt about this \nreally this seems to be somehing else");
-	lines.emplace_back("#008800ls");
+	lines.emplace_back(U"#008800Line1 is nice");
+	lines.emplace_back(U"Line2 is nicer no doubt about this \nreally this seems to be somehing else");
+	lines.emplace_back(U"#008800ls");
 	rebuildMesh();
 
 	deformationShader = ShaderLib::loadOrGetShader(ND_RESLOC("res/shaders/Deformation.shader"));
@@ -228,12 +228,12 @@ void ConsoleTestLayer::onEvent(Event& e)
 		return;
 
 	char c = (char)KeyTypeEvent::getKeyNumber(e);
-	std::string currentLine = lines[lines.size() - 1];
+	auto currentLine = lines[lines.size() - 1];
 	if (c != -1)
 	{
 		if (c == '\t')
 		{
-			lines[lines.size() - 1] += "    ";
+			lines[lines.size() - 1] += U"    ";
 		}
 		else
 		{
@@ -251,8 +251,8 @@ void ConsoleTestLayer::onEvent(Event& e)
 		{
 			lines.erase(lines.begin());
 		}
-		lines[0] = "#008800";
-		lines.emplace_back("#008800");
+		lines[0] = U"#008800";
+		lines.emplace_back(U"#008800");
 
 		rebuildMesh();
 		e.handled = true;

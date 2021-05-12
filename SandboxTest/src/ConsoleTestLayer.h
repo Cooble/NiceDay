@@ -14,7 +14,7 @@ class FrameBufferPingPong;
 class ConsoleTestLayer: public Layer
 {
 private:
-	std::vector<std::string> lines;
+	std::vector<std::u32string> lines;
 	char chars[BUFF_LINES_COUNT][BUFF_LINE_SIZE];
 	FontMaterial* fontMat;
 	BatchRenderer2D renderer;

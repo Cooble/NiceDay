@@ -21,7 +21,7 @@ res/audio/
 res/engine/lua/temp
 res/lua/temp
 res/registry/headers
-res/tracing/currentProfileTemp.js
+res/engine/tracing
 
 # Files
 .mat #material files of the engine

@@ -127,7 +127,7 @@ void ItemTool::onInteraction(World& w, ItemStack& stack, void* dataBox, WorldEnt
 			w.getChunkM(World::toChunkCoord(x), World::toChunkCoord(y))->markDirty(true);
 		}
 		{
-			auto audioPath = ND_RESLOC("res/audio/temp/a/dig_") + std::to_string(std::rand()%4)+".ogg";
+			auto audioPath = ND_RESLOC("res/audio/dig_stone/dig_") + std::to_string(std::rand()%4)+".ogg";
 			//play dig sound
 			Sounder::get().playSound(audioPath,0.5f);
 		}

@@ -647,7 +647,7 @@ static void imguiProfile()
 			}
 			if (FUtil::exists(fileName)) {
 				//copy trace file to index.html
-				std::ofstream out = std::ofstream(ND_RESLOC("res/tracing/") + "currentProfileTemp.js");
+				std::ofstream out = std::ofstream(ND_RESLOC("res/engine/tracing/") + "currentProfileTemp.js");
 				std::ifstream in(fileName);
 				out << "var bigSourceName =" << std::filesystem::path(fileName).filename() << ";\nvar bigSource = `";
 				out << in.rdbuf();
@@ -655,7 +655,7 @@ static void imguiProfile()
 				out.close();
 				in.close();
 
-				auto location = ND_RESLOC("res/tracing/index.html");
+				auto location = ND_RESLOC("res/engine/tracing/index.html");
 				system(("start chrome \"" + location + "\"").c_str());
 			}
 		}
