@@ -4,14 +4,15 @@ jobs:
   Explore-GitHub-Actions:
     runs-on: windows-latest
     steps:
-      - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
-      - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
-      - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
+      - run: echo "Downloading MONO_INSTALLER"
       - name: Installing Dependencies
         uses: actions/checkout@v2
       - run: echo "Installing Mono"
       - run: curl -O -J "https://download.mono-project.com/archive/6.10.0/windows-installer/mono-6.10.0.104-x64-0.msi"
-      - name: List files in the repository
-        run: |
-          ls ${{ github.workspace }}
-      - run: echo "🍏 This job's status is ${{ job.status }}."
+      - run: msiexec -i "mono-6.10.0.104-x64-0.msi" -passive -qn -norestart
+      - name: Building project
+      - run: cmake . -DCMAKE_GENERATOR_PLATFORM=x64
+      - run: cmake --build . --config Release --target Sandbox
+      - run: cmake --build . --config Release --target TestNiceDay
+      - run: cmake -DTT_TARGET_DIR="$TRAVIS_BUILD_DIR/TestNiceDay/Release" -P CopyMonoDll.cmake
+      - run: ctest --output-on-failure
