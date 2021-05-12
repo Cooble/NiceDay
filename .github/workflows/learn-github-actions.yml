@@ -15,7 +15,7 @@ jobs:
           msiexec -i "mono-6.10.0.104-x64-0.msi" -passive -qn -norestart
       - name: Building Project
         run: |
-          cmake . -DCMAKE_GENERATOR_PLATFORM=x64
+          cmake . -DCMAKE_GENERATOR_PLATFORM=x64 -DCMAKE_JOB_POOLS=pool-linking=1;pool-compilation=2
           cmake --build . --config Release --target Sandbox
           cmake --build . --config Release --target TestNiceDay
           cmake -DTT_TARGET_DIR="${{ github.workspace }}/TestNiceDay/Release" -P CopyMonoDll.cmake
