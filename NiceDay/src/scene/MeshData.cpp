@@ -74,11 +74,18 @@ namespace MeshDataFactory
 	};
 
 	constexpr int bufsize = 200000;
-	static std::array<glm::vec3, bufsize> v_data;
+	/*static std::array<glm::vec3, bufsize> v_data;
 	static std::array<glm::vec3, bufsize> vn_data;
 	static std::array<glm::vec2, bufsize> vt_data;
 	static std::array<BigVertex, bufsize> bigVertices;
-	static std::array<int, bufsize * 4> indices_data;
+	static std::array<int, bufsize * 4> indices_data;*/
+
+    	static glm::vec3* v_data = new glm::vec3[bufsize];
+	static glm::vec3* vn_data = new glm::vec3[bufsize];
+	static glm::vec2* vt_data = new glm::vec2[bufsize];
+	static BigVertex* bigVertices = new BigVertex[bufsize];
+	static int* indices_data = new int[bufsize * 4];
+	//todo change back after gh_actions
 
 	//hash, index
 	static std::unordered_map<uint64_t, uint64_t> bigVertexIndexes;
@@ -102,7 +109,7 @@ namespace MeshDataFactory
 		size_t bigSize = 0;
 		size_t indSize = 0;
 
-		ZeroMemory(&bigVertices, bigVertices.size() * sizeof(BigVertex));
+		ZeroMemory(&bigVertices, bufsize * sizeof(BigVertex));
 
 		{
 			TimerStaper t("fileLoad");
