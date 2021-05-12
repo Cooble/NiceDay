@@ -1,24 +1,25 @@
-name: GitHub Actions Demo
+name: Testing Engine & Building Sandbox
 on: [push]
 jobs:
-  Explore-GitHub-Actions:
+  Test-Engine-Build-Sandbox:
     runs-on: windows-latest
     steps:
-      - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
-      - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
-      - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
       - name: Installing Dependencies
         uses: actions/checkout@v2
         with:
           submodules: 'true'
-      - run: echo "Installing Mono"
-      - run: curl -O -J "https://download.mono-project.com/archive/6.10.0/windows-installer/mono-6.10.0.104-x64-0.msi"
-      - run: msiexec -i "mono-6.10.0.104-x64-0.msi" -passive -qn -norestart
-      - run: cmake . -DCMAKE_GENERATOR_PLATFORM=x64
-      - run: cmake --build . --config Release --target Sandbox
-      - run: cmake --build . --config Release --target TestNiceDay
-      - run: cmake -DTT_TARGET_DIR="${{ github.workspace }}/TestNiceDay/Release" -P CopyMonoDll.cmake
-      - name: List files in the repository
+      - name: Installing Mono
         run: |
-          ls ${{ github.workspace }}
+          echo "Installing Mono"
+          curl -O -J "https://download.mono-project.com/archive/6.10.0/windows-installer/mono-6.10.0.104-x64-0.msi"
+          msiexec -i "mono-6.10.0.104-x64-0.msi" -passive -qn -norestart
+      - name: Building Project
+        run: |
+          cmake . -DCMAKE_GENERATOR_PLATFORM=x64
+          cmake --build . --config Release --target Sandbox
+          cmake --build . --config Release --target TestNiceDay
+          cmake -DTT_TARGET_DIR="${{ github.workspace }}/TestNiceDay/Release" -P CopyMonoDll.cmake
+      - name: Testing Engine
+        run: |
+          ctest --output-on-failure
       - run: echo "🍏 This job's status is ${{ job.status }}."
