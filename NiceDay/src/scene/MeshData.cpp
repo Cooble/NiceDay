@@ -1,4 +1,4 @@
-﻿#include "MeshData.h"
+#include "MeshData.h"
 
 #include "files/FUtil.h"
 
@@ -80,12 +80,11 @@ namespace MeshDataFactory
 	static std::array<BigVertex, bufsize> bigVertices;
 	static std::array<int, bufsize * 4> indices_data;*/
 
-    	static glm::vec3* v_data = new glm::vec3[bufsize];
+    static glm::vec3* v_data = new glm::vec3[bufsize];
 	static glm::vec3* vn_data = new glm::vec3[bufsize];
 	static glm::vec2* vt_data = new glm::vec2[bufsize];
 	static BigVertex* bigVertices = new BigVertex[bufsize];
 	static int* indices_data = new int[bufsize * 4];
-	//todo change back after gh_actions
 
 	//hash, index
 	static std::unordered_map<uint64_t, uint64_t> bigVertexIndexes;
@@ -109,7 +108,7 @@ namespace MeshDataFactory
 		size_t bigSize = 0;
 		size_t indSize = 0;
 
-		ZeroMemory(&bigVertices, bufsize * sizeof(BigVertex));
+		ZeroMemory(bigVertices, bufsize * sizeof(BigVertex));
 
 		{
 			TimerStaper t("fileLoad");
@@ -213,7 +212,7 @@ namespace MeshDataFactory
 		if (bigvertexSize == sizeof(BigVertex) || usePosNormUv)
 		{
 			//we have all (pos,normals,uvs)
-			memcpy(model->getVertices(), (char*)&bigVertices, bigSize * sizeof(BigVertex));
+			memcpy(model->getVertices(), (char*)bigVertices, bigSize * sizeof(BigVertex));
 		}
 		else
 		{
@@ -280,7 +279,7 @@ namespace MeshDataFactory
 
 	MeshData* buildCube(float scale)
 	{
-		/*static const float cubeVertices[] = {
+		static const float cubeVertices[] = {
 	                -1.0f,-1.0f,-1.0f,
 	                -1.0f,-1.0f, 1.0f,
 	                -1.0f, 1.0f, 1.0f,
@@ -317,8 +316,7 @@ namespace MeshDataFactory
 	                1.0f, 1.0f, 1.0f,
 	                -1.0f, 1.0f, 1.0f,
 	                1.0f,-1.0f, 1.0f
-		};*/
-		auto cubeVertices = new float[50 * 3];//todo change back to static allocation after done with gh_actions compilation
+		};
 
 
 		MeshData* mesh = new MeshData;
