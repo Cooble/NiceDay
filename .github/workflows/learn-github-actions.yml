@@ -9,6 +9,8 @@ jobs:
       - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
       - name: Installing Dependencies
         uses: actions/checkout@v2
+        with:
+          submodules: 'true'
       - run: echo "Installing Mono"
       - run: curl -O -J "https://download.mono-project.com/archive/6.10.0/windows-installer/mono-6.10.0.104-x64-0.msi"
       - run: msiexec -i "mono-6.10.0.104-x64-0.msi" -passive -qn -norestart
