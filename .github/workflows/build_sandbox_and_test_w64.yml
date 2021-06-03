@@ -1,4 +1,4 @@
-name: Testing Engine & Building Sandbox
+name: build_sandbox_and_test_w64
 on: [push]
 jobs:
   Test-Engine-Build-Sandbox:
