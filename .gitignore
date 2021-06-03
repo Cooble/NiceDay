@@ -35,6 +35,8 @@ res/engine/tracing
 *log.*.txt
 *log.txt
 *.dll
+*crateM.mat
+
 
 # CMake
 CMakeLists.txt.user
@@ -79,6 +81,7 @@ mono_crash.*
 [Dd]ebugPublic/
 [Rr]elease/
 [Rr]eleases/
+RelWithDebInfo/
 x64/
 x86/
 [Ww][Ii][Nn]32/

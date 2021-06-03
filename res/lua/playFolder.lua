@@ -37,5 +37,5 @@ function playFolder(fileP)
 	ND_INFO("Done")
 end
 
-playFolder("D:/SteamLibrary/steamapps/common/Undertale/")
+playFolder("C:/Program Files (x86)/Steam/steamapps/common/Undertale/")
 

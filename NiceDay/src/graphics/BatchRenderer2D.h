@@ -62,6 +62,8 @@ private:
 	int m_indices_count;
 	TextVertexData* m_text_vertex_data;
 	int m_text_indices_count;
+	//if src_alpha + 1-src_alpha should be used for each flush
+	bool m_apply_default_blending=true;
 private:
 	int bindTexture(const Texture* t);
 	void prepareQuad();
@@ -71,14 +73,16 @@ private:
 	void flushText();
 	void beginQuad();
 	void flushQuad();
+
 public:
 	BatchRenderer2D();
 	
 	~BatchRenderer2D();
 
 	void push(const mat4& trans);
-	void pop();
+	void pop(int count = 1);
 
+	void setDefaultBlending(bool b) { m_apply_default_blending = b; }
 	void begin(FrameBuffer* fbo);
 	void submit(const Renderable2D& ren);
 	void submitTextureQuad(const glm::vec3& pos, const glm::vec2& size, const UVQuad& uv,const Texture* t,float alpha=1);

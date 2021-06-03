@@ -20,6 +20,7 @@ namespace Colli
 			aiProcess_Triangulate |
 			aiProcess_GenBoundingBoxes |
 			aiProcess_JoinIdenticalVertices |
+			aiProcess_GenSmoothNormals |
 			(flags & ColliFlags_BuildTangent ? aiProcess_CalcTangentSpace : 0) |
 			aiProcess_SortByPType | aiProcess_GlobalScale);
 

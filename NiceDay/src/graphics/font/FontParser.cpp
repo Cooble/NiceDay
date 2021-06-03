@@ -28,6 +28,8 @@ uint32_t Font::entityToColor(std::string_view s)
 std::optional<uint32_t> Font::tryEntityToColor(std::string_view s)
 {
 	const char c = s[0];
+	if(s.size()==1)
+		return std::optional<uint32_t>();
 	switch (c)
 	{
 	case '&':

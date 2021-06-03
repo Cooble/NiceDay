@@ -211,10 +211,10 @@ static defaultable_map<ChunkID, bool, false> CHUNK_MAP;
 
 // calls genchunks2 with promise:
 //		all chunks in toLoadChunks	are valid
-//									have their header and space
-//									have GENERATED or BEING_LOADED state
-//									maskGen which should be generated
-//									maskFreshlyOnlyLoaded should load their entities
+//		have their header and space
+//		have GENERATED or BEING_LOADED state
+//		maskGen which should be generated
+//		maskFreshlyOnlyLoaded should load their entities
 
 void World::loadChunksAndGen(nd::temp_set<int>& toLoadChunks)
 {

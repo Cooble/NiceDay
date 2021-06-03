@@ -10,6 +10,8 @@
 #include "platform/OpenGL/GLRenderer.h"
 #include "biome/BiomeRegistry.h"
 #include <algorithm>
+
+#include "core/AppGlobals.h"
 #include "graphics/GContext.h"
 #include "graphics/Sprite2D.h"
 #include "graphics/Renderable2D.h"
@@ -446,11 +448,17 @@ void WorldRenderManager::renderBiomeBackgroundToFBO(BatchRenderer2D& batchRender
 		b.update(m_world, m_camera);
 		Sprite2D** sprites = b.getBGSprites();
 
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	    bool bb;
+		AppGlobals::get().nbt.loadSet("blend", bb, true);
 
 		m_bg_layer_fbo->bind();
 		m_bg_layer_fbo->clear(BuffBit::COLOR);
 		batchRenderer.begin(m_bg_layer_fbo);
+		if (bb) {
+			batchRenderer.setDefaultBlending(false);
+			GContext::get().enableBlend();
+			GContext::get().setBlendFunc(Blend::ONE, Blend::ONE_MINUS_SRC_ALPHA);
+		}
 		for (int i = 0; i < b.getBGSpritesSize(); i++)
 		{
 			Sprite2D& sprite = *sprites[i];
@@ -472,6 +480,8 @@ void WorldRenderManager::renderBiomeBackgroundToFBO(BatchRenderer2D& batchRender
 
 		}
 		batchRenderer.flush();
+		batchRenderer.setDefaultBlending(true);
+
 
 		glBlendFunc(GL_CONSTANT_ALPHA, GL_ONE);
 		glBlendColor(0, 0, 0, intensity);

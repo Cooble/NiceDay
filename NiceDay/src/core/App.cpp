@@ -10,8 +10,6 @@
 #include "core/AppGlobals.h"
 #include "lua/LuaLayer.h"
 #include "event/ControlMap.h"
-#include "event/KeyEvent.h"
-#include "event/MessageEvent.h"
 #include "audio/SoundLayer.h"
 #include "ImGuiLayer.h"
 #include "script/MonoLayer.h"

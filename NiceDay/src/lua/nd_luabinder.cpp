@@ -11,6 +11,7 @@
 #include "gui/GUIBasic.h"
 #include "gui/GUIContext.h"
 #include "lua.hpp"
+#include "graphics/FontMaterial.h"
 
 //#define BIND_LUA_GUI_HANDLES
 

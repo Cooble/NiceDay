@@ -1,7 +1,7 @@
 #pragma once
 #include "Event.h"
 
-enum class KeyCode:int
+enum KeyCode:int
 {
 UNKNOWN            =-1,
 

@@ -126,10 +126,11 @@ void BatchRenderer2D::push(const mat4& trans)
 	m_back = m_transformation_stack[m_transformation_stack.size() - 1];
 }
 
-void BatchRenderer2D::pop()
+void BatchRenderer2D::pop(int count)
 {
-	if (m_transformation_stack.size() > 1)
-		m_transformation_stack.pop_back();
+    for (int i = 0; i < count && m_transformation_stack.size() > 1; ++i)
+			m_transformation_stack.pop_back();
+    
 	m_back = m_transformation_stack[m_transformation_stack.size() - 1];
 }
 
@@ -187,9 +188,10 @@ void BatchRenderer2D::flushText()
 	m_ibo->bind();
 	m_text_shader->bind();
 
-	Gcon.enableBlend();
-	Gcon.setBlendFunc(Blend::SRC_ALPHA, Blend::ONE_MINUS_SRC_ALPHA);
-
+	if (m_apply_default_blending) {
+		Gcon.enableBlend();
+		Gcon.setBlendFunc(Blend::SRC_ALPHA, Blend::ONE_MINUS_SRC_ALPHA);
+	}
 	static int BUF_S = 500;
 	static auto lengths = new int[BUF_S];
 	static auto indices = new uint64_t[BUF_S];
@@ -254,8 +256,10 @@ void BatchRenderer2D::flushQuad()
 	for (int i = 0; i < m_textures.size(); ++i)
 		m_textures[i]->bind(i);
 
-	Gcon.enableBlend();
-	Gcon.setBlendFunc(Blend::SRC_ALPHA, Blend::ONE_MINUS_SRC_ALPHA);
+	if (m_apply_default_blending) {
+		Gcon.enableBlend();
+		Gcon.setBlendFunc(Blend::SRC_ALPHA, Blend::ONE_MINUS_SRC_ALPHA);
+	}
 	Gcon.cmdDrawElements(Topology::TRIANGLES, m_indices_count);
 }
 

@@ -61,4 +61,6 @@ namespace FUtil
 		return true;
 	}
 	std::string readFileString(std::string_view path);
+
+	uint64_t lastWriteTime(std::string_view path);
 }

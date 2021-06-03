@@ -994,7 +994,7 @@ void WorldLayer::onEvent(Event& e)
 			//todo maybe make each message as a class with inheritance and allocate it on stack
 		}
 	}
-	if (!m_has_world)
+	if (!m_has_world||!m_is_world_ready)
 		return;
 
 	if (e.getEventType() == Event::EventType::WindowResize)

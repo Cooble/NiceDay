@@ -153,9 +153,9 @@ GUIElement* GUIFactory::end(GUIElement& source)
    if (!s_map["margin"].isNull()) element->marginVec = getVec4(s_map["margin"].string());
    if (!s_map["padding"].isNull()) element->paddingVec = getVec4(s_map["padding"].string());
 
-	// if element has not value and has id then id becomes translated value as well
+	// if element has not value and has id then id becomes translated value as well (and is not textBox)
    auto& valu = s_map["value"];
-   if (valu.isString() && valu.string().empty() && !element->id.empty())
+   if (valu.isString() && valu.string().empty() && !element->id.empty() && !dynamic_cast<GUITextBox*>(element))
 	  valu = Translator::translateTryWithKey(element->id);
 
    auto text = dynamic_cast<GUIText*>(element);

@@ -33,6 +33,11 @@ std::string FUtil::readFileString(std::string_view path)
    return buffer.str();
 }
 
+uint64_t FUtil::lastWriteTime(std::string_view path)
+{
+	return std::filesystem::last_write_time(path).time_since_epoch().count();
+}
+
 
 std::string FUtil::getAbsolutePath(const char* fileName)
 {
