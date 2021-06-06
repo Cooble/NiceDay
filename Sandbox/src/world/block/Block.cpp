@@ -12,26 +12,22 @@
 using namespace nd;
 
 Block::Block(std::string id)
-	: m_string_id(std::move(id)),
-	m_texture_pos(0),
-	m_corner_translate_array(nullptr),
-	m_tile_entity(ENTITY_TYPE_NONE),
-	m_collision_box(BLOCK_BOUNDS_DEFAULT),
-	m_collision_box_size(3),
-	m_opacity(OPACITY_SOLID),
-	m_light_src(0),
-	m_block_connect_group(0),
-	m_id(-1)
+	: m_id(-1),
+	  m_string_id(std::move(id)),
+	  m_texture_pos(0),
+	  m_corner_translate_array(nullptr),
+	  m_tile_entity(ENTITY_TYPE_NONE),
+	  m_collision_box(BLOCK_BOUNDS_DEFAULT),
+	  m_collision_box_size(3),
+	  m_opacity(OPACITY_SOLID),
+	  m_light_src(0),
+	  m_block_connect_group(0)
 {
 	setFlag(BLOCK_FLAG_HAS_ITEM_VERSION, true);
 	setFlag(BLOCK_FLAG_SOLID, true);
 }
 
-Phys::Vecti Block::getTileEntityCoords(int x, int y, const BlockStruct& b) const
-{
-	return Phys::Vecti(x, y);
-	
-}
+Phys::Vecti Block::getTileEntityCoords(int x, int y, const BlockStruct& b) const { return Phys::Vecti(x, y); }
 
 const Phys::Polygon& Block::getCollisionBox(int x, int y, const BlockStruct& b) const
 {
@@ -39,9 +35,9 @@ const Phys::Polygon& Block::getCollisionBox(int x, int y, const BlockStruct& b) 
 	switch (BLOCK_STATE_PURE_MASK & b.block_corner)
 	{
 	case BLOCK_STATE_CORNER_UP_LEFT:
-		return m_collision_box[1* i];
+		return m_collision_box[1 * i];
 	case BLOCK_STATE_CORNER_UP_RIGHT:
-		return m_collision_box[2* i];
+		return m_collision_box[2 * i];
 	default:
 		return m_collision_box[0];
 	}
@@ -64,7 +60,7 @@ int Block::getTextureOffset(int x, int y, const BlockStruct& b) const
 
 int Block::getCornerOffset(int x, int y, const BlockStruct& b) const
 {
-	return m_corner_translate_array?m_corner_translate_array[(int)b.block_corner].i:BLOCK_STATE_FULL;
+	return m_corner_translate_array ? m_corner_translate_array[(int)b.block_corner].i : BLOCK_STATE_FULL;
 }
 
 bool Block::isInGroup(BlockAccess& w, int x, int y, int group) const
@@ -101,19 +97,20 @@ bool Block::onNeighborBlockChange(BlockAccess& world, int x, int y) const
 
 void Block::onBlockPlaced(World& w, WorldEntity* e, int x, int y, BlockStruct& b) const
 {
-	if (hasTileEntity()) {
+	if (hasTileEntity())
+	{
 		auto entity = EntityAllocator::createEntity(m_tile_entity);
-		entity->getPosition() = { x, y };
+		entity->getPosition() = {x, y};
 		w.spawnEntity(entity);
 	}
 }
 
 void Block::onBlockDestroyed(World& w, WorldEntity* e, int x, int y, BlockStruct& b) const
 {
-	if (hasTileEntity()) {
-
+	if (hasTileEntity())
+	{
 		auto corrds = getTileEntityCoords(x, y, b);
-		WorldEntity* ee = w.getLoadedTileEntity(corrds.x,corrds.y);
+		WorldEntity* ee = w.getLoadedTileEntity(corrds.x, corrds.y);
 		if (ee)
 			ee->markDead();
 	}
@@ -128,7 +125,7 @@ void Block::onBlockClicked(World& w, WorldEntity* e, int x, int y, BlockStruct& 
 		if (entity == nullptr)
 		{
 			entity = (TileEntity*)EntityAllocator::createEntity(m_tile_entity);
-			entity->getPosition() = { pos.x,pos.y };
+			entity->getPosition() = {pos.x, pos.y};
 			w.spawnEntity(entity);
 		}
 		entity->onClicked(w, e);
@@ -138,32 +135,28 @@ void Block::onBlockClicked(World& w, WorldEntity* e, int x, int y, BlockStruct& 
 bool Block::canBePlaced(World& w, int x, int y) const
 {
 	// can be hanged only on wall
-	if(needsWall() && w.getBlock(x, y)->isWallFree())
+	if (needsWall() && w.getBlock(x, y)->isWallFree())
 		return false;
 
 	// block is already occupied with another block
 	if (!w.getBlockInstance(x, y).isReplaceable())
 		return false;
-	
+
 	// can be put only on ground
-	if(cannotFloat() && !w.getBlockInstance(x, y - 1).isSolid())
+	if (cannotFloat() && !w.getBlockInstance(x, y - 1).isSolid())
 		return false;
-	
+
 	return true;
 }
 
 const ItemBlock& Block::getItemFromBlock() const
 {
 	return dynamic_cast<const ItemBlock&>(ItemRegistry::get().getItem(SID(getItemIDFromBlock())));
-	
 }
 
-std::string Block::getItemIDFromBlock() const
-{
-	return getStringID();
-}
+std::string Block::getItemIDFromBlock() const { return getStringID(); }
 
-ItemStack* Block::createItemStackFromBlock(const BlockStruct& b) const 
+ItemStack* Block::createItemStackFromBlock(const BlockStruct& b) const
 {
 	if (!hasItemVersion())
 		return nullptr;
@@ -176,14 +169,12 @@ ItemStack* Block::createItemStackFromBlock(const BlockStruct& b) const
 
 //MULTIBLOCK==================================================
 MultiBlock::MultiBlock(std::string id)
-	: Block(std::move(id))
-{
-}
+	: Block(std::move(id)) {}
 
-Phys::Vecti MultiBlock::getTileEntityCoords(int x, int y, const BlockStruct& b)const
+Phys::Vecti MultiBlock::getTileEntityCoords(int x, int y, const BlockStruct& b) const
 {
 	quarter_int offset = b.block_metadata;
-	return { x - offset.x, y - offset.y };
+	return {x - offset.x, y - offset.y};
 }
 
 int MultiBlock::getTextureOffset(int x, int y, const BlockStruct& b) const
@@ -193,10 +184,7 @@ int MultiBlock::getTextureOffset(int x, int y, const BlockStruct& b) const
 	return m_texture_pos + half_int(d.x, d.y);
 }
 
-bool MultiBlock::onNeighborBlockChange(BlockAccess& world, int x, int y) const
-{
-	return false;
-}
+bool MultiBlock::onNeighborBlockChange(BlockAccess& world, int x, int y) const { return false; }
 
 void MultiBlock::onBlockPlaced(World& w, WorldEntity* e, int xx, int yy, BlockStruct& b) const
 {
@@ -242,13 +230,15 @@ void MultiBlock::onBlockDestroyed(World& w, WorldEntity* e, int xx, int yy, Bloc
 bool MultiBlock::canBePlaced(World& w, int xx, int yy) const
 {
 	for (int x = 0; x < m_width; ++x)
-		for (int y = 0; y < m_height; ++y) {
+		for (int y = 0; y < m_height; ++y)
+		{
 			auto b = w.getBlock(xx + x, yy + y);
-			if (!b ->isAir() || (needsWall() && b->isWallFree()))
+			if (!b->isAir() || needsWall() && b->isWallFree())
 				return false;
 		}
 	if (cannotFloat())
-		for (int x = 0; x < m_width; ++x){
+		for (int x = 0; x < m_width; ++x)
+		{
 			if (!w.getBlockInstance(xx + x, yy - 1).isSolid())
 				return false;
 		}
@@ -260,10 +250,8 @@ bool MultiBlock::canBePlaced(World& w, int xx, int yy) const
 Wall::Wall(std::string id)
 	: m_string_id(std::move(id)),
 	  m_texture_pos(0),
-	  m_corner_translate_array(BlockRegistry::get().getCorners("dirt",true)),
-	  m_transparent(false)
-{
-}
+	  m_corner_translate_array(BlockRegistry::get().getCorners("dirt", true)),
+	  m_transparent(false) {}
 
 Wall::~Wall() = default;
 
@@ -285,7 +273,7 @@ int Wall::getCornerOffset(int wx, int wy, const BlockStruct& b) const
 	if (i.i == 0)
 		return 0;
 
-	return half_int((((wx & 1) + (wy & 1)) & 1) * 3, 0).plus(i).i;
+	return half_int(((wx & 1) + (wy & 1) & 1) * 3, 0).plus(i).i;
 }
 
 static bool isWallFree(BlockAccess& w, int x, int y)

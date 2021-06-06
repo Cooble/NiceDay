@@ -26,10 +26,7 @@ public:
 			free(buff);
 	}
 
-	void clearBuffer()
-	{
-		offset = 0;
-	}
+	void clearBuffer() { offset = 0; }
 
 	void appendData(const float* data, size_t sampleNumber)
 	{
@@ -467,10 +464,7 @@ void SoundBuffer::loadRaw(const float* data, size_t sampleFrames)
 	m_current_write_head += sampleFrames;
 }
 
-MusicStream::~MusicStream()
-{
-	close();
-}
+MusicStream::~MusicStream() { close(); }
 
 bool MusicStream::initFromFile(const char* filePath)
 {

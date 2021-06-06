@@ -4,24 +4,14 @@
 
 //AIR=============================
 WallAir::WallAir()
-	: Wall("air")
-{
-}
+	: Wall("air") {}
 
-int WallAir::getTextureOffset(int wx, int wy, const BlockStruct&) const
-{
-	return -1;
-}
+int WallAir::getTextureOffset(int wx, int wy, const BlockStruct&) const { return -1; }
 
-int WallAir::getCornerOffset(int wx, int wy, const BlockStruct&) const
-{
-	return 0;
-}
+int WallAir::getCornerOffset(int wx, int wy, const BlockStruct&) const { return 0; }
 
 WallGlass::WallGlass()
-	: Wall("glass")
-{
-}
+	: Wall("glass") {}
 
 int WallGlass::getCornerOffset(int wx, int wy, const BlockStruct& b) const
 {

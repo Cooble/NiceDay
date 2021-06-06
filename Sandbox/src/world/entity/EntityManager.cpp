@@ -8,10 +8,10 @@ EntityID EntityManager::createEntity()
 	/*std::vector<bool> bools;
 	for (int i = 0; i < m_loaded.bitSize(); ++i)
 		bools.push_back(m_loaded[i]);*/
-	
+
 	uint32_t idx;
-	if (m_freeList.size() > EE_ENTITY_MINIMAL_FREE_SIZE || (!m_freeList.empty() && m_generations.size() >=
-		EE_ENTITY_MAXIMAL_SIZE))
+	if (m_freeList.size() > EE_ENTITY_MINIMAL_FREE_SIZE || !m_freeList.empty() && m_generations.size() >=
+		EE_ENTITY_MAXIMAL_SIZE)
 	{
 		idx = m_freeList.front();
 		m_freeList.pop_front();
@@ -40,7 +40,8 @@ void EntityManager::killEntity(EntityID e)
 	}
 }
 
-struct MHeader {
+struct MHeader
+{
 	uint32_t freeListSize;
 	uint32_t generationSize;
 };
@@ -72,6 +73,3 @@ void EntityManager::deserialize(const IBinaryStream::RWStream& stream)
 	m_loaded.resize(h.generationSize);
 	m_p_entities.resize(h.generationSize);
 }
-
-
-

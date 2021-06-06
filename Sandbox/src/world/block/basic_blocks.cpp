@@ -33,9 +33,7 @@ bool BlockAir::onNeighborBlockChange(BlockAccess& world, int x, int y) const { r
 
 //PLATFORM====================================
 BlockPlatform::BlockPlatform()
-	: Block("platform")
-{
-}
+	: Block("platform") {}
 
 bool BlockPlatform::onNeighborBlockChange(BlockAccess& world, int x, int y) const
 {
@@ -52,34 +50,13 @@ bool BlockPlatform::onNeighborBlockChange(BlockAccess& world, int x, int y) cons
 	bool isRightAir = idRight == BLOCK_AIR;
 
 
-	if (leftPlat && rightPlat)
-	{
-		block.block_metadata = half_int(1, 0);
-	}
-	else if (!rightPlat && !leftPlat && !isLeftAir && !isRightAir)
-	{
-		block.block_metadata = half_int(0, 0);
-	}
-	else if (isLeftAir && isRightAir)
-	{
-		block.block_metadata = half_int(6, 0);
-	}
-	else if (isLeftAir && rightPlat)
-	{
-		block.block_metadata = half_int(4, 0);
-	}
-	else if (isRightAir && leftPlat)
-	{
-		block.block_metadata = half_int(5, 0);
-	}
-	else if (!isLeftAir && !leftPlat)
-	{
-		block.block_metadata = half_int(2, 0);
-	}
-	else
-	{
-		block.block_metadata = half_int(3, 0);
-	}
+	if (leftPlat && rightPlat) { block.block_metadata = half_int(1, 0); }
+	else if (!rightPlat && !leftPlat && !isLeftAir && !isRightAir) { block.block_metadata = half_int(0, 0); }
+	else if (isLeftAir && isRightAir) { block.block_metadata = half_int(6, 0); }
+	else if (isLeftAir && rightPlat) { block.block_metadata = half_int(4, 0); }
+	else if (isRightAir && leftPlat) { block.block_metadata = half_int(5, 0); }
+	else if (!isLeftAir && !leftPlat) { block.block_metadata = half_int(2, 0); }
+	else { block.block_metadata = half_int(3, 0); }
 	return lastMeta != block.block_metadata; //we have a change (or not)
 }
 
@@ -91,9 +68,7 @@ int BlockPlatform::getTextureOffset(int x, int y, const BlockStruct& s) const
 //GRASS=======================================
 
 BlockGrass::BlockGrass()
-	: Block("grass")
-{
-}
+	: Block("grass") {}
 
 
 int BlockGrass::getTextureOffset(int x, int y, const BlockStruct& s) const
@@ -109,7 +84,7 @@ bool BlockGrass::onNeighborBlockChange(BlockAccess& world, int x, int y) const
 	int lastCorner = block.block_corner;
 	//bool custombit = (lastCorner & BIT(4)); //perserve custombit
 	//block.block_corner &= ~BIT(4);
-	bool custombit = (lastCorner & BLOCK_STATE_CRACKED); //perserve custombit
+	bool custombit = lastCorner & BLOCK_STATE_CRACKED; //perserve custombit
 	block.block_corner &= ~BLOCK_STATE_CRACKED;
 
 
@@ -123,8 +98,8 @@ bool BlockGrass::onNeighborBlockChange(BlockAccess& world, int x, int y) const
 		|| block.block_corner == BLOCK_STATE_LINE_END_DOWN
 		|| block.block_corner == BLOCK_STATE_LINE_VERTICAL)
 	{
-		block.block_id = BLOCK_DIRT;//no air around
-		custombit = false;//we dont care about cracks anymore
+		block.block_id = BLOCK_DIRT; //no air around
+		custombit = false; //we dont care about cracks anymore
 	}
 	else if (block.block_corner == BLOCK_STATE_CORNER_UP_LEFT
 		|| block.block_corner == BLOCK_STATE_LINE_END_LEFT)
@@ -134,20 +109,18 @@ bool BlockGrass::onNeighborBlockChange(BlockAccess& world, int x, int y) const
 		block.block_metadata = half_int((x & 1) + 2, 0);
 	else
 		block.block_metadata = half_int(x & 3, 1);
-	block.block_corner |= BLOCK_STATE_CRACKED*custombit; //put back custombit
+	block.block_corner |= BLOCK_STATE_CRACKED * custombit; //put back custombit
 	return lastCorner != block.block_corner || lastid != block.block_id; //we have a change (or not)
 }
 
 //GLASS=======================================
 
 BlockGlass::BlockGlass()
-	: Block("glass")
-{
-}
+	: Block("glass") {}
 
 int BlockGlass::getTextureOffset(int x, int y, const BlockStruct& s) const
 {
-	return (m_texture_pos + half_int(s.block_metadata, 0));
+	return m_texture_pos + half_int(s.block_metadata, 0);
 }
 
 bool BlockGlass::onNeighborBlockChange(BlockAccess& world, int x, int y) const
@@ -162,9 +135,7 @@ bool BlockGlass::onNeighborBlockChange(BlockAccess& world, int x, int y) const
 
 //up 0 left 1 down 2 right 3
 BlockTorch::BlockTorch()
-	: Block("torch")
-{
-}
+	: Block("torch") {}
 
 void BlockTorch::onBlockClicked(World& w, WorldEntity* e, int x, int y, BlockStruct& b) const
 {
@@ -173,7 +144,6 @@ void BlockTorch::onBlockClicked(World& w, WorldEntity* e, int x, int y, BlockStr
 		w.killTileEntity(tileE->getID());
 	else
 	{
-		
 		auto entityBuff = (TileEntityTorch*)EntityAllocator::createEntity(ENTITY_TYPE_TILE_TORCH);
 		entityBuff->getPosition() = {x, y};
 		w.spawnEntity(entityBuff);
@@ -184,7 +154,6 @@ int BlockTorch::getTextureOffset(int x, int y, const BlockStruct& b) const
 {
 	return m_texture_pos + half_int(b.block_corner, 0);
 }
-
 
 
 bool BlockTorch::isInTorchGroup(BlockAccess& world, int x, int y) const
@@ -206,26 +175,14 @@ bool BlockTorch::onNeighborBlockChange(BlockAccess& world, int x, int y) const
 	mask |= (isInTorchGroup(world, x - 1, y) & 1) << 0;
 	mask |= (isInTorchGroup(world, x, y - 1) & 1) << 1;
 	mask |= (isInTorchGroup(world, x + 1, y) & 1) << 2;
-	mask |= (!s.isWallFree()) << 3; //can be placed on wall
+	mask |= !s.isWallFree() << 3; //can be placed on wall
 
 	if ((BIT(lastCorner) & mask) == 0)
 	{
-		if ((mask & BIT(0)) != 0)
-		{
-			s.block_corner = 0;
-		}
-		else if ((mask & BIT(1)) != 0)
-		{
-			s.block_corner = 1;
-		}
-		else if ((mask & BIT(2)) != 0)
-		{
-			s.block_corner = 2;
-		}
-		else if ((mask & BIT(3)) != 0)
-		{
-			s.block_corner = 3;
-		}
+		if ((mask & BIT(0)) != 0) { s.block_corner = 0; }
+		else if ((mask & BIT(1)) != 0) { s.block_corner = 1; }
+		else if ((mask & BIT(2)) != 0) { s.block_corner = 2; }
+		else if ((mask & BIT(3)) != 0) { s.block_corner = 3; }
 		else
 		{
 			world.setBlock(x, y, BLOCK_AIR); //torch cannot float
@@ -287,10 +244,7 @@ void BlockDoor::onBlockClicked(World& w, WorldEntity* e, int x, int y, BlockStru
 	}
 }
 
-std::string BlockDoor::getItemIDFromBlock() const
-{
-	return "door";
-}
+std::string BlockDoor::getItemIDFromBlock() const { return "door"; }
 
 BlockDoorOpen::BlockDoorOpen()
 	: BlockDoor("door_open")
@@ -327,15 +281,10 @@ bool BlockDoorClose::canBePlaced(World& w, int x, int y) const
 	return bb.hasCollisionBox();
 }
 
-void BlockDoorClose::onTextureLoaded(const BlockTextureAtlas& atlas)
-{
-	m_texture_pos = atlas.getTexture("block/door");
-}
+void BlockDoorClose::onTextureLoaded(const BlockTextureAtlas& atlas) { m_texture_pos = atlas.getTexture("block/door"); }
 
 BlockPumpkin::BlockPumpkin()
-	: MultiBlock("pumpkin")
-{
-}
+	: MultiBlock("pumpkin") {}
 
 void BlockPumpkin::onBlockPlaced(World& w, WorldEntity* e, int x, int y, BlockStruct& b) const
 {
@@ -365,15 +314,12 @@ void BlockPumpkin::onBlockPlaced(World& w, WorldEntity* e, int x, int y, BlockSt
 }
 
 BlockChest::BlockChest()
-	: MultiBlock("chest")
-{
-}
+	: MultiBlock("chest") {}
 
 void BlockChest::onTextureLoaded(const BlockTextureAtlas& atlas)
 {
-	
-	m_open_texture = atlas.getTexture("block/" + getStringID()+"_opened");
-	m_close_texture = atlas.getTexture("block/" + getStringID()+"_closed");
+	m_open_texture = atlas.getTexture("block/" + getStringID() + "_opened");
+	m_close_texture = atlas.getTexture("block/" + getStringID() + "_closed");
 }
 
 
@@ -381,27 +327,23 @@ int BlockChest::getTextureOffset(int x, int y, const BlockStruct& b) const
 {
 	quarter_int d = b.block_metadata;
 
-	return (d.z==0?m_close_texture:m_open_texture) + half_int(d.x, d.y);
+	return (d.z == 0 ? m_close_texture : m_open_texture) + half_int(d.x, d.y);
 }
 
-void BlockChest::openChest(World& w,int x,int y, bool open) const
+void BlockChest::openChest(World& w, int x, int y, bool open) const
 {
-	
 	auto basePos = getTileEntityCoords(x, y, *w.getBlock(x, y));
 	for (int x = 0; x < m_width; ++x)
 		for (int y = 0; y < m_height; ++y)
-			((quarter_int*)&w.getBlockM(basePos.x+x,basePos.y+y)->block_metadata)->z = open ? 1 : 0;
+			((quarter_int*)&w.getBlockM(basePos.x + x, basePos.y + y)->block_metadata)->z = open ? 1 : 0;
 	w.getChunkM(Chunk::getChunkIDFromWorldPos(x, y))->markDirty(true);
 }
 
-bool BlockChest::isOpened(BlockStruct& b)const 
-{
-	return ((quarter_int*)&b.block_metadata)->z == 1;
-}
+bool BlockChest::isOpened(BlockStruct& b) const { return ((quarter_int*)&b.block_metadata)->z == 1; }
 
 
 BlockTreeSapling::BlockTreeSapling()
-:Block("tree_sapling"){}
+	: Block("tree_sapling") {}
 
 bool BlockTreeSapling::canBePlaced(World& w, int x, int y) const
 {
@@ -412,11 +354,8 @@ bool BlockTreeSapling::canBePlaced(World& w, int x, int y) const
 }
 
 
-
 BlockTree::BlockTree()
-	: Block("tree")
-{
-}
+	: Block("tree") {}
 
 void BlockTree::onTextureLoaded(const BlockTextureAtlas& atlas)
 {
@@ -459,10 +398,7 @@ int BlockTree::getTextureOffset(int x, int y, const BlockStruct& s) const
 }
 
 
-bool BlockTree::onNeighborBlockChange(BlockAccess& world, int x, int y) const
-{
-	return false;
-}
+bool BlockTree::onNeighborBlockChange(BlockAccess& world, int x, int y) const { return false; }
 
 void BlockTree::onBlockDestroyed(World& w, WorldEntity* e, int x, int y, BlockStruct& b) const
 {
@@ -498,7 +434,7 @@ void BlockTree::onBlockDestroyed(World& w, WorldEntity* e, int x, int y, BlockSt
 
 BlockPlant::BlockPlant(std::string id)
 	: Block(std::move(id))
-	  
+
 {
 	setNoCollisionBox();
 	setFlag(BLOCK_FLAG_CANNOT_FLOAT, true);

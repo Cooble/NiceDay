@@ -4,14 +4,9 @@
 namespace nd {
 AudioHandle::AudioHandle(bool isSound, bool isSpatial)
 	: m_is_sound(isSound),
-	  m_is_spatial(isSpatial)
-{
-}
+	  m_is_spatial(isSpatial) {}
 
-bool AudioHandle::isPlaying()
-{
-	return Sounder::get().isPlaying(m_handle);
-}
+bool AudioHandle::isPlaying() { return Sounder::get().isPlaying(m_handle); }
 
 void AudioHandle::updateSpatialData(const SpatialData& data)
 {
@@ -25,15 +20,11 @@ void AudioHandle::updateSpatialData(const SpatialData& data)
 
 SoundHandle::SoundHandle()
 	:
-	AudioHandle(true)
-{
-}
+	AudioHandle(true) {}
 
 MusicHandle::MusicHandle()
 	:
-	AudioHandle(false)
-{
-}
+	AudioHandle(false) {}
 
 void AudioHandle::open(const std::string& filePath)
 {

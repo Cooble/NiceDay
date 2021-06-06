@@ -10,7 +10,6 @@ WorldEntity* EntityAllocator::allocate(EntityType id)
 	auto& bucket = EntityRegistry::get().getBucket(id);
 	auto entity = (WorldEntity*)malloc(bucket.byte_size);
 	return entity;
-	
 }
 
 WorldEntity* EntityAllocator::createEntity(EntityType id)
@@ -28,8 +27,4 @@ WorldEntity* EntityAllocator::loadInstance(NBT& nbt)
 	return entity;
 }
 
-void EntityAllocator::deallocate(WorldEntity* entity)
-{
-	free(entity);
-}
-
+void EntityAllocator::deallocate(WorldEntity* entity) { free(entity); }

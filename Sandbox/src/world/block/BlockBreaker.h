@@ -10,7 +10,7 @@ private:
 public:
 	BlockBreaker();
 
-	void beginBreak(World& w,int x, int y);
-	
+	void beginBreak(World& w, int x, int y);
+
 	bool update(World& w);
 };

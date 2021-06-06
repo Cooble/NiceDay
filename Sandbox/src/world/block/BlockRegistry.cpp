@@ -6,6 +6,7 @@
 using namespace nd;
 
 static std::vector<std::string> allConnectGroups;
+
 void BlockRegistry::initTextures(const BlockTextureAtlas& atlas)
 {
 	for (Block* block : m_blocks)
@@ -19,7 +20,7 @@ void BlockRegistry::readAllConnectGroupsJSON()
 	allConnectGroups.clear();
 	NBT t;
 	NBT::loadFromFile("res/registry/blocks/connect_groups.json", t);
-	if(t.isArray())
+	if (t.isArray())
 	{
 		allConnectGroups.reserve(t.size());
 		for (auto& item : t.arrays())
@@ -28,13 +29,12 @@ void BlockRegistry::readAllConnectGroupsJSON()
 }
 
 
-
-void BlockRegistry::checkIfConnectGroupRegistered(const std::string& s,const std::string& elementID)
+void BlockRegistry::checkIfConnectGroupRegistered(const std::string& s, const std::string& elementID)
 {
 	for (auto& all_connect_group : allConnectGroups)
-		if(all_connect_group==s)
+		if (all_connect_group == s)
 			return;
-	ND_WARN("Unregistered connectGroup detected: {} in: {}", s,elementID);
+	ND_WARN("Unregistered connectGroup detected: {} in: {}", s, elementID);
 }
 
 void BlockRegistry::readExternalIDList()
@@ -84,7 +84,7 @@ void BlockRegistry::readExternalIDList()
 	m_block_flags["cannotFloat"] = 3;
 	m_block_flags["hasBigTexture"] = 4;
 	m_block_flags["solid"] = 5;
-	
+
 	{
 		auto t = std::ifstream(ND_RESLOC("res/registry/blocks/flags.ids"));
 		std::string line;
@@ -96,23 +96,22 @@ void BlockRegistry::readExternalIDList()
 			int index;
 			std::string name;
 			if (!(iss >> index >> name)) { continue; } // error
-			m_block_flags[name]=index;
+			m_block_flags[name] = index;
 		}
 	}
-	
 }
 
 static NBT blocksNBT;
+
 void BlockRegistry::readJSONRegistry()
 {
-
 	if (NBT::loadFromFile(ND_RESLOC("res/registry/blocks/blocks.json"), blocksNBT))
 		for (auto& map : blocksNBT.maps())
 		{
 			auto it = m_blockIDs.find(map.first);
 			if (it == m_blockIDs.end())
 				createBlockFromJSON(map.first, map.second);
-			else if(m_blocks[it->second]==nullptr)
+			else if (m_blocks[it->second] == nullptr)
 				createBlockFromJSON(map.first, map.second);
 			updateBlockFromJSON(map.first, map.second);
 		}
@@ -153,7 +152,7 @@ void BlockRegistry::updateBlockFromJSON(const std::string& id, NBT& nbt)
 	nbt.load("hardness", block->m_hardness);
 	nbt.load("tier", block->m_tier);
 	//nbt.load("maxStackSize", block->m_ma);
-	if(nbt.exists("opacity"))
+	if (nbt.exists("opacity"))
 	{
 		auto& t = nbt["opacity"];
 		if (t.isString())
@@ -170,7 +169,7 @@ void BlockRegistry::updateBlockFromJSON(const std::string& id, NBT& nbt)
 
 	auto& hasBigTexture = nbt["hasBigTexture"];
 	if (hasBigTexture.isBool())
-		block->setFlag(BLOCK_FLAG_HAS_BIG_TEXTURE,hasBigTexture);
+		block->setFlag(BLOCK_FLAG_HAS_BIG_TEXTURE, hasBigTexture);
 	auto& hasItemVersion = nbt["hasItemVersion"];
 	if (hasItemVersion.isBool())
 		block->setFlag(BLOCK_FLAG_HAS_ITEM_VERSION, hasItemVersion);
@@ -194,18 +193,18 @@ void BlockRegistry::updateBlockFromJSON(const std::string& id, NBT& nbt)
 	auto& otherFlags = nbt["flags"];
 	if (otherFlags.isMap())
 		for (auto& pair : otherFlags.maps())
-			block->setFlag(getFlagIndex(pair.first),pair.second);
-	else if(otherFlags.isArray())
+			block->setFlag(getFlagIndex(pair.first), pair.second);
+	else if (otherFlags.isArray())
 		for (auto& item : otherFlags.arrays())
 			block->setFlag(getFlagIndex(item.string()), true);
-	
+
 	//multiblock
 	if (!dynamic_cast<MultiBlock*>(block) && nbt.exists("multiBlock"))
 		ND_WARN("[{}] MultiBlock is specified in json but in source code it is not! so its ignored", id);
 	else if (nbt.exists("multiBlock"))
 	{
 		auto& mltNBT = nbt["multiBlock"];
-		MultiBlock* multi = dynamic_cast<MultiBlock*>(block);
+		auto multi = dynamic_cast<MultiBlock*>(block);
 		mltNBT.load("width", multi->m_width);
 		mltNBT.load("height", multi->m_height);
 	}
@@ -216,11 +215,13 @@ void BlockRegistry::updateBlockFromJSON(const std::string& id, NBT& nbt)
 		groups = 0;
 		auto& ii = nbt["connectGroups"];
 		if (ii.isArray())
-			for (auto& item : ii.arrays()) {
+			for (auto& item : ii.arrays())
+			{
 				checkIfConnectGroupRegistered(item.string(), id);
 				groups |= 1 << getConnectGroupIndex(item.string());
 			}
-		else {
+		else
+		{
 			checkIfConnectGroupRegistered(ii.string(), id);
 			groups |= 1 << getConnectGroupIndex(ii.string());
 		}
@@ -231,18 +232,22 @@ void BlockRegistry::updateBlockFromJSON(const std::string& id, NBT& nbt)
 	if (nbt.exists("corners") && nbt["corners"].isString())
 		block->m_corner_translate_array = getCorners(nbt["corners"].string(), false);
 
-	if (nbt.exists("collision")) {
+	if (nbt.exists("collision"))
+	{
 		auto& item = nbt["collision"];
-		if (item.isString()) {
+		if (item.isString())
+		{
 			int size;
 			block->m_collision_box = getBlockBounds(item.string(), size);
 			block->m_collision_box_size = size;
 		}
-		else if (item.isArray()) {
+		else if (item.isArray())
+		{
 			std::string name;
 			Phys::Polygon* gon;
 			int numberOfTypes = 0;
-			if (item[0].isArray()) {
+			if (item[0].isArray())
+			{
 				for (auto& arra : item.arrays())
 				{
 					if (arra.isArray())
@@ -267,13 +272,12 @@ void BlockRegistry::updateBlockFromJSON(const std::string& id, NBT& nbt)
 			block->m_collision_box = gon;
 			block->m_collision_box_size = numberOfTypes;
 		}
-		else if(item.isBool()&&!((bool)item))
+		else if (item.isBool() && !(bool)item)
 		{
 			block->m_collision_box = nullptr;
 			block->m_collision_box_size = 0;
 		}
 	}
-
 }
 
 void BlockRegistry::updateBlockFromJSONAfterEntities(const std::string& id, NBT& nbt)
@@ -281,14 +285,10 @@ void BlockRegistry::updateBlockFromJSONAfterEntities(const std::string& id, NBT&
 	Block* block = m_blocks[m_blockIDs[id]];
 	if (nbt.exists("tileEntity"))
 		block->m_tile_entity = EntityRegistry::get().getEntityType(nbt["tileEntity"].string());
-	
 }
 
 
-void BlockRegistry::createWallFromJSON(const std::string& id, NBT& nbt)
-{
-	registerWall(new Wall(id));
-}
+void BlockRegistry::createWallFromJSON(const std::string& id, NBT& nbt) { registerWall(new Wall(id)); }
 
 void BlockRegistry::updateWallFromJSON(const std::string& id, NBT& nbt)
 {
@@ -334,10 +334,7 @@ const Block& BlockRegistry::getBlock(const std::string& block_id) const
 	return *m_blocks[m_blockIDs.at(block_id)];
 }
 
-const Wall& BlockRegistry::getWall(const std::string& wall_id) const
-{
-	return *m_walls[m_wallIDs.at(wall_id)];
-}
+const Wall& BlockRegistry::getWall(const std::string& wall_id) const { return *m_walls[m_wallIDs.at(wall_id)]; }
 
 void BlockRegistry::registerCorners(const std::string& id, const half_int* data, bool isWall)
 {
@@ -348,7 +345,7 @@ void BlockRegistry::registerCorners(const std::string& id, const half_int* data,
 
 void BlockRegistry::registerBlockBounds(const std::string& id, const Phys::Polygon* data, int size)
 {
-	m_block_bounds[id] = std::make_pair(data,size);
+	m_block_bounds[id] = std::make_pair(data, size);
 }
 
 int BlockRegistry::getConnectGroupIndex(const std::string& id)
@@ -362,7 +359,7 @@ int BlockRegistry::getConnectGroupIndex(const std::string& id)
 int BlockRegistry::getFlagIndex(const std::string& id)
 {
 	auto& it = m_block_flags.find(id);
-	ASSERT(it != m_block_flags.end(), "Unregistered block flag {}",id);
+	ASSERT(it != m_block_flags.end(), "Unregistered block flag {}", id);
 	return m_block_flags[id];
 }
 
@@ -379,7 +376,7 @@ const half_int* BlockRegistry::getCorners(const std::string& id, bool isWall) co
 	return it->second;
 }
 
-const Phys::Polygon* BlockRegistry::getBlockBounds(const std::string& id,int& size) const
+const Phys::Polygon* BlockRegistry::getBlockBounds(const std::string& id, int& size) const
 {
 	size = 0;
 	auto& it = m_block_bounds.find(id);

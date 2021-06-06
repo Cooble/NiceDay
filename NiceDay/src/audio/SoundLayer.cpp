@@ -163,7 +163,7 @@ static int paMusicCallback(const void* inputBuffer, void* outputBuffer,
 		if (data->channels == 2)
 			data->right_phase = currentFrame[data->valuesReadInCurrentFrame++];
 
-		if (data->valuesReadInCurrentFrame >= (data->buffer->getFrameSize() / sizeof(float)))
+		if (data->valuesReadInCurrentFrame >= data->buffer->getFrameSize() / sizeof(float))
 		{
 			data->valuesReadInCurrentFrame = 0;
 			data->buffer->pop();
@@ -219,9 +219,7 @@ static void checkSoundError(PaError error)
 std::vector<std::string> m_audioDevices;
 char** m_audioDevicesStrings;
 
-SoundLayer::SoundLayer()
-{
-}
+SoundLayer::SoundLayer() {}
 
 static SoundBuffer soundBuff;
 static MusicStream musicStream;
@@ -348,10 +346,7 @@ void SoundLayer::onDetach()
 	ND_TRACE("Sounder stopped");
 }
 
-void SoundLayer::onUpdate()
-{
-	Sounder::get().flushSpatialData();
-}
+void SoundLayer::onUpdate() { Sounder::get().flushSpatialData(); }
 
 
 void SoundLayer::onImGuiRender()
@@ -391,10 +386,7 @@ void SoundLayer::onImGuiRender()
 				delayPlay = 10;
 			}
 		}
-		if (ImGui::SmallButton("StopAllMusic"))
-		{
-			Sounder::get().stopAllMusic();
-		}
+		if (ImGui::SmallButton("StopAllMusic")) { Sounder::get().stopAllMusic(); }
 
 		if (ImGui::SmallButton("OpenMusic"))
 		{

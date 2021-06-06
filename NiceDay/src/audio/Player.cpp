@@ -54,7 +54,7 @@ static int paSoundCallback(const void* inputBuffer, void* outputBuffer,
 				data->logVolume = f * f * f * f;
 			}
 
-			size_t realOffset = (size_t)(data->currentFloatSampleIndex) * channels;
+			size_t realOffset = (size_t)data->currentFloatSampleIndex * channels;
 			data->left_phase = samples[realOffset];
 			data->right_phase = samples[realOffset + channels - 1];
 			data->currentFloatSampleIndex += data->pitch;
@@ -65,7 +65,7 @@ static int paSoundCallback(const void* inputBuffer, void* outputBuffer,
 	for (int i = 0; i < restZeros; ++i)
 		*out++ = 0;
 
-	if ((data->volume == 0 && data->terminateOnFadeOut) || data->shouldClose)
+	if (data->volume == 0 && data->terminateOnFadeOut || data->shouldClose)
 	{
 		data->shouldLoop = false;
 		result = paComplete;
@@ -134,7 +134,7 @@ static int paMusicCallback(const void* inputBuffer, void* outputBuffer,
 				if (data->pitch * signum >= data->targetPitch * signum)
 					data->pitch = 0 + data->targetPitch;
 			}
-			size_t realOffset = (size_t)(data->currentFloatSampleIndex) * channels;
+			size_t realOffset = (size_t)data->currentFloatSampleIndex * channels;
 			data->left_phase = currentFrame[realOffset];
 			data->right_phase = currentFrame[realOffset + channels - 1];
 			data->currentFloatSampleIndex += data->pitch;
@@ -145,12 +145,9 @@ static int paMusicCallback(const void* inputBuffer, void* outputBuffer,
 	for (int i = 0; i < restZeros; ++i)
 		*out++ = 0;
 
-	if ((data->volume == 0 && data->terminateOnFadeOut)
+	if (data->volume == 0 && data->terminateOnFadeOut
 		|| data->shouldClose
-		|| (!currentFrame && data->has_started))
-	{
-		result = paComplete;
-	}
+		|| !currentFrame && data->has_started) { result = paComplete; }
 
 	data->has_started = currentFrame;
 	return result;
@@ -159,9 +156,7 @@ static int paMusicCallback(const void* inputBuffer, void* outputBuffer,
 Sounder::Sounder()
 	:
 	m_rings(SOUNDER_RING_BUFF_COUNT),
-	m_sound_buff_pool(SOUNDER_SOUND_BUFF_COUNT)
-{
-}
+	m_sound_buff_pool(SOUNDER_SOUND_BUFF_COUNT) {}
 
 static PaError paStartSoundAudioStream(Sound* sound)
 {
@@ -185,10 +180,7 @@ static PaError paStartSoundAudioStream(Sound* sound)
 	                           paSoundCallback,
 	                           &sound->data);
 	ASSERT(error == paNoError, "caanot open pa stream");
-	if (error != paNoError)
-	{
-		return error;
-	}
+	if (error != paNoError) { return error; }
 	error = Pa_StartStream(sound->pa_stream);
 	ASSERT(error == paNoError, "caanot open pa stream");
 	return error;
@@ -403,7 +395,7 @@ static void getVolume(const SpatialData& target, const SpatialData& source, floa
 	float minDist = glm::max(dist, source.maxDistances.x);
 	outVolume = glm::max(0.f, 1 - (minDist - source.maxDistances.x) / (source.maxDistances.y - source.maxDistances.x));
 
-	outDirection = (source.pos.x - target.pos.x);
+	outDirection = source.pos.x - target.pos.x;
 	if (outDirection == 0)
 		return;
 	///prizpusobit radiusnormal kdyz se bude delit glmabs(outdir)
@@ -496,10 +488,7 @@ void Sounder::loopInternal()
 							music_stream->data.shouldClose = true;
 						music_stream->data.shouldLoop = false;
 					}
-					for (auto sound_stream : m_sound_streams)
-					{
-						sound_stream->data.shouldClose = true;
-					}
+					for (auto sound_stream : m_sound_streams) { sound_stream->data.shouldClose = true; }
 				}
 				break;
 				//just load soundbuffer if doesn't exist already
@@ -679,10 +668,7 @@ void Sounder::loopInternal()
 						music->spatialData = command.spatialData;
 				}
 				break;
-			case SoundAssignment::FLUSH_SPATIAL_DATA:
-				{
-					recalculateSpatialData();
-				}
+			case SoundAssignment::FLUSH_SPATIAL_DATA: { recalculateSpatialData(); }
 				break;
 			default: ;
 			}
@@ -716,7 +702,7 @@ void Sounder::loopInternal()
 
 					music->isFileOpened = true;
 					// sound buffer to be filled if marked as such
-					if (music->optional_sound_buffer == ((SoundBuff*)1))
+					if (music->optional_sound_buffer == (SoundBuff*)1)
 					{
 						auto buff = allocateSoundBuffer(music->sid);
 						if (buff != nullptr)
@@ -911,10 +897,7 @@ void Sounder::loopInternal()
 
 SoundBuff* Sounder::allocateSoundBuffer(Strid id)
 {
-	if (m_sound_buff_pool.getFreeSize() > 0)
-	{
-		return m_sound_buff_pool.allocate();
-	}
+	if (m_sound_buff_pool.getFreeSize() > 0) { return m_sound_buff_pool.allocate(); }
 	//pick the buffer which nobody uses and which lastUsage was long time ago
 	float now = TimerStaper::getNowMicros();
 	float lastUsed = 0;
@@ -926,7 +909,7 @@ SoundBuff* Sounder::allocateSoundBuffer(Strid id)
 	for (auto& sound_buff : m_sound_buff_map)
 	{
 		if (sound_buff.second->usages == 0)
-			if ((now - sound_buff.second->lastTimeUsage) == lastUsed)
+			if (now - sound_buff.second->lastTimeUsage == lastUsed)
 			{
 				m_sound_buff_pool.deallocate(sound_buff.second);
 				m_sound_buff_map.erase(m_sound_buff_map.find(sound_buff.first));
@@ -939,14 +922,8 @@ SoundBuff* Sounder::allocateSoundBuffer(Strid id)
 void Sounder::init()
 {
 	auto err = Pa_Initialize();
-	if (err == 0)
-	{
-		ND_TRACE("Sounder Initialized");
-	}
-	else
-	{
-		ND_ERROR("Cannot initialize sounder!");
-	}
+	if (err == 0) { ND_TRACE("Sounder Initialized"); }
+	else { ND_ERROR("Cannot initialize sounder!"); }
 	/*checkSoundError(err);
 
 	int maxDevices = Pa_GetDeviceCount();
@@ -975,10 +952,7 @@ void Sounder::start()
 	t.detach();
 }
 
-void Sounder::stop()
-{
-	m_should_stop = true;
-}
+void Sounder::stop() { m_should_stop = true; }
 
 void Sounder::updateSpatialData(SoundID id, const SpatialData& data)
 {

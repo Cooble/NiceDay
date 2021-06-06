@@ -10,25 +10,24 @@ class BlockTextureAtlas;
 
 class BlockRegistry
 {
-
 private:
 	std::unordered_map<std::string, int> m_blockIDs;
 	std::unordered_map<std::string, int> m_wallIDs;
 	std::unordered_map<std::string, const half_int*> m_block_corners;
 	std::unordered_map<std::string, const half_int*> m_wall_corners;
 	std::unordered_map<std::string, std::pair<const ndPhys::Polygon*, int>> m_block_bounds;
-	int m_currentConnectGroup=0;
+	int m_currentConnectGroup = 0;
 	std::unordered_map<std::string, int> m_connect_groups;
-	int m_currentFlag=0;
+	int m_currentFlag = 0;
 	std::unordered_map<std::string, int> m_block_flags;
 	std::vector<Block*> m_blocks;
 	std::vector<Wall*> m_walls;
-	BlockRegistry()=default;
+	BlockRegistry() = default;
 
 
 public:
-	BlockRegistry(BlockRegistry const&) =delete;
-	void operator=(BlockRegistry const&)=delete;
+	BlockRegistry(const BlockRegistry&) = delete;
+	void operator=(const BlockRegistry&) = delete;
 	~BlockRegistry();
 
 	const std::vector<Block*>& getBlocks() { return m_blocks; }
@@ -36,10 +35,12 @@ public:
 
 	void initTextures(const BlockTextureAtlas& atlas);
 
-	static inline BlockRegistry& get() { 
+	static inline BlockRegistry& get()
+	{
 		static BlockRegistry s_instance;
 		return s_instance;
 	}
+
 private:
 	void readAllConnectGroupsJSON();
 	void checkIfConnectGroupRegistered(const std::string& s, const std::string& elementID);
@@ -67,16 +68,15 @@ public:
 
 	const Wall& getWall(const std::string& wall_id) const;
 
-	void registerCorners(const std::string& id, const half_int* data,bool isWall=false);
-	void registerBlockBounds(const std::string& id, const ndPhys::Polygon* data,int size);
+	void registerCorners(const std::string& id, const half_int* data, bool isWall = false);
+	void registerBlockBounds(const std::string& id, const ndPhys::Polygon* data, int size);
 
 	int getConnectGroupIndex(const std::string& id);
 	int getFlagIndex(const std::string& id);
-	
-	const half_int* getCorners(const std::string& id,bool isWall) const;
+
+	const half_int* getCorners(const std::string& id, bool isWall) const;
 	const ndPhys::Polygon* getBlockBounds(const std::string& id, int& size) const;
 
 	BlockID getBlockID(const std::string& block_id) const { return getBlock(block_id).getID(); }
 	int getWallID(const std::string& wall_id) const { return getWall(wall_id).getID(); }
 };
-

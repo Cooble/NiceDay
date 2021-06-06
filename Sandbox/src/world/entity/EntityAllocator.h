@@ -3,9 +3,7 @@
 
 class EntityAllocator
 {
-	
 public:
-
 	/***
 	 * All entity allocations have to made using this
 	 * It will determine whether custom allocation is neccessary
