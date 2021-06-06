@@ -5,14 +5,14 @@
 
 class GameFonts {
 public:
-	static FontMaterial* bigFont;
-	static FontMaterial* smallFont;
+	static nd::FontMaterial* bigFont;
+	static nd::FontMaterial* smallFont;
 };
 
-class MainWindow:public GUIWindow
+class MainWindow:public nd::GUIWindow
 {
 private:
-	GUIImage* m_logo;
+	nd::GUIImage* m_logo;
 	MessageConsumer m_messenger;
 public:
 	MainWindow(const MessageConsumer& c);
@@ -20,9 +20,9 @@ public:
 	
 };
 
-class GUIWorldEntry:public GUIBlank
+class GUIWorldEntry:public nd::GUIBlank
 {
-	GUIText* m_world_name;
+	nd::GUIText* m_world_name;
 	MessageConsumer* m_messenger;
 	
 public:
@@ -34,12 +34,12 @@ public:
 };
 
 
-class SelectWorldWindow :public GUIWindow
+class SelectWorldWindow :public nd::GUIWindow
 {
 private:
 	std::vector<WorldInfoData> m_worlds;
 	GUIElement* m_world_column;
-	GUIVSlider* m_world_slider;
+	nd::GUIVSlider* m_world_slider;
 	MessageConsumer m_messenger;
 public:
 	SelectWorldWindow(const MessageConsumer& c);
@@ -47,39 +47,39 @@ public:
 	void setWorlds(const std::vector<WorldInfoData>& m_worlds);
 };
 
-class PauseWindow :public GUIWindow
+class PauseWindow :public nd::GUIWindow
 {
 	MessageConsumer m_messenger;
 public:
 	PauseWindow(const MessageConsumer& c);
 
 };
-class ControlsWindow :public GUIWindow
+class ControlsWindow :public nd::GUIWindow
 {
 	MessageConsumer m_messenger;
 public:
 	ControlsWindow(const MessageConsumer& c);
 
 };
-class SettingsWindow :public GUIWindow
+class SettingsWindow :public nd::GUIWindow
 {
 	MessageConsumer m_messenger;
 public:
 	SettingsWindow(const MessageConsumer& c);
 
 };
-class LanguageWindow :public GUIWindow
+class LanguageWindow :public nd::GUIWindow
 {
 	MessageConsumer m_messenger;
 public:
 	LanguageWindow(const MessageConsumer& c);
 
 };
-class SkinWindow :public GUIWindow
+class SkinWindow :public nd::GUIWindow
 {
 	MessageConsumer m_messenger;
 public:
 	SkinWindow(const MessageConsumer& c);
-	void onMyEvent(Event& e) override;
+	void onMyEvent(nd::Event& e) override;
 
 };

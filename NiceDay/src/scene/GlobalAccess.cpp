@@ -1,3 +1,3 @@
 ﻿#include "GlobalAccess.h"
 #include "ndpch.h"
-TextureAtlasUV GlobalAccess::ui_icons;
+nd::TextureAtlasUV nd::GlobalAccess::ui_icons;

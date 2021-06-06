@@ -4,6 +4,7 @@
 #include "graphics/Renderer.h"
 #include "platform/OpenGL/GLShader.h"
 
+namespace nd {
 static void extractLayoutIn(ShaderLayout& out, const std::string& vertexSrc)
 {
 	std::string noComments = vertexSrc;
@@ -15,14 +16,15 @@ static void extractLayoutIn(ShaderLayout& out, const std::string& vertexSrc)
 		for (auto it = SUtil::SplitIterator<true, const char*, true>(line, "\t\n ()="); it; ++it)
 		{
 			auto word = *it;
-			if (word == "layout") {
+			if (word == "layout")
+			{
 				UniformElement e;
 
-				ASSERT(*++it == "location", "Error while extracting shader layout");//location
-				int ind=  std::stoi(std::string(*++it));//index
-				ASSERT(*++it=="in","Error while extracting shader layout");//in
-				e.type=GTypes::getType(*++it);//type
-				e.name = *++it;//name
+				ASSERT(*++it == "location", "Error while extracting shader layout"); //location
+				int ind = std::stoi(std::string(*++it)); //index
+				ASSERT(*++it == "in", "Error while extracting shader layout"); //in
+				e.type = GTypes::getType(*++it); //type
+				e.name = *++it; //name
 				e.offset = 0;
 				e.arraySize = 1;
 				list[ind] = std::move(e);
@@ -38,16 +40,17 @@ static void extractLayoutIn(ShaderLayout& out, const std::string& vertexSrc)
 		layout.elements.push_back(std::move(uniform_element));
 	out.structs.push_back(std::move(layout));
 }
+
 static void extractLayoutSingle(ShaderLayout& out, RenderStage stage, const std::string& src, bool expandPath)
 {
-	std::string noComments=src;
+	std::string noComments = src;
 	SUtil::removeComments(noComments);
 	UniformLayout currentStruct;
 	UniformElement element;
 	bool openStruct = false;
 	int offset = 0;
 
-	for (auto it = SUtil::SplitIterator<true,const char*, true>(noComments, "; \t\n"); it; ++it)
+	for (auto it = SUtil::SplitIterator<true, const char*, true>(noComments, "; \t\n"); it; ++it)
 	{
 		auto word = *it;
 		if (!openStruct)
@@ -60,9 +63,11 @@ static void extractLayoutSingle(ShaderLayout& out, RenderStage stage, const std:
 					if (s.name == structName)
 					{
 						s.prefixName = structPrefixName;
-						if(expandPath)
+						if (expandPath)
 							for (auto& e : s.elements)
-								if (!SUtil::startsWith(e.name, s.prefixName)) {//otherwise we would add prefix in each stage
+								if (!SUtil::startsWith(e.name, s.prefixName))
+								{
+									//otherwise we would add prefix in each stage
 									e.name = s.prefixName + "." + e.name;
 								}
 								else break;
@@ -79,7 +84,6 @@ static void extractLayoutSingle(ShaderLayout& out, RenderStage stage, const std:
 						currentStruct.name = "";
 						break;
 					}
-				
 			}
 			else if (word == "{" && !currentStruct.name.empty())
 				openStruct = true;
@@ -100,7 +104,7 @@ static void extractLayoutSingle(ShaderLayout& out, RenderStage stage, const std:
 				element.type = GTypes::getType(word);
 				if (element.type == g_typ::INVALID)
 					throw std::string("Invalid type");
-				auto nameIt = SUtil::SplitIterator<true,const char*,true>(*(++it), " []");
+				auto nameIt = SUtil::SplitIterator<true, const char*, true>(*(++it), " []");
 				element.name = *nameIt;
 				if (++nameIt)
 				{
@@ -115,7 +119,7 @@ static void extractLayoutSingle(ShaderLayout& out, RenderStage stage, const std:
 	}
 }
 
-ShaderLayout Shader::extractLayout(const ShaderProgramSources& res,bool expandPath)
+ShaderLayout Shader::extractLayout(const ShaderProgramSources& res, bool expandPath)
 {
 	ShaderLayout out;
 	try
@@ -129,7 +133,8 @@ ShaderLayout Shader::extractLayout(const ShaderProgramSources& res,bool expandPa
 	}
 	catch (...)
 	{
-		ND_ERROR("Error while parsing shader vertex:\n\n{}\n\nfragment:\n\n{}\n\ngeometry:\n\n{}",res.vertexSrc,res.fragmentSrc,res.geometrySrc);
+		ND_ERROR("Error while parsing shader vertex:\n\n{}\n\nfragment:\n\n{}\n\ngeometry:\n\n{}", res.vertexSrc,
+		         res.fragmentSrc, res.geometrySrc);
 		return out;
 	}
 }
@@ -139,7 +144,7 @@ ShaderPtr Shader::create(const ShaderProgramSources& res)
 	switch (Renderer::getAPI())
 	{
 	case GraphicsAPI::OpenGL:
-		return MakeRef<GLShader>(res);
+		return MakeRef<internal::GLShader>(res);
 	default:
 		ASSERT(false, "Invalid RenderAPI");
 		return nullptr;
@@ -151,9 +156,10 @@ ShaderPtr Shader::create(const std::string& filePath)
 	switch (Renderer::getAPI())
 	{
 	case GraphicsAPI::OpenGL:
-		return MakeRef<GLShader>(filePath);
+		return MakeRef<internal::GLShader>(filePath);
 	default:
 		ASSERT(false, "Invalid RenderAPI");
 		return nullptr;
 	}
+}
 }

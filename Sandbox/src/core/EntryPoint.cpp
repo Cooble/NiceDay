@@ -3,6 +3,7 @@
 #ifndef ND_TEST
 int main()
 {
+	using namespace nd;
 	
 	Log::init();
 	ND_PROFILE_BEGIN_SESSION("start", "start.json");

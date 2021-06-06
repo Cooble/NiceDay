@@ -43,10 +43,10 @@ public:
 	int* m_height_map;
 	std::vector<Layer> m_layers;
 
-	void updateNBT(const NBT& nbt);
+	void updateNBT(const nd::NBT& nbt);
 	void gen();
-	Texture* buildTexture();
-	void updateTexture(Texture* t);
+	nd::Texture* buildTexture();
+	void updateTexture(nd::Texture* t);
 	inline BlockID& getBlock(int x, int y)
 	{
 		//ASSERT(x >= 0 && x < m_width&& y >= 0 && y < m_height, "INvalid coords");

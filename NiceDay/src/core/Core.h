@@ -4,10 +4,14 @@
 #include "ResourceMan.h"
 #include <type_traits>
 
-template<class T>
+namespace nd {
+template <class T>
 using Ref = std::shared_ptr<T>;
+
 template <class _Ty, class... _Types>
-Ref<_Ty> MakeRef(_Types&&... _Args) { // make a shared_ptr
+Ref<_Ty> MakeRef(_Types&&... _Args)
+{
+	// make a shared_ptr
 	return std::make_shared<_Ty>(std::forward<_Types>(_Args)...);
 }
 
@@ -44,12 +48,13 @@ public:
 
 	static uint64_t getNowMicros()
 	{
-		return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+		return std::chrono::duration_cast<std::chrono::microseconds>(
+			std::chrono::system_clock::now().time_since_epoch()).count();
 	}
 };
 
-inline TimerStaper::TimerStaper(std::string&& name): namee(std::move(name)),
-                                       stop(false)
+inline TimerStaper::TimerStaper(std::string&& name) : namee(std::move(name)),
+                                                      stop(false)
 {
 	start = std::chrono::high_resolution_clock::now();
 }
@@ -57,15 +62,16 @@ inline TimerStaper::TimerStaper(std::string&& name): namee(std::move(name)),
 inline void TimerStaper::time(const std::string& s)
 {
 	stop = true;
-	long long micros = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count();
-	ND_TRACE("[{}] {} It took {}ms", namee.c_str(), s.c_str(),micros/1000.f);
-	
+	long long micros = std::chrono::duration_cast<std::chrono::microseconds>(
+		std::chrono::high_resolution_clock::now() - start).count();
+	ND_TRACE("[{}] {} It took {}ms", namee.c_str(), s.c_str(), micros / 1000.f);
 }
 
 inline long long TimerStaper::getUS()
 {
 	stop = true;
-	return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count();
+	return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).
+		count();
 }
 
 inline TimerStaper::~TimerStaper()
@@ -73,8 +79,9 @@ inline TimerStaper::~TimerStaper()
 	if (!stop)
 		time();
 }
+
 #define ND_RESLOC(x)\
-	ResourceMan::getResourceLoc(x)
+	::nd::ResourceMan::getResourceLoc(x)
 
 
 #define ND_HAS_MEMBER_METHOD_PREPARE(methName)\
@@ -87,6 +94,4 @@ struct Has_##methName <T,decltype(/*std::is_member_function_pointer<decltype(*/&
 
 #define ND_HAS_MEMBER_METHOD(Type,methName)\
 	Has_##methName <Type>::value
-
-
-
+}

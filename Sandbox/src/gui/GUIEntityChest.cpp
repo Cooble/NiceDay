@@ -1,5 +1,6 @@
 ﻿#include "GUIEntityChest.h"
 #include "world/entity/entities.h"
+using namespace nd;
 
 GUISlots::GUISlots(Inventory* inv, HUD& hud, int fromIndex, int toIndex, int rowSize)
 	:GUIElement(GETYPE::Other)

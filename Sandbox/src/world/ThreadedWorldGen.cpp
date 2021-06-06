@@ -2,6 +2,8 @@
 #include "ThreadedWorldGen.h"
 #include "World.h"
 
+using namespace nd;
+
 void ThreadedWorldGen::proccessAssignments(std::vector<WorldGenAssignment>& assignments)
 {
 	for (auto & assignment : assignments)

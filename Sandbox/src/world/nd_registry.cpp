@@ -18,6 +18,7 @@
 #include "graphics/TextureAtlas.h"
 #include "block/block_datas.h"
 
+using namespace nd;
 
 constexpr int particleAtlasSize = 8;
 constexpr int ITEM_ATLAS_SIZE = 16;

@@ -5,8 +5,9 @@
 #include "graphics/GContext.h"
 #include "MeshData.h"
 
-class MeshData;
+namespace nd {
 
+class MeshData;
 
 
 struct VertexDeclaration
@@ -17,17 +18,18 @@ struct VertexDeclaration
 		g_typ type;
 		VertexType vertexType;
 		constexpr bool exists() const { return index != -1; }
-
 	};
+
 	std::vector<VDElement> elements;
 
-	void addElement(int index,g_typ type,VertexType vertexType)
+	void addElement(int index, g_typ type, VertexType vertexType)
 	{
 		if (elements.size() <= index)
 			elements.resize(index + 1);
-		elements[index] = { index,type,vertexType };
+		elements[index] = {index, type, vertexType};
 	}
 };
+
 struct VertexBufferBinding
 {
 	struct VBBElement
@@ -36,29 +38,35 @@ struct VertexBufferBinding
 		VertexBuffer* buffer;
 		constexpr bool exists() const { return index != -1; }
 	};
+
 	std::vector<VBBElement> bindings;
+
 	void setBinding(int index, VertexBuffer* b)
 	{
 		if (bindings.size() <= index)
 			bindings.resize(index + 1);
-		bindings[index] = { index,b};
+		bindings[index] = {index, b};
 		//todo fix this, this should not be here
 		count = b->getSize() / b->getLayout().getStride();
 	}
+
 	size_t count = 0;
 };
+
 struct VertexData
 {
 	VertexDeclaration declaration;
 	VertexBufferBinding binding;
 };
+
 struct IndexData
 {
-	IndexBuffer* indexBuffer=nullptr;
+	IndexBuffer* indexBuffer = nullptr;
 	size_t offset;
-	size_t count=0;
+	size_t count = 0;
 	constexpr bool exists() const { return indexBuffer; }
 };
+
 // graphical wrapper around meshdata
 class Mesh
 {
@@ -67,16 +75,16 @@ public:
 	IndexData indexData;
 	//this will not be here
 	VertexArray* vao_temp;
-	
+
 	MeshData* data;
 
 	Strid getID() const { return data->getID(); }
 	const std::string& getName() const { return data->getFilePath(); }
-
 };
+
 typedef Ref<Mesh> MeshPtr;
-namespace MeshLibrary
-{
+
+namespace MeshLibrary {
 	static VertexArray* buildVAO(Mesh* mesh);
 	MeshPtr buildNewMesh(MeshData* data);
 
@@ -88,4 +96,5 @@ namespace MeshLibrary
 	//returns meshptr or nullptr
 	MeshPtr& get(Strid id);
 	inline void remove(Strid id) { getList().erase(getList().find(id)); }
+}
 }

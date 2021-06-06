@@ -1,6 +1,7 @@
 #pragma once
 #include "ndpch.h"
 
+namespace nd {
 struct ChunkSegmentHeader
 {
 	uint64_t next_index = std::numeric_limits<uint64_t>::max();
@@ -23,36 +24,35 @@ struct pai
 
 
 //	====DynamicSaver=======
-	//	
-	// Capable of saving objects with unique IDs with different sizes to file
-	// (uses linked list mechanism)
-	// No upper limit of how big objects can be
-	// 
-	// NOTE:
-	//		Writing mode completely overwrites previously written data of specific object.
-	//		Appending more data is impossible. (you need to read all, modify, and save all)
-	// 
-	// How to use DynamicSaver:
-	// 	
-	//		init();//only once for instance
-	//		
-	//		beginSession();
-	//		
-	//			// writing
-	//			setWriteChunkID(smth);
-	//				write(smth,somth); ......
-	//				write(smth,somth); ......
-	//			flushWrite();
-	//		
-	//			// reading
-	//			setReadChunkID(smth);
-	//				read(smth,srhthr); .....
-	//				read(smth,srhthr); .....
-	//		
-	//		endSession();
+//	
+// Capable of saving objects with unique IDs with different sizes to file
+// (uses linked list mechanism)
+// No upper limit of how big objects can be
+// 
+// NOTE:
+//		Writing mode completely overwrites previously written data of specific object.
+//		Appending more data is impossible. (you need to read all, modify, and save all)
+// 
+// How to use DynamicSaver:
+// 	
+//		init();//only once for instance
+//		
+//		beginSession();
+//		
+//			// writing
+//			setWriteChunkID(smth);
+//				write(smth,somth); ......
+//				write(smth,somth); ......
+//			flushWrite();
+//		
+//			// reading
+//			setReadChunkID(smth);
+//				read(smth,srhthr); .....
+//				read(smth,srhthr); .....
+//		
+//		endSession();
 class DynamicSaver
 {
-
 private:
 	bool m_is_opened = false;
 	bool m_has_flushed = true;
@@ -145,19 +145,21 @@ public:
 	bool read(char* b, uint64_t length);
 	inline void readI(char* b, uint64_t length) { read(b, length); }
 
-	template<typename T>
+	template <typename T>
 	void write(const T& t)
 	{
 		write((const char*)&t, sizeof(T));
 	}
-	template<typename T>
+
+	template <typename T>
 	void read(T& t)
 	{
 		read((char*)&t, sizeof(T));
 	}
 
-	inline uint64_t getSegmentCount()const { return m_segment_count; }
-	inline uint64_t getFreeSegmentCount()const { return m_free_offsets.size(); }
+	inline uint64_t getSegmentCount() const { return m_segment_count; }
+	inline uint64_t getFreeSegmentCount() const { return m_free_offsets.size(); }
 	void clearEverything();
-	inline bool isOpened()const { return m_is_opened; }
+	inline bool isOpened() const { return m_is_opened; }
 };
+}

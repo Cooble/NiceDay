@@ -3,6 +3,8 @@
 #include "FontParser.h"
 #include <optional>
 
+namespace nd {
+
 TextMesh::TextMesh(int characterCount)
 	: charCount(characterCount) //char_count * vertex_count * x+y * pos+uv 
 {
@@ -57,7 +59,6 @@ void TextMesh::reserve(int size)
 }
 
 
-
 struct clipper
 {
 	float minX, minY, maxX, maxY;
@@ -93,9 +94,9 @@ static void setCursorData(float currentX, float yLoc, float pixelRat, clipper& c
 
 
 bool TextBuilder::buildMesh(const std::vector<std::u32string>& lines, const Font& font, TextMesh& mesh, int alignment,
-	glm::vec<4, int> clipRect, CursorProp* cursor)
+                            glm::vec<4, int> clipRect, CursorProp* cursor)
 {
-	clipper clip = { (float)clipRect.x, (float)clipRect.y, (float)clipRect.z, (float)clipRect.w };
+	clipper clip = {(float)clipRect.x, (float)clipRect.y, (float)clipRect.z, (float)clipRect.w};
 
 	float pixelRat = font.getPixelRatio();
 
@@ -107,7 +108,7 @@ bool TextBuilder::buildMesh(const std::vector<std::u32string>& lines, const Font
 	float defaultXPos;
 
 	uint32_t color = 0xffffff00;
-	uint32_t borderColor = Font::colorToInt({ 0, 0.1, 0.7, 1 });
+	uint32_t borderColor = Font::colorToInt({0, 0.1, 0.7, 1});
 
 	for (auto& line : lines)
 	{
@@ -164,9 +165,9 @@ bool TextBuilder::buildMesh(const std::vector<std::u32string>& lines, const Font
 						borderColor = col.value();
 					ignoreColorChar = 7;
 				}
-
 			}
-			else if ((c == Font::BORDER_PREFIX || c == Font::IGNORE_PREFIX) && currentLineIndex + 1 < line.size())//check if in future the color is valid
+			else if ((c == Font::BORDER_PREFIX || c == Font::IGNORE_PREFIX) && currentLineIndex + 1 < line.size())
+				//check if in future the color is valid
 			{
 				auto col = Font::tryEntityToColor(line.substr(currentLineIndex + 1));
 				if (col.has_value())
@@ -237,7 +238,7 @@ bool TextBuilder::buildMesh(const std::vector<std::u32string>& lines, const Font
 
 
 void TextBuilder::convertToLines(const std::string& text, const Font& font, int maxLineWidth,
-	std::vector<std::u32string>& lines)
+                                 std::vector<std::u32string>& lines)
 {
 	std::vector<std::string> separatedLines;
 	SUtil::splitString(Font::removeColorEntities(text), separatedLines, "\n");
@@ -265,4 +266,5 @@ void TextBuilder::convertToLines(const std::string& text, const Font& font, int 
 		if (!currentLine.empty())
 			lines.push_back(SUtil::utf8toCodePoints(currentLine));
 	}
+}
 }

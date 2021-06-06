@@ -14,6 +14,7 @@
 #include "graphics/FontMaterial.h"
 
 //#define BIND_LUA_GUI_HANDLES
+namespace nd {
 
 static void bindBasic(sol::state& state);
 
@@ -57,110 +58,114 @@ static void bindGLM(sol::state& state)
 #ifndef NOO_SOOL
 	//glm::vec<2, float, Q> operator+(vec<2, T, Q> const& v1, vec<2, T, Q> const& v2)
 	state.new_usertype<half_int>("half_int",
-		sol::constructors<half_int(int), half_int(int, int)>(),
-		"x", &half_int::x,
-		"y", &half_int::y,
-		"i", &half_int::i,
-		sol::meta_function::addition, [](half_int& a, half_int& b) { return a + b; },
-		sol::meta_function::subtraction, [](half_int& a, half_int& b) { return a - b; },
-		sol::meta_function::multiplication, [](half_int& a, int b) { return a * b; },
-		sol::meta_function::subtraction, [](half_int& a, int b) { return a / b; }
+	                             sol::constructors<half_int(int), half_int(int, int)>(),
+	                             "x", &half_int::x,
+	                             "y", &half_int::y,
+	                             "i", &half_int::i,
+	                             sol::meta_function::addition, [](half_int& a, half_int& b) { return a + b; },
+	                             sol::meta_function::subtraction, [](half_int& a, half_int& b) { return a - b; },
+	                             sol::meta_function::multiplication, [](half_int& a, int b) { return a * b; },
+	                             sol::meta_function::subtraction, [](half_int& a, int b) { return a / b; }
 	);
 	state.new_usertype<glm::vec2>("vec2",
-		sol::constructors<glm::vec2(float, float)>(),
-		"x", &glm::vec2::x,
-		"y", &glm::vec2::y,
-		sol::meta_function::addition, [](glm::vec2& a, glm::vec2& b) { return a + b; },
-		sol::meta_function::subtraction, [](glm::vec2& a, glm::vec2& b) { return a - b; },
-		sol::meta_function::multiplication,
-		sol::overload([](glm::vec2& a, glm::vec2& b) { return a * b; },
-			[](glm::vec2& a, float b) { return a * b; }, [](float a, glm::vec2& b) { return a * b; }),
-		sol::meta_function::division,
-		sol::overload([](glm::vec2& a, glm::vec2& b) { return a / b; },
-			[](glm::vec2& a, float b) { return a / b; })
-		);
-	state.set_function("Vec2", sol::overload([](float x, float y) {return glm::vec2(x, y); }, [](float v) {return glm::vec2(v); }));
+	                              sol::constructors<glm::vec2(float, float)>(),
+	                              "x", &glm::vec2::x,
+	                              "y", &glm::vec2::y,
+	                              sol::meta_function::addition, [](glm::vec2& a, glm::vec2& b) { return a + b; },
+	                              sol::meta_function::subtraction, [](glm::vec2& a, glm::vec2& b) { return a - b; },
+	                              sol::meta_function::multiplication,
+	                              sol::overload([](glm::vec2& a, glm::vec2& b) { return a * b; },
+	                                            [](glm::vec2& a, float b) { return a * b; }, [](float a, glm::vec2& b)
+	                                            {
+		                                            return a * b;
+	                                            }),
+	                              sol::meta_function::division,
+	                              sol::overload([](glm::vec2& a, glm::vec2& b) { return a / b; },
+	                                            [](glm::vec2& a, float b) { return a / b; })
+	);
+	state.set_function("Vec2", sol::overload([](float x, float y) { return glm::vec2(x, y); },
+	                                         [](float v) { return glm::vec2(v); }));
 	state.new_usertype<glm::vec3>("vec3",
-		sol::constructors<glm::vec3(float, float, float)>(),
-		"x", &glm::vec3::x,
-		"y", &glm::vec3::y,
-		"z", &glm::vec3::z,
-		sol::meta_function::addition, [](glm::vec3& a, glm::vec3& b) { return a + b; },
-		sol::meta_function::subtraction, [](glm::vec3& a, glm::vec3& b) { return a - b; },
-		sol::meta_function::multiplication,
-		sol::overload([](glm::vec3& a, glm::vec3& b) { return a * b; },
-			[](glm::vec3& a, float b) { return a * b; }),
-		sol::meta_function::division,
-		sol::overload([](glm::vec3& a, glm::vec3& b) { return a / b; },
-			[](glm::vec3& a, float b) { return a / b; })
-		);
-	state.set_function("Vec3", sol::overload([](float x, float y, float z) {return glm::vec3(x, y, z); }, [](float v) {return glm::vec3(v); }));
+	                              sol::constructors<glm::vec3(float, float, float)>(),
+	                              "x", &glm::vec3::x,
+	                              "y", &glm::vec3::y,
+	                              "z", &glm::vec3::z,
+	                              sol::meta_function::addition, [](glm::vec3& a, glm::vec3& b) { return a + b; },
+	                              sol::meta_function::subtraction, [](glm::vec3& a, glm::vec3& b) { return a - b; },
+	                              sol::meta_function::multiplication,
+	                              sol::overload([](glm::vec3& a, glm::vec3& b) { return a * b; },
+	                                            [](glm::vec3& a, float b) { return a * b; }),
+	                              sol::meta_function::division,
+	                              sol::overload([](glm::vec3& a, glm::vec3& b) { return a / b; },
+	                                            [](glm::vec3& a, float b) { return a / b; })
+	);
+	state.set_function("Vec3", sol::overload([](float x, float y, float z) { return glm::vec3(x, y, z); },
+	                                         [](float v) { return glm::vec3(v); }));
 	state.new_usertype<glm::vec4>("vec4",
-		sol::constructors<glm::vec4(float, float, float, float)>(),
-		"x", &glm::vec4::x,
-		"y", &glm::vec4::y,
-		"z", &glm::vec4::z,
-		"w", &glm::vec4::w,
-		sol::meta_function::addition, [](glm::vec4& a, glm::vec4& b) { return a + b; },
-		sol::meta_function::subtraction, [](glm::vec4& a, glm::vec4& b) { return a - b; },
-		sol::meta_function::multiplication,
-		sol::overload([](glm::vec4& a, glm::vec4& b) { return a * b; },
-			[](glm::vec4& a, float b) { return a * b; }),
-		sol::meta_function::division,
-		sol::overload([](glm::vec4& a, glm::vec4& b) { return a / b; },
-			[](glm::vec4& a, float b) { return a / b; })
-		);
-	state.set_function("Vec4", sol::overload([](float x, float y, float z, float w) {return glm::vec4(x, y, z, w); }, [](float v) {return glm::vec4(v); }));
+	                              sol::constructors<glm::vec4(float, float, float, float)>(),
+	                              "x", &glm::vec4::x,
+	                              "y", &glm::vec4::y,
+	                              "z", &glm::vec4::z,
+	                              "w", &glm::vec4::w,
+	                              sol::meta_function::addition, [](glm::vec4& a, glm::vec4& b) { return a + b; },
+	                              sol::meta_function::subtraction, [](glm::vec4& a, glm::vec4& b) { return a - b; },
+	                              sol::meta_function::multiplication,
+	                              sol::overload([](glm::vec4& a, glm::vec4& b) { return a * b; },
+	                                            [](glm::vec4& a, float b) { return a * b; }),
+	                              sol::meta_function::division,
+	                              sol::overload([](glm::vec4& a, glm::vec4& b) { return a / b; },
+	                                            [](glm::vec4& a, float b) { return a / b; })
+	);
+	state.set_function("Vec4", sol::overload([](float x, float y, float z, float w) { return glm::vec4(x, y, z, w); },
+	                                         [](float v) { return glm::vec4(v); }));
 	state.set_function("normalize", sol::overload(
-		[](glm::vec2 v) {return glm::normalize(v); },
-		[](glm::vec3 v) {return glm::normalize(v); },
-		[](glm::vec4 v) {return glm::normalize(v); }));
+		                   [](glm::vec2 v) { return glm::normalize(v); },
+		                   [](glm::vec3 v) { return glm::normalize(v); },
+		                   [](glm::vec4 v) { return glm::normalize(v); }));
 #endif
-
 }
 
 static void bindSound(sol::state& state)
 {
 #ifndef NOO_SOOL
 	state.new_usertype<SoundHandle>("Sound",
-		"play", sol::overload(&SoundHandle::play, [](SoundHandle& h) { h.play(); }),
-		"stop", sol::overload(&SoundHandle::stop, [](SoundHandle& h) { h.stop(); }),
-		"setPitch", sol::overload(&SoundHandle::setPitch, [](SoundHandle& h, float p)
-			{
-				h.setPitch(p);
-			}),
-		"setVolume",
-				sol::overload(&SoundHandle::setVolume, [](SoundHandle& h, float p)
-					{
-						h.setVolume(p);
-					}),
-				"pause", &SoundHandle::pause,
-						"open", &SoundHandle::open,
-						"setLoop", &SoundHandle::setLoop,
-						"isPlaying", &SoundHandle::isPlaying
-						);
+	                                "play", sol::overload(&SoundHandle::play, [](SoundHandle& h) { h.play(); }),
+	                                "stop", sol::overload(&SoundHandle::stop, [](SoundHandle& h) { h.stop(); }),
+	                                "setPitch", sol::overload(&SoundHandle::setPitch, [](SoundHandle& h, float p)
+	                                {
+		                                h.setPitch(p);
+	                                }),
+	                                "setVolume",
+	                                sol::overload(&SoundHandle::setVolume, [](SoundHandle& h, float p)
+	                                {
+		                                h.setVolume(p);
+	                                }),
+	                                "pause", &SoundHandle::pause,
+	                                "open", &SoundHandle::open,
+	                                "setLoop", &SoundHandle::setLoop,
+	                                "isPlaying", &SoundHandle::isPlaying
+	);
 	state.new_usertype<MusicHandle>("Music",
-		"play", sol::overload(&MusicHandle::play, [](MusicHandle& h) { h.play(); }),
-		"stop", sol::overload(&MusicHandle::stop, [](MusicHandle& h) { h.stop(); }),
-		"setPitch", sol::overload(&MusicHandle::setPitch, [](MusicHandle& h, float p)
-			{
-				h.setPitch(p);
-			}),
-		"setVolume",
-				sol::overload(&MusicHandle::setVolume, [](MusicHandle& h, float p)
-					{
-						h.setVolume(p);
-					}),
-				"pause", &MusicHandle::pause,
-						"open", &MusicHandle::open,
-						"setLoop", &MusicHandle::setLoop,
-						"isPlaying", &MusicHandle::isPlaying
-						);
+	                                "play", sol::overload(&MusicHandle::play, [](MusicHandle& h) { h.play(); }),
+	                                "stop", sol::overload(&MusicHandle::stop, [](MusicHandle& h) { h.stop(); }),
+	                                "setPitch", sol::overload(&MusicHandle::setPitch, [](MusicHandle& h, float p)
+	                                {
+		                                h.setPitch(p);
+	                                }),
+	                                "setVolume",
+	                                sol::overload(&MusicHandle::setVolume, [](MusicHandle& h, float p)
+	                                {
+		                                h.setVolume(p);
+	                                }),
+	                                "pause", &MusicHandle::pause,
+	                                "open", &MusicHandle::open,
+	                                "setLoop", &MusicHandle::setLoop,
+	                                "isPlaying", &MusicHandle::isPlaying
+	);
 
 	lua_register(state.lua_state(), "playSound", playSound);
 	lua_register(state.lua_state(), "playMusic", playMusic);
 #endif
-
 }
 
 static int playSound(lua_State* L)
@@ -226,36 +231,35 @@ static void bindNBT(sol::state& state)
 	namespac["T_NULL"] = NBT::NBTType::T_NULL;
 
 	state.new_usertype<NBT>("NBT",
-		sol::constructors<NBT()>(),
-		"isArray", &NBT::isArray,
-		"isMap", &NBT::isMap,
-		"isBool", &NBT::isBool,
-		"isContainer", &NBT::isContainer,
-		"isFloat", &NBT::isFloat,
-		"isInt", &NBT::isInt,
-		"isNull", &NBT::isNull,
-		"isNumber", &NBT::isNumber,
-		"isString", &NBT::isString,
-		"isUInt", &NBT::isUInt,
-		"toNumber", [](NBT& t) { return (double)t; },
-		"toString", [](NBT& t) { return t.string(); },
-		"toBool", [](NBT& t) { return (bool)t; },
-		"toVec2", [](NBT& t) { return (glm::vec2)t; },
-		"arrays", [](NBT& t) { return t.arrays(); },
-		"maps", [](NBT& t) { return t.maps(); },
-		sol::meta_method::new_index, &nbtNewIndex,
-		sol::meta_method::index, &nbtIndex,
-		"nbt", &nbtRetrieve,
-		"getValue", &nbtGetValue,
-		"setValue", &nbtSetValue
-		);
+	                        sol::constructors<NBT()>(),
+	                        "isArray", &NBT::isArray,
+	                        "isMap", &NBT::isMap,
+	                        "isBool", &NBT::isBool,
+	                        "isContainer", &NBT::isContainer,
+	                        "isFloat", &NBT::isFloat,
+	                        "isInt", &NBT::isInt,
+	                        "isNull", &NBT::isNull,
+	                        "isNumber", &NBT::isNumber,
+	                        "isString", &NBT::isString,
+	                        "isUInt", &NBT::isUInt,
+	                        "toNumber", [](NBT& t) { return (double)t; },
+	                        "toString", [](NBT& t) { return t.string(); },
+	                        "toBool", [](NBT& t) { return (bool)t; },
+	                        "toVec2", [](NBT& t) { return (glm::vec2)t; },
+	                        "arrays", [](NBT& t) { return t.arrays(); },
+	                        "maps", [](NBT& t) { return t.maps(); },
+	                        sol::meta_method::new_index, &nbtNewIndex,
+	                        sol::meta_method::index, &nbtIndex,
+	                        "nbt", &nbtRetrieve,
+	                        "getValue", &nbtGetValue,
+	                        "setValue", &nbtSetValue
+	);
 #endif
 }
 
 //sets current nbt's value (use nil to erase it to T_NULL)
 static int nbtSetValue(lua_State* L)
 {
-
 #ifndef NOO_SOOL
 	if (lua_gettop(L) != 2)
 	{
@@ -299,7 +303,6 @@ static int nbtSetValue(lua_State* L)
 //get current nbt's value (=string/bool/number). if nil or container -> returns itself
 static int nbtGetValue(lua_State* L)
 {
-
 #ifndef NOO_SOOL
 	NBT& nbt = sol::stack::get_usertype<NBT>(L, 1);
 
@@ -454,29 +457,29 @@ static int nbtNewIndex(lua_State* L)
 			nbt[index] = lua_toboolean(L, INDEX);
 			break;
 		case LUA_TNIL:
-		{
-			if (index < nbt.size())
-				nbt[index] = NBT();
-		}
-		break;
+			{
+				if (index < nbt.size())
+					nbt[index] = NBT();
+			}
+			break;
 		case LUA_TUSERDATA:
-		{
-			if (sol::stack::check_usertype<NBT>(L, INDEX))
 			{
-				nbt[index] = sol::stack::get_usertype<NBT>(L, INDEX);
+				if (sol::stack::check_usertype<NBT>(L, INDEX))
+				{
+					nbt[index] = sol::stack::get_usertype<NBT>(L, INDEX);
+				}
+				else
+				{
+					return luaL_error(L, "LUA Invalid type passed to nbt");
+				}
 			}
-			else
-			{
-				return luaL_error(L, "LUA Invalid type passed to nbt");
-			}
-		}
-		break;
+			break;
 		default:
 			ND_WARN("LUA Invalid type passed to nbt");
 			break;
 		}
 	}
-	//map access
+		//map access
 	else if (type == LUA_TSTRING && lua_isstring(L, 2))
 	{
 		std::string key = lua_tostring(L, 2);
@@ -497,25 +500,25 @@ static int nbtNewIndex(lua_State* L)
 			nbt[key] = lua_toboolean(L, INDEX);
 			break;
 		case LUA_TNIL:
-		{
-			auto it = nbt.maps().find(key);
-			if (it != nbt.maps().end())
-				nbt.maps().erase(it);
-		}
-		break;
+			{
+				auto it = nbt.maps().find(key);
+				if (it != nbt.maps().end())
+					nbt.maps().erase(it);
+			}
+			break;
 		case LUA_TUSERDATA:
-		{
-			if (sol::stack::check_usertype<NBT>(L, INDEX))
 			{
-				auto e = sol::stack::get_usertype<NBT>(L, INDEX);
-				nbt[key] = e;
+				if (sol::stack::check_usertype<NBT>(L, INDEX))
+				{
+					auto e = sol::stack::get_usertype<NBT>(L, INDEX);
+					nbt[key] = e;
+				}
+				else
+				{
+					return luaL_error(L, "LUA Invalid type passed to nbt");
+				}
 			}
-			else
-			{
-				return luaL_error(L, "LUA Invalid type passed to nbt");
-			}
-		}
-		break;
+			break;
 		default:
 			ND_WARN("LUA Invalid type passed to nbt");
 			break;
@@ -792,12 +795,13 @@ static void bindFontMaterial(sol::state& state)
 {
 #ifndef NOO_SOOL
 	state.new_usertype<FontMaterial>("FontMaterial",
-		sol::no_constructor,
-		"color", &FontMaterial::color,
-		"border_color", &FontMaterial::border_color
-		);
+	                                 sol::no_constructor,
+	                                 "color", &FontMaterial::color,
+	                                 "border_color", &FontMaterial::border_color
+	);
 	auto namespac = state["FontMatLib"].get_or_create<sol::table>();
 
 	namespac.set_function("getMaterial", &FontMatLib::getMaterial);
 #endif
+}
 }

@@ -3,6 +3,8 @@
 #include "MainWindow.h"
 #include "gui/GUIBasic.h"
 
+using namespace nd;
+
 constexpr int GUI_ITEM_CONTAINER_SIZE = 60;
 constexpr int GUI_ITEM_ITEM_SIZE = 32;
 
@@ -55,11 +57,11 @@ GUIItemTitle::GUIItemTitle():GUIBlank()
 	row->space = -5;
 	row->isAlwaysPacked = true;
 	
-	m_title = new GUIText(mat);
+	m_title = new nd::GUIText(mat);
 	m_title->setText("Name");
 	row->appendChild(m_title);
 
-	m_meta = new GUIText(mat);
+	m_meta = new nd::GUIText(mat);
 	m_meta->packToZeroWhenEmpty = true;
 	m_meta->setText("Metadata");
 	row->appendChild(m_meta);

@@ -2,6 +2,8 @@
 #include "GUIElement.h"
 #include "core/NBT.h"
 
+namespace nd {
+
 class GUIFactory
 {
 private:
@@ -13,9 +15,7 @@ public:
 	static GUIElement* end(GUIElement& source);
 	static void begin();
 	static void setAttrib(const std::string& name, NBT& val);
-	
+
 	static void setStyle(const NBT& style);
-	
-	
-	
 };
+}

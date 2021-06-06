@@ -120,15 +120,14 @@ private:
 	std::queue<Assignment> m_cached_light_assignments;// Have I found everybody fun assignment to do today?
 
 
+	nd::Utils::FifoList<Pos> m_light_list0;
+	nd::Utils::FifoList<Pos> m_light_list1;
 
-	NDUtil::FifoList<Pos> m_light_list0;
-	NDUtil::FifoList<Pos> m_light_list1;
+	nd::Utils::FifoList<Pos> m_light_list2;
+	nd::Utils::FifoList<Pos> m_light_list3;
 
-	NDUtil::FifoList<Pos> m_light_list2;
-	NDUtil::FifoList<Pos> m_light_list3;
-
-	NDUtil::FifoList<Pos> m_light_list0_main_thread;
-	NDUtil::FifoList<Pos> m_light_list1_main_thread;
+	nd::Utils::FifoList<Pos> m_light_list0_main_thread;
+	nd::Utils::FifoList<Pos> m_light_list1_main_thread;
 	volatile bool m_running=false;
 	volatile bool m_is_fresh_map=false;
 	struct LightData
@@ -188,9 +187,9 @@ private:
 	// depends only on		map, 
 	//						world opacity,
 	//						current_list
-	void runFloodLocal(int minX, int minY, int width, int height, NDUtil::FifoList<Pos>* current_list, NDUtil::FifoList<Pos>* new_list);
-	void runFloodSky(int minX, int minY, int width, int height, NDUtil::FifoList<Pos>* current_list,
-	                       NDUtil::FifoList<Pos>* new_list);
+	void runFloodLocal(int minX, int minY, int width, int height, nd::Utils::FifoList<Pos>* current_list, nd::Utils::FifoList<Pos>* new_list);
+	void runFloodSky(int minX, int minY, int width, int height, nd::Utils::FifoList<Pos>* current_list,
+	                 nd::Utils::FifoList<Pos>* new_list);
 
 
 	void computeLT(Snapshot& snapshot);

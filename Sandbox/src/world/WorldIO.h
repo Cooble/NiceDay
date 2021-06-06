@@ -41,8 +41,8 @@ namespace WorldIO
 
 		void saveWorldMetadata(const WorldInfo* world);
 
-		void saveGenBoolMap(const NDUtil::Bitset* bitset);
-		void loadGenBoolMap(NDUtil::Bitset* bitset);
+		void saveGenBoolMap(const nd::Utils::Bitset* bitset);
+		void loadGenBoolMap(nd::Utils::Bitset* bitset);
 
 		//return true if success
 		bool loadWorldMetadata(WorldInfo* world);
@@ -66,6 +66,6 @@ namespace WorldIO
 	constexpr uint32_t DYNAMIC_SAVER_CHUNK_SEGMENT_BYTE_SIZE = 2000 + sizeof(ChunkSegmentHeader);
 
 
-	IBinaryStream::RWStream streamFuncs(DynamicSaver* saver); 
+	nd::IBinaryStream::RWStream streamFuncs(nd::DynamicSaver* saver); 
 
 }

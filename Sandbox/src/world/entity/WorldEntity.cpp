@@ -3,6 +3,7 @@
 #include "world/World.h"
 #include "core/NBT.h"
 
+using namespace nd;
 
 
 void WorldEntity::save(NBT& src)

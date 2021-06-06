@@ -3,6 +3,8 @@
 #include "event/MouseEvent.h"
 #include <optional>
 
+namespace nd {
+
 struct GUIStyle;
 
 //very simple optional implementation for small types (uses too much copy)
@@ -13,16 +15,23 @@ class nd_optional
 	T m_value;
 
 public:
-	nd_optional() :m_hasValue(false) {}
-	nd_optional(T value) :m_hasValue(true), m_value(value) {}
+	nd_optional() : m_hasValue(false)
+	{
+	}
+
+	nd_optional(T value) : m_hasValue(true), m_value(value)
+	{
+	}
+
 	nd_optional(nd_optional<T>&& v) = default;
 	nd_optional(const nd_optional<T>& v) = default;
 	constexpr bool hasValue() const { return m_hasValue; }
 	constexpr void clear() { m_hasValue = false; }
+
 	T& value() const
 	{
 		ASSERT(m_hasValue, "attempt to get value where there is none");
-		return  m_value;
+		return m_value;
 	}
 
 	nd_optional<T>& operator=(const T& value)
@@ -31,14 +40,16 @@ public:
 		m_value = value;
 		return *this;
 	}
+
 	nd_optional<T>& operator=(const nd_optional<T>& value)
 	{
 		m_hasValue = value.m_hasValue;
 		m_value = value.m_value;
 		return *this;
 	}
+
 	//operator T ()() const {return m_value; }
-	operator T () const {return m_value; }
+	operator T() const { return m_value; }
 };
 
 struct FontMaterial;
@@ -50,7 +61,7 @@ constexpr int GUI_BOTTOM = 3;
 
 class GUIElement;
 typedef std::function<void(GUIElement&)> ActionF;
-typedef std::function<void(Event&,GUIElement&)> EventF;
+typedef std::function<void(Event&, GUIElement&)> EventF;
 typedef int GEID;
 
 enum class GETYPE : int
@@ -74,7 +85,8 @@ enum class GETYPE : int
 	View,
 	Blank,
 	ItemContainer,
-	Other, //doesn!t have custom render (usually aglomeration of elements)
+	Other,
+	//doesn!t have custom render (usually aglomeration of elements)
 };
 
 typedef std::string GECLASS;
@@ -94,17 +106,27 @@ enum class GUIAlign : int
 	DOWN,
 	INVALID
 };
+
 enum class GUIDimensionInherit : int
 {
-   WIDTH,
-   HEIGHT,
-   WIDTH_HEIGHT,
-   INVALID,
+	WIDTH,
+	HEIGHT,
+	WIDTH_HEIGHT,
+	INVALID,
 };
-constexpr bool isWidth(GUIDimensionInherit dim) { return dim == GUIDimensionInherit::WIDTH || dim == GUIDimensionInherit::WIDTH_HEIGHT; }
-constexpr bool isHeight(GUIDimensionInherit dim) { return dim == GUIDimensionInherit::HEIGHT || dim == GUIDimensionInherit::WIDTH_HEIGHT; }
+
+constexpr bool isWidth(GUIDimensionInherit dim)
+{
+	return dim == GUIDimensionInherit::WIDTH || dim == GUIDimensionInherit::WIDTH_HEIGHT;
+}
+
+constexpr bool isHeight(GUIDimensionInherit dim)
+{
+	return dim == GUIDimensionInherit::HEIGHT || dim == GUIDimensionInherit::WIDTH_HEIGHT;
+}
 
 constexpr float GUIElement_InvalidNumber = -100000;
+
 class GUIElement
 {
 protected:
@@ -116,7 +138,7 @@ protected:
 
 	// is mouse over the element
 	bool m_has_focus = false;
-	
+
 	//usually some column,row grid or something which is fully embedded in its parent
 	bool m_is_pressed = false;
 
@@ -140,35 +162,46 @@ public:
 	// always adapts dimensions based on the sizes of children
 	bool isAlwaysPacked = false;
 	bool isDirty;
-	
+
 	//===ALIGNMENT=====================================
 	GUIAlign alignment = GUIAlign::INVALID;
-	union {
+
+	union
+	{
 		float margin[4];
 		glm::vec4 marginVec;
 	};
-	union {
+
+	union
+	{
 		float padding[4];
 		glm::vec4 paddingVec;
 	};
-	float space=0;
-	float renderAngle=0;
+
+	float space = 0;
+	float renderAngle = 0;
 	GUIDimensionInherit dimInherit = GUIDimensionInherit::INVALID;
-	union{
+
+	union
+	{
 		struct
 		{
 			float x, y;
 		};
+
 		glm::vec2 pos;
 	};
-	union{
+
+	union
+	{
 		struct
 		{
 			float width, height;
 		};
+
 		glm::vec2 dim;
 	};
-	
+
 	//===EVENTS========================================
 	ActionF onDimChange;
 	EventF onMyEventFunc;
@@ -181,8 +214,8 @@ public:
 	GETYPE type;
 
 	//===OTHER=========================================
-	glm::vec4 color = { 0,0,0,0 };
-	
+	glm::vec4 color = {0, 0, 0, 0};
+
 	// unique identificator of element
 	std::string id;
 
@@ -191,33 +224,39 @@ public:
 	GUIElement(GETYPE type);
 	virtual ~GUIElement();
 
-	
+
 	constexpr bool hasFocus() const { return m_has_focus; }
 	constexpr bool isPressed() const { return m_is_pressed; }
-	float widthPadding()const { return padding[GUI_LEFT] + padding[GUI_RIGHT]; }
-	float heightPadding()const { return padding[GUI_BOTTOM] + padding[GUI_TOP]; }
-	
-	
+	float widthPadding() const { return padding[GUI_LEFT] + padding[GUI_RIGHT]; }
+	float heightPadding() const { return padding[GUI_BOTTOM] + padding[GUI_TOP]; }
+
+
 	void setAlignment(GUIAlign align) { alignment = align; }
+
 	void setPadding(float p)
 	{
 		for (float& i : padding)
 			i = p;
 	}
+
 	//will center element to the center of width and height
 	void setCenterPosition(float width, float height)
 	{
 		x = (width - this->width) / 2;
 		y = (height - this->height) / 2;
 	}
+
 	void markDirty() { isDirty = true; }
 
 	void setParent(GUIElement* parent) { this->m_parent = parent; }
+
 	GUIElement* getParent() const
 	{
 		return m_parent;
 	}
+
 	auto& getChildren() { return m_children; }
+
 	GUIElement* getFirstChild()
 	{
 		ASSERT(!m_children.empty(), "no children");
@@ -234,7 +273,7 @@ public:
 	// called when this instance was given as a child to some parent element
 	// used to update all static positions and stuff
 	virtual void onParentAttached();
-	
+
 	virtual void onChildChange();
 
 	//called when the dimensions were changed
@@ -248,20 +287,19 @@ public:
 	// NOTE:	nor does it anything else
 	// // return true if dimensions were changed
 	virtual bool packDimensions();
-	
+
 	// used to adapt dimensions to those of the parent
 	// @return true if change in dimensions
 	virtual bool adaptToParent();
 
 	//called on parent dimension change
 	virtual void onParentChanged();
-	
+
 	bool contains(float xx, float yy) const;
 
-	
+
 	//will be called each tick if is_updatable
 	virtual void update();
-	
 
 
 	inline virtual void onEvent(Event& e);
@@ -292,12 +330,13 @@ public:
 
 	virtual void applyStyle(GUIStyle& style);
 
-	template<typename ElementType>
+	template <typename ElementType>
 	ElementType* get(const std::string& id) { return (ElementType*)this->getChildWithID(id); }
 };
 
 
 #define ND_GUI_STYLE_BUILD(att) if (!target.att.hasValue()) target.att = att;
+
 struct GUIStyle
 {
 	nd_optional<FontMaterial*> textMaterial;
@@ -334,3 +373,4 @@ struct GUIStyle
 		ND_GUI_STYLE_BUILD(padding);
 	}
 };
+}

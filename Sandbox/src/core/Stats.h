@@ -1,7 +1,12 @@
 #pragma once
-struct BiomeDistances;
+
+namespace nd {
 class Sprite;
+}
+
+struct BiomeDistances;
 class World;
+
 class Stats
 {
 public:
@@ -16,8 +21,9 @@ public:
 	//static BiomeDistances biome_distances;
 	static float edge_scale;
 	static int updates_per_frame;
-	static Sprite* bound_sprite;
+	static nd::Sprite* bound_sprite;
 	static bool show_collisionBox;
 	static World* world;
 	static int particle_count;
 };
+

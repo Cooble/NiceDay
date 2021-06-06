@@ -2,6 +2,8 @@
 
 #include "files/FUtil.h"
 
+namespace nd {
+
 MeshData::MeshData(size_t maxVertexCount, size_t vertexSize, size_t maxIndexCount, const VertexBufferLayout& layout)
 {
 	allocate(maxVertexCount, vertexSize, maxIndexCount, layout);
@@ -19,7 +21,8 @@ MeshData::~MeshData()
 		free(m_indices);
 }
 
-void MeshData::allocate(size_t maxVertexCount, size_t vertexSize, size_t maxIndexCount, const VertexBufferLayout& layout)
+void MeshData::allocate(size_t maxVertexCount, size_t vertexSize, size_t maxIndexCount,
+                        const VertexBufferLayout& layout)
 {
 	if (m_vertices)
 		free(m_vertices);
@@ -40,21 +43,20 @@ void MeshData::allocate(size_t maxVertexCount, size_t vertexSize, size_t maxInde
 }
 
 
-namespace MeshDataFactory
-{
+namespace MeshDataFactory {
 	std::hash<std::string> hasher;
 
 	struct BigVertex
 	{
-		glm::vec3 pos = { 0,0,0 };
-		glm::vec3 norm = { 0,0,0 };
-		glm::vec2 uv = { 0,0 };
+		glm::vec3 pos = {0, 0, 0};
+		glm::vec3 norm = {0, 0, 0};
+		glm::vec2 uv = {0, 0};
 
 		//the ultimate performance nightmare
 		uint64_t hash() const
 		{
 			char death[(3 + 3 + 2) * sizeof(float)];
-			float* p = (float*)death;
+			auto p = (float*)death;
 			*p++ = pos.x;
 			*p++ = pos.y;
 			*p++ = pos.z;
@@ -80,7 +82,7 @@ namespace MeshDataFactory
 	static std::array<BigVertex, bufsize> bigVertices;
 	static std::array<int, bufsize * 4> indices_data;*/
 
-    static glm::vec3* v_data = new glm::vec3[bufsize];
+	static glm::vec3* v_data = new glm::vec3[bufsize];
 	static glm::vec3* vn_data = new glm::vec3[bufsize];
 	static glm::vec2* vt_data = new glm::vec2[bufsize];
 	static BigVertex* bigVertices = new BigVertex[bufsize];
@@ -125,23 +127,23 @@ namespace MeshDataFactory
 				{
 					double x = 0, y = 0, z = 0;
 					iss >> x >> y >> z;
-					v_data[vSize++] = { x, y, z };
+					v_data[vSize++] = {x, y, z};
 				}
-				// texture uv
+					// texture uv
 				else if (type == "vt")
 				{
 					double u = 0, v = 0;
 					iss >> u >> v;
-					vt_data[vtSize++] = { u, v };
+					vt_data[vtSize++] = {u, v};
 				}
-				// normal
+					// normal
 				else if (type == "vn")
 				{
 					double x = 0, y = 0, z = 0;
 					iss >> x >> y >> z;
-					vn_data[vnSize++] = { x, y, z };
+					vn_data[vnSize++] = {x, y, z};
 				}
-				// faces
+					// faces
 				else if (type == "f")
 				{
 					int packIndex = 0;
@@ -153,12 +155,13 @@ namespace MeshDataFactory
 						BigVertex biggie;
 						std::istringstream packStream(pack);
 
-						uint32_t indicesIndex[3]{ 0, 0, 0 };
+						uint32_t indicesIndex[3]{0, 0, 0};
 						// vertex=0, vt=1, vn=2
 						size_t indexik = 0;
 						std::string val;
 						while (std::getline(packStream, val, '/'))
-							if (!val.empty()) {
+							if (!val.empty())
+							{
 								indicesIndex[indexik++] = std::stoi(val) - 1;
 							}
 							else
@@ -207,12 +210,12 @@ namespace MeshDataFactory
 
 		model->allocate(bigSize, bigvertexSize, indSize, layout);
 
-		memcpy(model->getIndices(), (char*)&indices_data, indSize * sizeof(uint32_t));
+		memcpy(model->getIndices(), &indices_data, indSize * sizeof(uint32_t));
 
 		if (bigvertexSize == sizeof(BigVertex) || usePosNormUv)
 		{
 			//we have all (pos,normals,uvs)
-			memcpy(model->getVertices(), (char*)bigVertices, bigSize * sizeof(BigVertex));
+			memcpy(model->getVertices(), bigVertices, bigSize * sizeof(BigVertex));
 		}
 		else
 		{
@@ -256,20 +259,20 @@ namespace MeshDataFactory
 		auto mesh = new MeshData;
 		auto size = (x + z) * 2;
 
-		VertexBufferLayout l{ g_typ::VEC3 };
+		VertexBufferLayout l{g_typ::VEC3};
 		mesh->allocate(size, sizeof(glm::vec3), 0, l);
 
-		auto point = (glm::vec3*) mesh->getVertices();
+		auto point = (glm::vec3*)mesh->getVertices();
 
 		for (int xx = 0; xx < x; ++xx)
 		{
-			*point++ = { xx,0,0 };
-			*point++ = { xx,0,z };
+			*point++ = {xx, 0, 0};
+			*point++ = {xx, 0, z};
 		}
 		for (int zz = 0; zz < z; ++zz)
 		{
-			*point++ = { 0,0,zz };
-			*point++ = { x,0,zz };
+			*point++ = {0, 0, zz};
+			*point++ = {x, 0, zz};
 		}
 		mesh->m_topology = Topology::LINES;
 		mesh->setID(("BuildWire" + std::to_string(64871 * x + z * 123456)).c_str());
@@ -280,50 +283,50 @@ namespace MeshDataFactory
 	MeshData* buildCube(float scale)
 	{
 		static const float cubeVertices[] = {
-	                -1.0f,-1.0f,-1.0f,
-	                -1.0f,-1.0f, 1.0f,
-	                -1.0f, 1.0f, 1.0f,
-	                1.0f, 1.0f,-1.0f,
-	                -1.0f,-1.0f,-1.0f,
-	                -1.0f, 1.0f,-1.0f,
-	                1.0f,-1.0f, 1.0f,
-	                -1.0f,-1.0f,-1.0f,
-	                1.0f,-1.0f,-1.0f,
-	                1.0f, 1.0f,-1.0f,
-	                1.0f,-1.0f,-1.0f,
-	                -1.0f,-1.0f,-1.0f,
-	                -1.0f,-1.0f,-1.0f,
-	                -1.0f, 1.0f, 1.0f,
-	                -1.0f, 1.0f,-1.0f,
-	                1.0f,-1.0f, 1.0f,
-	                -1.0f,-1.0f, 1.0f,
-	                -1.0f,-1.0f,-1.0f,
-	                -1.0f, 1.0f, 1.0f,
-	                -1.0f,-1.0f, 1.0f,
-	                1.0f,-1.0f, 1.0f,
-	                1.0f, 1.0f, 1.0f,
-	                1.0f,-1.0f,-1.0f,
-	                1.0f, 1.0f,-1.0f,
-	                1.0f,-1.0f,-1.0f,
-	                1.0f, 1.0f, 1.0f,
-	                1.0f,-1.0f, 1.0f,
-	                1.0f, 1.0f, 1.0f,
-	                1.0f, 1.0f,-1.0f,
-	                -1.0f, 1.0f,-1.0f,
-	                1.0f, 1.0f, 1.0f,
-	                -1.0f, 1.0f,-1.0f,
-	                -1.0f, 1.0f, 1.0f,
-	                1.0f, 1.0f, 1.0f,
-	                -1.0f, 1.0f, 1.0f,
-	                1.0f,-1.0f, 1.0f
+			-1.0f, -1.0f, -1.0f,
+			-1.0f, -1.0f, 1.0f,
+			-1.0f, 1.0f, 1.0f,
+			1.0f, 1.0f, -1.0f,
+			-1.0f, -1.0f, -1.0f,
+			-1.0f, 1.0f, -1.0f,
+			1.0f, -1.0f, 1.0f,
+			-1.0f, -1.0f, -1.0f,
+			1.0f, -1.0f, -1.0f,
+			1.0f, 1.0f, -1.0f,
+			1.0f, -1.0f, -1.0f,
+			-1.0f, -1.0f, -1.0f,
+			-1.0f, -1.0f, -1.0f,
+			-1.0f, 1.0f, 1.0f,
+			-1.0f, 1.0f, -1.0f,
+			1.0f, -1.0f, 1.0f,
+			-1.0f, -1.0f, 1.0f,
+			-1.0f, -1.0f, -1.0f,
+			-1.0f, 1.0f, 1.0f,
+			-1.0f, -1.0f, 1.0f,
+			1.0f, -1.0f, 1.0f,
+			1.0f, 1.0f, 1.0f,
+			1.0f, -1.0f, -1.0f,
+			1.0f, 1.0f, -1.0f,
+			1.0f, -1.0f, -1.0f,
+			1.0f, 1.0f, 1.0f,
+			1.0f, -1.0f, 1.0f,
+			1.0f, 1.0f, 1.0f,
+			1.0f, 1.0f, -1.0f,
+			-1.0f, 1.0f, -1.0f,
+			1.0f, 1.0f, 1.0f,
+			-1.0f, 1.0f, -1.0f,
+			-1.0f, 1.0f, 1.0f,
+			1.0f, 1.0f, 1.0f,
+			-1.0f, 1.0f, 1.0f,
+			1.0f, -1.0f, 1.0f
 		};
 
 
-		MeshData* mesh = new MeshData;
-		VertexBufferLayout l{ g_typ::VEC3 };
+		auto mesh = new MeshData;
+		VertexBufferLayout l{g_typ::VEC3};
 		mesh->allocate(36, sizeof(glm::vec3), 0, l);
 		auto point = (glm::vec3*)mesh->getVertices();
-		memcpy(point, (char*)cubeVertices, mesh->getVerticesSize());
+		memcpy(point, cubeVertices, mesh->getVerticesSize());
 		for (int i = 0; i < mesh->getVerticesCount(); ++i)
 			*mesh->vertex<glm::vec3>(i) *= scale;
 		mesh->setID(("BuildCube" + std::to_string(scale)).c_str());
@@ -352,7 +355,8 @@ namespace MeshDataFactory
 		FILE* file = fopen(ND_RESLOC(filePath).c_str(), "wb");
 
 		fwrite(&h, sizeof(BigHead), 1, file);
-		fwrite(&mesh.getLayout().getElements()[0], sizeof(VertexBufferElement), mesh.getLayout().getElements().size(), file);
+		fwrite(&mesh.getLayout().getElements()[0], sizeof(VertexBufferElement), mesh.getLayout().getElements().size(),
+		       file);
 		fwrite(mesh.getVertices(), mesh.getVerticesSize(), 1, file);
 		if (mesh.getIndicesCountMax())
 			fwrite(mesh.getIndices(), mesh.getIndicesSize(), 1, file);
@@ -389,4 +393,5 @@ namespace MeshDataFactory
 		mesh.setAABB(h.box);
 		return &mesh;
 	}
+}
 }

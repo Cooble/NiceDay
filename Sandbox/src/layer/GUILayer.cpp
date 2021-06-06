@@ -23,6 +23,8 @@
 
 #include <stack>
 
+using namespace nd;
+
 GUILayer::GUILayer()
 {
 	ND_PROFILE_METHOD();
@@ -252,7 +254,7 @@ void GUILayer::onRender()
 
 void GUILayer::onEvent(Event& e)
 {
-	bool flipped = e.isInCategory(Event::EventCategory::Mouse);
+	bool flipped = e.isInCategory(Event::EventCategory::CatMouse);
 	if (flipped)
 		static_cast<MouseMoveEvent&>(e).flipY(APwin()->getHeight());
 	GUIContext::setContext(m_gui_context);

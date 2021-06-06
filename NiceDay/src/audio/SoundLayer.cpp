@@ -3,14 +3,14 @@
 #include "portaudio.h"
 #include "imgui.h"
 #include "memory/RingBuffer.h"
-#include "audio/player.h"
+#include "player.h"
 #include "imguifiledialog/ImGuiFileDialog.h"
 #include "event/KeyEvent.h"
 #include "GLFW/glfw3.h"
 #include "event/MessageEvent.h"
-#include "core/App.h"
 #include "core/ImGuiLayer.h"
 
+namespace nd {
 #define SAMPLE_RATE (44100)
 //#define SAMPLE_RATE (22050)
 constexpr int musicBufferSize = 256 * 1000;
@@ -31,7 +31,7 @@ typedef struct
 	int sampleIndex = 0;
 	float samples[SAMPLE_SIZE * 2]; //one tenth of second
 	int bufferIndex = 0;
-	NDUtil::RingBufferLite* buffer;
+	Utils::RingBufferLite* buffer;
 	int valuesReadInCurrentFrame = 0;
 	bool error = false;
 	int channels = 1;
@@ -49,8 +49,8 @@ static int patestCallback(const void* inputBuffer, void* outputBuffer,
                           void* userData)
 {
 	/* Cast data passed through stream to our structure. */
-	paTestData* data = (paTestData*)userData;
-	float* out = (float*)outputBuffer;
+	auto data = (paTestData*)userData;
+	auto out = (float*)outputBuffer;
 
 	for (unsigned int i = 0; i < framesPerBuffer; i++)
 	{
@@ -80,22 +80,22 @@ static int patestCallback(const void* inputBuffer, void* outputBuffer,
 	}
 	/*for (unsigned i = 0; i < framesPerBuffer; i++)
 	{
-		data->sampleIndex++;
-		data->sampleIndex %= SAMPLE_SIZE;
-		
-		data->samples[data->sampleIndex] = data->left_phase * data->volume;
-		
-		*out++ = data->left_phase*data->volume;  
-		*out++ = data->right_phase * data->volume;  
-		if (!data->isPlaying)
-			continue;
-		//Generate simple sawtooth phaser that ranges between -1.0 and 1.0. 
-		data->left_phase += 0.01f;
-		// When signal reaches top, drop back down.
-		if (data->left_phase >= 1.0f) data->left_phase -= 2.0f;
-		// higher pitch so we can distinguish left and right.
-		data->right_phase += 0.01f;
-		if (data->right_phase >= 1.0f) data->right_phase -= 2.0f;
+	    data->sampleIndex++;
+	    data->sampleIndex %= SAMPLE_SIZE;
+
+	    data->samples[data->sampleIndex] = data->left_phase * data->volume;
+
+	    *out++ = data->left_phase*data->volume;
+	    *out++ = data->right_phase * data->volume;
+	    if (!data->isPlaying)
+	        continue;
+	    //Generate simple sawtooth phaser that ranges between -1.0 and 1.0.
+	    data->left_phase += 0.01f;
+	    // When signal reaches top, drop back down.
+	    if (data->left_phase >= 1.0f) data->left_phase -= 2.0f;
+	    // higher pitch so we can distinguish left and right.
+	    data->right_phase += 0.01f;
+	    if (data->right_phase >= 1.0f) data->right_phase -= 2.0f;
 	}*/
 	return 0;
 }
@@ -131,8 +131,8 @@ static int paMusicCallback(const void* inputBuffer, void* outputBuffer,
                            void* userData)
 {
 	/* Cast data passed through stream to our structure. */
-	paTestData* data = (paTestData*)userData;
-	float* out = (float*)outputBuffer;
+	auto data = (paTestData*)userData;
+	auto out = (float*)outputBuffer;
 
 	auto currentFrame = (const float*)data->buffer->read();
 	if (!currentFrame)
@@ -186,8 +186,8 @@ static int paMicrophoneCallback(const void* inputBuffer, void* outputBuffer,
                                 void* userData)
 {
 	/* Cast data passed through stream to our structure. */
-	paTestData* data = (paTestData*)userData;
-	float* out = (float*)outputBuffer;
+	auto data = (paTestData*)userData;
+	auto out = (float*)outputBuffer;
 
 
 	auto inputFloatBuff = (float*)inputBuffer;
@@ -227,6 +227,7 @@ static SoundBuffer soundBuff;
 static MusicStream musicStream;
 static size_t soundBuffOffset = 0;
 static bool ImGUIopen = false;
+
 void SoundLayer::onAttach()
 {
 	REGISTER_IMGUI_WIN("Sound Editor", &ImGUIopen);
@@ -240,13 +241,13 @@ void SoundLayer::onAttach()
 
 	std::thread first([]()
 	{
-		while (!musicStream.readNext(data.buffer->getFrameCount()*1000,*data.buffer))
-		{
-			//std::this_thread::sleep_for(std::chrono::milliseconds(10));
-			//ND_INFO("Feeding the beást");
-		}
-		musicStream.close();
-		ND_INFO("and music is done:D");
+	    while (!musicStream.readNext(data.buffer->getFrameCount()*1000,*data.buffer))
+	    {
+	        //std::this_thread::sleep_for(std::chrono::milliseconds(10));
+	        //ND_INFO("Feeding the beást");
+	    }
+	    musicStream.close();
+	    ND_INFO("and music is done:D");
 	});
 	first.detach();
 
@@ -255,54 +256,54 @@ void SoundLayer::onAttach()
 
 	std::thread first([]()
 	{
-		std::ifstream myfile("C:/Users/Matej/Desktop/sounds/headerless.raw", std::ios::binary);
-		if (!myfile.is_open())
-		{
-			ND_WARN("Cannot open file sound");
-			return;
-		}
+	    std::ifstream myfile("C:/Users/Matej/Desktop/sounds/headerless.raw", std::ios::binary);
+	    if (!myfile.is_open())
+	    {
+	        ND_WARN("Cannot open file sound");
+	        return;
+	    }
 
-		int offste = 0;
-		while (!myfile.eof())
-		{
-			auto frame = data.buffer->write();
-			if (frame)
-			{
-				myfile.read(frame, FRAME_SIZE * sizeof(float));
-				data.buffer->push();
-				frame = data.buffer->write();
-			}
-			else std::this_thread::sleep_for(std::chrono::milliseconds(5));
-		}
-		myfile.close();
-		ND_INFO("File was read");
+	    int offste = 0;
+	    while (!myfile.eof())
+	    {
+	        auto frame = data.buffer->write();
+	        if (frame)
+	        {
+	            myfile.read(frame, FRAME_SIZE * sizeof(float));
+	            data.buffer->push();
+	            frame = data.buffer->write();
+	        }
+	        else std::this_thread::sleep_for(std::chrono::milliseconds(5));
+	    }
+	    myfile.close();
+	    ND_INFO("File was read");
 	});
 	first.detach();
 	*/
 	/*
-		auto err = Pa_Initialize();
-		checkSoundError(err);
-	
-		int maxDevices = Pa_GetDeviceCount();
-		int stringSize = 0;
-		for (int i = 0; i < maxDevices; ++i)
-		{
-			auto info = Pa_GetDeviceInfo(i);
-			m_audioDevices.insert(m_audioDevices.begin() + i, info->name);
-			stringSize += strlen(info->name) + 1;
-		}
-		char* bu = new char[stringSize];
-		m_audioDevicesStrings = new char* [maxDevices];
-		int buffidx = 0;
-		for (int i = 0; i < maxDevices; ++i)
-		{
-			m_audioDevicesStrings[i] = bu + buffidx;
-			auto info = Pa_GetDeviceInfo(i);
-			memcpy(bu + buffidx, info->name, strlen(info->name) + 1);
-			buffidx += strlen(info->name) + 1;
-		}
-	
-		/* Open an audio I/O stream. */
+	    auto err = Pa_Initialize();
+	    checkSoundError(err);
+
+	    int maxDevices = Pa_GetDeviceCount();
+	    int stringSize = 0;
+	    for (int i = 0; i < maxDevices; ++i)
+	    {
+	        auto info = Pa_GetDeviceInfo(i);
+	        m_audioDevices.insert(m_audioDevices.begin() + i, info->name);
+	        stringSize += strlen(info->name) + 1;
+	    }
+	    char* bu = new char[stringSize];
+	    m_audioDevicesStrings = new char* [maxDevices];
+	    int buffidx = 0;
+	    for (int i = 0; i < maxDevices; ++i)
+	    {
+	        m_audioDevicesStrings[i] = bu + buffidx;
+	        auto info = Pa_GetDeviceInfo(i);
+	        memcpy(bu + buffidx, info->name, strlen(info->name) + 1);
+	        buffidx += strlen(info->name) + 1;
+	    }
+
+	    /* Open an audio I/O stream. */
 	return;
 	auto err = Pa_OpenDefaultStream(&m_stream,
 	                                0, /* no input channels */
@@ -310,15 +311,15 @@ void SoundLayer::onAttach()
 	                                paFloat32, /* 32 bit floating point output */
 	                                musicStream.getRate(),
 	                                FRAME_SAMPLE_SIZE, /* frames per buffer, i.e. the number
-						   of sample frames that PortAudio will
-						   request from the callback. Many apps
-						   may want to use
-						   paFramesPerBufferUnspecified, which
-						   tells PortAudio to pick the best,
-						   possibly changing, buffer size.*/
+   of sample frames that PortAudio will
+   request from the callback. Many apps
+   may want to use
+   paFramesPerBufferUnspecified, which
+   tells PortAudio to pick the best,
+   possibly changing, buffer size.*/
 	                                paMusicCallback, /* this is your callback function */
 	                                &data); /*This is a pointer that will be passed to
-						   your callback*/
+   your callback*/
 
 
 	checkSoundError(err);
@@ -335,10 +336,10 @@ void SoundLayer::onDetach()
 	ND_PROFILE_END_SESSION();
 	/*PaError err = paNoError;
 	if (m_stream && Pa_IsStreamActive(m_stream))
-		err = Pa_StopStream(m_stream);
+	    err = Pa_StopStream(m_stream);
 	checkSoundError(err);
 	if (microStream && Pa_IsStreamActive(microStream))
-		err = Pa_StopStream(microStream);
+	    err = Pa_StopStream(microStream);
 	checkSoundError(err);
 	err = Pa_Terminate();
 	checkSoundError(err);*/
@@ -366,7 +367,7 @@ void SoundLayer::onImGuiRender()
 	static bool isRecording = false;
 
 	static AudioStateMap audioMap;
-	static int currentTick=0;
+	static int currentTick = 0;
 	static float vol = 0.2;
 	//ImGui::SetNextWindowSize(ImVec2(400, 500), ImGuiCond_FirstUseEver);
 	int delayPlay = 0;
@@ -416,33 +417,30 @@ void SoundLayer::onImGuiRender()
 			delayPlay--;
 		ImGui::SliderFloat("Volume", &vol, 0, 2);
 
-		
-			
-		
-		
+
 		/*if (ImGui::SmallButton("Play"))
 		{
-			data.isPlaying = true;
+		    data.isPlaying = true;
 		}
 		ImGui::SameLine();
 		if (ImGui::SmallButton("Pause"))
 		{
-			data.isPlaying = false;
+		    data.isPlaying = false;
 		}
 
 		static float volumeZoom = 1;
-		
+
 		ImGui::SliderFloat("Frequency", &data.timeSpeed, 0, 0.1);
 		int startIndex = 0;
 		float threshold = 0.05;
 		float* samples = data.samples + (data.sampleIndex < SAMPLE_SIZE ? SAMPLE_SIZE : 0);
 		for (int i = 0; i < SAMPLE_SIZE / 10; ++i)
 		{
-			if ((samples[i] < threshold && samples[i] > -threshold) && (samples[i] < samples[i + 2]))
-			{
-				startIndex = i;
-				break;
-			}
+		    if ((samples[i] < threshold && samples[i] > -threshold) && (samples[i] < samples[i + 2]))
+		    {
+		        startIndex = i;
+		        break;
+		    }
 		}
 
 		ImGui::PlotLines("LeftChannel", samples + startIndex, SAMPLE_SIZE * 0.9f, 0, 0, -1 / volumeZoom, 1 / volumeZoom,
@@ -452,16 +450,16 @@ void SoundLayer::onImGuiRender()
 		ImGui::Value("TimeOfMusic: ", (int)(musicStream.getCurrentMillis()/1000));
 		if (ImGui::SmallButton("Reset time"))
 		{
-			data.time = 0;
+		    data.time = 0;
 		}
 		ImGui::Value("Error: ", data.error);
 
 		static bool wasZero = false;
 		if (data.buffer->getAvailableReads() == 0)
-			wasZero = true;
+		    wasZero = true;
 		if (wasZero)
-			ImGui::LabelText("jv", "was zero");
-		
+		    ImGui::LabelText("jv", "was zero");
+
 		ImGui::Value("AvailableFrames: ", (int)data.buffer->getAvailableReads());
 
 		static int lastSampleIndex = 0;
@@ -473,14 +471,14 @@ void SoundLayer::onImGuiRender()
 		//static float frequenciesAbsolute[freqSize/2];
 
 		if ((lastSampleIndex >= SAMPLE_SIZE && data.sampleIndex < SAMPLE_SIZE) || (lastSampleIndex < SAMPLE_SIZE && data
-			.sampleIndex >= SAMPLE_SIZE))
+		    .sampleIndex >= SAMPLE_SIZE))
 		{
-			//ft(samples, SAMPLE_SIZE, frequencies, freqSize, SAMPLE_RATE, freqReach);
+		    //ft(samples, SAMPLE_SIZE, frequencies, freqSize, SAMPLE_RATE, freqReach);
 		}
 		lastSampleIndex = data.sampleIndex;
 		ImGui::PlotLines("FT", frequencies, freqSize, 0, 0, 0, 1 / freqVolume,
 		                 ImVec2(0, 100));
-		
+
 
 		ImGui::SliderFloat("FreqVol", &freqVolume, 1, 50);
 		ImGui::SliderFloat("FreqReach", &freqReach, 10, 5000);
@@ -491,7 +489,7 @@ void SoundLayer::onImGuiRender()
 		ImGui::Value("cached sounds:", Sounder::get().getSoundBufferCount());
 		ImGui::Separator();
 #if SOUNDER_DEBUG_INFO
-		ImGui::TextColored({ 0,1,0,1 }, "Current Streams:");
+		ImGui::TextColored({0, 1, 0, 1}, "Current Streams:");
 		if (currentTick++ > 15)
 		{
 			currentTick = 0;
@@ -507,27 +505,25 @@ void SoundLayer::onImGuiRender()
 				ImGui::Value("Vol", audio.second.volume);
 				ImGui::Value("Pitch", audio.second.pitch);
 				ImGui::Value("Loop", audio.second.looping);
-				ImGui::Value("Timestamp", (int)(audio.second.timestamp/1000));
+				ImGui::Value("Timestamp", (int)(audio.second.timestamp / 1000));
 				ImGui::Value("Spatial", audio.second.spatialMultiplier);
 				ImGui::EndTooltip();
 			}
 		}
 #endif
-
-	
-
-		}
+	}
 	ImGui::End();
 }
 
 void SoundLayer::onEvent(Event& e)
 {
 	auto ee = dynamic_cast<MessageEvent*>(&e);
-	if(ee)
+	if (ee)
 	{
 		if (ee->isTitle("openSoundLayer"))
 			ImGUIopen = true;
 		else if (ee->isTitle("closeSoundLayer"))
 			ImGUIopen = false;
 	}
+}
 }

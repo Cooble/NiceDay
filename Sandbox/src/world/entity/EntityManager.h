@@ -18,7 +18,7 @@ private:
 	std::deque<uint32_t> m_freeList;
 	std::vector<uint8_t> m_generations;
 	std::vector<WorldEntity*> m_p_entities;
-	NDUtil::Bitset m_loaded;
+	NDUtils::Bitset m_loaded;
 private:
 	inline uint32_t index(EntityID e) { return e >> 8; }
 	inline uint32_t generation(EntityID e) { return ((uint8_t)e); }
@@ -78,6 +78,6 @@ public:
 		return m_p_entities[index(e)];
 	}
 
-	void serialize(const IBinaryStream::RWStream& stream);
-	void deserialize(const IBinaryStream::RWStream& stream);
+	void serialize(const nd::IBinaryStream::RWStream& stream);
+	void deserialize(const nd::IBinaryStream::RWStream& stream);
 };

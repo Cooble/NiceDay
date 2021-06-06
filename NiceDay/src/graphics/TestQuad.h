@@ -3,14 +3,16 @@
 #include "API/Buffer.h"
 #include "API/VertexArray.h"
 
+namespace nd {
+
 struct TestQuad
 {
 	ShaderPtr shader;
 	VertexBuffer* vbo;
 	VertexArray* vao;
 public:
-	TestQuad(bool centered=false);
+	TestQuad(bool centered = false);
 	~TestQuad();
 	void render(const glm::mat4& transform);
-	
 };
+}

@@ -2,6 +2,7 @@
 #include "event/ControlMap.h"
 #include "event/KeyEvent.h"
 
+using namespace nd;
 
 ControlType Controls::SPAWN_ENTITY=			(ControlType)KeyCode::E;
 ControlType Controls::DROP_ITEM =			(ControlType)KeyCode::Q;

@@ -2,6 +2,7 @@
 #include "core/NBT.h"
 #include "platform/OpenGL/GLShader.h"
 
+namespace nd {
 
 Material::MaterialPtr Material::create(const MaterialInfo& info)
 {
@@ -63,7 +64,7 @@ void Material::bind(int slotBindingOffset, const ShaderPtr& shader)
 	if (!m_layout)
 		return;
 	int localTexIdx = 0;
-	auto sh = std::static_pointer_cast<GLShader>(sha);
+	auto sh = std::static_pointer_cast<internal::GLShader>(sha);
 	for (auto& element : m_layout->elements)
 	{
 		/*if(shader)//skip uniforms which dont exist in shader
@@ -138,7 +139,8 @@ void Material::updateLayoutFromShader()
 }
 
 Material::Material(const MaterialInfo& info)
-	: m_name(info.name), m_shader(info.shader), m_flags(info.flags), m_structName(info.structName),m_id(StringId(info.name)())
+	: m_id(StringId(info.name)()), m_name(info.name), m_structName(info.structName), m_shader(info.shader),
+	  m_flags(info.flags)
 {
 	ASSERT((info.shader || info.layout)&& !(info.shader && info.layout), "You need to specify shader xor layout");
 	if (!info.shader)
@@ -230,7 +232,7 @@ MaterialPtr Material::deserialize(NBT& nbt)
 				if (info.file_path.empty())
 					break;
 
-				TexturePtr ptr = std::shared_ptr<Texture>(Texture::create(info));
+				auto ptr = std::shared_ptr<Texture>(Texture::create(info));
 				mat->setValue(element.name.substr(offsetSize), ptr);
 				break;
 			}
@@ -246,8 +248,8 @@ MaterialPtr Material::deserialize(NBT& nbt)
 
 
 static MaterialPtr invalid;
-static std::unordered_map<Strid,MaterialPtr> m_materials;
-static std::unordered_map<Strid,bool> m_dirties;
+static std::unordered_map<Strid, MaterialPtr> m_materials;
+static std::unordered_map<Strid, bool> m_dirties;
 
 MaterialPtr MaterialLibrary::getByName(const std::string& name)
 {
@@ -265,10 +267,10 @@ MaterialPtr MaterialLibrary::create(const MaterialInfo& info)
 		if (m_materials.find(SID(possibleName)) != m_materials.end())
 			possibleName = info.name + std::to_string(currentIndex++);
 		else break;
-	
+
 	MaterialInfo newMat{info.shader, info.structName, possibleName.c_str(), info.layout, info.flags};
 	auto mat = Material::create(newMat);
-	m_materials[SID(possibleName)]=mat;
+	m_materials[SID(possibleName)] = mat;
 	m_dirties[SID(possibleName)] = true;
 	return mat;
 }
@@ -280,7 +282,6 @@ MaterialPtr MaterialLibrary::copy(const MaterialPtr& mat, const std::string& new
 	m_dirties[out->getID()] = true;
 
 	return out;
-
 }
 
 void MaterialLibrary::save(MaterialPtr& ptr, const std::string& path)
@@ -300,7 +301,7 @@ MaterialPtr MaterialLibrary::loadOrGet(const std::string& filepath)
 	if (e.size() == 0)
 		return invalid;
 	auto m = Material::deserialize(e);
-	m_materials[m->getID()]=m;
+	m_materials[m->getID()] = m;
 	m_dirties[m->getID()] = true;
 
 	return m;
@@ -311,15 +312,16 @@ void MaterialLibrary::clearUnused()
 	std::vector<Strid> toRemove;
 	toRemove.reserve(m_materials.size());
 	for (auto& material : m_materials)
-		if (material.second.use_count() == 1) 
+		if (material.second.use_count() == 1)
 			toRemove.push_back(material.first);
-	for (auto id : toRemove) {
+	for (auto id : toRemove)
+	{
 		m_materials.erase(id);
 		m_dirties.erase(id);
 	}
 }
 
-std::unordered_map<Strid,MaterialPtr>& MaterialLibrary::getList()
+std::unordered_map<Strid, MaterialPtr>& MaterialLibrary::getList()
 {
 	return m_materials;
 }
@@ -339,7 +341,9 @@ bool& MaterialLibrary::isDirty(Strid mat)
 	ASSERT(it != m_dirties.end(), "This material is not in lib");
 	return it->second;
 }
+
 static std::shared_ptr<Material> nullMat(nullptr);
+
 MaterialPtr& MaterialLibrary::get(Strid id)
 {
 	auto it = m_materials.find(id);
@@ -347,4 +351,5 @@ MaterialPtr& MaterialLibrary::get(Strid id)
 		return nullMat;
 	//ASSERT(it != m_materials.end(), "This material is not in lib");
 	return it->second;
+}
 }

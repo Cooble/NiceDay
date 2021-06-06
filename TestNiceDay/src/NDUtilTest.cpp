@@ -2,6 +2,9 @@
 #include "core/SUtil.h"
 #include "core/NBT.h"
 #include <nlohmann/json.hpp>
+
+using namespace nd;
+
 static void testNBT();
 static void testSUtil();
 static void testNBTSerialization();

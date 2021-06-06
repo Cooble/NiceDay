@@ -2,14 +2,21 @@
 #include <glad/glad.h>
 #include "graphics/GContext.h"
 
+namespace nd {
 struct VertexBufferElement
 {
 	g_typ typ;
 	bool normalized;
 	uint32_t count;
-	VertexBufferElement()=default;
-	VertexBufferElement(g_typ typ,uint32_t count,bool norm=false):typ(typ),normalized(norm),count(count){}
-	VertexBufferElement(g_typ typ, uint32_t count=1) :typ(typ), normalized(false), count(count) {}
+	VertexBufferElement() = default;
+
+	VertexBufferElement(g_typ typ, uint32_t count, bool norm = false) : typ(typ), normalized(norm), count(count)
+	{
+	}
+
+	VertexBufferElement(g_typ typ, uint32_t count = 1) : typ(typ), normalized(false), count(count)
+	{
+	}
 };
 
 class VertexBufferLayout
@@ -26,6 +33,7 @@ public:
 		m_elements.push_back(e);
 		m_stride += GTypes::getSize(e.typ) * e.count;
 	}
+
 	const std::vector<VertexBufferElement>& getElements() const { return m_elements; }
 	unsigned int getStride() const { return m_stride; }
 };
@@ -47,7 +55,7 @@ public:
 	virtual void unbind() const = 0;
 	virtual void bind() const = 0;
 	virtual uint32_t getSize() const = 0;
-	virtual void setLayout(const VertexBufferLayout& layout)  { this->m_layout = layout; }
+	virtual void setLayout(const VertexBufferLayout& layout) { this->m_layout = layout; }
 	virtual const VertexBufferLayout& getLayout() const { return m_layout; }
 	virtual void changeData(char* buff, uint32_t size, uint32_t offset) = 0;
 	virtual void* mapPointer() = 0;
@@ -63,5 +71,6 @@ public:
 	virtual void unbind() const = 0;
 	virtual void bind() const = 0;
 	virtual uint32_t getCount() const = 0;
-	static IndexBuffer* create(uint32_t* vertices, uint32_t count,BufferUsage = BufferUsage::STATIC_DRAW);
+	static IndexBuffer* create(uint32_t* vertices, uint32_t count, BufferUsage = BufferUsage::STATIC_DRAW);
 };
+}

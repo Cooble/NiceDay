@@ -7,7 +7,9 @@
 #include "graphics/Effect.h"
 
 
+namespace nd {
 class BatchRenderer2D;
+}
 
 struct BiomeDistances
 {
@@ -27,46 +29,46 @@ const int BLOCK_PIXEL_SIZE = 16;
 class WorldRenderManager
 {
 private:
-	TestQuad* m_test_quad;
-	ShaderPtr m_sky_program;
+	nd::TestQuad* m_test_quad;
+	nd::ShaderPtr m_sky_program;
 
-	FrameBufferTexturePair* m_fbo_pair;
-	GreenFilter* m_green_filter;
-	GaussianBlurMultiple* m_blur;
-	ScaleEdgesEffect* m_edge;
-	AlphaMaskEffect* m_block_mask;
-
-	//background
-	FrameBuffer* m_bg_fbo;
-	FrameBuffer* m_bg_layer_fbo;
+	nd::FrameBufferTexturePair* m_fbo_pair;
+	nd::GreenFilter* m_green_filter;
+	nd::GaussianBlurMultiple* m_blur;
+	nd::ScaleEdgesEffect* m_edge;
+	nd::AlphaMaskEffect* m_block_mask;
 
 	//background
-	FrameBuffer* m_bg_sky_fbo;
+	nd::FrameBuffer* m_bg_fbo;
+	nd::FrameBuffer* m_bg_layer_fbo;
+
+	//background
+	nd::FrameBuffer* m_bg_sky_fbo;
 
 
 	//light stuff
 	LightCalculator& m_light_calculator;
-	
-	FrameBuffer* m_light_fbo;
+
+	nd::FrameBuffer* m_light_fbo;
 	//FrameBuffer* m_light_smooth_fbo;
-	FrameBuffer* m_block_fbo;
-	FrameBuffer* m_wall_fbo;
-	FrameBuffer* m_sky_fbo;
-	FrameBuffer* m_entity_fbo;
+	nd::FrameBuffer* m_block_fbo;
+	nd::FrameBuffer* m_wall_fbo;
+	nd::FrameBuffer* m_sky_fbo;
+	nd::FrameBuffer* m_entity_fbo;
 
 
 	//FrameBuffer* m_light_FBO;
 	
 	//Texture* m_light_texture;
-	Texture* m_light_simple_texture;
-	Texture* m_light_sky_simple_texture;
-	Texture* m_block_mask_texture;
+	nd::Texture* m_light_simple_texture;
+	nd::Texture* m_light_sky_simple_texture;
+	nd::Texture* m_block_mask_texture;
 
-	ShaderPtr m_light_program;
-	ShaderPtr m_light_simple_program;
+	nd::ShaderPtr m_light_program;
+	nd::ShaderPtr m_light_simple_program;
 
-	VertexBuffer* m_light_VBO;
-	VertexArray* m_light_VAO;
+	nd::VertexBuffer* m_light_VBO;
+	nd::VertexArray* m_light_VAO;
 	//end of light
 
 	//converts from camera space to screen space (-1,-1,1,1)
@@ -86,7 +88,7 @@ private:
 	int m_light_chunk_height;
 	int getChunkIndex(int cx, int cy);
 	glm::vec4 getSkyColor(float y);
-	void renderBiomeBackgroundToFBO(BatchRenderer2D& batchRenderer);
+	void renderBiomeBackgroundToFBO(nd::BatchRenderer2D& batchRenderer);
 public:
 	
 	WorldRenderManager(Camera* cam,World* world);
@@ -96,9 +98,9 @@ public:
 	void refreshChunkList();
 	//todo make this on different thread
 	void update();
-	void render(BatchRenderer2D& batchRenderer,FrameBuffer* fbo);
+	void render(nd::BatchRenderer2D& batchRenderer, nd::FrameBuffer* fbo);
 	void renderLightMap();
-	void applyLightMap(const Texture* lightmap,FrameBuffer* fbo);
+	void applyLightMap(const nd::Texture* lightmap, nd::FrameBuffer* fbo);
 	int getChunksSize() const { return m_chunk_width * m_chunk_height; }
 	std::unordered_map<int, int>& getMap() { return m_offset_map; }
 	const glm::mat4& getProjMatrix() { return m_proj_matrix; }
@@ -106,9 +108,9 @@ public:
 	//const Texture* getLightTextureSmooth() { return m_light_smooth_fbo->getAttachment(0); }
 	//Texture* getLightTextureBlur() { return m_blur->getTexture(); }
 	
-	const Texture* getLightTextureBlur() { return m_light_fbo->getAttachment(1); }
+	const nd::Texture* getLightTextureBlur() { return m_light_fbo->getAttachment(1); }
 	
-	const Texture* getLightTextureHard() { return m_light_fbo->getAttachment(0); }
+	const nd::Texture* getLightTextureHard() { return m_light_fbo->getAttachment(0); }
 	auto* getEntityFBO() { return m_entity_fbo; }
 };
 

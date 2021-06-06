@@ -7,6 +7,7 @@
 #include "memory/RingBuffer.h"
 #include "core/sids.h"
 
+namespace nd {
 struct vorbis_stream
 {
 	vorbis_info info;
@@ -88,7 +89,7 @@ public:
 	// frees all current data
 	// pass memory to be used instead of malloc()
 	void allocate(size_t samplesTotal, const vorbis_info& info, float* memory = nullptr);
-	inline bool isFilled()const { return m_current_write_head >= m_samples_total; }
+	inline bool isFilled() const { return m_current_write_head >= m_samples_total; }
 
 	// you need to call allocate first
 	// will add partial data to buffer
@@ -104,9 +105,8 @@ public:
 	size_t getTotalSamples() const { return m_samples_total * m_info.channels; }
 	float* getData() { return m_buffer; }
 	Strid getID() const { return m_id; }
-
-
 };
+
 /**
  * Represents partial data of sound
  * storing as float values in mono
@@ -164,10 +164,10 @@ public:
 	// fills the ring buffer until its full or maxFrames is reached
 	// it can also fill the optional consumer with the same data if not nullptr
 	// returns true end of stream
-	bool readNext(int maxFrames, NDUtil::RingBufferLite& ringBuffer, SoundBuffer* optionalConsumer = nullptr);
+	bool readNext(int maxFrames, Utils::RingBufferLite& ringBuffer, SoundBuffer* optionalConsumer = nullptr);
 	// not implemented
 	// worked without VorbisFile
-	bool readNextOld(int maxFrames, NDUtil::RingBufferLite& ringBuffer);
+	bool readNextOld(int maxFrames, Utils::RingBufferLite& ringBuffer);
 
 	inline bool isOpened() const { return m_is_opened; }
 	inline bool isDone() const { return m_is_done; }
@@ -187,3 +187,4 @@ public:
 
 	size_t getTotalSamples() const { return m_total_samples; }
 };
+}

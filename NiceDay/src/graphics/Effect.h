@@ -6,6 +6,8 @@
 #include "API/Shader.h"
 #include "platform/OpenGL/GLShader.h"
 
+namespace nd {
+
 class Effect
 {
 private:
@@ -37,17 +39,17 @@ public:
 		};
 		s_vbo = VertexBuffer::create(f, sizeof(f));
 		VertexBufferLayout layout{
-			g_typ::VEC2,//pos
-			g_typ::VEC2,//uv
+			g_typ::VEC2, //pos
+			g_typ::VEC2, //uv
 		};
 		s_vbo->setLayout(layout);
 		s_vao = VertexArray::create();
 		s_vao->addBuffer(*s_vbo);
 
 		s_shader = ShaderLib::loadOrGetShader("res/shaders/TextureQuad.shader");
-		auto sh = std::static_pointer_cast<GLShader>(s_shader);
+		auto sh = std::static_pointer_cast<internal::GLShader>(s_shader);
 		sh->bind();
-		sh->setUniformMat4("transform",glm::mat4(1.0f));
+		sh->setUniformMat4("transform", glm::mat4(1.0f));
 		sh->unbind();
 	}
 
@@ -61,7 +63,7 @@ public:
 	static void renderDefaultVAO();
 
 	// draws texture on whole screen
-	static void render(const Texture* t,FrameBuffer* fbo);
+	static void render(const Texture* t, FrameBuffer* fbo);
 };
 
 class FrameBufferTexturePair
@@ -81,7 +83,7 @@ public:
 		m_texture = t;
 
 		m_fbo->bind();
-		m_fbo->attachTexture(m_texture->getID(),0);
+		m_fbo->attachTexture(m_texture->getID(), 0);
 		m_fbo->unbind();
 	}
 
@@ -90,6 +92,7 @@ public:
 	void unbind() const;
 	inline Texture* getTexture() { return m_texture; }
 };
+
 class SingleTextureEffect
 {
 protected:
@@ -103,18 +106,20 @@ public:
 
 	void replaceTexture(const TextureInfo& targetTexture)
 	{
-		if(m_output_texture)
+		if (m_output_texture)
 			delete m_output_texture;
 		m_output_texture = Texture::create(targetTexture);
 		m_fbo->bind();
 		m_fbo->attachTexture(m_output_texture->getID(), 0);
 		m_fbo->unbind();
 	}
+
 	auto getFBO() { return m_fbo; }
 	void defaultBind();
 	void defaultUnbind();
 };
-class AlphaMaskEffect:public SingleTextureEffect
+
+class AlphaMaskEffect : public SingleTextureEffect
 {
 private:
 	ShaderPtr getShader()
@@ -124,7 +129,7 @@ private:
 		{
 			s = ShaderLib::loadOrGetShader("res/shaders/AlphaMask.shader");
 			s->bind();
-			std::static_pointer_cast<GLShader>(s)->setUniform1i("u_attachment", 0); //txture input
+			std::static_pointer_cast<internal::GLShader>(s)->setUniform1i("u_attachment", 0); //txture input
 			s->unbind();
 		}
 		return s;
@@ -137,7 +142,8 @@ public:
 
 	void render(const Texture* t, bool toFBO = true);
 };
-class ScaleEdgesEffect:public SingleTextureEffect
+
+class ScaleEdgesEffect : public SingleTextureEffect
 {
 private:
 	ShaderPtr getShader()
@@ -147,7 +153,7 @@ private:
 		{
 			s = ShaderLib::loadOrGetShader("res/shaders/ScaleEdge.shader");
 			s->bind();
-			std::static_pointer_cast<GLShader>(s)->setUniform1i("u_attachment", 0); //txture input
+			std::static_pointer_cast<internal::GLShader>(s)->setUniform1i("u_attachment", 0); //txture input
 			s->unbind();
 		}
 		return s;
@@ -158,10 +164,10 @@ public:
 	ScaleEdgesEffect(const TextureInfo& targetTexture);
 	~ScaleEdgesEffect() = default;
 
-	void render(const Texture* t,float scale, bool toFBO = true);
+	void render(const Texture* t, float scale, bool toFBO = true);
 };
 
-class GreenFilter :public SingleTextureEffect
+class GreenFilter : public SingleTextureEffect
 {
 private:
 	ShaderPtr getShader()
@@ -195,18 +201,19 @@ protected:
 		{
 			s = ShaderLib::loadOrGetShader("res/shaders/Blur.shader");
 			s->bind();
-			std::static_pointer_cast<GLShader>(s)->setUniform1i("u_attachment", 0); //txture input
+			std::static_pointer_cast<internal::GLShader>(s)->setUniform1i("u_attachment", 0); //txture input
 			s->unbind();
 		}
 		return s;
 	}
 };
+
 class FrameBufferPingPong
 {
 private:
 	FrameBuffer* m_fbos[2];
 	Texture* m_textures[2];
-	int m_currentRenderTarget=0;
+	int m_currentRenderTarget = 0;
 #ifdef ND_DEBUG
 	bool isBounded = false;
 #endif
@@ -217,17 +224,17 @@ public:
 	Texture* getOutputTexture();
 
 	void bind();
-	
+
 	// changes current bounded fbo
 	// bind() call is required
 	void flip();
 	void unbind();
 };
+
 namespace Effecto {
 	class Blurer
 	{
 	private:
-		
 	public:
 		static ShaderPtr getShader()
 		{
@@ -236,61 +243,59 @@ namespace Effecto {
 			{
 				s = ShaderLib::loadOrGetShader("res/shaders/Blur.shader");
 				s->bind();
-				std::static_pointer_cast<GLShader>(s)->setUniform1i("u_attachment", 0); //txture input
+				std::static_pointer_cast<internal::GLShader>(s)->setUniform1i("u_attachment", 0); //txture input
 				s->unbind();
 			}
 			return s;
 		}
+
 		static void blur(FrameBufferPingPong& fbos, Texture* input, int repeats);
 	};
 
 
 }
 
-class HorizontalBlur : GaussBlurShader,public SingleTextureEffect
+class HorizontalBlur : GaussBlurShader, public SingleTextureEffect
 {
-
 public:
 	HorizontalBlur(const TextureInfo& targetTexture);
 	~HorizontalBlur() = default;
 
 	void render(const Texture* t, bool toFBO = true);
 };
+
 class VerticalBlur : GaussBlurShader, public SingleTextureEffect
 {
-
 public:
 	VerticalBlur(const TextureInfo& targetTexture);
 	~VerticalBlur() = default;
 
 	void render(const Texture* t, bool toFBO = true);
 };
+
 class GaussianBlur
 {
 	HorizontalBlur m_hor;
 	VerticalBlur m_vert;
 public:
-
 	GaussianBlur(const TextureInfo& targetTexture);
 	void render(const Texture* t, bool toFBO = true);
 	inline Texture* getTexture() { return m_vert.getTexture(); }
-	
+
 	inline void replaceTexture(const TextureInfo& targetTexture)
 	{
 		m_hor.replaceTexture(targetTexture);
 		m_vert.replaceTexture(targetTexture);
 	}
-
-
 };
+
 class GaussianBlurMultiple
 {
 	std::vector<GaussianBlur> m_list;
 	std::vector<float> m_scales;
 public:
-
 	GaussianBlurMultiple(const TextureInfo& targetTexture, std::initializer_list<float> scales);
-	
+
 	void render(const Texture* t);
 
 	inline void replaceTexture(const TextureInfo& targetTexture)
@@ -305,9 +310,9 @@ public:
 		}
 	}
 
-	inline Texture* getTexture() 
+	inline Texture* getTexture()
 	{
-		return  m_list[m_list.size() - 1].getTexture();
+		return m_list[m_list.size() - 1].getTexture();
 	}
-
 };
+}

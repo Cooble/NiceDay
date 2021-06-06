@@ -1,8 +1,12 @@
 #include "ndpch.h"
 #include "Sprite2D.h"
+
+#include "graphics/API/Buffer.h"
+#include "graphics/API/Texture.h"
+#include "graphics/API/VertexArray.h"
 #include "platform/OpenGL/GLShader.h"
 
-
+using namespace nd;
 VertexBuffer* Sprite2D::s_vbo=nullptr;
 VertexArray* Sprite2D::s_vao;
 ShaderPtr Sprite2D::s_program;
@@ -25,8 +29,8 @@ void Sprite2D::init()
 
 	s_program = ShaderLib::loadOrGetShader("res/shaders/Sprite2D.shader");
 	s_program->bind();
-	std::static_pointer_cast<GLShader>(s_program)->setUniform1i("u_texture", 0);
-	std::static_pointer_cast<GLShader>(s_program)->setUniform1f("u_alpha", 1);
+	std::static_pointer_cast<internal::GLShader>(s_program)->setUniform1i("u_texture", 0);
+	std::static_pointer_cast<internal::GLShader>(s_program)->setUniform1f("u_alpha", 1);
 	s_program->unbind();
 }
 

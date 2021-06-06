@@ -15,9 +15,6 @@
 
 class IChunkProvider;
 
-
-
-
 constexpr int DYNAMIC_ID_ENTITY_MANAGER = std::numeric_limits<int>::max() - 0;
 constexpr int DYNAMIC_ID_WORLD_NBT = std::numeric_limits<int>::max() - 1;
 
@@ -46,7 +43,7 @@ private:
 	int m_biome;
 
 	//multithreading light
-	JobAssignment m_light_job;
+	nd::JobAssignment m_light_job;
 
 public:
 	friend class World;
@@ -72,7 +69,7 @@ public:
 		else m_flags &= ~CHUNK_LOCKED_FLAG;
 	}
 
-	JobAssignment& getLightJob() { return m_light_job; }
+	nd::JobAssignment& getLightJob() { return m_light_job; }
 
 	BlockStruct& block(int x, int y)
 	{
@@ -146,7 +143,7 @@ public:
 	class ChunkHeader
 	{
 		ChunkID m_chunkId = std::numeric_limits<int>::max();
-		JobAssignment m_job;
+		nd::JobAssignment m_job;
 		ChunkState m_state = UNLOADED;
 
 		// whether you can call setBlock etc.
@@ -168,8 +165,8 @@ public:
 		}
 		
 		ChunkID getChunkID() const { return m_chunkId; }
-		JobAssignmentP getJob() { return &m_job; }
-		const JobAssignment& getJobConst() const { return m_job; }
+		nd::JobAssignmentP getJob() { return &m_job; }
+		const nd::JobAssignment& getJobConst() const { return m_job; }
 
 		bool isFree() const
 		{
@@ -189,14 +186,14 @@ public:
 	float m_time_speed = 1;
 	bool m_dayNightCycleEnable = true;
 private:
-	NDUtil::Bitset m_is_chunk_gen_map;
+	nd::Utils::Bitset m_is_chunk_gen_map;
 	LightCalculator m_light_calc;
 	WorldGen m_gen;
 	std::vector<Chunk> m_chunks;
 	// will be set to true after first batch of chunks is generated (used to start light snapshots)
 	bool m_first_chunks_generated=false;
 	std::vector<ChunkHeader> m_chunk_headers;
-	NBT m_world_nbt;
+	nd::NBT m_world_nbt;
 	IChunkProvider* m_chunk_provider;
 	ThreadedWorldGen m_threaded_gen;
 
@@ -213,7 +210,7 @@ private:
 
 	// needs to be created outside world and set
 	ParticleManager* m_particle_manager = nullptr;
-	DynamicSaver m_nbt_saver;
+	nd::DynamicSaver m_nbt_saver;
 
 	std::vector<EntityID> m_entity_array;
 	std::unordered_map<int64_t, EntityID> m_tile_entity_map;
@@ -229,14 +226,14 @@ private:
 	void onBlocksChange(int x, int y, int deep = 0);
 	void onWallsChange(int xx, int yy, BlockStruct& blok);
 	int getNextFreeChunkIndex(int startSearchIndex = 0);
-	void genChunks(defaultable_map<int, int, 0>& toUpdateChunks);
-	void updateLight(defaultable_map<int, int, 0>& toUpdateChunks);
+	void genChunks(nd::defaultable_map<int, int, 0>& toUpdateChunks);
+	void updateLight(nd::defaultable_map<int, int, 0>& toUpdateChunks);
 
-	void loadEntFinal(defaultable_map<int, int, 0>& toUpdateChunks, std::vector<int>& chunkEntitiesToLoad);
+	void loadEntFinal(nd::defaultable_map<int, int, 0>& toUpdateChunks, std::vector<int>& chunkEntitiesToLoad);
 
-	JobAssignmentP loadEntities2(std::vector<int>& chunksToLoad);
-	
-	JobAssignmentP updateBounds2(defaultable_map<int, int, 0>& toUpdateChunks);
+	nd::JobAssignmentP loadEntities2(std::vector<int>& chunksToLoad);
+
+	nd::JobAssignmentP updateBounds2(nd::defaultable_map<int, int, 0>& toUpdateChunks);
 	void loadLightResources(int x, int y);
 
 	ChunkState getChunkState(int chunkID)
@@ -387,7 +384,7 @@ public:
 	const WorldInfo& getInfo() const { return m_info; };
 	const std::string& getFilePath() const { return m_file_path; }
 	auto& modifyInfo() { return m_info; }
-	NBT& getWorldNBT() { return m_world_nbt; }
+	nd::NBT& getWorldNBT() { return m_world_nbt; }
 	WorldGen& getWorldGen() { return m_gen; }
 
 	//================ENTITY========================================
@@ -412,11 +409,12 @@ public:
 
 	WorldEntity* getLoadedTileEntity(int x, int y)
 	{
-		auto f = m_tile_entity_map.find(Phys::toInt64(x,y));
+		auto f = m_tile_entity_map.find(ndPhys::toInt64(x,y));
 		if (f == m_tile_entity_map.end())
 			return nullptr;
 		return m_entity_manager.entity(f->second);
 	}
+
 	nd::temp_vector<WorldEntity*> getEntitiesInRadius(const glm::vec2& pos,float radius);
 	nd::temp_vector<WorldEntity*> getEntitiesAtLocation(const glm::vec2& pos);
 	const auto& getLoadedEntities() { return m_entity_array; }
@@ -470,11 +468,11 @@ public:
 public:
 	// saves everything except for loaded chunks (and entities in those chunks)
 	// return true if success
-	JobAssignmentP saveWorld();
+	nd::JobAssignmentP saveWorld();
 
 	// loads everything except for chunks
 	// return true if success
-	JobAssignmentP loadWorld();
+	nd::JobAssignmentP loadWorld();
 
 	// creates all neccessary world files and stuff
 	// no chunk generation

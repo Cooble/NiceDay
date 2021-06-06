@@ -5,7 +5,10 @@
 #include "font/FontParser.h"
 #include "font/TextBuilder.h"
 
+namespace nd {
+
 typedef int FontResourceID;
+
 struct FontResource
 {
 	FontResourceID id;
@@ -13,6 +16,7 @@ struct FontResource
 	Texture* texture;
 	Font* font;
 };
+
 class FontObject
 {
 private:
@@ -20,7 +24,6 @@ private:
 	VertexArray* m_vao;
 	VertexBuffer* m_vbo;
 public:
-
 	FontObject(int size);
 	inline auto& getTextMesh() { return m_textMesh; }
 
@@ -28,3 +31,4 @@ public:
 	void bind();
 	void unbind();
 };
+}

@@ -4,9 +4,7 @@
 #include <algorithm>
 #include <fstream>
 
-#include <thread>
-
-
+namespace nd {
 struct ProfileResult
 {
 	std::string name;
@@ -54,24 +52,24 @@ private:
 	std::string m_name;
 	long long m_startTimepoint;
 	bool m_stopped;
-	
+
 public:
 	ScoperTimer(const char* name)
 		: m_name(name), m_stopped(false)
 	{
 		auto now = std::chrono::time_point_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now())
-			.time_since_epoch().count();
-		
+		           .time_since_epoch().count();
+
 		thread_local long long lastStart = 0;
-		
+
 		m_startTimepoint = now;
-		
-		if(m_startTimepoint==lastStart)//we must not allow two timers to start at once (due to high granularity of high_res_clock)
+
+		if (m_startTimepoint == lastStart)
+			//we must not allow two timers to start at once (due to high granularity of high_res_clock)
 		{
 			++m_startTimepoint;
 		}
 		lastStart = m_startTimepoint;
-		
 	}
 
 	~ScoperTimer()
@@ -111,8 +109,8 @@ public:
 #define TOKENPASTE(x, y) x ## y
 #define TOKENPASTE2(x, y) TOKENPASTE(x, y)
 
-#define ND_PROFILE_BEGIN_SESSION(name, filepath)  ::Scoper::get().beginSession(name, filepath)
-#define ND_PROFILE_END_SESSION() ::Scoper::get().endSession()
+#define ND_PROFILE_BEGIN_SESSION(name, filepath)  ::nd::Scoper::get().beginSession(name, filepath)
+#define ND_PROFILE_END_SESSION() ::nd::Scoper::get().endSession()
 #define ND_PROFILE_SCOPE(name) ScoperTimer TOKENPASTE2(scoperTim, __LINE__)(name);
 #define ND_PROFILE_CALL(call) {ND_PROFILE_SCOPE(#call);call;}
 #define ND_PROFILE_METHOD() ND_PROFILE_SCOPE(ND_FUNC_SIG)
@@ -123,3 +121,4 @@ public:
 #define ND_PROFILE_CALL(call) call;
 #define ND_PROFILE_METHOD()
 #endif
+}

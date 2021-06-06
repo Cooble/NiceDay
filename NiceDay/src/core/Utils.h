@@ -3,8 +3,181 @@
 #include <bitset>
 
 
-namespace NDUtil
+struct half_int
 {
+	inline static std::string toString(half_int i)
+	{
+		return std::to_string(i) + ":[" + std::to_string(i.x) + ", " + std::to_string(i.y) + "]";
+	}
+
+
+	inline static int X(int i)
+	{
+		return ((half_int*)&i)->x;
+	}
+
+	inline static int Y(int i)
+	{
+		return ((half_int*)&i)->y;
+	}
+
+	union
+	{
+		int i;
+
+		const struct
+		{
+			short x; //lsb
+			short y; //msb
+		};
+	};
+
+	half_int()
+	{
+	}
+
+	half_int(int in) : i(in)
+	{
+	}
+
+	half_int(int xx, int yy) : x((short)xx), y((short)yy)
+	{
+	}
+
+	half_int plus(half_int v) const
+	{
+		return half_int(x + v.x, y + v.y);
+	}
+
+	half_int operator+(half_int v) const
+	{
+		return plus(v);
+	}
+
+	inline operator int() const
+	{
+		return i;
+	}
+};
+
+inline std::ostream& operator<<(std::ostream& stream, const half_int& v)
+{
+	auto s = half_int::toString(v);
+	stream.write(s.c_str(), s.size());
+	return stream;
+}
+
+struct quarter_int
+{
+	inline static int X(int i)
+	{
+		return ((quarter_int*)&i)->x;
+	}
+
+	inline static int Y(int i)
+	{
+		return ((quarter_int*)&i)->y;
+	}
+
+	inline static int Z(int i)
+	{
+		return ((quarter_int*)&i)->z;
+	}
+
+	inline static int W(int i)
+	{
+		return ((quarter_int*)&i)->w;
+	}
+
+	union
+	{
+		uint32_t i;
+
+		const struct
+		{
+			uint8_t x; //lsb
+			uint8_t y; //msb
+			uint8_t z; //msb
+			uint8_t w; //msb
+		};
+	};
+
+	quarter_int()
+	{
+	}
+
+	quarter_int(int in) : i(in)
+	{
+	}
+
+	quarter_int(int xx, int yy, int zz, int ww) : x((char)xx), y((char)yy), z((char)zz), w((char)ww)
+	{
+	}
+
+	quarter_int plus(quarter_int v) const
+	{
+		return quarter_int(x + v.x, y + v.y, z + v.z, w + v.w);
+	}
+
+	quarter_int operator+(quarter_int v) const
+	{
+		return plus(v);
+	}
+
+	inline operator int() const
+	{
+		return i;
+	}
+};
+
+inline half_int operator*(const half_int& f0, const int& f1)
+{
+	return half_int(f0.x * f1, f0.y * f1);
+}
+
+
+inline bool operator!=(const half_int& f0, const half_int& f1)
+{
+	return !(f0.i == f1.i);
+}
+
+inline bool operator==(const half_int& f0, const half_int& f1)
+{
+	return f0.i == f1.i;
+}
+
+inline bool operator!=(const half_int& f0, const int& f1)
+{
+	return !(f0.i == f1);
+}
+
+inline bool operator==(const half_int& f0, const int& f1)
+{
+	return f0.i == f1;
+}
+
+inline bool operator!=(const int& f0, const half_int& f1)
+{
+	return !(f0 == f1.i);
+}
+
+inline bool operator==(const int& f0, const half_int& f1)
+{
+	return f0 == f1.i;
+}
+
+inline bool operator!=(const quarter_int& f0, const quarter_int& f1)
+{
+	return !(f0.i == f1.i);
+}
+
+inline bool operator==(const quarter_int& f0, const quarter_int& f1)
+{
+	return f0.i == f1.i;
+}
+
+namespace nd {
+namespace Utils {
 	//List is dynamically allocated, will get bigger if more items are pushed
 	//1. push() items to list
 	//2. call popMode()
@@ -103,13 +276,13 @@ namespace NDUtil
 			if (m_last_size >= bits)
 				return;
 			m_last_size = bits;
-			
-			if ((bits % 32)!=0)
+
+			if ((bits % 32) != 0)
 				bits = (bits / 32) * 32 + 32;
 			if (m_bits.size() < (bits / 32))
 				m_bits.resize(bits / 32);
 		}
-		
+
 		inline void resizeHard(size_t bits)
 		{
 			m_last_size = bits;
@@ -122,13 +295,13 @@ namespace NDUtil
 
 		inline bool get(size_t index) const
 		{
-			ASSERT((index >> 5) < m_bits.size(), "Invalid index: {}",index);
+			ASSERT((index >> 5) < m_bits.size(), "Invalid index: {}", index);
 			return m_bits[index >> 5][index & ((1 << 5) - 1)];
 		}
 
 		inline void set(size_t index, bool val)
 		{
-			ASSERT((index >> 5) < m_bits.size(), "Invalid index {}",index);
+			ASSERT((index >> 5) < m_bits.size(), "Invalid index {}", index);
 			m_bits[index >> 5][index & ((1 << 5) - 1)] = val;
 		}
 
@@ -139,7 +312,7 @@ namespace NDUtil
 
 		inline void push_back(bool val)
 		{
-			resize(m_last_size+1);
+			resize(m_last_size + 1);
 			set(m_last_size - 1, val);
 		}
 
@@ -180,185 +353,15 @@ namespace NDUtil
 	}
 
 	template <typename T>
-	bool contains(const T& element,std::vector<T>& v)
+	bool contains(const T& element, std::vector<T>& v)
 	{
-		for (auto & a : v)
+		for (auto& a : v)
 		{
 			if (a == element)
 				return true;
 		}
 		return false;
 	}
-}
-
-struct half_int
-{
-	inline static std::string toString(half_int i)
-	{
-		return std::to_string(i) + ":[" + std::to_string(i.x) + ", " + std::to_string(i.y) + "]";
-	}
-	
-
-	inline static int X(int i)
-	{
-		return ((half_int*)&i)->x;
-	}
-
-	inline static int Y(int i)
-	{
-		return ((half_int*)&i)->y;
-	}
-
-	union
-	{
-		int i;
-
-		const struct
-		{
-			short x; //lsb
-			short y; //msb
-		};
-	};
-
-	half_int()
-	{
-	}
-
-	half_int(int in) : i(in)
-	{
-	}
-
-	half_int(int xx, int yy) : x((short)xx), y((short)yy)
-	{
-	}
-
-	half_int plus(half_int v) const
-	{
-		return half_int(x + v.x, y + v.y);
-	}
-
-	half_int operator+(half_int v) const
-	{
-		return plus(v);
-	}
-
-	inline operator int() const
-	{
-		return i;
-	}
-};
-inline std::ostream & operator<<(std::ostream& stream,const half_int& v) {
-	auto s = half_int::toString(v);
-	stream.write(s.c_str(), s.size());
-	return stream;
-}
-
-struct quarter_int
-{
-	inline static int X(int i)
-	{
-		return ((quarter_int*)&i)->x;
-	}
-
-	inline static int Y(int i)
-	{
-		return ((quarter_int*)&i)->y;
-	}
-
-	inline static int Z(int i)
-	{
-		return ((quarter_int*)&i)->z;
-	}
-
-	inline static int W(int i)
-	{
-		return ((quarter_int*)&i)->w;
-	}
-
-	union
-	{
-		uint32_t i;
-
-		const struct
-		{
-			uint8_t x; //lsb
-			uint8_t y; //msb
-			uint8_t z; //msb
-			uint8_t w; //msb
-		};
-	};
-
-	quarter_int()
-	{
-	}
-
-	quarter_int(int in) : i(in)
-	{
-	}
-
-	quarter_int(int xx, int yy, int zz, int ww) : x((char)xx), y((char)yy), z((char)zz), w((char)ww)
-	{
-	}
-
-	quarter_int plus(quarter_int v) const
-	{
-		return quarter_int(x + v.x, y + v.y, z + v.z, w + v.w);
-	}
-
-	quarter_int operator+(quarter_int v) const
-	{
-		return plus(v);
-	}
-
-	inline operator int() const
-	{
-		return i;
-	}
-};
-inline half_int operator*(const half_int& f0, const int& f1)
-{
-	return half_int(f0.x * f1, f0.y * f1);
-}
-
-
-inline bool operator!=(const half_int& f0, const half_int& f1)
-{
-	return !(f0.i == f1.i);
-}
-
-inline bool operator==(const half_int& f0, const half_int& f1)
-{
-	return f0.i == f1.i;
-}
-
-inline bool operator!=(const half_int& f0, const int& f1)
-{
-	return !(f0.i == f1);
-}
-
-inline bool operator==(const half_int& f0, const int& f1)
-{
-	return f0.i == f1;
-}
-
-inline bool operator!=(const int& f0, const half_int& f1)
-{
-	return !(f0 == f1.i);
-}
-
-inline bool operator==(const int& f0, const half_int& f1)
-{
-	return f0 == f1.i;
-}
-
-inline bool operator!=(const quarter_int& f0, const quarter_int& f1)
-{
-	return !(f0.i == f1.i);
-}
-
-inline bool operator==(const quarter_int& f0, const quarter_int& f1)
-{
-	return f0.i == f1.i;
 }
 
 struct iVec2D
@@ -512,9 +515,9 @@ public:
 
 	T& operator[](size_t idx)
 	{
-		if(idx>=size())
+		if (idx >= size())
 			resize(idx + 1);
-		
+
 		return at(idx);
 	}
 };
@@ -535,16 +538,23 @@ public:
 	// custom atomic variable to store some job state in
 	// normally used to store job success
 	// usually is equal to JOB_SUCCESS or JOB_FAILURE
-	std::atomic <int64_t> m_variable;
+	std::atomic<int64_t> m_variable;
 
 public:
-	JobAssignment() { m_main.store(0); m_worker.store(0); m_variable.store(0); }
+	JobAssignment()
+	{
+		m_main.store(0);
+		m_worker.store(0);
+		m_variable.store(0);
+	}
+
 	JobAssignment(const JobAssignment& a)
 	{
 		m_main.store(a.m_main);
 		m_worker.store(a.m_worker);
 		m_variable.store(a.m_variable);
 	}
+
 	JobAssignment& operator=(const JobAssignment& a)
 	{
 		m_main.store(a.m_main);
@@ -603,7 +613,7 @@ private:
 			m_wait_condition_variable.wait(loopLock);
 
 			bool runAgain = true;
-			while (runAgain&&m_is_running)
+			while (runAgain && m_is_running)
 			{
 				{
 					std::unique_lock<std::mutex> guard(m_queue_mutex);
@@ -694,4 +704,6 @@ public:
 		assignWork(&assignment, 1);
 	}
 };
+}
 
+namespace NDUtils = nd::Utils;

@@ -2,11 +2,13 @@
 #include "audio.h"
 #include "memory/Pool.h"
 #include "audio_header.h"
+
+namespace nd {
 // enables possibility to get currently playing list of streams using Sounder::getDebugInfo()
 #define SOUNDER_DEBUG_INFO 1
 
 //how big one soundbuffer can be 
-constexpr int SOUNDER_SOUND_BUFF_SAMPLE_MEMORY_SIZE = 44100 * 4 * 2;//rate * seconds * stereo
+constexpr int SOUNDER_SOUND_BUFF_SAMPLE_MEMORY_SIZE = 44100 * 4 * 2; //rate * seconds * stereo
 
 struct SoundBuff
 {
@@ -26,7 +28,7 @@ struct SoundData
 	std::atomic<float> volume;
 	float logVolume;
 	std::atomic<float> targetVolume;
-	float currentFloatSampleIndex=0;
+	float currentFloatSampleIndex = 0;
 	//how much should volume change per sample if(targetVolume!=volume) always positive
 	std::atomic<float> deltaRate = 0;
 	//is already log based
@@ -36,9 +38,10 @@ struct SoundData
 	std::atomic_bool shouldClose = false;
 	std::atomic_bool terminateOnFadeOut = false;
 	bool shouldLoop = false;
-	
+
 	float pitch = 1;
 };
+
 struct MusicData
 {
 	float left_phase;
@@ -46,7 +49,7 @@ struct MusicData
 
 
 	MusicStream file_stream;
-	NDUtil::RingBufferLite* ring_buffer;
+	Utils::RingBufferLite* ring_buffer;
 	std::atomic<float> volume;
 	std::atomic<float> pitch;
 	float logVolume;
@@ -78,6 +81,7 @@ struct Sound
 	SpatialData spatialData;
 	auto& soundBuffer() { return data.sound_buff; }
 };
+
 struct Music
 {
 	const bool isSound = false;
@@ -91,10 +95,10 @@ struct Music
 	JobAssignmentP optional_job = nullptr;
 	std::string fileName;
 	Strid sid = 0;
-	std::atomic_bool hasLoopRing=false;
-	std::atomic_bool shouldTerminate=false;
+	std::atomic_bool hasLoopRing = false;
+	std::atomic_bool shouldTerminate = false;
 	SpatialData spatialData;
-	
+
 	auto& musicStream() { return data.file_stream; }
 };
 
@@ -102,6 +106,7 @@ inline bool operator==(const SpatialData& lhs, const SpatialData& rhs)
 {
 	return lhs.pos == rhs.pos && rhs.maxDistances == lhs.maxDistances;
 }
+
 struct SoundAssignment
 {
 	enum
@@ -115,6 +120,7 @@ struct SoundAssignment
 		CLOSE,
 		STOP_ALL,
 	} type;
+
 	std::string soundFile;
 	bool sound_or_music;
 	bool loop;
@@ -123,7 +129,6 @@ struct SoundAssignment
 	float timeToChangeVolume = -1;
 	float timeToChangePitch = -1;
 	SpatialData spatialData;
-
 };
 
 struct FileOpenAssignment
@@ -132,7 +137,8 @@ struct FileOpenAssignment
 	JobAssignmentP job = nullptr;
 	std::string filepath;
 };
-class SoundFileOpener :public Worker<FileOpenAssignment>
+
+class SoundFileOpener : public Worker<FileOpenAssignment>
 {
 	void proccessAssignments(std::vector<FileOpenAssignment>& assignments) override;
 };
@@ -144,7 +150,7 @@ constexpr int SOUNDER_SOUND_BUFF_COUNT = 32;
 
 constexpr int SOUNDER_RING_BUFF_SIZE = 1024 * 32;
 constexpr int SOUNDER_RING_BUFF_FRAME_COUNT = 32;
-typedef NDUtil::RingBuffer<SOUNDER_RING_BUFF_SIZE, SOUNDER_RING_BUFF_FRAME_COUNT> RingBufferSounder;
+typedef Utils::RingBuffer<SOUNDER_RING_BUFF_SIZE, SOUNDER_RING_BUFF_FRAME_COUNT> RingBufferSounder;
 
 struct AudioState
 {
@@ -156,11 +162,12 @@ struct AudioState
 	float spatialMultiplier;
 	float spatialDistance;
 	glm::vec2 spatialMaxes;
-	
+
 	float timestamp;
 	std::string filePath;
 	bool isPaused;
 };
+
 typedef std::unordered_map<SoundID, AudioState> AudioStateMap;
 
 /**
@@ -169,7 +176,7 @@ typedef std::unordered_map<SoundID, AudioState> AudioStateMap;
  *					1. main thread which takes commands from game thread and executes them
  *					2. opens filestreams
  *					3. feeds RingBuffers from filestreams
- *					
+ *
  * Uses MusicStream and SoundBuffer from audio.h (which is independent on everything)
  * Manages whole sound memory management with caching sounds which are heavily used
  * Supports playing, pausing and changing pitch/speed and volume continuously over time - fading
@@ -181,12 +188,13 @@ class Sounder
 {
 public:
 	static const SoundID PLAYER_ID = 1;
-	
+
 	inline static Sounder& get()
 	{
 		static auto t = new Sounder;
 		return *t;
 	}
+
 private:
 	SoundFileOpener m_file_opener;
 	Pool<RingBufferSounder> m_rings;
@@ -210,8 +218,8 @@ private:
 	std::mutex m_debug_states_mutex;
 	AudioStateMap m_debug_states;
 #endif
-	SoundID m_current_id=2;
-	SpatialData m_target_data={{0,0},{0,0}};
+	SoundID m_current_id = 2;
+	SpatialData m_target_data = {{0, 0}, {0, 0}};
 
 	void loopInternal();
 	//will return new soundbuff
@@ -219,7 +227,7 @@ private:
 	SoundBuff* allocateSoundBuffer(Strid id);
 	Sounder();
 
-	
+
 	//ringfill section
 
 	std::atomic_bool m_is_ringfill_running = false;
@@ -229,11 +237,10 @@ private:
 	void loopRingFill();
 	void startRingFill();
 
-	void prepareMusic(Music** musi, const SoundAssignment& command,bool buffFill,bool justLoad);
+	void prepareMusic(Music** musi, const SoundAssignment& command, bool buffFill, bool justLoad);
 	void preparePlaySound(Sound** soun, const SoundAssignment& command);
 	void recalculateSpatialData();
 public:
-
 	// prepares portaudio
 	void init();
 	// starts new thread and returns
@@ -253,22 +260,23 @@ public:
 	// will recalculate all spatial sounds to target
 	// Should be called once per tick
 	void flushSpatialData();
-	
-	SoundID playAudio(const std::string& filePath, bool sound_or_music, float volume, float pitch, bool loop, float fadeTime, const SpatialData& data);
-	SoundID playSound(const std::string& filePath, float volume = 1, float pitch = 1, bool loop = false, float fadeTime = 0, const SpatialData& data = SpatialData());
-	SoundID playMusic(const std::string& filePath, float volume = 1, float pitch = 1, bool loop = false, float fadeTime = 0, const SpatialData& data = SpatialData());
+
+	SoundID playAudio(const std::string& filePath, bool sound_or_music, float volume, float pitch, bool loop,
+	                  float fadeTime, const SpatialData& data);
+	SoundID playSound(const std::string& filePath, float volume = 1, float pitch = 1, bool loop = false,
+	                  float fadeTime = 0, const SpatialData& data = SpatialData());
+	SoundID playMusic(const std::string& filePath, float volume = 1, float pitch = 1, bool loop = false,
+	                  float fadeTime = 0, const SpatialData& data = SpatialData());
 	bool isPlaying(SoundID id);
 	void stopAllMusic();
 	void submit(const SoundAssignment& assignment);
 
-	int getNumberOfSoundStreams()const { return m_sound_streams_size; }
-	int getNumberOfMusicStreams()const { return m_music_streams_size; }
-	int getSoundBufferCount()const { return m_sound_buffers_count; }
+	int getNumberOfSoundStreams() const { return m_sound_streams_size; }
+	int getNumberOfMusicStreams() const { return m_music_streams_size; }
+	int getSoundBufferCount() const { return m_sound_buffers_count; }
 
 #if SOUNDER_DEBUG_INFO == 1
 	AudioStateMap getDebugInfo();
 #endif
 };
-
-
-
+}

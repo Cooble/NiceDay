@@ -2,6 +2,8 @@
 #include "API/Shader.h"
 #include "API/VertexArray.h"
 
+namespace nd {
+
 struct UVQuad;
 class Texture;
 class Renderable2D;
@@ -18,6 +20,7 @@ class ParticleRenderer2D
 		int textureSlot;
 		float mix;
 	};
+
 private:
 	std::vector<mat3> m_transformation_stack;
 	std::vector<const Texture*> m_textures;
@@ -42,6 +45,5 @@ public:
 	void begin();
 	void submit(const vec2& pos, const vec2& size, const UVQuad& uv0, const UVQuad& uv1, Texture* t, float mix);
 	void flush();
-
-
 };
+}

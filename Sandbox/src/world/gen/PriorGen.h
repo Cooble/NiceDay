@@ -67,6 +67,6 @@ public:
 	}
 
 	void exportImage();
-	Texture* buildTexture();
-	void updateTexture(Texture* t);
+	nd::Texture* buildTexture();
+	void updateTexture(nd::Texture* t);
 };

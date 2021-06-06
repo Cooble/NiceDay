@@ -3,6 +3,8 @@
 #include "world/entity/EntityRegistry.h"
 #include "basic_blocks.h"
 
+using namespace nd;
+
 static std::vector<std::string> allConnectGroups;
 void BlockRegistry::initTextures(const BlockTextureAtlas& atlas)
 {

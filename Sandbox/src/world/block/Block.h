@@ -165,7 +165,7 @@ protected:
 
 	EntityType m_tile_entity;
 
-	const Phys::Polygon* m_collision_box;
+	const ndPhys::Polygon* m_collision_box;
 	int m_collision_box_size;
 
 
@@ -215,10 +215,10 @@ public:
 	}
 	uint8_t getOpacity()const { return m_opacity; }
 	bool hasTileEntity()const { return m_tile_entity != ENTITY_TYPE_NONE; }
-	virtual Phys::Vecti getTileEntityCoords(int x, int y, const BlockStruct& b) const;
+	virtual ndPhys::Vecti getTileEntityCoords(int x, int y, const BlockStruct& b) const;
 	EntityType getTileEntity() const { return m_tile_entity; }
 
-	virtual const Phys::Polygon& getCollisionBox(int x, int y, const BlockStruct& b) const;
+	virtual const ndPhys::Polygon& getCollisionBox(int x, int y, const BlockStruct& b) const;
 	bool hasCollisionBox() const;
 
 	bool isInConnectGroup(int groups) const { return (groups & m_block_connect_group) != 0; }//they have group in common 
@@ -280,7 +280,7 @@ class MultiBlock :public Block
 {
 	friend BlockRegistry;
 protected:
-	Phys::Rectanglei m_build_dimensions;
+	ndPhys::Rectanglei m_build_dimensions;
 	int m_width;
 	int m_height;
 
@@ -300,10 +300,10 @@ public:
 	int getWidth()const { return m_width; }
 	int getHeight()const { return m_height; }
 
-	Phys::Vecti getTileEntityCoords(int x, int y, const BlockStruct& b)const override;
+	ndPhys::Vecti getTileEntityCoords(int x, int y, const BlockStruct& b)const override;
 
 	//what dimensions need to be placed
-	virtual Phys::Rectanglei getBuildDimensions() const { return m_build_dimensions; }
+	virtual ndPhys::Rectanglei getBuildDimensions() const { return m_build_dimensions; }
 
 	int getTextureOffset(int x, int y, const BlockStruct& b) const override;
 

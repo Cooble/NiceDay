@@ -3,6 +3,8 @@
 #include "core/App.h"
 #include "world/WorldRenderManager.h"
 
+using namespace nd;
+
 BiomeTiledTexture::BiomeTiledTexture(int id, const std::string& texture_path)
 	:Biome(id)
 {

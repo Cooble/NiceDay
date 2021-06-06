@@ -9,13 +9,13 @@
 #include "API/VertexArray.h"
 #include "platform/OpenGL/GLShader.h"
 
+namespace nd {
+
 #define MAX_TEXTURES 16
 
 #define MAX_QUADS 10000
 #define MAX_VERTICES (MAX_QUADS * 4)
 #define MAX_INDICES (MAX_QUADS * 6)
-
-
 
 
 ParticleRenderer::ParticleRenderer()
@@ -33,20 +33,20 @@ ParticleRenderer::ParticleRenderer()
 	}
 	m_shader = ShaderLib::loadOrGetShader("res/shaders/ParticleSprite.shader");
 	m_shader->bind();
-	std::static_pointer_cast<GLShader>(m_shader)->setUniform1iv("u_textures", MAX_TEXTURES, uniforms);
-	std::static_pointer_cast<GLShader>(m_shader)->setUniformMat4("u_projectionMatrix", mat4(1.0f));
+	std::static_pointer_cast<internal::GLShader>(m_shader)->setUniform1iv("u_textures", MAX_TEXTURES, uniforms);
+	std::static_pointer_cast<internal::GLShader>(m_shader)->setUniformMat4("u_projectionMatrix", mat4(1.0f));
 	m_shader->unbind();
 	delete[] uniforms;
 
 	VertexBufferLayout l{
-		g_typ::VEC3,			//POS
-		g_typ::VEC2,			//UV0
-		g_typ::VEC2,			//UV1
-		g_typ::UNSIGNED_INT,	//TEXTURE_SLOT
-		g_typ::FLOAT,			//MIX_CONSTANT
+		g_typ::VEC3, //POS
+		g_typ::VEC2, //UV0
+		g_typ::VEC2, //UV1
+		g_typ::UNSIGNED_INT, //TEXTURE_SLOT
+		g_typ::FLOAT, //MIX_CONSTANT
 	};
-	
-	m_vbo = VertexBuffer::create(nullptr, MAX_VERTICES*sizeof(VertexData), BufferUsage::STREAM_DRAW);
+
+	m_vbo = VertexBuffer::create(nullptr, MAX_VERTICES * sizeof(VertexData), BufferUsage::STREAM_DRAW);
 	m_vbo->setLayout(l);
 
 	m_vao = VertexArray::create();
@@ -99,7 +99,7 @@ int ParticleRenderer::bindTexture(const Texture* t)
 
 void ParticleRenderer::begin(FrameBuffer* fbo)
 {
-	if(fbo)
+	if (fbo)
 		m_fbo = fbo;
 	ASSERT(m_fbo, "Renderer Target must be specified");
 	m_indices_count = 0;
@@ -110,8 +110,6 @@ void ParticleRenderer::begin(FrameBuffer* fbo)
 #else
 	m_vertex_data = m_buff;
 #endif
-	
-
 }
 
 static glm::vec3 operator*(const glm::mat4& m, const glm::vec3& v)
@@ -122,10 +120,11 @@ static glm::vec3 operator*(const glm::mat4& m, const glm::vec3& v)
 	return *((glm::vec3*)&ss);
 }
 
-void ParticleRenderer::submit(const glm::vec3& pos,const glm::vec2& size,const UVQuad& uv0, const UVQuad& uv1,Texture* t,float mix)
+void ParticleRenderer::submit(const glm::vec3& pos, const glm::vec2& size, const UVQuad& uv0, const UVQuad& uv1,
+                              Texture* t, float mix)
 {
 	int textureSlot = bindTexture(t);
-	
+
 	m_vertex_data->position = (m_back) * pos;
 	m_vertex_data->uv0 = uv0.uv[0];
 	m_vertex_data->uv1 = uv1.uv[0];
@@ -160,14 +159,12 @@ void ParticleRenderer::submit(const glm::vec3& pos,const glm::vec2& size,const U
 		flush();
 		begin();
 	}
-
-
 }
 
 void ParticleRenderer::flush()
 {
 	m_fbo->bind();
-	
+
 #if USE_MAP_BUF
 	m_vbo->unMapPointer();
 #else
@@ -185,5 +182,5 @@ void ParticleRenderer::flush()
 	GLCall(glEnable(GL_BLEND));
 	GLCall(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
 	GLCall(glDrawElements(GL_TRIANGLES, m_indices_count, GL_UNSIGNED_INT, nullptr));
-
+}
 }

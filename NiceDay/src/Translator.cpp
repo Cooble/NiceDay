@@ -9,37 +9,46 @@
 #include "core/NBT.h"
 #include "files/FUtil.h"
 
+namespace nd {
 
 std::unordered_map<Strid, std::string> Translator::s_dictionary;
 std::set<std::string> Translator::s_unknowns;
-bool Translator::s_unknown_remember=true;
+bool Translator::s_unknown_remember = true;
 
 void Translator::loadDict(const char* filePath, std::unordered_map<Strid, std::string>& dic)
 {
 	ND_INFO("Loading dictionary: {}", filePath);
 	std::string commonPrefix = "";
 	std::ifstream file(filePath);
-	if (file.is_open()) {
+	if (file.is_open())
+	{
 		std::string s;
-		while (std::getline(file, s)) {
-			if (SUtil::startsWith(s, "->")) {
+		while (std::getline(file, s))
+		{
+			if (SUtil::startsWith(s, "->"))
+			{
 				commonPrefix = s.substr(2);
 				if (!SUtil::endsWith(commonPrefix, '.'))
 					commonPrefix += '.';
 			}
-			else if (SUtil::startsWith(s, "<-")) {
+			else if (SUtil::startsWith(s, "<-"))
+			{
 				commonPrefix = "";
 			}
-			else if (s.empty() || SUtil::startsWith(s, "//") || SUtil::startsWith(s, '#')) {
+			else if (s.empty() || SUtil::startsWith(s, "//") || SUtil::startsWith(s, '#'))
+			{
 				continue;
 			}
-			else {
+			else
+			{
 				auto indexEquuls = s.find_first_of('=');
 				auto indexStop = s.find_first_of("\t =");
-				if (indexEquuls != std::string::npos) {
+				if (indexEquuls != std::string::npos)
+				{
 					std::string translated = s.substr(indexEquuls + 1);
 					std::string src = commonPrefix + s.substr(0, indexStop);
-					if (SUtil::startsWith(translated, '{') && translateTry(SID(src)) != nullptr) {
+					if (SUtil::startsWith(translated, '{') && translateTry(SID(src)) != nullptr)
+					{
 						dic[SID(src)] = *translateTry(SID(src));
 					}
 					else
@@ -53,23 +62,25 @@ void Translator::loadDict(const char* filePath, std::unordered_map<Strid, std::s
 
 void Translator::saveUnknownEntries(const char* filePath)
 {
-
 	std::unordered_map<Strid, std::string> newDic;
 	loadDict(filePath, newDic);
-	
+
 	std::ofstream file;
 	file.open(filePath, std::ios_base::app);
 	bool first = false;
-	for(const auto& s:s_unknowns)
-		if (newDic.find(SID(s)) == newDic.end()) {//if this file does not contain the entry yet
-			if (!first) {
+	for (const auto& s : s_unknowns)
+		if (newDic.find(SID(s)) == newDic.end())
+		{
+			//if this file does not contain the entry yet
+			if (!first)
+			{
 				file << "\n// This is start of automatically generated unknown list:\n";
 				first = true;
 			}
 
 			file << s << "=?" << s << "?\n";
 		}
-			
+
 	ND_INFO("Saved unknown dictionary entries to: {}", filePath);
 	file.close();
 }
@@ -83,7 +94,7 @@ const std::string& Translator::translate(const std::string& id)
 {
 	auto t = translateTry(StringId(id));
 	if (t)return *t;
-	if(s_unknown_remember)
+	if (s_unknown_remember)
 		s_unknowns.emplace(id);
 	return id;
 }
@@ -105,50 +116,52 @@ const std::string* Translator::translateTry(StringId id)
 
 const std::string& Translator::translateTryWithKey(const std::string& id)
 {
-   auto it = s_dictionary.find(SID(id));
-   if (it != s_dictionary.end())
-	  return (it->second);
-   return id;
+	auto it = s_dictionary.find(SID(id));
+	if (it != s_dictionary.end())
+		return (it->second);
+	return id;
 }
 
 AppLanguages::S AppLanguages::s_data;
 
 void AppLanguages::addLanguageFolder(const std::string& folderPath)
 {
-	ASSERT(FUtil::exists(folderPath),"this folder does not exist, isn't that strange?");
+	ASSERT(FUtil::exists(folderPath), "this folder does not exist, isn't that strange?");
 	s_data.languageFolders.push_back(folderPath);
 }
 
 void AppLanguages::registerLanguage(const std::string& language, const std::string& abbrev)
 {
-	s_data.languages.push_back({ language,abbrev });
+	s_data.languages.push_back({language, abbrev});
 }
 
 void AppLanguages::loadLanguage(const std::string& abbrev)
 {
 	bool exist = false;
 	for (auto& wrap : s_data.languages)
-		if (abbrev == wrap.abbrev) {
+		if (abbrev == wrap.abbrev)
+		{
 			exist = true;
 			break;
 		}
-	if (!exist) {
+	if (!exist)
+	{
 		ND_ERROR("Cannot load language which was not rregistered");
 		return;
 	}
-	
+
 	Translator::clearDict();
-	for (auto & folder: s_data.languageFolders)
+	for (auto& folder : s_data.languageFolders)
 	{
-		auto list = FUtil::fileList(folder,FUtil::FileSearchFlags_Recursive);
-		for(auto& file:list)
+		auto list = FUtil::fileList(folder, FUtil::FileSearchFlags_Recursive);
+		for (auto& file : list)
 		{
-			if(SUtil::endsWith(file,".lang"))
+			if (SUtil::endsWith(file, ".lang"))
 			{
 				auto underIdx = file.find_last_of('_');
-				if(underIdx!=std::string::npos)
+				if (underIdx != std::string::npos)
 				{
-					auto lang = file.substr(underIdx + 1, file.find_last_of('.')- underIdx - 1);
+					auto lang = file.substr(underIdx + 1, file.find_last_of('.') - underIdx - 1);
 					if (abbrev == lang)
 						Translator::loadDict(file.c_str());
 				}
@@ -161,8 +174,9 @@ void AppLanguages::loadLanguage(const std::string& abbrev)
 
 std::string AppLanguages::getFullLangName(const std::string& abbrev)
 {
-	for (auto & l : s_data.languages)
+	for (auto& l : s_data.languages)
 		if (l.abbrev == abbrev)
 			return l.name;
 	return "";
+}
 }

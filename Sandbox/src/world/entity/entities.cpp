@@ -20,6 +20,7 @@
 #include "core/NBT.h"
 
 using namespace glm;
+using namespace nd;
 
 //PhysEntity======================================================
 

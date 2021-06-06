@@ -6,6 +6,7 @@
 #include "event/Event.h"
 #include "GLFW/glfw3.h"
 
+using namespace nd;
 
 HUD* HUD::s_hud = nullptr;
 

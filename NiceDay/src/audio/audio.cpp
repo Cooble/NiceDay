@@ -4,6 +4,7 @@
 #include "vorbis/vorbisfile.h"
 #include "core/App.h"
 
+namespace nd {
 
 class ResizableBuffer
 {
@@ -79,8 +80,8 @@ static void mergeBuffers(float* target, const float* src0, const float* src1, si
 
 
 static int loadVorbisFileVorbisFile(const char* filePath, vorbis_info& vorbisInfo, vorbis_comment& vorbisComment,
-	float*& sampleBuffer,
-	size_t& pcmTotal)
+                                    float*& sampleBuffer,
+                                    size_t& pcmTotal)
 {
 	OggVorbis_File vf;
 	int eof = 0;
@@ -586,7 +587,7 @@ bool MusicStream::initFromFileOld(const char* filePath)
 	return false;
 }
 
-bool MusicStream::readNext(int maxFrames, NDUtil::RingBufferLite& ringBuffer, SoundBuffer* optionalConsumer)
+bool MusicStream::readNext(int maxFrames, Utils::RingBufferLite& ringBuffer, SoundBuffer* optionalConsumer)
 {
 	if (m_is_done)
 		return true;
@@ -594,7 +595,7 @@ bool MusicStream::readNext(int maxFrames, NDUtil::RingBufferLite& ringBuffer, So
 		return false;
 
 	ASSERT(!optionalConsumer || (optionalConsumer->getChannels() == m_info.channels),
-		"Sound buffer has different number of channels");
+	       "Sound buffer has different number of channels");
 
 
 	int currentFrameNumber = 0;
@@ -621,7 +622,7 @@ bool MusicStream::readNext(int maxFrames, NDUtil::RingBufferLite& ringBuffer, So
 
 				//fill the rest with zeros
 				ZeroMemory(ringBuff + m_samples_written * m_info.channels,
-					(samplesPerFrame - m_samples_written) * m_info.channels * sizeof(float));
+				           (samplesPerFrame - m_samples_written) * m_info.channels * sizeof(float));
 				if (optionalConsumer)
 					optionalConsumer->loadRaw(ringBuff, m_samples_written);
 				ringBuffer.push();
@@ -674,7 +675,7 @@ bool MusicStream::readNext(int maxFrames, NDUtil::RingBufferLite& ringBuffer, So
 	}
 }
 
-bool MusicStream::readNextOld(int maxFrames, NDUtil::RingBufferLite& ringBuffer)
+bool MusicStream::readNextOld(int maxFrames, Utils::RingBufferLite& ringBuffer)
 {
 	return true;
 	/*if (ringBuffer.isFull())
@@ -813,4 +814,5 @@ void MusicStream::close()
 		fclose(m_file_stream);
 		m_is_opened = false;
 	}
+}
 }

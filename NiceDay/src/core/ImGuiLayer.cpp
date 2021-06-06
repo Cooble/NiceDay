@@ -16,6 +16,7 @@
 #include "FakeWindow.h"
 #include "files/FUtil.h"
 
+namespace nd {
 static void setImGuiCinema4DStyle()
 {
 	auto& style = ImGui::GetStyle();
@@ -72,15 +73,13 @@ static void setImGuiCinema4DStyle()
 	colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.80f, 0.80f, 0.80f, 0.35f);
 
 
-
-
-
 	style.FrameBorderSize = 1;
 	style.FrameRounding = 6;
 	style.PopupRounding = 4;
 	style.TabRounding = 9;
 	style.ColorButtonPosition = ImGuiDir_Left;
 }
+
 struct MovingBox
 {
 	int index;
@@ -89,8 +88,8 @@ struct MovingBox
 	glm::vec2 speed;
 	float scaleSpeed;
 	float scale = 0;
-
 };
+
 static bool s_is_animaiting = false;
 static std::vector<MovingBox> s_boxes;
 static const int view_size = 256;
@@ -98,7 +97,7 @@ static const int view_size = 256;
 
 void registerImGuiWinFunc(std::string_view v, bool* p)
 {
-	if(App::get().getIO().enableIMGUI)
+	if (App::get().getIO().enableIMGUI)
 		App::get().getImGui()->registerWindow(v, p);
 }
 
@@ -107,7 +106,9 @@ void ImGuiLayer::renderViewWindows()
 	for (int i = m_views.size() - 1; i >= 0; --i)
 	{
 		auto& view = m_views[i];
-		if (!view.refreshed) {//remove those which have not been submitted this frame
+		if (!view.refreshed)
+		{
+			//remove those which have not been submitted this frame
 
 			if (view.owner)
 				delete view.texture;
@@ -128,30 +129,30 @@ void ImGuiLayer::renderViewWindows()
 			ImGui::SetNextWindowPos(ImVec2(box.srcPos.x, box.srcPos.y), ImGuiCond_Always);
 			ImGui::SetNextWindowSize(ImVec2(box.scale * view_size, box.scale * view_size), ImGuiCond_Always);
 		}
-		else {
-			ImGui::SetNextWindowSize({ (float)view_size,(float)view_size }, ImGuiCond_Once);
+		else
+		{
+			ImGui::SetNextWindowSize({(float)view_size, (float)view_size}, ImGuiCond_Once);
 		}
 		ImGui::Begin(view.name.c_str(), &view.opened, ImGuiWindowFlags_NoDecoration);
 		ImGui::PopStyleVar(2);
 		auto size = ImGui::GetWindowSize();
 
-		ImGui::Image((void*)view.texture->getID(), size, { 0,1 }, { 1,0 });
+		ImGui::Image((void*)view.texture->getID(), size, {0, 1}, {1, 0});
 		ImGui::End();
 	}
-
 }
 
 ImGuiLayer::ImGuiLayer()
 	: Layer("ImGuiLayer")
 {
 	m_copyFBO = FrameBuffer::create();
-
 }
 
 static bool showTelemetrics = false;
 static bool showDemoWindow = false;
 
 static bool firstRun = false;
+
 void ImGuiLayer::onAttach()
 {
 	// Setup Dear ImGui context
@@ -161,8 +162,8 @@ void ImGuiLayer::onAttach()
 	(void)io;
 	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
 	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
-	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;           // Enable Docking
-	io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;         // Enable Multi-Viewport / Platform Windows
+	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable; // Enable Docking
+	io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable; // Enable Multi-Viewport / Platform Windows
 	//io.ConfigFlags |= ImGuiConfigFlags_ViewportsNoTaskBarIcons;
 	//io.ConfigFlags |= ImGuiConfigFlags_ViewportsNoMerge;
 
@@ -175,8 +176,8 @@ void ImGuiLayer::onAttach()
 	ImGuiStyle& style = ImGui::GetStyle();
 	/*if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
 	{
-		style.WindowRounding = 0.0f;
-		style.Colors[ImGuiCol_WindowBg].w = 1.0f;
+	    style.WindowRounding = 0.0f;
+	    style.Colors[ImGuiCol_WindowBg].w = 1.0f;
 	}*/
 
 
@@ -194,16 +195,16 @@ void ImGuiLayer::onAttach()
 	registerWindow("Telemetrics", &showTelemetrics);
 	registerWindow("Demo", &showDemoWindow);
 	registerWindow("NavBar", &dynamic_cast<FakeWindow*>(APwin())->m_enableNavigationBar);
-	
+
 	NBT currentLayout;
 	if (NBT::loadFromFile("current_layout.nbt", currentLayout))
 		m_layout_type = getLayoutFromName(currentLayout["layout"].c_str());
-	
+
 	m_iniConfigToLoad = std::string(getLayoutName(m_layout_type)) + ".ini";
 	m_freshLayoutChange = !std::filesystem::exists(m_iniConfigToLoad);
 	m_wins_past = NBT();
 	NBT::loadFromFile(m_iniConfigToLoad + ".nbt", m_wins_past);
-	
+
 	firstRun = true;
 }
 
@@ -221,36 +222,37 @@ void ImGuiLayer::onDetach()
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui_ImplGlfw_Shutdown();
 	ImGui::DestroyContext();
-
-
 }
 
 void ImGuiLayer::begin()
 {
-	if(firstRun)
+	if (firstRun)
 	{
 		firstRun = false;
 		for (auto& win : m_wins)
 			if (m_wins_past.exists(win.name))
 				*win.opened = m_wins_past[win.name];
 	}
-	if (!m_iniConfigToSave.empty()) {
+	if (!m_iniConfigToSave.empty())
+	{
 		ImGui::SaveIniSettingsToDisk(m_iniConfigToSave.c_str());
 		m_wins_past = NBT();
 		if (!m_freshLayoutChange)
 			for (auto& win : m_wins)
 				m_wins_past[win.name] = *win.opened;
-	
+
 		NBT::saveToFile(m_iniConfigToSave + ".nbt", m_wins_past);
 		m_iniConfigToSave = "";
 	}
-	if (!m_iniConfigToLoad.empty()) {//todo imgui node crash on load ini settings: (assert) because of ImGui::DockContextBuildNodesFromSettings should be called before.
+	if (!m_iniConfigToLoad.empty())
+	{
+		//todo imgui node crash on load ini settings: (assert) because of ImGui::DockContextBuildNodesFromSettings should be called before.
 		ImGui::LoadIniSettingsFromDisk(m_iniConfigToLoad.c_str());
 		m_wins_past = NBT();
 		NBT::loadFromFile(m_iniConfigToLoad + ".nbt", m_wins_past);
 		m_iniConfigToLoad = "";
 		for (auto& win : m_wins)
-			if(m_wins_past.exists(win.name))
+			if (m_wins_past.exists(win.name))
 				*win.opened = m_wins_past[win.name];
 	}
 
@@ -291,7 +293,6 @@ void ImGuiLayer::onImGuiRender()
 		drawTelemetry();
 
 	renderViewWindows();
-
 }
 
 template <typename T>
@@ -311,23 +312,21 @@ void ImGuiLayer::onUpdate()
 
 void ImGuiLayer::onEvent(Event& e)
 {
-
 	auto& io = ImGui::GetIO();
 	if ((
-		io.WantCaptureKeyboard && (e.getEventCategories() & Event::EventCategory::Key)) || (
-			io.WantCaptureMouse && (e.getEventCategories() & Event::EventCategory::Mouse)))
+		io.WantCaptureKeyboard && (e.getEventCategories() & Event::EventCategory::CatKey)) || (
+		io.WantCaptureMouse && (e.getEventCategories() & Event::EventCategory::CatMouse)))
 	{
 		//exception when view imgui window is focused - dont consume event
-		if (App::get().getIO().enableSCENE && APwin()->isFocused()) {
-
+		if (App::get().getIO().enableSCENE && APwin()->isFocused())
+		{
 		}
-		else {
-
+		else
+		{
 			e.handled = true;
 			return;
 		}
 	}
-
 }
 
 void ImGuiLayer::renderBaseImGui()
@@ -347,7 +346,8 @@ void ImGuiLayer::renderBaseImGui()
 		ImGui::SetNextWindowViewport(viewport->ID);
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-		window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+		window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize |
+			ImGuiWindowFlags_NoMove;
 		window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
 	}
 
@@ -381,10 +381,12 @@ void ImGuiLayer::renderBaseImGui()
 	//ImGui::Load
 	ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspaceFlags);
 
-	if (m_freshLayoutChange) {
+	if (m_freshLayoutChange)
+	{
 		m_freshLayoutChange = false;
 
-		if (m_layout_type == ImGuiLayout::DEFAULT|| m_layout_type == ImGuiLayout::CUSTOM0) {
+		if (m_layout_type == ImGuiLayout::DEFAULT || m_layout_type == ImGuiLayout::CUSTOM0)
+		{
 			ImGui::DockBuilderRemoveNodeChildNodes(dockspace_id);
 			ImGui::DockBuilderSplitNode(dockspace_id, ImGuiDir_Left, 0.8f, &dock_left_id, &dock_right_id);
 			ImGui::DockBuilderSplitNode(dock_left_id, ImGuiDir_Left, 0.05f, &dock_left_left_id, &dock_left_right_id);
@@ -408,22 +410,23 @@ void ImGuiLayer::renderBaseImGui()
 
 	if (ImGui::BeginMenuBar())
 	{
-		
 		if (ImGui::BeginMenu("View"))
 		{
 			for (auto& view : m_views)
-				if (ImGui::MenuItem(view.name.c_str(), "", view.opened))	view.opened = !view.opened;
+				if (ImGui::MenuItem(view.name.c_str(), "", view.opened)) view.opened = !view.opened;
 			ImGui::Separator();
 
-			if (ImGui::MenuItem("Enable All", "", false)) {
+			if (ImGui::MenuItem("Enable All", "", false))
+			{
 				for (auto& view : m_views) view.opened = true;
 			}
 			if (ImGui::MenuItem("Disable All", "", false))
 				for (auto& view : m_views) view.opened = false;
 
 
-			ImGui::PushStyleColor(ImGuiCol_Text, { 0.3f,0.3f,0.3f,1.f });
-			if (ImGui::MenuItem("Enable All (EasterEgg)", "", false)) {
+			ImGui::PushStyleColor(ImGuiCol_Text, {0.3f, 0.3f, 0.3f, 1.f});
+			if (ImGui::MenuItem("Enable All (EasterEgg)", "", false))
+			{
 				for (auto& view : m_views) view.opened = true;
 				animateView();
 			}
@@ -443,17 +446,19 @@ void ImGuiLayer::renderBaseImGui()
 			// which we can't undo at the moment without finer window depth/z control.
 			//ImGui::MenuItem("Fullscreen", NULL, &opt_fullscreen_persistant);
 
-			if (ImGui::MenuItem(getLayoutName(ImGuiLayout::DEFAULT), "", m_layout_type == ImGuiLayout::DEFAULT, m_layout_type != ImGuiLayout::DEFAULT))
+			if (ImGui::MenuItem(getLayoutName(ImGuiLayout::DEFAULT), "", m_layout_type == ImGuiLayout::DEFAULT,
+			                    m_layout_type != ImGuiLayout::DEFAULT))
 				this->setINILayoutConfiguration(ImGuiLayout::DEFAULT);
-			if (ImGui::MenuItem(getLayoutName(ImGuiLayout::SCREEN), "", m_layout_type == ImGuiLayout::SCREEN, m_layout_type != ImGuiLayout::SCREEN))
+			if (ImGui::MenuItem(getLayoutName(ImGuiLayout::SCREEN), "", m_layout_type == ImGuiLayout::SCREEN,
+			                    m_layout_type != ImGuiLayout::SCREEN))
 				this->setINILayoutConfiguration(ImGuiLayout::SCREEN);
-			if (ImGui::MenuItem(getLayoutName(ImGuiLayout::CUSTOM0), "", m_layout_type == ImGuiLayout::CUSTOM0, m_layout_type != ImGuiLayout::CUSTOM0))
+			if (ImGui::MenuItem(getLayoutName(ImGuiLayout::CUSTOM0), "", m_layout_type == ImGuiLayout::CUSTOM0,
+			                    m_layout_type != ImGuiLayout::CUSTOM0))
 				this->setINILayoutConfiguration(ImGuiLayout::CUSTOM0);
 			ImGui::Separator();
 			if (ImGui::MenuItem("Reset current layout"))
 				this->setINILayoutConfiguration(m_layout_type, true);
 			ImGui::EndMenu();
-
 		}
 
 		ImGui::EndMenuBar();
@@ -467,8 +472,7 @@ void ImGuiLayer::registerWindow(std::string_view windowName, bool* opened)
 	for (auto& m_win : m_wins)
 		if (m_win.name == windowName)
 			return;
-	m_wins.push_back({ std::string(windowName), opened });
-
+	m_wins.push_back({std::string(windowName), opened});
 }
 
 
@@ -493,18 +497,14 @@ void ImGuiLayer::animateView()
 		auto to = realPos + glm::vec2(currentX, currentY);
 		//auto sp = glm::normalize(to - from) * speed;
 		auto sp = (to - from) * speed;
-		s_boxes.push_back({ i,from,to,sp,speed,0.01 });
+		s_boxes.push_back({i, from, to, sp, speed, 0.01});
 		currentX += view_size + padding;
 		if (currentX + view_size >= realDim.x)
 		{
 			currentX = padding;
 			currentY += view_size + padding;
 		}
-
-
 	}
-
-
 }
 
 void ImGuiLayer::updateViewAnimation()
@@ -522,7 +522,8 @@ void ImGuiLayer::updateViewAnimation()
 		auto& box = s_boxes[current_index_idx];
 		box.srcPos += box.speed;
 		box.scale += box.scaleSpeed;
-		if (box.index >= m_views.size()) {
+		if (box.index >= m_views.size())
+		{
 			s_is_animaiting = false;
 			return;
 		}
@@ -534,17 +535,13 @@ void ImGuiLayer::updateViewAnimation()
 			box.srcPos = box.targetPos;
 			if (++current_index_idx == s_boxes.size())
 			{
-				will_die_in = 5;//done
+				will_die_in = 5; //done
 			}
 		}
-
-
-
-
 	}
 }
 
-void ImGuiLayer::renderView(const std::string& name, const  Texture* t)
+void ImGuiLayer::renderView(const std::string& name, const Texture* t)
 {
 	if (!t)
 		return;
@@ -557,8 +554,7 @@ void ImGuiLayer::renderView(const std::string& name, const  Texture* t)
 			return;
 		}
 	}
-	m_views.push_back({ false,name,t,true,false });
-
+	m_views.push_back({false, name, t, true, false});
 }
 
 void ImGuiLayer::renderViewProxy(const std::string& name, const Texture* t)
@@ -571,11 +567,12 @@ void ImGuiLayer::renderViewProxy(const std::string& name, const Texture* t)
 		{
 			view.refreshed = true;
 			if (!view.opened)
-				return;//no render if window not opened
+				return; //no render if window not opened
 
 			ASSERT(view.owner, "Change in ownership not permitted");
 
-			if (t->getDimensions() != view.texture->getDimensions()) {
+			if (t->getDimensions() != view.texture->getDimensions())
+			{
 				delete view.texture;
 				view.texture = Texture::create(TextureInfo().size(t->width(), t->height()));
 			}
@@ -592,7 +589,7 @@ void ImGuiLayer::renderViewProxy(const std::string& name, const Texture* t)
 		}
 	}
 
-	auto  tex = Texture::create(TextureInfo().size(t->width(), t->height()));
+	auto tex = Texture::create(TextureInfo().size(t->width(), t->height()));
 	m_copyFBO->bind();
 	m_copyFBO->attachTexture(tex->getID(), 0);
 	Gcon.setViewport(t->width(), t->height());
@@ -601,8 +598,7 @@ void ImGuiLayer::renderViewProxy(const std::string& name, const Texture* t)
 	Effect::render(t, m_copyFBO);
 	m_copyFBO->unbind();
 
-	m_views.push_back({ false,name,tex,true,true });
-
+	m_views.push_back({false, name, tex, true, true});
 }
 
 void ImGuiLayer::updateTelemetry()
@@ -614,10 +610,11 @@ void ImGuiLayer::updateTelemetry()
 
 static void imguiProfile()
 {
-	ImGui::TextColored({0.f,1.f,0.f,1.f},"PROFILING");
+	ImGui::TextColored({0.f, 1.f, 0.f, 1.f}, "PROFILING");
 	static bool isProfiling = false;
 	static char profilingNameBuff[256]{};
-	ImGui::InputText("Profiling name", profilingNameBuff, 256, ImGuiInputTextFlags_CharsUppercase | (isProfiling? ImGuiInputTextFlags_ReadOnly:0));
+	ImGui::InputText("Profiling name", profilingNameBuff, 256,
+	                 ImGuiInputTextFlags_CharsUppercase | (isProfiling ? ImGuiInputTextFlags_ReadOnly : 0));
 
 
 	if (!isProfiling && ImGui::Button("Start Profiling") && strlen(profilingNameBuff))
@@ -631,7 +628,7 @@ static void imguiProfile()
 		isProfiling = false;
 	}
 	if (isProfiling)
-		ImGui::TextColored({ 0.f,1.f,0.f,1.f }, "Profiling: %s", profilingNameBuff);
+		ImGui::TextColored({0.f, 1.f, 0.f, 1.f}, "Profiling: %s", profilingNameBuff);
 	if (!isProfiling)
 	{
 		if (ImGui::Button("Open last Profile"))
@@ -641,13 +638,15 @@ static void imguiProfile()
 			//if not pick the newest profile
 			if (!FUtil::exists(fileName) || strlen(profilingNameBuff) == 0)
 			{
-				auto list = FUtil::fileList(FUtil::getExecutableFolderPath() + "/profiles/", FUtil::FileSearchFlags_OnlyFiles | FUtil::FileSearchFlags_Newest);
+				auto list = FUtil::fileList(FUtil::getExecutableFolderPath() + "/profiles/",
+				                            FUtil::FileSearchFlags_OnlyFiles | FUtil::FileSearchFlags_Newest);
 				if (!list.empty())
 					fileName = list[0];
 			}
-			if (FUtil::exists(fileName)) {
+			if (FUtil::exists(fileName))
+			{
 				//copy trace file to index.html
-				std::ofstream out = std::ofstream(ND_RESLOC("res/engine/tracing/") + "currentProfileTemp.js");
+				auto out = std::ofstream(ND_RESLOC("res/engine/tracing/") + "currentProfileTemp.js");
 				std::ifstream in(fileName);
 				out << "var bigSourceName =" << std::filesystem::path(fileName).filename() << ";\nvar bigSource = `";
 				out << in.rdbuf();
@@ -665,7 +664,7 @@ static void imguiProfile()
 void ImGuiLayer::drawTelemetry()
 {
 	if (!ImGui::Begin("Telemetrics", &showTelemetrics,
-		ImGuiWindowFlags_NoNav | ImGuiWindowFlags_AlwaysAutoResize))
+	                  ImGuiWindowFlags_NoNav | ImGuiWindowFlags_AlwaysAutoResize))
 	{
 		ImGui::End();
 		return;
@@ -699,7 +698,7 @@ void ImGuiLayer::drawTelemetry()
 	imguiProfile();
 	ImGui::Separator();
 	ImGui::Spacing();
-	
+
 	drawGlobals();
 	ImGui::End();
 }
@@ -765,8 +764,8 @@ static bool typeSelector(NBT& n)
 	ImGui::PushID(123);
 	//bool change = ImGui::Combo(hideLbl, &current_index, "String\0Int\0Float\0Bool\0Uint\0Map\0Array\0Null\0\0");
 	bool change = false;
-	const char* names[] = { "String", "Int", "Float", "Bool", "Uint", "Map", "Array", "Null" };
-	const char* namess[] = { "S", "I", "F", "B", "U", "M", "A", "N" };
+	const char* names[] = {"String", "Int", "Float", "Bool", "Uint", "Map", "Array", "Null"};
+	const char* namess[] = {"S", "I", "F", "B", "U", "M", "A", "N"};
 
 	// Simple selection popup
 	// (If you want to show the current selection inside the Button itself, you may want to build a string using the "###" operator to preserve a constant ID with a variable label)
@@ -888,11 +887,11 @@ bool ImGuiLayer::drawNBT(const char* name, NBT& n)
 	{
 		bool f = n;
 		if (ImGui::Checkbox(hideLbl, &f))
-			n = (bool)f;
+			n = f;
 	}
 	else if (n.isMap())
 	{
-		ImGui::PushStyleColor(ImGuiCol_Text, { 0, 1, 0, 1 });
+		ImGui::PushStyleColor(ImGuiCol_Text, {0, 1, 0, 1});
 		if (ImGui::TreeNode(name))
 		{
 			ImGui::PopStyleColor();
@@ -943,7 +942,7 @@ bool ImGuiLayer::drawNBT(const char* name, NBT& n)
 	}
 	else if (n.isArray())
 	{
-		ImGui::PushStyleColor(ImGuiCol_Text, { 0, 0, 1, 1 });
+		ImGui::PushStyleColor(ImGuiCol_Text, {0, 0, 1, 1});
 		if (ImGui::TreeNode(name))
 		{
 			ImGui::PopStyleColor();
@@ -1030,7 +1029,7 @@ void ImGuiLayer::drawNBTConst(const char* name, const NBT& n)
 	}
 	else if (n.isMap())
 	{
-		ImGui::PushStyleColor(ImGuiCol_Text, { 0, 1, 0, 1 });
+		ImGui::PushStyleColor(ImGuiCol_Text, {0, 1, 0, 1});
 		if (ImGui::TreeNode(name))
 		{
 			ImGui::PopStyleColor();
@@ -1050,7 +1049,7 @@ void ImGuiLayer::drawNBTConst(const char* name, const NBT& n)
 	}
 	else if (n.isArray())
 	{
-		ImGui::PushStyleColor(ImGuiCol_Text, { 0, 0, 1, 1 });
+		ImGui::PushStyleColor(ImGuiCol_Text, {0, 0, 1, 1});
 		if (ImGui::TreeNode(name))
 		{
 			ImGui::PopStyleColor();
@@ -1078,9 +1077,9 @@ void ImGuiLayer::drawNBTConst(const char* name, const NBT& n)
 }
 
 
-
 void ImGuiLayer::drawGlobals()
 {
 	drawNBT("Globals", AppGlobals::get().nbt);
 	drawNBTConst("GlobalsConst", AppGlobals::get().nbt);
+}
 }

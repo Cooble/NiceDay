@@ -1,6 +1,8 @@
 #include "ndpch.h"
 #include "FontParser.h"
 
+namespace nd {
+
 uint32_t Font::entityToColor(std::string_view s)
 {
 	const char c = s[0];
@@ -28,23 +30,23 @@ uint32_t Font::entityToColor(std::string_view s)
 std::optional<uint32_t> Font::tryEntityToColor(std::string_view s)
 {
 	const char c = s[0];
-	if(s.size()==1)
+	if (s.size() == 1)
 		return std::optional<uint32_t>();
 	switch (c)
 	{
 	case '&':
-	{
-		const char cc = s[1];
-		if (s.size() < 2)
+		{
+			const char cc = s[1];
+			if (s.size() < 2)
+				return std::optional<uint32_t>();
+			if (cc >= '0' && cc <= '9')
+				return colorTemplates[cc - '0'];
+			if (cc >= 'a' && cc <= 'f')
+				return colorTemplates[(cc - 'a') + 10];
+			if (cc >= 'A' && cc <= 'F')
+				return colorTemplates[(cc - 'A') + 10];
 			return std::optional<uint32_t>();
-		if (cc >= '0' && cc <= '9')
-			return colorTemplates[cc - '0'];
-		if (cc >= 'a' && cc <= 'f')
-			return colorTemplates[(cc - 'a') + 10];
-		if (cc >= 'A' && cc <= 'F')
-			return colorTemplates[(cc - 'A') + 10];
-		return std::optional<uint32_t>();
-	}
+		}
 	case '#':
 		if (s.size() < 7)
 			return std::optional<uint32_t>();
@@ -215,7 +217,7 @@ bool FontParser::parse(Font& font, const std::string& filePath)
 			{
 				auto& var = words[i];
 				auto arg = var.substr(var.find_first_of('=') + 1);
-				if (SUtil::startsWith(var,"face="))
+				if (SUtil::startsWith(var, "face="))
 					font.face = arg.substr(1, arg.size() - 2);
 				else if (SUtil::startsWith(var, "size="))
 					font.size = std::stoi(arg);
@@ -338,10 +340,10 @@ bool FontParser::parse(Font& font, const std::string& filePath)
 		}
 	}
 #ifdef ND_DEBUG
-	if(font.chars.size() != charCount)
-		ND_WARN("Strange font file {}",ND_RESLOC(filePath));
+	if (font.chars.size() != charCount)
+		ND_WARN("Strange font file {}", ND_RESLOC(filePath));
 #endif
 	font.bakeUVChars();
 	return true;
 }
-
+}

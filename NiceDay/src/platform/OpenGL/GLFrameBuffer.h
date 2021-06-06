@@ -1,22 +1,28 @@
 ﻿#pragma once
 #include "graphics/API/FrameBuffer.h"
 
+namespace nd::internal {
+
 class GLTexture;
-class GLFrameBuffer :public FrameBuffer
+
+class GLFrameBuffer : public FrameBuffer
 {
 private:
-	struct ColorAttachment { GLTexture* texture=nullptr; };
-	
-	inline static GLFrameBuffer* s_currently_bound=nullptr;
-	
+	struct ColorAttachment
+	{
+		GLTexture* texture = nullptr;
+	};
+
+	inline static GLFrameBuffer* s_currently_bound = nullptr;
+
 	unsigned int m_id;
 	FBType m_type;
-	
+
 	std::vector<ColorAttachment> m_attachments;
 	FBAttachment m_special_attachment;
 	uint32_t m_special_attachment_id;
 	TexDimensions m_dimensions;
-	int multiSampleLevel=0;
+	int multiSampleLevel = 0;
 
 	void bindColorAttachments();
 	void resizeAttachments();
@@ -25,7 +31,7 @@ private:
 public:
 	bool isWindow() const override { return m_type == FBType::WINDOW_TARGET; }
 	GLFrameBuffer(const FrameBufferInfo& info);
-	~GLFrameBuffer();
+	~GLFrameBuffer() override;
 	// will create special attachment for FBType::normal_external_textures
 	// only for FBType::normal_external_textures!
 	// works only once (no resizing)
@@ -42,4 +48,4 @@ public:
 	uint32_t getAttachmentID(uint32_t attachmentIndex, FBAttachment type = FBAttachment::COLOR) const override;
 	const Texture* getAttachment(uint32_t attachmentIndex, FBAttachment type) override;
 };
-
+}

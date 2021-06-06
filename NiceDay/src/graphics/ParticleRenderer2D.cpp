@@ -8,9 +8,9 @@
 #include "API/VertexArray.h"
 #include "platform/OpenGL/GLShader.h"
 
+namespace nd {
 
-namespace PRenderer2DSpecs
-{
+namespace PRenderer2DSpecs {
 	constexpr int MAX_TEXTURES = 16;
 	constexpr int MAX_QUADS = 10000;
 	constexpr int MAX_VERTICES = MAX_QUADS * 4;
@@ -30,17 +30,18 @@ ParticleRenderer2D::ParticleRenderer2D()
 	}
 	m_shader = ShaderLib::loadOrGetShader("res/shaders/ParticleSprite.shader");
 	m_shader->bind();
-	std::static_pointer_cast<GLShader>(m_shader)->setUniform1iv("u_textures", PRenderer2DSpecs::MAX_TEXTURES, uniforms);
-	std::static_pointer_cast<GLShader>(m_shader)->setUniformMat4("u_projectionMatrix", mat4(1.0f));
+	std::static_pointer_cast<internal::GLShader>(m_shader)->setUniform1iv(
+		"u_textures", PRenderer2DSpecs::MAX_TEXTURES, uniforms);
+	std::static_pointer_cast<internal::GLShader>(m_shader)->setUniformMat4("u_projectionMatrix", mat4(1.0f));
 	m_shader->unbind();
 	delete[] uniforms;
 
 	VertexBufferLayout l{
-		g_typ::VEC3,			//POS
-		g_typ::VEC2,			//UV0
-		g_typ::VEC2,			//UV1
-		g_typ::UNSIGNED_INT,	//TEXTURE_SLOT
-		g_typ::FLOAT,			//MIX_CONSTANT
+		g_typ::VEC3, //POS
+		g_typ::VEC2, //UV0
+		g_typ::VEC2, //UV1
+		g_typ::UNSIGNED_INT, //TEXTURE_SLOT
+		g_typ::FLOAT, //MIX_CONSTANT
 
 	};
 
@@ -118,22 +119,22 @@ void ParticleRenderer2D::begin()
 #else
 	m_vertex_data = m_buff;
 #endif
-
-
 }
+
 static glm::vec3 operator*(const glm::mat3& m, const glm::vec2& v)
 {
-	glm::vec3 inV = *((glm::vec3*) & v);
+	glm::vec3 inV = *((glm::vec3*)&v);
 	inV.z = 1;
 	glm::vec3 ss = m * inV;
-	return *((glm::vec3*) & ss);
+	return *&ss;
 }
 
-void ParticleRenderer2D::submit(const glm::vec2& pos, const glm::vec2& size, const UVQuad& uv0, const UVQuad& uv1, Texture* t, float mix)
+void ParticleRenderer2D::submit(const glm::vec2& pos, const glm::vec2& size, const UVQuad& uv0, const UVQuad& uv1,
+                                Texture* t, float mix)
 {
 	int textureSlot = bindTexture(t);
 
-	m_vertex_data->position = (m_back)*pos;
+	m_vertex_data->position = (m_back) * pos;
 	m_vertex_data->uv0 = uv0.uv[0];
 	m_vertex_data->uv1 = uv1.uv[0];
 	m_vertex_data->textureSlot = textureSlot;
@@ -171,7 +172,6 @@ void ParticleRenderer2D::submit(const glm::vec2& pos, const glm::vec2& size, con
 
 void ParticleRenderer2D::flush()
 {
-
 	m_vbo->bind();
 	m_vbo->changeData((char*)m_buff, sizeof(VertexData) * PRenderer2DSpecs::MAX_VERTICES, 0);
 	//m_vbo->changeData((char*)m_buff, sizeof(VertexData)*(m_indices_count/6)*4, 0);
@@ -186,6 +186,5 @@ void ParticleRenderer2D::flush()
 	GLCall(glEnable(GL_BLEND));
 	GLCall(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
 	GLCall(glDrawElements(GL_TRIANGLES, m_indices_count, GL_UNSIGNED_INT, nullptr));
-
 }
-
+}

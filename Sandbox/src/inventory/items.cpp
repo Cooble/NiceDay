@@ -2,6 +2,8 @@
 #include "world/block/block_datas.h"
 #include "world/entity/EntityPlayer.h"
 
+using namespace nd;
+
 ItemPickaxeCopper::ItemPickaxeCopper()
 	:ItemTool(SID("pickaxe"),"pickaxe",TOOL_TYPE_PICKAXE)
 {

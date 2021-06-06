@@ -3,6 +3,7 @@
 #include "core/AppGlobals.h"
 #include "graphics/TextureAtlas.h"
 #include "graphics/font/FontParser.h"
+using namespace nd;
 
 ItemStack::ItemStack(ItemID item, int size)
 	: m_item(item), m_size(size)

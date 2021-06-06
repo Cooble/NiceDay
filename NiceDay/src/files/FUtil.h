@@ -1,11 +1,11 @@
 #include "ndpch.h"
 
+namespace nd {
 // assert fail if file does not exist
 // filePath is automatically transformed using ND_RESLOC
 #define FUTIL_ASSERT_EXIST(stringPath) ASSERT(FUtil::exists(stringPath), "FILE: {} does not exist", stringPath)
 
-namespace FUtil
-{
+namespace FUtil {
 	inline bool exists(std::string_view path) { return std::filesystem::exists(ND_RESLOC(path)); }
 
 	//inline void assertFileExists(std::string_view path) {
@@ -17,6 +17,7 @@ namespace FUtil
 	const std::string& getExecutablePath();
 
 	typedef int FileSearchFlags;
+
 	enum FileSearchFlags_
 	{
 		FileSearchFlags_None = 0,
@@ -27,9 +28,8 @@ namespace FUtil
 		FileSearchFlags_Newest = 1 << 3,
 		// return oldest folder/file with in folder
 		FileSearchFlags_Oldest = 1 << 4,
-	
 	};
-	
+
 	std::vector<std::string> fileList(std::string_view folder_path, FileSearchFlags flags = FileSearchFlags_None);
 
 	// absolute path of fileName in the same folder as executable
@@ -37,9 +37,12 @@ namespace FUtil
 	std::string getAbsolutePath(const char* fileName);
 
 	void cleanPathString(std::string& s);
+
 	inline std::string cleanPathStringConst(std::string_view s)
 	{
-		auto out = std::string(s); cleanPathString(out); return out;
+		auto out = std::string(s);
+		cleanPathString(out);
+		return out;
 	}
 
 
@@ -48,6 +51,7 @@ namespace FUtil
 		if (s.find_last_of('.') != std::string::npos)
 			s = s.substr(0, s.find_last_of('.'));
 	}
+
 	inline std::string removeSuffixConst(std::string_view s)
 	{
 		auto out = std::string(s);
@@ -60,7 +64,9 @@ namespace FUtil
 		std::filesystem::copy(src, dest);
 		return true;
 	}
+
 	std::string readFileString(std::string_view path);
 
 	uint64_t lastWriteTime(std::string_view path);
+}
 }

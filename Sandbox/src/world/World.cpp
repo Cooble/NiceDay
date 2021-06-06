@@ -12,6 +12,8 @@
 #include "memory/stack_allocator.h"
 #include "entity/EntityAllocator.h"
 
+using namespace nd;
+
 #define CHUNK_NOT_EXIST -1
 constexpr int CHUNK_BUFFER_LENGTH = 400; //5*4
 

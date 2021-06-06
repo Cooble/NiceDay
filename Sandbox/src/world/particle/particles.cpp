@@ -3,6 +3,7 @@
 #include "core/NBT.h"
 #define PARTICATOR(var) var= PARTICLE_ID(#var)
 
+using namespace nd;
 namespace ParticleList {
 
 	void initDefaultParticles(ParticleRegistry& p)

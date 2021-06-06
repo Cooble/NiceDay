@@ -3,6 +3,8 @@
 #include "core/App.h"
 #include "world/WorldRenderManager.h"
 
+using namespace nd;
+
 static const int forestLayersCount = 3;
 static const int forestCloudsCount = 4;
 static const int forestSunCount = 1;

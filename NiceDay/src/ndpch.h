@@ -31,15 +31,12 @@
 #include <glm/gtc/type_ptr.hpp>
 
 
-
 //program specific
 #include "core/Log.h"
 #include "core/SUtil.h"
 #include "core/Core.h"
-#include "core/NDUtil.h"
+#include "core/Utils.h"
 
 //profiling
 #include "core/Scoper.h"
 #include "core/sids.h"
-
-

@@ -9,9 +9,10 @@
 #include "graphics/API/Texture.h"
 #include "files/FUtil.h"
 
+namespace nd {
+
 //should print everything
 #define VERBOSE_TEXTURE_ATLAS_B 0
-
 
 
 struct Icon : Phys::Rectanglei
@@ -106,13 +107,13 @@ struct Nod
 {
 	Icon* IMAGE;
 	Phys::Rectanglei frame;
-	Nod* n1, * n2;
+	Nod *n1, *n2;
 
 	Nod(int x, int y, int width, int height, Icon* image = nullptr)
 		: IMAGE(image),
-		frame(Phys::Rectanglei::createFromDimensions(x, y, width, height)),
-		n1(nullptr),
-		n2(nullptr)
+		  frame(Phys::Rectanglei::createFromDimensions(x, y, width, height)),
+		  n1(nullptr),
+		  n2(nullptr)
 	{
 		if (IMAGE != nullptr)
 		{
@@ -137,12 +138,12 @@ struct Nod
 
 		if (width > frame.width() || height > frame.height())
 			return false;
-		Nod* down = new Nod(frame.x0, frame.y0, frame.width(), height);
-		Nod* up = new Nod(frame.x0, frame.y0 + height, frame.width(), frame.height() - height);
+		auto down = new Nod(frame.x0, frame.y0, frame.width(), height);
+		auto up = new Nod(frame.x0, frame.y0 + height, frame.width(), frame.height() - height);
 		n1 = down;
 		n2 = up;
-		Nod* left = new Nod(frame.x0, frame.y0, width, height, IMAGE);
-		Nod* right = new Nod(frame.x0 + width, frame.y0, frame.width() - width, height);
+		auto left = new Nod(frame.x0, frame.y0, width, height, IMAGE);
+		auto right = new Nod(frame.x0 + width, frame.y0, frame.width() - width, height);
 		down->n1 = left;
 		down->n2 = right;
 		return true;
@@ -183,7 +184,7 @@ static bool fit(Icon* icon, Nod* nod)
 
 static std::string convertToShrunkFilePath(std::string_view folder, std::string_view currentFilePath)
 {
-	std::string out = std::string(currentFilePath.substr(folder.size()+1));
+	auto out = std::string(currentFilePath.substr(folder.size() + 1));
 	FUtil::removeSuffix(out);
 	FUtil::cleanPathString(out);
 	return out;
@@ -286,7 +287,7 @@ bool TextureAtlas::createAtlas(std::string_view folder, int segmentCount, int se
 					icon.y0 = dims[1];
 					icon.setWidth(dims[2]);
 					icon.setHeight(dims[3]);
-					subImages[icon.filePath +'/'+ icon.subName] = icon;
+					subImages[icon.filePath + '/' + icon.subName] = icon;
 					subImagesPath[pngFile].push_back(icon.filePath + '/' + icon.subName);
 					icon = {};
 					++labelCount;
@@ -295,7 +296,7 @@ bool TextureAtlas::createAtlas(std::string_view folder, int segmentCount, int se
 
 			myfile.close();
 		}
-		else if (SUtil::endsWith(file, ".png")&&!SUtil::endsWith(file, "atlas.png"))
+		else if (SUtil::endsWith(file, ".png") && !SUtil::endsWith(file, "atlas.png"))
 		{
 			allPNGPaths.push_back(file);
 		}
@@ -335,7 +336,7 @@ bool TextureAtlas::createAtlas(std::string_view folder, int segmentCount, int se
 	}
 
 
-	Icon** ordered_icons = new Icon * [subImages.size()];
+	auto ordered_icons = new Icon*[subImages.size()];
 
 	int index = 0;
 	for (auto& i : subImages)
@@ -346,7 +347,7 @@ bool TextureAtlas::createAtlas(std::string_view folder, int segmentCount, int se
 	Sorter::invert(ordered_icons, subImages.size());
 
 	int size = segmentSize * m_segmentCount;
-	
+
 	while (true)
 	{
 		bool cont = false;
@@ -358,9 +359,12 @@ bool TextureAtlas::createAtlas(std::string_view folder, int segmentCount, int se
 #endif
 			if (!fit(ordered_icons[i], &n))
 			{
-				if (flags & TextureAtlasFlags_DontResizeIfNeccessary) {
-					ND_ERROR("TextureAtlas: {} size[{}], too small (consider disabling TextureAtlasUVFlags_DontResizeIfNeccessary)", folder, size);
-				
+				if (flags & TextureAtlasFlags_DontResizeIfNeccessary)
+				{
+					ND_ERROR(
+						"TextureAtlas: {} size[{}], too small (consider disabling TextureAtlasUVFlags_DontResizeIfNeccessary)",
+						folder, size);
+
 					delete[] ordered_icons;
 					return false;
 				}
@@ -385,7 +389,7 @@ bool TextureAtlas::createAtlas(std::string_view folder, int segmentCount, int se
 		int height = 0;
 		int BPP = 0;
 
-		
+
 		void* currentImage = stbi_load(path.first.c_str(), &width, &height, &BPP, 4);
 		ASSERT(currentImage, "invalid image: {}", path.first.c_str());
 
@@ -406,11 +410,12 @@ bool TextureAtlas::createAtlas(std::string_view folder, int segmentCount, int se
 	if (!(flags & TextureAtlasFlags_DontCreateTexture))
 		m_texture = Texture::create(TextureInfo().size(size, size).format(TextureFormat::RGBA).pixels(atlas));
 	if (flags & TextureAtlasFlags_CreateFile)
-		stbi_write_png((ND_RESLOC(folder)+ "/atlas.png").c_str(), size, size, STBI_rgb_alpha, atlas, size * 4);
+		stbi_write_png((ND_RESLOC(folder) + "/atlas.png").c_str(), size, size, STBI_rgb_alpha, atlas, size * 4);
 	free(atlas);
 	ND_TRACE("[TextureAtlas] Done: {}", std::string(folder)+ "/atlas.png");
 	return true;
 }
+
 half_int TextureAtlas::getSubImage(const std::string& fileName, const char* subName) const
 {
 	std::string subNameC = subName;
@@ -429,10 +434,9 @@ TextureAtlasUV::~TextureAtlasUV()
 {
 	if (m_texture)
 		delete m_texture;
-
 }
 
-bool TextureAtlasUV::createAtlas(std::string_view folder, int size,int padding,TextureAtlasFlags flags)
+bool TextureAtlasUV::createAtlas(std::string_view folder, int size, int padding, TextureAtlasFlags flags)
 {
 	FUTIL_ASSERT_EXIST(folder);
 
@@ -470,16 +474,15 @@ bool TextureAtlasUV::createAtlas(std::string_view folder, int size,int padding,T
 			Icon icon = {};
 			icon.x0 = 0;
 			icon.y0 = 0;
-			icon.x1 = width+padding*2;
-			icon.y1 = height+padding*2;
+			icon.x1 = width + padding * 2;
+			icon.y1 = height + padding * 2;
 			icon.data = currentImage;
 			icon.filePath = convertToShrunkFilePath(ND_RESLOC(folder), file);
 			icons.push_back(icon);
 		}
-		
 	}
 
-	Icon** ordered_icons = new Icon * [icons.size()];
+	auto ordered_icons = new Icon*[icons.size()];
 
 	int index = 0;
 	for (auto& i : icons)
@@ -489,7 +492,7 @@ bool TextureAtlasUV::createAtlas(std::string_view folder, int size,int padding,T
 	Sorter::invert(ordered_icons, icons.size());
 
 
-	while(true)
+	while (true)
 	{
 		bool cont = false;
 		Nod n(0, 0, m_size, m_size);
@@ -500,14 +503,17 @@ bool TextureAtlasUV::createAtlas(std::string_view folder, int size,int padding,T
 #endif
 			if (!fit(ordered_icons[i], &n))
 			{
-				if (flags & TextureAtlasFlags_DontResizeIfNeccessary) {
-					ND_ERROR("TextureAtlas: {} size[{}], too small (consider disabling TextureAtlasUVFlags_DontResizeIfNeccessary)", folder, m_size);
+				if (flags & TextureAtlasFlags_DontResizeIfNeccessary)
+				{
+					ND_ERROR(
+						"TextureAtlas: {} size[{}], too small (consider disabling TextureAtlasUVFlags_DontResizeIfNeccessary)",
+						folder, m_size);
 					for (auto& icon : icons)
 						stbi_image_free(icon.data);
 					delete[] ordered_icons;
 					return false;
 				}
-				m_size = m_size*1.5f;
+				m_size = m_size * 1.5f;
 				cont = true;
 				break;
 			}
@@ -515,7 +521,7 @@ bool TextureAtlasUV::createAtlas(std::string_view folder, int size,int padding,T
 		if (!cont)
 			break;
 	}
-	
+
 
 	void* atlas = malloc(4 * m_size * m_size);
 	memset(atlas, 0, 4 * m_size * m_size);
@@ -528,20 +534,23 @@ bool TextureAtlasUV::createAtlas(std::string_view folder, int size,int padding,T
 			icon.data, atlas,
 			icon.width() - padding * 2, icon.height() - padding * 2,
 			m_size, m_size,
-			0,0,
+			0, 0,
 			icon.width() - padding * 2, icon.height() - padding * 2,
-			icon.targetX+padding, icon.targetY+padding);
+			icon.targetX + padding, icon.targetY + padding);
 		stbi_image_free(icon.data);
 		auto& subTex = m_subtextures[SID(icon.filePath)];
-		subTex.min = glm::vec2(icon.targetX+padding, icon.targetY+padding) / (float)m_size;
-		subTex.max = glm::vec2(icon.targetX+icon.width()-padding, icon.targetY+icon.height()-padding) / (float)m_size;
-		subTex.pixelSize = { icon.width() - padding * 2, icon.height() - padding * 2};
+		subTex.min = glm::vec2(icon.targetX + padding, icon.targetY + padding) / (float)m_size;
+		subTex.max = glm::vec2(icon.targetX + icon.width() - padding, icon.targetY + icon.height() - padding) / (float)
+			m_size;
+		subTex.pixelSize = {icon.width() - padding * 2, icon.height() - padding * 2};
 	}
-	if(!(flags&TextureAtlasFlags_DontCreateTexture))
+	if (!(flags & TextureAtlasFlags_DontCreateTexture))
 		m_texture = Texture::create(TextureInfo().size(m_size, m_size).format(TextureFormat::RGBA).pixels(atlas));
-	if(flags & TextureAtlasFlags_CreateFile)
-		stbi_write_png((std::string(ND_RESLOC(folder))+ "/atlas.png").c_str(), m_size, m_size, STBI_rgb_alpha, atlas, m_size * 4);
+	if (flags & TextureAtlasFlags_CreateFile)
+		stbi_write_png((std::string(ND_RESLOC(folder)) + "/atlas.png").c_str(), m_size, m_size, STBI_rgb_alpha, atlas,
+		               m_size * 4);
 	free(atlas);
 	ND_TRACE("[TextureAtlas] Done: {}", folder);
 	return true;
+}
 }

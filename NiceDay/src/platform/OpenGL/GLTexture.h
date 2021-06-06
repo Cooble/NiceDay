@@ -1,23 +1,24 @@
 ﻿#pragma once
 #include "graphics/API/Texture.h"
 
+namespace nd::internal {
 
-class GLTexture: public Texture
+class GLTexture : public Texture
 {
 private:
 	bool m_not_proxy = true;
 	unsigned int m_id;
-	int m_BPP;//channels
+	int m_BPP; //channels
 	unsigned char* m_buffer;
 	int m_width, m_height;
 	TextureType m_type;
-	TextureFormat m_format;//should i use GLenum instead?
+	TextureFormat m_format; //should i use GLenum instead?
 	std::string m_filePath;
 	TextureInfo m_info;
 
 public:
 	GLTexture(const TextureInfo& info);
-	~GLTexture();
+	~GLTexture() override;
 
 	//will just wrap around existing texture, will not destroy it in destructor
 	GLTexture(uint32_t id, uint32_t width, uint32_t height, TextureType type);
@@ -31,11 +32,10 @@ public:
 	inline unsigned int getID() const override { return m_id; }
 
 	const TextureInfo& getInfo() const { return m_info; }
-	void setPixels(float* pixels) override;//todo add template anotation to enable more than jut floats
-	void setPixels(uint8_t* pixels) override;//todo add template anotation to enable more than jut floats
+	void setPixels(float* pixels) override; //todo add template anotation to enable more than jut floats
+	void setPixels(uint8_t* pixels) override; //todo add template anotation to enable more than jut floats
 	bool isProxy() const { return !m_not_proxy; }
 
 	const std::string& getFilePath() const override { return m_info.file_path; }
-
 };
-
+}

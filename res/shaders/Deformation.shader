@@ -36,9 +36,10 @@ void main(){
 	//color = texture2D(u_texture, v_uv_coords);
 	float len = length(v_pos_coords);
 	vec2 offseto =abs(v_pos_coords);
-	offseto = offseto/(15.0*clamp(0.5+sin(u_line*15),0.5,1))*sign(v_pos_coords)*len*len;
+	offseto = offseto/(15.0*clamp(0.5+sin(u_line*15)*sin(u_line * 31),0.5,1))*sign(v_pos_coords)*len*len;
 
-	offseto.x+=u_line*0.05-0.05;//slight shift in x direction for a good taste
+	//offseto.x+=u_line*0.05-0.05;//slight shift in x direction for a good taste
+	offseto.x+= u_line*0.05+sin(u_line * 17)*sin(u_line*8)*0.01;//slight shift in x direction for a good taste
 	const float line_thiccness = 0.06;
 	vec2 cor = v_uv_coords + offseto;
 	float dist = 1.- clamp(abs(cor.y-u_line),0.0,line_thiccness)/line_thiccness;
@@ -46,6 +47,8 @@ void main(){
 	dist = smoothstep(0.0,1.0,dist);
 	cor.y-=(cor.y-u_line)*dist;
 	color = texture2D(u_texture,cor);
+	cor.x -= 0.01*mod(u_line*3,1)-0.005;
+	color += texture2D(u_texture,cor)*0.2;
 	len += u_on_screen;
 	
 	float f = mod(cor.y*2,0.1); 

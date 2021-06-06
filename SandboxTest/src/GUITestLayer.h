@@ -10,22 +10,21 @@
 #include "core/App.h"
 #include "graphics/Sprite.h"
 #include "GUIExampleWindow.h"
-#include "globals.h"
 
 
-inline static BatchRenderer2D* g_batch_render;
+inline static nd::BatchRenderer2D* g_batch_render;
 
-class GUITestLayer : public Layer
+class GUITestLayer : public nd::Layer
 {
 private:
-	GUIContextID currentContext;
-	GUIRenderer guiRender;
-	Texture* fontTexture;
-	Texture* backTexture;
-	Sprite* backSprite;
-	ShaderPtr fontShader;
-	Font font;
-	FontMaterial* g_fontMat;
+	nd::GUIContextID currentContext;
+	nd::GUIRenderer guiRender;
+	nd::Texture* fontTexture;
+	nd::Texture* backTexture;
+	nd::Sprite* backSprite;
+	nd::ShaderPtr fontShader;
+	nd::Font font;
+	nd::FontMaterial* g_fontMat;
 
 
 public:
@@ -33,31 +32,31 @@ public:
 
 	void onAttach() override
 	{
-		g_batch_render = new BatchRenderer2D();
+		g_batch_render = new nd::BatchRenderer2D();
 
 		ND_INFO("TestLayer attached");
 
-		FontParser::parse(font, "res/fonts/andrew.fnt");
+		nd::FontParser::parse(font, "res/fonts/andrew.fnt");
 		font.xSpace = 0;
 		font.ySpace = -5;
 
-		fontTexture = Texture::create(TextureInfo("res/fonts/"+font.texturePath).filterMode(TextureFilterMode::NEAREST));
-		backTexture = Texture::create(TextureInfo("res/images/gui_back.png"));
-		static SpriteSheetResource* res = new SpriteSheetResource(backTexture, 1, 1);
-		backSprite = new Sprite(res);
+		fontTexture = nd::Texture::create(nd::TextureInfo("res/fonts/"+font.texturePath).filterMode(nd::TextureFilterMode::NEAREST));
+		backTexture = nd::Texture::create(nd::TextureInfo("res/images/gui_back.png"));
+		static nd::SpriteSheetResource* res = new nd::SpriteSheetResource(backTexture, 1, 1);
+		backSprite = new nd::Sprite(res);
 		backSprite->setPosition({-1, -1, 0.1});
 		backSprite->setSize({2, 2});
 
-		g_fontMat = FontMatLib::getMaterial("res/fonts/andrew.fnt");
+		g_fontMat = nd::FontMatLib::getMaterial("res/fonts/andrew.fnt");
 		guiRender.m_font_material = g_fontMat;
 
-		currentContext = GUIContext::create();
-		guiRender.setContext(&GUIContext::get());
+		currentContext = nd::GUIContext::create();
+		guiRender.setContext(&nd::GUIContext::get());
 
 		ND_INFO("font loaded");
 
 
-		auto& context = GUIContext::get();
+		auto& context = nd::GUIContext::get();
 		/*for (int i = 0; i < 1; ++i)
 		{
 			context.getWindows().push_back(new GUIWindow());
@@ -160,10 +159,10 @@ public:
 	void onRender() override
 	{
 		Gcon.enableBlend();
-		Gcon.setBlendEquation(BlendEquation::FUNC_ADD);
-		Gcon.setBlendFunc(Blend::SRC_ALPHA, Blend::ONE_MINUS_SRC_ALPHA);
+		Gcon.setBlendEquation(nd::BlendEquation::FUNC_ADD);
+		Gcon.setBlendFunc(nd::Blend::SRC_ALPHA, nd::Blend::ONE_MINUS_SRC_ALPHA);
 
-		g_batch_render->begin(Renderer::getDefaultFBO());
+		g_batch_render->begin(nd::Renderer::getDefaultFBO());
 		g_batch_render->submit(*backSprite);
 		g_batch_render->push(
 			glm::translate(
@@ -172,7 +171,7 @@ public:
 		g_batch_render->push(
 			glm::scale(
 				glm::mat4(1.f),
-				{2.f / APwin()->getWidth(), 2.f / APwin()->getHeight(), 1}));
+				{2.f / nd::APwin()->getWidth(), 2.f / nd::APwin()->getHeight(), 1}));
 
 		guiRender.render(*g_batch_render);
 		g_batch_render->pop();
@@ -180,23 +179,23 @@ public:
 		g_batch_render->flush();
 	}
 
-	void onEvent(Event& e) override
+	void onEvent(nd::Event& e) override
 	{
-		if(e.getEventType()==Event::EventType::WindowResize)
+		if(e.getEventType()== nd::Event::EventType::WindowResize)
 		{
-			auto m = static_cast<WindowResizeEvent&>(e);
+			auto m = static_cast<nd::WindowResizeEvent&>(e);
 			guiRender.setScreenDimensions(m.getWidth(), m.getHeight());
 		}
-		bool flipped = e.isInCategory(Event::EventCategory::Mouse);
+		bool flipped = e.isInCategory(nd::Event::EventCategory::CatMouse);
 		if (flipped)
-			static_cast<MouseMoveEvent&>(e).flipY(APwin()->getHeight());
-		GUIContext::get().onEvent(e);
+			static_cast<nd::MouseMoveEvent&>(e).flipY(nd::APwin()->getHeight());
+		nd::GUIContext::get().onEvent(e);
 		if (flipped)
-			static_cast<MouseMoveEvent&>(e).flipY(APwin()->getHeight());
+			static_cast<nd::MouseMoveEvent&>(e).flipY(nd::APwin()->getHeight());
 	}
 
 	void onUpdate() override
 	{
-		GUIContext::get().onUpdate();
+		nd::GUIContext::get().onUpdate();
 	}
 };

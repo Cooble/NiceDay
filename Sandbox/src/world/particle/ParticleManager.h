@@ -3,8 +3,10 @@
 #include "world/particle/ParticleRegistry.h"
 #include "world/block/Block.h"
 
+namespace nd {
 class ParticleRenderer;
 class Texture;
+}
 
 constexpr int particleBlockDivision = 4;
 constexpr uint8_t isBlockBit = (1 << 0);
@@ -13,7 +15,6 @@ class ParticleManager
 {
 
 private:
-	
 	struct Particle
 	{
 		glm::vec2 acceleration;
@@ -38,12 +39,12 @@ private:
 	Particle* m_list= nullptr;
 	int m_list_size;
 	int m_particleCount=0;
-	Texture* m_atlas;
-	Texture* m_block_atlas;
+	nd::Texture* m_atlas;
+	nd::Texture* m_block_atlas;
 	int m_atlas_segment_count;
 	int m_block_atlas_segment_count;
 public:
-	ParticleManager(int maxParticles,Texture* atlas,int atlasSegmentCount,Texture* blockAtlas,int blockAtlasSegmentCount);
+	ParticleManager(int maxParticles,nd::Texture* atlas,int atlasSegmentCount,nd::Texture* blockAtlas,int blockAtlasSegmentCount);
 	ParticleManager();
 	~ParticleManager();
 
@@ -56,5 +57,5 @@ public:
 	void createParticle(ParticleID id, const glm::vec2& pos, const glm::vec2& speed, const glm::vec2& acc, int life,float rotation=0);
 	void createParticle(ParticleID id, const glm::vec2& pos, const glm::vec2& speed, const glm::vec2& acc, int life,float rotation,half_int texturePos);
 	void createBlockParticle(half_int textureOffset, int xPos,int yPos, const glm::vec2& pos, const glm::vec2& speed, const glm::vec2& acc, int life,float rotation=0);
-	void render(ParticleRenderer& renderer);
+	void render(nd::ParticleRenderer& renderer);
 };

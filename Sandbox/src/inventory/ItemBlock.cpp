@@ -3,6 +3,7 @@
 #include "world/block/BlockRegistry.h"
 #include "world/World.h"
 
+using namespace nd;
 ItemBlock::ItemBlock(ItemID id, BlockID blockID, const std::string& name, int maxTextureMetadata) :
 	Item(id, name),
 	m_block_id(blockID)

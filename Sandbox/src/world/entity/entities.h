@@ -51,8 +51,8 @@ public:
 	Inventory& getInventory() { return m_inventory; }
 	EntityType getEntityType() const override;
 	
-	void save(NBT& src) override;
-	void load(NBT& src) override;
+	void save(nd::NBT& src) override;
+	void load(nd::NBT& src) override;
 
 	TO_ENTITY_STRING(TileEntityChest)
 	void onGUIEntityClosed();
@@ -61,7 +61,7 @@ public:
 class TileEntityRadio :public TileEntity
 {
 private:
-	MusicHandle m_music;
+	nd::MusicHandle m_music;
 	bool m_is_playing=false;
 	int m_randTime = 0;
 	ItemStack* m_disc= nullptr;
@@ -75,8 +75,8 @@ public:
 	EntityType getEntityType() const override;
 	TO_ENTITY_STRING(TileEntityRadio)
 	ND_FACTORY_METH_ENTITY_BUILD(TileEntityRadio)
-	void save(NBT& src) override;
-	void load(NBT& src) override;
+	void save(nd::NBT& src) override;
+	void load(nd::NBT& src) override;
 };
 class PhysEntity : public WorldEntity
 {
@@ -96,7 +96,7 @@ protected:
 	glm::vec2 m_velocity;
 	glm::vec2 m_max_velocity;
 	glm::vec2 m_acceleration;
-	Phys::Polygon m_bound;
+	ndPhys::Polygon m_bound;
 	bool m_can_walk=true;
 
 
@@ -112,26 +112,26 @@ public:
 	void computeVelocity(World& w);
 	void computeWindResistance(World& w,float windResistance=0.01f);
 
-	void save(NBT& src) override;
-	void load(NBT& src) override;
+	void save(nd::NBT& src) override;
+	void load(nd::NBT& src) override;
 
 public:
 	glm::vec2& getAcceleration() { return m_acceleration; }
 	glm::vec2& getVelocity() { return m_velocity; }
-	const Phys::Polygon& getCollisionBox() const { return m_bound; }
+	const ndPhys::Polygon& getCollisionBox() const { return m_bound; }
 	bool isOnFloor() const { return m_is_on_floor; }
 	Blockage getBlockageState() const { return m_blockage; }
 };
 
 
-class EntityItem:public PhysEntity, public IBatchRenderable2D
+class EntityItem:public PhysEntity, public nd::IBatchRenderable2D
 {
 protected:
 	int m_live_ticks;
 	int m_max_live_ticks;
 	int m_speed_mode_ticks_remaining=0;
 protected:
-	UVQuad m_sprite;
+	nd::UVQuad m_sprite;
 	float m_angle;
 	ItemStack* m_item_stack=nullptr;
 	EntityID m_target=ENTITY_ID_INVALID;
@@ -148,10 +148,10 @@ public:
 	 */
 	void setThrowerEntity(EntityID id) { m_ignore_target = id; }
 	void update(World & w) override;
-	void render(BatchRenderer2D & renderer) override;
+	void render(nd::BatchRenderer2D& renderer) override;
 	EntityType getEntityType() const override;
-	void save(NBT& src) override;
-	void load(NBT& src) override;
+	void save(nd::NBT& src) override;
+	void load(nd::NBT& src) override;
 	void onSpawned(World& w) override;
 
 	TO_ENTITY_STRING(EntityItem)
@@ -161,7 +161,7 @@ public:
 
 constexpr float MAX_BULLET_ENTITY_DISTANCE_SQ = 25 * 25;
 
-class Bullet : public PhysEntity, public IBatchRenderable2D
+class Bullet : public PhysEntity, public nd::IBatchRenderable2D
 {
 protected:
 	/*struct BulletTemplate
@@ -172,7 +172,7 @@ protected:
 	/*/};*/
 protected:
 	//BulletTemplate* m_template;
-	Sprite m_sprite;
+	nd::Sprite m_sprite;
 	float m_angle;
 	EntityID m_owner_id=ENTITY_ID_INVALID;
 	int m_ticks_to_ignore_owner=15;
@@ -192,7 +192,7 @@ public:
 	virtual bool onBlockHit(World& w, int blockX, int blockY);
 	//return true if was hit
 	virtual bool onEntityHit(World& w, WorldEntity* entity);
-	void render(BatchRenderer2D& renderer) override;
+	void render(nd::BatchRenderer2D& renderer) override;
 };
 
 inline void Bullet::setOwner(EntityID id)
@@ -226,10 +226,10 @@ public:
 	void load(NBT2& src) override;*/
 };
 
-class Creature : public PhysEntity, public IBatchRenderable2D
+class Creature : public PhysEntity, public nd::IBatchRenderable2D
 {
 protected:
-	Animation m_animation;
+	nd::Animation m_animation;
 	Bar m_health_bar;
 	float m_max_health=1;
 	float m_health=1;
@@ -246,21 +246,21 @@ public:
 	Creature();
 	virtual ~Creature() = default;
 
-	inline Sprite& getSprite() { return m_animation; }
-	void render(BatchRenderer2D& renderer) override;
+	inline nd::Sprite& getSprite() { return m_animation; }
+	void render(nd::BatchRenderer2D& renderer) override;
 
 	virtual void onHit(World& w,WorldEntity *e, float damage);
 
 	virtual void throwItem(World& w,ItemStack* stack);
 	inline void setFacingDirection(const glm::vec2& facing) { m_facing_direction = facing; }
 	inline const glm::vec2& getFacingDirection() const { return m_facing_direction; }
-	void save(NBT& src) override;
-	void load(NBT& src) override;
+	void save(nd::NBT& src) override;
+	void load(nd::NBT& src) override;
 };
 
 inline void Creature::onHit(World& w,WorldEntity* e, float damage)
 {
-	m_health = max(0.f, m_health - damage);
+	m_health = glm::max(0.f, m_health - damage);
 	if (m_health == 0.f)
 		markDead();
 }
@@ -285,8 +285,8 @@ public:
 	TO_ENTITY_STRING(EntityTNT)
 	ND_FACTORY_METH_ENTITY_BUILD(EntityTNT)
 
-	void save(NBT& src) override;
-	void load(NBT& src) override;
+	void save(nd::NBT& src) override;
+	void load(nd::NBT& src) override;
 };
 class EntityBomb : public Creature
 {
@@ -310,8 +310,8 @@ public:
 	TO_ENTITY_STRING(EntityBomb);
 	ND_FACTORY_METH_ENTITY_BUILD(EntityBomb);
 
-	void save(NBT& src) override;
-	void load(NBT& src) override;
+	void save(nd::NBT& src) override;
+	void load(nd::NBT& src) override;
 };
 
 class EntityZombie : public Creature
@@ -332,8 +332,8 @@ public:
 	TO_ENTITY_STRING(EntityZombie)
 	ND_FACTORY_METH_ENTITY_BUILD(EntityZombie)
 
-	void save(NBT& src) override;
-	void load(NBT& src) override;
+	void save(nd::NBT& src) override;
+	void load(nd::NBT& src) override;
 };
 
 class EntitySnowman : public Creature
@@ -354,7 +354,7 @@ public:
 	TO_ENTITY_STRING(EntitySnowman)
 	ND_FACTORY_METH_ENTITY_BUILD(EntitySnowman)
 
-	void save(NBT& src) override;
-	void load(NBT& src) override;
+	void save(nd::NBT& src) override;
+	void load(nd::NBT& src) override;
 };
 

@@ -1,4 +1,5 @@
 ﻿#pragma once
+namespace nd {
 
 // each tick memory will be set to 0
 #define STACK_ALLOC_MEM_CLEAR_ENABLE 1
@@ -13,7 +14,7 @@ private:
 	size_t m_byte_size;
 	uint8_t* m_src;
 	uint8_t* m_current_pointer;
-	
+
 public:
 	// todo StackAllocator(size_t byteSize,CustomAllocator alloc);
 	StackAllocator(size_t byteSize);
@@ -28,15 +29,16 @@ public:
 	void* allocate(size_t size);
 
 	//==================SPECIALIZED ALLOCATIONS==================
-	
+
 	// @param c null-terminated
 	inline std::string_view allocateString(const char* c)
 	{
-		int strl = strlen(c)+1;//include terminator char
+		int strl = strlen(c) + 1; //include terminator char
 		auto p = (char*)allocate(strl);
 		memcpy(p, c, strl);
 		return std::string_view(p);
 	}
+
 	inline std::string_view allocateString(const std::string& c)
 	{
 		return allocateString(c.c_str());
@@ -45,7 +47,7 @@ public:
 
 	// constructs copy of the object in allocated space
 	// @return nullptr if no buffer is full
-	template<typename T>
+	template <typename T>
 	T* allocateObject(T&& val)
 	{
 		T* p = (T*)allocate(sizeof(T));
@@ -54,10 +56,10 @@ public:
 		memcpy(p, &std::forward<T>(val), sizeof(T));
 		return p;
 	}
-	
+
 	// constructs the object in allocated space
 	// @return nullptr if no buffer is full
-	template<typename T, typename... Args>
+	template <typename T, typename... Args>
 	T* emplace(Args&&... args)
 	{
 		T* p = (T*)allocate(sizeof(T));
@@ -66,11 +68,11 @@ public:
 		*p = T(std::forward<Args>(args)...);
 		return p;
 	}
+
 	inline size_t getCurrentStackSize()
 	{
 		return (size_t)(m_current_pointer - m_src);
 	}
-
 };
 
 /**
@@ -82,7 +84,7 @@ class DoubleBuffStackAllocator
 private:
 	StackAllocator m_0;
 	StackAllocator m_1;
-	
+
 	StackAllocator* m_current;
 	StackAllocator* m_past;
 public:
@@ -91,7 +93,7 @@ public:
 
 
 	void resizeAndReset(size_t byteSize);
-	
+
 	// currentBuffer turns into past one,
 	// pastBuffer resets and is used as current one
 	void swapBuffers();
@@ -116,7 +118,7 @@ public:
 
 	// constructs copy of the object in allocated space
 	// @return nullptr if no buffer is full
-	template<typename T>
+	template <typename T>
 	inline T* allocateObject(T&& val)
 	{
 		return m_current->allocateObject(std::forward<T>(val));
@@ -124,10 +126,10 @@ public:
 
 	// constructs the object in allocated space
 	// @return nullptr if no buffer is full
-	template<typename T, typename... Args>
+	template <typename T, typename... Args>
 	inline T* emplace(Args&&... args)
 	{
 		return m_current->emplace<T>(std::forward<Args>(args)...);
 	}
-
 };
+}

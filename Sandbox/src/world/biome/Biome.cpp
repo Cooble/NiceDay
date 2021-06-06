@@ -1,6 +1,8 @@
 ﻿#include "ndpch.h"
 #include "Biome.h"
 
+using namespace nd;
+
 //todo destruct textures in sprites
 Biome::Biome(int id)
 :m_id(id),

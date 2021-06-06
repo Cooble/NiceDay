@@ -4,8 +4,10 @@
 #include "graphics/GContext.h"
 #include "GLContext.h"
 
+namespace nd::internal {
+
 GLVertexArray::GLVertexArray()
-	:m_atrib_point_index(0)
+	: m_atrib_point_index(0)
 {
 	GLCall(glGenVertexArrays(1, &m_id));
 }
@@ -22,17 +24,24 @@ void GLVertexArray::addBuffer(const VertexBuffer& vbo)
 	unsigned int offset = 0;
 	auto& ray = vbo.getLayout().getElements();
 
-	for (unsigned int i = 0; i < ray.size(); i++) {
+	for (unsigned int i = 0; i < ray.size(); i++)
+	{
 		auto& e = ray[i];
-		
+
 		GLCall(glEnableVertexAttribArray(m_atrib_point_index + i));
-		if (GTypes::isIType(e.typ)) {
-			GLCall(glVertexAttribIPointer(m_atrib_point_index + i, GTypes::getCount(e.typ), toGL(GTypes::getBase(e.typ)), vbo.getLayout().getStride(), (const void*)offset));
+		if (GTypes::isIType(e.typ))
+		{
+			GLCall(
+				glVertexAttribIPointer(m_atrib_point_index + i, GTypes::getCount(e.typ), toGL(GTypes::getBase(e.typ)), vbo.
+					getLayout().getStride(), (const void*)offset));
 		}
-		else {
-			GLCall(glVertexAttribPointer(m_atrib_point_index + i, GTypes::getCount(e.typ), toGL(GTypes::getBase(e.typ)), e.normalized, vbo.getLayout().getStride(), (const void*)offset));
+		else
+		{
+			GLCall(
+				glVertexAttribPointer(m_atrib_point_index + i, GTypes::getCount(e.typ), toGL(GTypes::getBase(e.typ)), e.
+					normalized, vbo.getLayout().getStride(), (const void*)offset));
 		}
-		
+
 
 		offset += GTypes::getSize(e.typ);
 	}
@@ -55,5 +64,5 @@ void GLVertexArray::bind() const
 void GLVertexArray::unbind() const
 {
 	GLCall(glBindVertexArray(0));
-
+}
 }

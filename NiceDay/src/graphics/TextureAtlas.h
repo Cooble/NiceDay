@@ -2,7 +2,10 @@
 #pragma warning(disable : 26812)
 #include "ndpch.h"
 
+namespace nd {
+
 typedef int TextureAtlasFlags;
+
 enum TextureAtlasFlags_
 {
 	TextureAtlasFlags_None = 0,
@@ -18,10 +21,11 @@ enum TextureAtlasFlags_
 };
 
 class Texture;
+
 class TextureAtlas
 {
 private:
-	Texture* m_texture=nullptr;
+	Texture* m_texture = nullptr;
 	std::unordered_map<Strid, half_int> m_subtextures;
 	int m_segmentCount;
 public:
@@ -55,8 +59,9 @@ public:
 	// will search through every image in folderPath and subsequent folders and build an atlas
 	// returns true on success
 	// NOTE: folder must not end with '/' !
-	bool createAtlas(std::string_view folder, int size,int padding = 0, TextureAtlasFlags flags = 0);
+	bool createAtlas(std::string_view folder, int size, int padding = 0, TextureAtlasFlags flags = 0);
 
 	const TextureAtlasUVCoords& getSubImage(StringId fileName) const { return m_subtextures.at(fileName.getValue()); }
 	const Texture* getTexture() const { return m_texture; }
 };
+}

@@ -9,6 +9,7 @@
 #include "inventory/Item.h"
 #include "inventory/ItemBlock.h"
 
+using namespace nd;
 
 Block::Block(std::string id)
 	: m_string_id(std::move(id)),

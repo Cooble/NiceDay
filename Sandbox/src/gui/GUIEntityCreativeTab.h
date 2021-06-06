@@ -6,7 +6,7 @@
 class HUD;
 class Inventory;
 class CreativeInventory;
-class GUICreativeTab :public GUIElement
+class GUICreativeTab :public nd::GUIElement
 {
 protected:
 	Inventory* m_inv;

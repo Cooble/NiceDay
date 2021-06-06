@@ -1,8 +1,11 @@
 ﻿#pragma once
 #include "layer/Layer.h"
 
+namespace nd {
+
 class NewScene;
-class EditorLayer:public Layer
+
+class EditorLayer : public Layer
 {
 private:
 	NewScene* m_scene;
@@ -17,3 +20,4 @@ public:
 	float getCurrentDepth();
 	void onWindowResize(int width, int height) override;
 };
+}

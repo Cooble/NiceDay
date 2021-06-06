@@ -36,6 +36,8 @@
 #include "gui/GUIContext.h"
 #include "world/particle/luabinder_particles.h"
 
+using namespace nd;
+
 const char* WORLD_FILE_PATH;
 int CHUNKS_LOADED;
 int CHUNKS_DRAWN;
@@ -324,9 +326,9 @@ void WorldLayer::afterPlayerLoaded()
 
 	//add camera
 	m_cam->setPosition(getPlayer().getPosition());
-	c.registerLight(dynamic_cast<LightSource*>(m_cam));
+	c.registerLight(m_cam);
 
-	m_chunk_loader->registerEntity(dynamic_cast<IChunkLoaderEntity*>(m_cam));
+	m_chunk_loader->registerEntity(m_cam);
 	m_is_world_ready = true;
 
 	loadLuaWorldLibs();
@@ -631,8 +633,7 @@ void WorldLayer::onSurvivalUpdate()
 
 void WorldLayer::onSurvivalEvent(Event& e)
 {
-	auto ee = dynamic_cast<MouseReleaseEvent*> (&e);
-	if (ee) {
+	if (e.getEventType()==Event::MouseRelease) {
 		auto& inHand = getPlayer().getInventory().itemInHand();
 		if (inHand && lastPressedTicks != 0)//check if this release had pressed first (there cannot be released with lastPressedTicks==0)
 		{
@@ -999,7 +1000,7 @@ void WorldLayer::onEvent(Event& e)
 
 	if (e.getEventType() == Event::EventType::WindowResize)
 	{
-		auto event = dynamic_cast<WindowResizeEvent*>(&e);
+		auto event = static_cast<WindowResizeEvent*>(&e);
 		m_render_manager->onScreenResize();
 	}
 	//if (!ImGui::IsMouseHoveringAnyWindow())
@@ -1012,15 +1013,15 @@ void WorldLayer::onEvent(Event& e)
 	if (e.getEventType() == Event::EventType::MousePress)
 	{
 		pressedTicks = 0;
-		auto event = dynamic_cast<MousePressEvent*>(&e);
-
-		if (event->getButton() == MouseCode::LEFT)
+		auto event = dynamic_cast<MouseEvent*>(&e);
+		auto button = event->getButton();
+		if (button == MouseCode::LEFT)
 		{
 			isDragging = true;
 			event->handled = true;
 		}
 
-		if (event->getButton() == MouseCode::MIDDLE)
+		if (button == MouseCode::MIDDLE)
 		{
 			if (BLOCK_OR_WALL_SELECTED)
 			{
@@ -1033,7 +1034,7 @@ void WorldLayer::onEvent(Event& e)
 
 			event->handled = true;
 		}
-		if (event->getButton() == MouseCode::RIGHT)
+		if (button == MouseCode::RIGHT)
 		{
 			auto inHand = getPlayer().getInventory().itemInHand();
 			if (inHand)

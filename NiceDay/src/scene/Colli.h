@@ -1,21 +1,24 @@
 ﻿#pragma once
 #include "ndpch.h"
 
+namespace nd {
+
 class VertexBufferLayout;
 class MeshData;
 
 typedef int ColliFlags;
+
 enum ColliFlags_
 {
 	ColliFlags_None = 0,
 	ColliFlags_NoNormals = 1 << 0,
 	ColliFlags_BuildTangent = 1 << 1,
-	
 };
 
-namespace Colli
-{
+namespace Colli {
 
-	MeshData* buildMesh(const std::string& path,float scale=1, ColliFlags flags=0,VertexBufferLayout* targetLayout=nullptr);
-	
+	MeshData* buildMesh(const std::string& path, float scale = 1, ColliFlags flags = 0,
+	                    VertexBufferLayout* targetLayout = nullptr);
+
 };
+}

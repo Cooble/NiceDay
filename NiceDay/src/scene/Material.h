@@ -3,10 +3,12 @@
 #include "graphics/API/Texture.h"
 #include "core/sids.h"
 
+namespace nd {
+
 class NBT;
 
 namespace MaterialFlags {
-	enum:int
+	enum :int
 	{
 		// default true
 		FLAG_CULL_FACE = 1 << 0,
@@ -18,8 +20,10 @@ namespace MaterialFlags {
 		// glo.view matrix (passed globally) wont be translational 
 		FLAG_CHOP_VIEW_MAT_POS = 1 << 3,
 	};
+
 	inline int DEFAULT_FLAGS = (FLAG_CULL_FACE | FLAG_DEPTH_MASK | FLAG_DEPTH_TEST);
 }
+
 // If you don't want to specify shader
 // dont set shader but set layout instead
 // In this case it's neccessary to specify shader in Material::bind(int,ShaderPtr)
@@ -28,11 +32,13 @@ struct MaterialInfo
 {
 	ShaderPtr shader;
 	const char* structName = "MAT";
-	const char* name="Unnamed Material";
-	const UniformLayout* layout=nullptr;
-	int flags= MaterialFlags::DEFAULT_FLAGS;
+	const char* name = "Unnamed Material";
+	const UniformLayout* layout = nullptr;
+	int flags = MaterialFlags::DEFAULT_FLAGS;
 };
+
 class MaterialLibrary;
+
 class Material
 {
 public:
@@ -43,7 +49,7 @@ private:
 	std::string m_name;
 	std::string m_structName;
 	char* m_ubo;
-	ShaderPtr m_shader=std::shared_ptr<Shader>(nullptr);
+	ShaderPtr m_shader = std::shared_ptr<Shader>(nullptr);
 	const UniformLayout* m_layout;
 	std::unordered_map<Strid, size_t> m_offsets;
 	//each texture has a slot associated and index in m_textures array
@@ -67,6 +73,7 @@ public:
 	// the textures will bind to slots starting from slotBindingOffset
 	// set shader if was not specified in MaterialInfo
 	void bind(int slotBindingOffset, const ShaderPtr& shader);
+
 	void bind(int slotBindingOffset = 0)
 	{
 		ShaderPtr ptr;
@@ -82,6 +89,7 @@ public:
 		ASSERT(m_layout->size == sizeof(BigStruct), "Size of struct doesn't correspond to shader uniform");
 		memcpy(m_ubo, &src, sizeof(BigStruct));
 	}
+
 	// retrieves value by shortened name (without layout name) e.g. "color"
 	template <typename T>
 	T& getValue(StringId name)
@@ -90,6 +98,7 @@ public:
 		ASSERT(t, "invalid field name");
 		return *(T*)t;
 	}
+
 	// retrieves value by shortened name (without layout name) e.g. "color"
 	template <>
 	TexturePtr& getValue(StringId name)
@@ -98,9 +107,11 @@ public:
 		ASSERT(it != m_tex_indexes.end(), "INvalid texture name");
 		return m_textures[it->second];
 	}
+
 	// retrieves value by full name as in layout e.g. "mat.color"
 	template <typename T>
 	T& getValueFullName(const char* name) { return getValue<T>(toShortName(name)); }
+
 	// retrieves value by full name as in layout e.g. "mat.color"
 	template <>
 	TexturePtr& getValueFullName(const char* name) { return getValue<TexturePtr>(toShortName(name)); }
@@ -112,6 +123,7 @@ public:
 		ASSERT(t, "invalid field name");
 		*(T*)t = val;
 	}
+
 	template <>
 	void setValue(StringId name, TexturePtr texture)
 	{
@@ -119,18 +131,20 @@ public:
 		ASSERT(it != m_tex_indexes.end(), "INvalid texture name");
 		m_textures[it->second] = texture;
 	}
+
 	// cuts of struct prefix e.g. from "mat.color" -> "color"
 	Strid toShortName(const char* name)
 	{
 		ASSERT(strlen(name) > m_structName.size() + 1, "invalid name");
 		return SID(name + (m_structName.size() + 1));
 	}
+
 	std::string toShortNameString(const std::string& name)
 	{
 		ASSERT(name.size() > m_structName.size() + 1, "invalid name");
 		return name.substr(m_structName.size() + 1);
 	}
-	
+
 	char* getRawAccess() { return m_ubo; }
 	void* getPointerToValue(StringId name);
 	void* getPointerToValueFullName(const char* c) { return getPointerToValue(toShortName(c)); }
@@ -158,7 +172,7 @@ public:
 	static void save(MaterialPtr& ptr, const std::string& path = "");
 	static MaterialPtr loadOrGet(const std::string& filepath);
 	static void clearUnused();
-	static std::unordered_map<Strid,MaterialPtr>& getList();
+	static std::unordered_map<Strid, MaterialPtr>& getList();
 	static void remove(Strid mat);
 
 	static bool& isDirty(Strid mat);
@@ -170,3 +184,4 @@ public:
 	static MaterialPtr& getByFilePath(Strid filePath);
 };
 
+}

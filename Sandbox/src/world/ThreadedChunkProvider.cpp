@@ -1,6 +1,7 @@
 ﻿#include "ndpch.h"
 #include "ThreadedChunkProvider.h"
 
+using namespace nd;
 
 void ThreadedChunkProvider::assignChunkLoad(JobAssignment* jobAssigment, Chunk* chunk, int chunkOffset)
 {
@@ -53,16 +54,16 @@ void ThreadedChunkProvider::assignWait(JobAssignment* jobAssigment)
 	assignWork({ jobAssigment, nullptr,0,0,WorldIOAssignment::WAIT });
 }
 
-void ThreadedChunkProvider::assignBoolGenLoad(JobAssignment* jobAssigment, NDUtil::Bitset* bitset)
+void ThreadedChunkProvider::assignBoolGenLoad(JobAssignment* jobAssigment, Utils::Bitset* bitset)
 {
 	jobAssigment->assign();
 	assignWork({ jobAssigment, bitset,0,0,WorldIOAssignment::BOOL_GEN_LOAD });
 }
 
-void ThreadedChunkProvider::assignBoolGenSave(JobAssignment* jobAssigment, const NDUtil::Bitset* bitset)
+void ThreadedChunkProvider::assignBoolGenSave(JobAssignment* jobAssigment, const Utils::Bitset* bitset)
 {
 	jobAssigment->assign();
-	assignWork({ jobAssigment, const_cast<NDUtil::Bitset*>(bitset),0,0,WorldIOAssignment::BOOL_GEN_SAVE });
+	assignWork({ jobAssigment, const_cast<Utils::Bitset*>(bitset),0,0,WorldIOAssignment::BOOL_GEN_SAVE });
 }
 
 void ThreadedChunkProvider::assignSerialize(JobAssignment* jobAssigment, int chunkId,const IBinaryStream::RWFunc& func)

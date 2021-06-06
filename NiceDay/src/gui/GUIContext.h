@@ -1,6 +1,8 @@
 ﻿#pragma once
 #include "GUIBasic.h"
 
+namespace nd {
+
 typedef int GUIContextID;
 
 class GUIContext
@@ -163,3 +165,4 @@ public:
 	void submitBroadcastEvent(Event& e);
 	inline const glm::vec2& getStackPos() const { return currentStackPos; }
 };
+}

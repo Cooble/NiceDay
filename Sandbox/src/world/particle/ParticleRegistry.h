@@ -2,7 +2,10 @@
 #include "ndpch.h"
 #include "core/sids.h"
 
+namespace nd {
 class TextureAtlas;
+}
+
 typedef int ParticleID;
 constexpr ParticleID INVALID_PARTICLE_ID = -1;
 #define PARTICLE_ID(name)\
@@ -31,7 +34,7 @@ public:
 	};
 private:
 	std::vector<ParticleTemplate> m_templates;
-	std::unordered_map<Strid, ParticleID> m_ids;
+	std::unordered_map<nd::Strid, ParticleID> m_ids;
 	ParticleRegistry()=default;
 public:
 	ParticleRegistry(ParticleRegistry const&) = delete;
@@ -39,7 +42,7 @@ public:
 
 	ParticleID registerTemplate(const ParticleTemplate& t);
 
-	void initTextures(const TextureAtlas& atlas);
+	void initTextures(const nd::TextureAtlas& atlas);
 
 	const auto& getList() const { return m_templates; }
 

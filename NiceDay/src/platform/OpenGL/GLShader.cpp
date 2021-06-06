@@ -2,6 +2,9 @@
 #include "GLShader.h"
 #include "GLRenderer.h"
 #include "files/FUtil.h"
+
+namespace nd::internal {
+
 #define IGNORE_UNIFORM_DOESNT_EXIST 1
 #define THROW_PARSING 1
 #define BREAK_IF_SHADER_COMPILE_ERROR 0
@@ -31,7 +34,7 @@ static GLShader::ShaderProgramSources parseShader(const std::string& file_path)
 	FUTIL_ASSERT_EXIST(file_path);
 
 	s_current_file = file_path.c_str();
-	
+
 	std::ifstream stream(file_path);
 
 	enum class ShaderType
@@ -42,7 +45,7 @@ static GLShader::ShaderProgramSources parseShader(const std::string& file_path)
 		GEOMETRY = 2
 	};
 
-	ShaderType shaderType = ShaderType::NONE;
+	auto shaderType = ShaderType::NONE;
 	std::string line;
 	std::stringstream ss[3];
 	while (getline(stream, line))
@@ -79,7 +82,7 @@ static unsigned int compileShader(unsigned int type, const std::string& src)
 		shaderTypeToString(type);
 		int length;
 		GLCall(glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length));
-		char* message = (char*)malloc(length * sizeof(char));
+		auto message = (char*)malloc(length * sizeof(char));
 		GLCall(glGetShaderInfoLog(id, length, &length, message));
 		ND_ERROR(message);
 		free(message);
@@ -97,7 +100,7 @@ static unsigned int buildProgram(const Shader::ShaderProgramSources& src)
 	unsigned int program;
 	GLCall(program = glCreateProgram());
 	unsigned int vs = compileShader(GL_VERTEX_SHADER, src.vertexSrc);
-	if(vs==0)
+	if (vs == 0)
 	{
 		glDeleteProgram(program);
 		return 0;
@@ -146,14 +149,14 @@ GLShader::GLShader(const Shader::ShaderProgramSources& src) : m_id(0)
 #endif
 }
 
-GLShader::GLShader(const std::string& file_path) : m_id(0),m_file_path(file_path)
+GLShader::GLShader(const std::string& file_path) : m_id(0), m_file_path(file_path)
 {
 	Shader::ShaderProgramSources& s = parseShader(ND_RESLOC(file_path));
 	m_layout = Shader::extractLayout(s);
 	m_id = buildProgram(s);
 #if THROW_PARSING
 	if (!m_id)
-		throw std::string("Error parsing shader: ")+file_path;
+		throw std::string("Error parsing shader: ") + file_path;
 #endif
 }
 
@@ -176,7 +179,6 @@ void GLShader::unbind() const
 
 void GLShader::setUniformMat4(const std::string& name, const glm::mat4& matrix)
 {
-	
 	SHADER_CHECK_BOUNDIN;
 	GLCall(glUniformMatrix4fv(getUniformLocation(name), 1, false, glm::value_ptr(matrix)));
 }
@@ -192,7 +194,6 @@ void GLShader::setUniformMat3v(const std::string& name, int count, const glm::ma
 	SHADER_CHECK_BOUNDIN;
 	GLCall(glUniformMatrix3fv(getUniformLocation(name), count, false, glm::value_ptr(*matrix)));
 }
-
 
 
 void GLShader::setUniform4f(const std::string& name, float f0, float f1, float f2, float f3)
@@ -289,17 +290,17 @@ void GLShader::setUniformfv(const std::string& name, int count, int arraySize, f
 	case 1:
 		//GLCall(glUniform1fv(loc, arraySize, v));
 		glUniform1fv(loc, arraySize, v);
-		break;		 
-	case 2:			 
+		break;
+	case 2:
 		//GLCall(glUniform2fv(loc, arraySize, v));
 		glUniform2fv(loc, arraySize, v);
-		break;		
-	case 3:			
+		break;
+	case 3:
 		//GLCall(glUniform3fv(loc, arraySize, v));
 		glUniform3fv(loc, arraySize, v);
-		break;		
-	case 4:			 
-	//	GLCall(glUniform4fv(loc, arraySize, v));
+		break;
+	case 4:
+		//	GLCall(glUniform4fv(loc, arraySize, v));
 		glUniform4fv(loc, arraySize, v);
 		break;
 	default:
@@ -317,16 +318,16 @@ void GLShader::setUniformuiv(const std::string& name, int count, int arraySize, 
 	case 1:
 		//GLCall(glUniform1uiv(loc, arraySize, v));
 		glUniform1uiv(loc, arraySize, v);
-		break;		  
-	case 2:			  
+		break;
+	case 2:
 		//GLCall(glUniform2uiv(loc, arraySize, v));
 		glUniform2uiv(loc, arraySize, v);
-		break;		  
-	case 3:			  
+		break;
+	case 3:
 		//GLCall(glUniform3uiv(loc, arraySize, v));
 		glUniform3uiv(loc, arraySize, v);
-		break;		 
-	case 4:			 
+		break;
+	case 4:
 		//GLCall(glUniform4uiv(loc, arraySize, v));
 		glUniform4uiv(loc, arraySize, v);
 		break;
@@ -358,6 +359,7 @@ int GLShader::getUniformLocation(const std::string& name)
 
 GLShader::~GLShader()
 {
-	if(m_id)
+	if (m_id)
 		GLCall(glDeleteProgram(m_id));
+}
 }

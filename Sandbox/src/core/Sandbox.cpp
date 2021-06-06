@@ -21,34 +21,34 @@ constexpr char* title = "Niceday - Release";
 #endif
 
 
-class MainEventsLayer :public Layer
+class MainEventsLayer :public nd::Layer
 {
 public:
    MainEventsLayer() = default;
-   void onEvent(Event& e) override
+   void onEvent(nd::Event& e) override
    {
-	  if (e.getEventType() == Event::EventType::Message)
+	  if (e.getEventType() == nd::Event::EventType::Message)
 	  {
 		 auto message = dynamic_cast<MessageEvent&>(e);
 		 if (message.isTitle("language_change"))
 		 {
-			AppLanguages::loadLanguage(message.getText());
+			 nd::AppLanguages::loadLanguage(message.getText());
 
 			if (message.getText() == "jp")//todo font change should not be here
 			{
-			   GameFonts::smallFont = FontMatLib::getMaterial("res/fonts/umeboshi.fnt");
-			   GameFonts::bigFont = FontMatLib::getMaterial("res/fonts/umeboshi_big.fnt");
+			   GameFonts::smallFont = nd::FontMatLib::getMaterial("res/fonts/umeboshi.fnt");
+			   GameFonts::bigFont = nd::FontMatLib::getMaterial("res/fonts/umeboshi_big.fnt");
 			}
 			else {
-			   GameFonts::smallFont = FontMatLib::getMaterial("res/fonts/andrew_czech.fnt");
-			   GameFonts::bigFont = FontMatLib::getMaterial("res/fonts/andrew_big_czech.fnt");
+			   GameFonts::smallFont = nd::FontMatLib::getMaterial("res/fonts/andrew_czech.fnt");
+			   GameFonts::bigFont = nd::FontMatLib::getMaterial("res/fonts/andrew_big_czech.fnt");
 			}
 			NBT smallFont;
 			smallFont["textMaterial"] = GameFonts::smallFont->name;
 			NBT bigFont;
 			bigFont["textMaterial"] = GameFonts::bigFont->name;
-			GUIParser::setGlobalStyle("smallFont", smallFont);
-			GUIParser::setGlobalStyle("bigFont", bigFont);
+			 nd::GUIParser::setGlobalStyle("smallFont", smallFont);
+			 nd::GUIParser::setGlobalStyle("bigFont", bigFont);
 		 }
 	  }
    }
@@ -82,10 +82,10 @@ Sandbox::Sandbox() :
 
 
    //language setup
-   AppLanguages::registerLanguage("English", "en");
-   AppLanguages::registerLanguage("Cestina", "cs");
-   AppLanguages::registerLanguage("Nihongo", "jp");
-   AppLanguages::addLanguageFolder(ND_RESLOC("res/lang"));
+   nd::AppLanguages::registerLanguage("English", "en");
+   nd::AppLanguages::registerLanguage("Cestina", "cs");
+   nd::AppLanguages::registerLanguage("Nihongo", "jp");
+   nd::AppLanguages::addLanguageFolder(ND_RESLOC("res/lang"));
    std::string l;
    getSettings().loadSet("language", l, "en");
    m_LayerStack.pushOverlay(new MainEventsLayer());

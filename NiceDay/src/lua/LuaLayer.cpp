@@ -3,7 +3,6 @@
 #include "imgui.h"
 
 
-
 #include "event/KeyEvent.h"
 #include <GLFW/glfw3.h>
 #include "memory/stack_allocator.h"
@@ -23,8 +22,7 @@
 //-----------------------------------------------------------------------------
 
 
-
-
+namespace nd {
 
 #define LUACON_ERROR_PREF "[error]"
 #define LUACON_TRACE_PREF "[trace]"
@@ -128,7 +126,7 @@ struct LuaConsole
 		size_t len = strlen(str) + 1;
 		void* buf = malloc(len);
 		IM_ASSERT(buf);
-		return (char*)memcpy(buf, (const void*)str, len);
+		return (char*)memcpy(buf, str, len);
 	}
 
 	static void Strtrim(char* str)
@@ -546,7 +544,7 @@ struct LuaConsole
 		bool reclaim_focus = false;
 		if (ImGui::InputText("Input", InputBuf, IM_ARRAYSIZE(InputBuf),
 		                     ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CallbackCompletion |
-		                     ImGuiInputTextFlags_CallbackHistory, &TextEditCallbackStub, (void*)this))
+		                     ImGuiInputTextFlags_CallbackHistory, &TextEditCallbackStub, this))
 		{
 			char* s = InputBuf;
 			Strtrim(s);
@@ -616,7 +614,7 @@ struct LuaConsole
 	static int TextEditCallbackStub(ImGuiInputTextCallbackData* data)
 	// In C++11 you are better off using lambdas for this sort of forwarding callbacks
 	{
-		LuaConsole* console = (LuaConsole*)data->UserData;
+		auto console = (LuaConsole*)data->UserData;
 		return console->TextEditCallback(data);
 	}
 
@@ -723,18 +721,20 @@ struct LuaConsole
 
 static LuaLayer* s_lua_layer;
 
-static nd::temp_string nd_print(lua_State* L,const char* channel)
+static nd::temp_string nd_print(lua_State* L, const char* channel)
 {
 	auto argNumber = lua_gettop(L);
 	nd::temp_string s;
 	s.reserve(100);
-	for (int i = 1; i < argNumber + 1; ++i) {
+	for (int i = 1; i < argNumber + 1; ++i)
+	{
 		s += lua_tostring(L, i);
-		s += i!=argNumber?", ":"";
+		s += i != argNumber ? ", " : "";
 	}
 	s_lua_layer->printToLuaConsole(L, (nd::temp_string(channel) + s).c_str());
 	return s;
 }
+
 static int nd_info(lua_State* L)
 {
 	ND_INFO(nd_print(L,LUACON_INFO_PREF));
@@ -818,15 +818,15 @@ void LuaLayer::print_error(lua_State* state)
 	// The error message is on top of the stack.
 	// Fetch it, print it and then pop it off the stack.
 	const char* message = lua_tostring(state, -1);
-	printToLuaConsole(state, (nd::temp_string(LUACON_ERROR_PREF) + message).c_str());
+	printToLuaConsole(state, (temp_string(LUACON_ERROR_PREF) + message).c_str());
 	ND_ERROR("LUA ERROR:\n {}", message);
 	lua_pop(state, 1);
 }
 
 
-
 static std::string s_couroutineFileSrc;
 static char buf[1024];
+
 static std::string readStringFromFile(const char* filePath)
 {
 	FUTIL_ASSERT_EXIST(filePath);
@@ -841,6 +841,7 @@ static std::string readStringFromFile(const char* filePath)
 	fclose(f);
 	return out;
 }
+
 void LuaLayer::onAttach()
 {
 	//settings save and load
@@ -889,7 +890,7 @@ void LuaLayer::onAttach()
 	lua_register(m_L, "ND_ERROR", nd_error);
 	lua_register(m_L, "ND_RUN_FILE", nd_run_lua_file_script);
 #ifndef NOO_SOOL
-	s_lua.set_function("ND_RESLOC", [](const std::string& a) {return ND_RESLOC(a); });
+	s_lua.set_function("ND_RESLOC", [](const std::string& a) { return ND_RESLOC(a); });
 #endif
 	lua_register(m_L, "runf", nd_run_lua_file_script);
 	lua_register(m_L, "exit", nd_exit);
@@ -899,7 +900,7 @@ void LuaLayer::onAttach()
 #ifndef NOO_SOOL
 	nd_luabinder::bindEverything(s_lua);
 #endif
-	
+
 	//s_lua.set_function("opii", [](GUIWindow& e, int ee) {ND_INFO("gotcha {}", ee); });
 	//auto namespac = s_lua["GUIContext"].get_or_create<sol::table>();
 
@@ -909,6 +910,7 @@ void LuaLayer::onAttach()
 
 	runScriptFromFile(m_L, "res/engine/lua/startup.lua");
 }
+
 static void saveConsoleState()
 {
 	s_settings = NBT();
@@ -925,8 +927,8 @@ static void saveConsoleState()
 	}
 	s_settings["list"] = std::move(list);
 	NBT::saveToFile(s_settings_file, s_settings);
-
 }
+
 void LuaLayer::onDetach()
 {
 	saveConsoleState();
@@ -959,7 +961,6 @@ sol::state* LuaLayer::getSolState()
 	return nullptr;
 #endif
 	//return nullptr;
-	
 }
 
 void LuaLayer::printToLuaConsole(lua_State* L, const char* c)
@@ -1009,9 +1010,10 @@ static int byteCodeWriterCallback(lua_State* L, const void* p, size_t sz, void* 
 
 constexpr int saveEveryNTicks = 60 * 15;
 static int timeToSave = saveEveryNTicks;
+
 void LuaLayer::onUpdate()
 {
-	if(--timeToSave==0)
+	if (--timeToSave == 0)
 	{
 		timeToSave = saveEveryNTicks;
 		saveConsoleState();
@@ -1039,4 +1041,5 @@ void LuaLayer::onUpdate()
 		print_error(m_L);
 		return;
 	}
+}
 }

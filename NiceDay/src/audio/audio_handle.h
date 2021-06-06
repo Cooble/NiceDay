@@ -3,6 +3,7 @@
 #include "audio_header.h"
 
 
+namespace nd {
 /**
  * Represents Audio which can be played, paused, stopped
  * It is only a handle, true audio proccessing is done on the separate thread in Sounder
@@ -55,19 +56,20 @@ public:
  * Represents audio that will be cached into the buffer for later (and faster) usage
  * Use with short audio clips (like 4sec max) (it's not mandatory yet advisable)
  */
-class SoundHandle :public AudioHandle
+class SoundHandle : public AudioHandle
 {
 public:
 	SoundHandle();
 };
+
 /**
  * Represents audio stream which will be read from file directly into the sound proccessing
  * Won't be loaded all at once
  * Use with songs, ambient sounds and longer audio clips (or with sounds which won't be needed again in the near future)
  */
-class MusicHandle :public AudioHandle
+class MusicHandle : public AudioHandle
 {
 public:
 	MusicHandle();
 };
-
+}

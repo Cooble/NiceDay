@@ -2,11 +2,13 @@
 #include "GLBuffer.h"
 #include "GLRenderer.h"
 
+namespace nd::internal {
+
 /////////////////////////////////////////////////////////////////////////////////
 //VertexBuffer //////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////
-OpenGLVertexBuffer::OpenGLVertexBuffer(void* data, uint32_t size,BufferUsage usage)
-	:m_size(size),m_id(0)
+OpenGLVertexBuffer::OpenGLVertexBuffer(void* data, uint32_t size, BufferUsage usage)
+	: m_id(0), m_size(size)
 {
 	GLCall(glGenBuffers(1, &m_id));
 	bind();
@@ -23,6 +25,7 @@ void OpenGLVertexBuffer::bind() const
 {
 	GLCall(glBindBuffer(GL_ARRAY_BUFFER, m_id));
 }
+
 void OpenGLVertexBuffer::unbind() const
 {
 	GLCall(glBindBuffer(GL_ARRAY_BUFFER, 0));
@@ -33,7 +36,8 @@ uint32_t OpenGLVertexBuffer::getSize() const
 	return m_size;
 }
 
-static bool OPENGL_MAPPING_BUFF_ACTIVE=false;
+static bool OPENGL_MAPPING_BUFF_ACTIVE = false;
+
 void* OpenGLVertexBuffer::mapPointer()
 {
 	ASSERT(!OPENGL_MAPPING_BUFF_ACTIVE, "Already mapping!");
@@ -59,8 +63,8 @@ void OpenGLVertexBuffer::changeData(char* buff, uint32_t size, uint32_t offset)
 /////////////////////////////////////////////////////////////////////////////////
 //IndexBuffer////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////
-OpenGLIndexBuffer::OpenGLIndexBuffer(uint32_t* data, uint32_t count,BufferUsage usage)
-	:m_count(count)
+OpenGLIndexBuffer::OpenGLIndexBuffer(uint32_t* data, uint32_t count, BufferUsage usage)
+	: m_count(count)
 {
 	GLCall(glGenBuffers(1, &m_id));
 	bind();
@@ -77,6 +81,7 @@ void OpenGLIndexBuffer::bind() const
 {
 	GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_id));
 }
+
 void OpenGLIndexBuffer::unbind() const
 {
 	GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
@@ -86,4 +91,4 @@ uint32_t OpenGLIndexBuffer::getCount() const
 {
 	return m_count;
 }
-
+}

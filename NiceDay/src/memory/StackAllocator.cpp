@@ -1,6 +1,8 @@
 ﻿#include "ndpch.h"
 #include "StackAllocator.h"
 
+namespace nd {
+
 StackAllocator::StackAllocator(size_t byteSize)
 	: m_byte_size(byteSize)
 {
@@ -40,7 +42,7 @@ void* StackAllocator::allocate(size_t size)
 }
 
 DoubleBuffStackAllocator::DoubleBuffStackAllocator(size_t byteSize):
-m_0(byteSize),m_1(byteSize)
+	m_0(byteSize), m_1(byteSize)
 {
 	m_current = &m_0;
 	m_past = &m_1;
@@ -55,7 +57,7 @@ void DoubleBuffStackAllocator::resizeAndReset(size_t byteSize)
 void DoubleBuffStackAllocator::swapBuffers()
 {
 	m_past->reset();
-	
+
 	auto m = m_current;
 	m_current = m_past;
 	m_past = m;
@@ -64,4 +66,5 @@ void DoubleBuffStackAllocator::swapBuffers()
 void* DoubleBuffStackAllocator::allocate(size_t size)
 {
 	return m_current->allocate(size);
+}
 }

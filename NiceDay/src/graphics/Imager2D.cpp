@@ -1,6 +1,8 @@
 ﻿#include "ndpch.h"
 #include "Imager2D.h"
 
+namespace nd {
+
 void Imager2D::copySubImage(void* src, void* dst, int srcW, int srcH, int dstW, int dstH, int cutX, int cutY, int cutW,
                             int cutH, int pasteX, int pasteY)
 {
@@ -19,4 +21,5 @@ void Imager2D::copySubImage(void* src, void* dst, int srcW, int srcH, int dstW, 
 	{
 		memcpy(dstPixel + (y * dstW), srcPixel + (y * srcW), cutW * sizeof(Pixel));
 	}
+}
 }

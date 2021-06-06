@@ -8,6 +8,7 @@
 #include "particles.h"
 #include "graphics/Renderer.h"
 
+using namespace nd;
 
 ParticleManager::ParticleManager(int maxparticles, Texture* atlas, int atlasSegmentCount, Texture* blockAtlas,
                                  int blockAtlasSegmentCount):

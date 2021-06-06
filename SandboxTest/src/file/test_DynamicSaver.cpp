@@ -11,14 +11,13 @@ std::string genRanString(int size)
 	return out;
 }
 
-NBT genRanNBT(int layers,int size)
+nd::NBT genRanNBT(int layers,int size)
 {
-
-	NBT out;
+	nd::NBT out;
 	for (int i = 0; i < size; ++i)
 	{
 		auto s = genRanString( 1 + std::rand() % 25);
-		NBT& e=out[s];
+		nd::NBT& e=out[s];
 		
 		switch ((i+std::rand()%2)%7)
 		{
@@ -44,7 +43,7 @@ NBT genRanNBT(int layers,int size)
 	return out;
 }
 
-void writeData(DynamicSaver& saver, size_t size, unsigned seed)
+void writeData(nd::DynamicSaver& saver, size_t size, unsigned seed)
 {
 	uint32_t data;
 	for (int i = 0; i < size; ++i)
@@ -53,7 +52,7 @@ void writeData(DynamicSaver& saver, size_t size, unsigned seed)
 		saver.write((char*)&data, sizeof(uint32_t));
 	}
 }
-bool checkData(DynamicSaver& saver, size_t size, unsigned seed)
+bool checkData(nd::DynamicSaver& saver, size_t size, unsigned seed)
 {
 	uint32_t data;
 	for (int i = 0; i < size; ++i)
@@ -64,23 +63,23 @@ bool checkData(DynamicSaver& saver, size_t size, unsigned seed)
 	}
 	return true;
 }
-void writeDataNBT(DynamicSaver& saver, unsigned seed)
+void writeDataNBT(nd::DynamicSaver& saver, unsigned seed)
 {
-	auto func = std::bind(&DynamicSaver::writeI, &saver, std::placeholders::_1, std::placeholders::_2);
+	auto func = std::bind(&nd::DynamicSaver::writeI, &saver, std::placeholders::_1, std::placeholders::_2);
 	std::srand(seed);
-	BinarySerializer::write(genRanNBT(5, 10), func);
+	nd::BinarySerializer::write(genRanNBT(5, 10), func);
 	
 }
-bool checkDataNBT(DynamicSaver& saver, unsigned seed)
+bool checkDataNBT(nd::DynamicSaver& saver, unsigned seed)
 {
-	NBT t;
-	auto func = std::bind(&DynamicSaver::readI, &saver, std::placeholders::_1, std::placeholders::_2);
-	BinarySerializer::read(t,func);
+	nd::NBT t;
+	auto func = std::bind(&nd::DynamicSaver::readI, &saver, std::placeholders::_1, std::placeholders::_2);
+	nd::BinarySerializer::read(t,func);
 	std::srand(seed);
 	return t == genRanNBT(5, 10);
 }
 int srando[10];
-void testik(DynamicSaver& saver)
+void testik(nd::DynamicSaver& saver)
 {
 	for (int& i : srando)
 	{

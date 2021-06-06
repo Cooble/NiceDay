@@ -1,6 +1,6 @@
 #pragma once
 #include "layer/Layer.h"
-class MainLayer: public Layer
+class MainLayer: public nd::Layer
 {
 public:
 	MainLayer();
@@ -10,7 +10,7 @@ public:
 	virtual void onDetach() override;
 	virtual void onUpdate() override;
 	virtual void onImGuiRender() override;
-	virtual void onEvent(Event& e) override;
+	virtual void onEvent(nd::Event& e) override;
 
 };
 

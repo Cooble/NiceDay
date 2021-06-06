@@ -1,6 +1,8 @@
 ﻿#include "ndpch.h"
 #include "EntityManager.h"
 
+using namespace nd;
+
 EntityID EntityManager::createEntity()
 {
 	/*std::vector<bool> bools;

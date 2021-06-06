@@ -13,14 +13,14 @@ struct FlatCam
 	glm::vec2 startCursor;
 	glm::vec2 startPos;
 
-	void onEvent(Event& e);
+	void onEvent(nd::Event& e);
 
 	glm::mat4 getProjMatrix();
 	void imGuiPropsRender();
 };
 
 
-class MandelBrotLayer:public Layer
+class MandelBrotLayer:public nd::Layer
 {
 public:
 	MandelBrotLayer() = default;
@@ -28,6 +28,6 @@ public:
 	void onDetach() override;
 	void onImGuiRender() override;
 	void onRender() override;
-	void onEvent(Event& e) override;
+	void onEvent(nd::Event& e) override;
 	
 };

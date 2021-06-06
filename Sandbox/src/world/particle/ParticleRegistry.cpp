@@ -3,6 +3,7 @@
 #include "graphics/TextureAtlas.h"
 
 
+using namespace nd;
 ParticleID ParticleRegistry::registerTemplate(const ParticleTemplate& t)
 {
 	m_templates.push_back(t);

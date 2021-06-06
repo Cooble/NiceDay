@@ -2,7 +2,6 @@
 #include "Window.h"
 #include <GLFW/glfw3.h>
 #include <glad/glad.h>
-#include <clocale>
 
 
 #include "AppGlobals.h"
@@ -16,24 +15,31 @@
 #include "stb_image.h"
 #include "files/FUtil.h"
 
-static void blankFun(Event& e) {}
-static bool is_glfw_initialized = false;
+using namespace nd;
 
 //forces driver to use nvidia and not integrated
 extern "C" {
-	_declspec(dllexport) DWORD NvOptimusEnablement = 1;
+_declspec(dllexport) DWORD NvOptimusEnablement = 0;
 }
+
+namespace nd {
+static void blankFun(Event& e)
+{
+}
+
+static bool is_glfw_initialized = false;
+
 
 Window::Window(int width, int height, const std::string& title, bool fullscreen) :
 	m_window(nullptr)
 {
-
 	m_data.width = width;
 	m_data.height = height;
 	m_data.title = title;
 	m_data.eventCallback = blankFun;
 
-	if (!is_glfw_initialized) {
+	if (!is_glfw_initialized)
+	{
 		is_glfw_initialized = true;
 		glfwInit();
 	}
@@ -50,7 +56,6 @@ Window::Window(int width, int height, const std::string& title, bool fullscreen)
 	// load icons
 	// --------------------
 	{
-
 		setIcon(ND_RESLOC("res/engine/images/nd_icon2.png"));
 	}
 
@@ -61,9 +66,9 @@ Window::Window(int width, int height, const std::string& title, bool fullscreen)
 		return;
 	}
 	glfwMakeContextCurrent(m_window);
-	glfwSwapInterval(0);//vsync off
+	glfwSwapInterval(0); //vsync off
 	// glad: load all OpenGL function pointers
-		// ---------------------------------------
+	// ---------------------------------------
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
 	{
 		ND_ERROR("Failed to initialize GLAD");
@@ -73,89 +78,97 @@ Window::Window(int width, int height, const std::string& title, bool fullscreen)
 	glfwSetWindowUserPointer(m_window, &m_data);
 
 	//window events
-	glfwSetFramebufferSizeCallback(m_window, [](GLFWwindow* window, int width, int height) {
+	glfwSetFramebufferSizeCallback(m_window, [](GLFWwindow* window, int width, int height)
+	{
 		WindowData& d = *(WindowData*)glfwGetWindowUserPointer(window);
 		GLCall(glViewport(0, 0, width, height));
 		d.width = width;
 		d.height = height;
 		WindowResizeEvent e(width, height);
 		d.eventCallback(e);
-		});
-	glfwSetWindowCloseCallback(m_window, [](GLFWwindow* window) {
+	});
+	glfwSetWindowCloseCallback(m_window, [](GLFWwindow* window)
+	{
 		WindowData& d = *(WindowData*)glfwGetWindowUserPointer(window);
 		WindowCloseEvent e;
 		d.eventCallback(e);
-		});
-	glfwSetWindowFocusCallback(m_window, [](GLFWwindow* window, int focused) {
+	});
+	glfwSetWindowFocusCallback(m_window, [](GLFWwindow* window, int focused)
+	{
 		WindowData& d = *(WindowData*)glfwGetWindowUserPointer(window);
 		d.focused = focused;
-		});
+	});
 
 
 	//key events
-	glfwSetKeyCallback(m_window, [](GLFWwindow* window, int key, int scancode, int action, int mods) {
+	glfwSetKeyCallback(m_window, [](GLFWwindow* window, int key, int scancode, int action, int mods)
+	{
 		WindowData& d = *(WindowData*)glfwGetWindowUserPointer(window);
-		if (action == GLFW_PRESS) {
-			KeyPressEvent e(key, mods);
-			d.eventCallback(e);
-		}
-		else if (action == GLFW_RELEASE) {
-			KeyReleaseEvent e(key);
-			d.eventCallback(e);
-		}
-		else if (action == GLFW_REPEAT)
+		if (action == GLFW_PRESS || action == GLFW_REPEAT)
 		{
-			KeyPressEvent e(key, mods, true);
+			KeyPressEvent e(key, mods, action == GLFW_REPEAT);
 			d.eventCallback(e);
 		}
-		});
-	glfwSetCharCallback(m_window, [](GLFWwindow* window, unsigned int key) {
+		else if (action == GLFW_RELEASE)
+		{
+			KeyReleaseEvent e(key, mods);
+			d.eventCallback(e);
+		}
+	});
+	glfwSetCharCallback(m_window, [](GLFWwindow* window, unsigned int key)
+	{
 		WindowData& d = *(WindowData*)glfwGetWindowUserPointer(window);
-		KeyTypeEvent e(key);
+		KeyTypeEvent e(key, 0);
 		d.eventCallback(e);
-		});
+	});
 	//mouse events
-	glfwSetMouseButtonCallback(m_window, [](GLFWwindow* window, int button, int action, int mods) {
+	glfwSetMouseButtonCallback(m_window, [](GLFWwindow* window, int button, int action, int mods)
+	{
 		WindowData& d = *(WindowData*)glfwGetWindowUserPointer(window);
 		double x, y;
 		glfwGetCursorPos(window, &x, &y);
 
-		if (action == GLFW_PRESS) {
-			MousePressEvent e(x, y, button);
+		if (action == GLFW_PRESS)
+		{
+			MousePressEvent e(x, y, mods, button);
 			d.eventCallback(e);
 		}
-		else if (action == GLFW_RELEASE) {
-			MouseReleaseEvent e(x, y, button);
+		else if (action == GLFW_RELEASE)
+		{
+			MouseReleaseEvent e(x, y, mods, button);
 			d.eventCallback(e);
 		}
-
-		});
-	glfwSetCursorPosCallback(m_window, [](GLFWwindow* window, double x, double y) {
+	});
+	glfwSetCursorPosCallback(m_window, [](GLFWwindow* window, double x, double y)
+	{
 		WindowData& d = *(WindowData*)glfwGetWindowUserPointer(window);
 		MouseMoveEvent e(x, y);
 		d.eventCallback(e);
-		});
-	glfwSetScrollCallback(m_window, [](GLFWwindow* window, double xx, double yy) {
+	});
+	glfwSetScrollCallback(m_window, [](GLFWwindow* window, double xx, double yy)
+	{
 		WindowData& d = *(WindowData*)glfwGetWindowUserPointer(window);
 		double x, y;
 		glfwGetCursorPos(window, &x, &y);
-		MouseScrollEvent e(x, y, xx, yy);
+		MouseScrollEvent e(x, y, 0, xx, yy);
 		d.eventCallback(e);
-		});
-	glfwSetCursorEnterCallback(m_window, [](GLFWwindow* window, int entered) {
+	});
+	glfwSetCursorEnterCallback(m_window, [](GLFWwindow* window, int entered)
+	{
 		WindowData& d = *(WindowData*)glfwGetWindowUserPointer(window);
 		d.hovered = entered;
 		double x, y;
 		glfwGetCursorPos(window, &x, &y);
-		MouseEnteredEvent e(x, y, (bool)entered);
+		MouseEnteredEvent e(x, y, (entered));
 		d.eventCallback(e);
-		});
-	glfwSetDropCallback(m_window, [](GLFWwindow* window, int count, const char** paths) {
+	});
+	glfwSetDropCallback(m_window, [](GLFWwindow* window, int count, const char** paths)
+	{
 		//warning paths are valid until this function returns
 		WindowData& d = *(WindowData*)glfwGetWindowUserPointer(window);
 		DropFilesEvent e(count, paths);
 		d.eventCallback(e);
-		});
+	});
 
 
 	//GLint i = 0;
@@ -186,7 +199,7 @@ Window::Window(int width, int height, const std::string& title, bool fullscreen)
 	}
 	//set the default fbo to be this window target
 	m_window_fbo = FrameBuffer::create(FrameBufferInfo().windowTarget());
-	Renderer::setDefaultFBO(m_window_fbo);//default fbo is in case of opengl "empty" => directly rendered to screen
+	Renderer::setDefaultFBO(m_window_fbo); //default fbo is in case of opengl "empty" => directly rendered to screen
 }
 
 
@@ -201,7 +214,7 @@ glm::vec2 Window::getPos()
 {
 	int x, y;
 	glfwGetWindowPos(m_window, &x, &y);
-	return { x,y };
+	return {x, y};
 }
 
 void Window::setSize(int width, int height)
@@ -215,8 +228,8 @@ void Window::setFullScreen(bool fullscreen)
 {
 	if (m_data.fullscreen == fullscreen)
 		return;
-	if (fullscreen) {
-
+	if (fullscreen)
+	{
 		glfwGetWindowPos(m_window, &m_data.lastX, &m_data.lastY);
 		glfwGetWindowSize(m_window, &m_data.lastWidth, &m_data.lastHeight);
 		glfwSetWindowMonitor(m_window, glfwGetPrimaryMonitor(), 0, 0, 1920, 1080, 60);
@@ -247,7 +260,7 @@ void Window::setCursorPolicy(WindowCursor state)
 		s = GLFW_CURSOR_HIDDEN;
 	glfwSetInputMode(m_window, GLFW_CURSOR, s);
 	if (m_raw_mouse_enabled)
-		glfwSetInputMode(m_window, GLFW_RAW_MOUSE_MOTION, (int)(s == GLFW_CURSOR_DISABLED));
+		glfwSetInputMode(m_window, GLFW_RAW_MOUSE_MOTION, s == GLFW_CURSOR_DISABLED);
 	m_cursor_policy = state;
 }
 
@@ -291,13 +304,14 @@ void Window::setIcon(std::string_view image_path)
 
 	int w, h, mbbpp;
 	GLFWimage icons[1];
-	if (FUtil::exists(image_path)) {
+	if (FUtil::exists(image_path))
+	{
 		icons->pixels = stbi_load(std::string(image_path).c_str(), &w, &h, &mbbpp, 4);
 		icons->width = w;
 		icons->height = h;
 
 		glfwSetWindowIcon(m_window, 1, icons);
-		stbi_image_free((void*)icons[0].pixels);
+		stbi_image_free(icons[0].pixels);
 	}
 }
 
@@ -318,7 +332,7 @@ int8_t& RealInput::getKey(int button)
 	{
 		auto lastSize = m_keys.size();
 		m_keys.resize(button + 1);
-		for (int i = 0; i < (button + 1) - lastSize; ++i)//clear all new keys
+		for (int i = 0; i < (button + 1) - lastSize; ++i) //clear all new keys
 			m_keys[i + lastSize] = 0;
 		m_keys[button] = 0;
 	}
@@ -331,7 +345,7 @@ int8_t& RealInput::getMouseKey(int button)
 	{
 		auto lastSize = m_mouse_keys.size();
 		m_mouse_keys.resize(button + 1);
-		for (int i = 0; i < (button + 1) - lastSize; ++i)//clear all new keys
+		for (int i = 0; i < (button + 1) - lastSize; ++i) //clear all new keys
 			m_mouse_keys[i + lastSize] = 0;
 		m_mouse_keys[button] = 0;
 	}
@@ -339,7 +353,8 @@ int8_t& RealInput::getMouseKey(int button)
 }
 
 RealInput::RealInput(Window* window)
-	:m_window(window) {
+	: m_window(window)
+{
 }
 
 void RealInput::update()
@@ -347,7 +362,8 @@ void RealInput::update()
 	for (int i = 0; i < m_keys.size(); ++i)
 	{
 		auto& k = getKey(i);
-		if (isKeyPressed((KeyCode)i)) {
+		if (isKeyPressed((KeyCode)i))
+		{
 			if (k < 127)
 				++k;
 		}
@@ -358,7 +374,8 @@ void RealInput::update()
 	for (int i = 0; i < m_mouse_keys.size(); ++i)
 	{
 		auto& k = getMouseKey(i);
-		if (isMousePressed((MouseCode)i)) {
+		if (isMousePressed((MouseCode)i))
+		{
 			if (k < 127)
 				++k;
 		}
@@ -366,31 +383,34 @@ void RealInput::update()
 			k = -1;
 		else k = 0;
 	}
-	if (isMouseFreshlyPressed(MouseCode::LEFT) || isMouseFreshlyPressed(MouseCode::MIDDLE) || isMouseFreshlyPressed(MouseCode::RIGHT))
+	if (isMouseFreshlyPressed(MouseCode::LEFT) || isMouseFreshlyPressed(MouseCode::MIDDLE) || isMouseFreshlyPressed(
+		MouseCode::RIGHT))
 		m_drag_offset = getMouseLocation();
 }
 
 bool RealInput::isKeyPressed(KeyCode button)
 {
-	getKey((int)button);//save this button to vector
-	GLFWwindow* w = (GLFWwindow*)m_window->getWindow();
-	auto state = glfwGetKey(w, (int)button);
+	getKey(button); //save this button to vector
+	auto w = (GLFWwindow*)m_window->getWindow();
+	auto state = glfwGetKey(w, button);
 	return state == GLFW_PRESS || state == GLFW_REPEAT;
 }
+
 bool RealInput::isKeyFreshlyPressed(KeyCode button)
 {
-	return getKey((int)button) == 1;
+	return getKey(button) == 1;
 }
+
 bool RealInput::isKeyFreshlyReleased(KeyCode button)
 {
-	return getKey((int)button) == -1;
+	return getKey(button) == -1;
 }
 
 bool RealInput::isMousePressed(MouseCode button)
 {
-	getMouseKey((int)button);//save this button to vector
+	getMouseKey((int)button); //save this button to vector
 
-	GLFWwindow* w = (GLFWwindow*)m_window->getWindow();
+	auto w = (GLFWwindow*)m_window->getWindow();
 	auto state = glfwGetMouseButton(w, (int)button);
 	return state == GLFW_PRESS;
 }
@@ -416,8 +436,6 @@ glm::vec2 RealInput::getMouseLocation()
 
 	double x, y;
 	glfwGetCursorPos(w, &x, &y);
-	return { x,y };
+	return {x, y};
 }
-
-
-
+}

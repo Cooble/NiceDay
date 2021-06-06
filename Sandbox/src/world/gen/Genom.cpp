@@ -3,6 +3,8 @@
 #include "graphics/API/Texture.h"
 #include "world/block/block_datas.h"
 
+using namespace nd;
+
 inline static Genom::Pix blockToColor(const BlockStruct& b)
 {
 	switch (b.block_id)
@@ -33,7 +35,7 @@ inline static Genom::Pix doubleToColor(double b)
 	auto n= (uint8_t)((b + 1) /2 *255);
 	return { n, n, n };
 }
-static NBT oldNBT;
+static nd::NBT oldNBT;
 static bool wasChange = true;
 void Genom::updateNBT(const NBT& nbt)
 {

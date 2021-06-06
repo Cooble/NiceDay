@@ -1,6 +1,8 @@
 ﻿#pragma once
 #include "graphics/API/VertexArray.h"
 
+namespace nd::internal {
+
 class GLVertexArray : public VertexArray
 {
 private:
@@ -9,7 +11,7 @@ private:
 
 public:
 	GLVertexArray();
-	~GLVertexArray();
+	~GLVertexArray() override;
 	void addBuffer(const VertexBuffer& vbo) override;
 	void addBuffer(const IndexBuffer& vio) override;
 
@@ -17,3 +19,4 @@ public:
 	void bind() const override;
 	void unbind() const override;
 };
+}

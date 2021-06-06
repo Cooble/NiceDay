@@ -3,14 +3,14 @@
 
 struct WorldIOAssignment
 {
-	JobAssignment* job;
+	nd::JobAssignment* job;
 
 	union //pointer
 	{
 		Chunk* chunk;
 		WorldInfo* worldInfo;
-		NDUtil::Bitset* bool_gen;
-		NBT* nbt;
+		NDUtils::Bitset* bool_gen;
+		nd::NBT* nbt;
 		WorldEntity** entities;
 		WorldEntity*** entitiesPointer;
 	};
@@ -46,11 +46,11 @@ struct WorldIOAssignment
 		WAIT,
 	} type;
 
-	IBinaryStream::RWFunc func;
+	nd::IBinaryStream::RWFunc func;
 
 	WorldIOAssignment() = default;
 
-	WorldIOAssignment(JobAssignment* job, void* pointer, uint64_t data, uint64_t data2, int type)
+	WorldIOAssignment(nd::JobAssignment* job, void* pointer, uint64_t data, uint64_t data2, int type)
 		: job(job),
 		  chunk((Chunk*)pointer),
 		  data(data),
@@ -59,8 +59,8 @@ struct WorldIOAssignment
 		*(int*)&this->type = type;
 	}
 
-	WorldIOAssignment(JobAssignment* job, void* pointer, uint64_t data, uint64_t data2, int type,
-		IBinaryStream::RWFunc func)
+	WorldIOAssignment(nd::JobAssignment* job, void* pointer, uint64_t data, uint64_t data2, int type,
+	                  nd::IBinaryStream::RWFunc func)
 		: job(job),
 		  chunk((Chunk*)pointer),
 		  data(data),
@@ -72,22 +72,22 @@ struct WorldIOAssignment
 };
 
 // File threaded chunk provider
-class ThreadedChunkProvider : public Worker<WorldIOAssignment>, public IChunkProvider
+class ThreadedChunkProvider : public nd::Worker<WorldIOAssignment>, public IChunkProvider
 {
 public:
 	virtual ~ThreadedChunkProvider() = default;
 
-	void assignChunkLoad(JobAssignment* jobAssigment, Chunk* chunk, int chunkOffset) override;
-	void assignChunkSave(JobAssignment* jobAssigment, Chunk* chunk, int chunkOffset) override;
-	void assignWorldInfoSave(JobAssignment* jobAssigment, const WorldInfo* info) override;
-	void assignWorldInfoLoad(JobAssignment* jobAssigment, WorldInfo* info) override;
-	void assignNBTLoad(JobAssignment* jobAssigment, int chunkId, NBT* nbt) override;
-	void assignNBTSave(JobAssignment* jobAssigment, int chunkId, const NBT* nbt) override;
-	void assignEntityLoad(JobAssignment* jobAssigment, int chunkId, WorldEntity*** entities, int* numberOfEntities)override;
-	void assignEntitySave(JobAssignment* jobAssigment, int chunkId, WorldEntity** entities, int numberOfEntities)override;
-	void assignWait(JobAssignment* jobAssigment) override;
-	void assignBoolGenLoad(JobAssignment* jobAssigment, NDUtil::Bitset* bitset) override;
-	void assignBoolGenSave(JobAssignment* jobAssigment, const NDUtil::Bitset* bitset) override;
-	void assignSerialize(JobAssignment* jobAssigment, int chunkId, const IBinaryStream::RWFunc& func) override;
-	void assignDeserialize(JobAssignment* jobAssigment, int chunkId, const IBinaryStream::RWFunc& func) override;
+	void assignChunkLoad(nd::JobAssignment* jobAssigment, Chunk* chunk, int chunkOffset) override;
+	void assignChunkSave(nd::JobAssignment* jobAssigment, Chunk* chunk, int chunkOffset) override;
+	void assignWorldInfoSave(nd::JobAssignment* jobAssigment, const WorldInfo* info) override;
+	void assignWorldInfoLoad(nd::JobAssignment* jobAssigment, WorldInfo* info) override;
+	void assignNBTLoad(nd::JobAssignment* jobAssigment, int chunkId, nd::NBT* nbt) override;
+	void assignNBTSave(nd::JobAssignment* jobAssigment, int chunkId, const nd::NBT* nbt) override;
+	void assignEntityLoad(nd::JobAssignment* jobAssigment, int chunkId, WorldEntity*** entities, int* numberOfEntities)override;
+	void assignEntitySave(nd::JobAssignment* jobAssigment, int chunkId, WorldEntity** entities, int numberOfEntities)override;
+	void assignWait(nd::JobAssignment* jobAssigment) override;
+	void assignBoolGenLoad(nd::JobAssignment* jobAssigment, NDUtils::Bitset* bitset) override;
+	void assignBoolGenSave(nd::JobAssignment* jobAssigment, const NDUtils::Bitset* bitset) override;
+	void assignSerialize(nd::JobAssignment* jobAssigment, int chunkId, const nd::IBinaryStream::RWFunc& func) override;
+	void assignDeserialize(nd::JobAssignment* jobAssigment, int chunkId, const nd::IBinaryStream::RWFunc& func) override;
 };

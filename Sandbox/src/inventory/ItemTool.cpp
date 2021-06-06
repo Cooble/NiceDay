@@ -5,6 +5,7 @@
 #include "audio/Player.h"
 #include "world/entity/EntityPlayer.h"
 
+using namespace nd;
 std::vector<glm::vec3> ItemTool::s_dug_blocks;
 
 // number of blocks that can be dug simultaneously

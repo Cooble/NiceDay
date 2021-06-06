@@ -4,6 +4,7 @@
 #include "event/KeyEvent.h"
 #include "core/App.h"
 #include "GLFW/glfw3.h"
+using namespace nd;
 
 MainLayer::MainLayer()
 	:Layer("MainLayer"){}

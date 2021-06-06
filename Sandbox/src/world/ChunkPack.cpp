@@ -3,6 +3,7 @@
 #include "World.h"
 
 
+using namespace nd;
 
 
 ChunkPack::ChunkPack(half_int chunkCenterPos, std::initializer_list<Chunk*> chunks):

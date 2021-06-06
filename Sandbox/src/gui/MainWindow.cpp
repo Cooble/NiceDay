@@ -12,6 +12,8 @@
 #include "files/FUtil.h"
 #include "gui/GUIParser.h"
 
+using namespace nd;
+
 
 FontMaterial* GameFonts::bigFont;
 FontMaterial* GameFonts::smallFont;

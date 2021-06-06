@@ -1,4 +1,5 @@
 ﻿#pragma once
+namespace nd {
 
 class Imager2D
 {
@@ -18,3 +19,4 @@ public:
 		int pasteX, int pasteY
 	);
 };
+}

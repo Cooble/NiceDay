@@ -10,6 +10,7 @@
 #include "stb_image_write.h"
 #include <filesystem>
 
+using namespace nd;
 static int itemBlockSize = 32;
 void BlockTextureCreator::createTextures()
 {
@@ -17,7 +18,7 @@ void BlockTextureCreator::createTextures()
 	stbi_flip_vertically_on_write(true);
 
 	ND_TRACE("[BlockTextureCreator]: making textures...");
-	m_fbo.replaceTexture(Texture::create(TextureInfo().size(itemBlockSize)));
+	m_fbo.replaceTexture(nd::Texture::create(TextureInfo().size(itemBlockSize)));
 
 	m_vbo = VertexBuffer::create(nullptr, sizeof(ChunkMesh::PosVertexData)*6, BufferUsage::DYNAMIC_DRAW);
 	m_vbo->setLayout(ChunkMesh::getLayout());
@@ -140,7 +141,7 @@ void BlockTextureCreator::createTexture(const Block& block)
 		Gcon.clear(BuffBit::COLOR);
 		m_vao->bind();
 		ChunkMesh::getProgram()->bind();		
-		std::static_pointer_cast<GLShader>(ChunkMesh::getProgram())->setUniformMat4("u_transform", glm::mat4(1.f));
+		std::static_pointer_cast<internal::GLShader>(ChunkMesh::getProgram())->setUniformMat4("u_transform", glm::mat4(1.f));
 		ChunkMesh::getAtlas()->bind(0);
 		ChunkMesh::getCornerAtlas()->bind(1);
 
@@ -159,14 +160,14 @@ void BlockTextureCreator::createTexture(const Block& block)
 	else if(block.hasMetaTexturesInRow())
 	{
 		int maxMetaSize = block.getMaxMetadata();
-		tempFBO.replaceTexture(Texture::create(TextureInfo().size(itemBlockSize * maxMetaSize, itemBlockSize)));
+		tempFBO.replaceTexture(nd::Texture::create(TextureInfo().size(itemBlockSize * maxMetaSize, itemBlockSize)));
 		tempFBO.bind();
 		Gcon.setClearColor(0, 0, 0, 0);
 		Gcon.clear(BuffBit::COLOR);
 		m_vao->bind();
 		ChunkMesh::getProgram()->bind();
 		auto m = glm::scale(glm::mat4(1.f), {1.f/maxMetaSize,1,1});
-		std::static_pointer_cast<GLShader>(ChunkMesh::getProgram())->setUniformMat4("u_transform", m);
+		std::static_pointer_cast<nd::internal::GLShader>(ChunkMesh::getProgram())->setUniformMat4("u_transform", m);
 		ChunkMesh::getAtlas()->bind(0);
 		ChunkMesh::getCornerAtlas()->bind(1);
 		

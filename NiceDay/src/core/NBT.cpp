@@ -2,6 +2,7 @@
 #include "NBT.h"
 #include <nlohmann/json.hpp>
 
+namespace nd {
 
 Stringo NBT::dump(int depth) const
 {
@@ -127,7 +128,8 @@ static void removeComments(int length)
 	for (int i = 0; i < length; ++i)
 	{
 		auto val = BIG_JSON_BUFFER[i];
-		if (val == '\0') {
+		if (val == '\0')
+		{
 			if (startIndex != -1)
 			{
 				memset(&BIG_JSON_BUFFER[startIndex], ' ', i - startIndex);
@@ -136,12 +138,12 @@ static void removeComments(int length)
 		}
 		if (startIndex == -1)
 		{
-			if (val == '/') {
+			if (val == '/')
+			{
 				if (lastChar == '/')
 				{
 					startIndex = i - 1;
 					bigLiner = false;
-
 				}
 			}
 			else if (val == '*')
@@ -153,16 +155,16 @@ static void removeComments(int length)
 				}
 			}
 		}
-		else
-			if (val == '\n' && !bigLiner)
-			{
-				memset(&BIG_JSON_BUFFER[startIndex], ' ', i - startIndex);
-				startIndex = -1;
-			}
-			else if (val == '/' && lastChar == '*' && bigLiner) {
-				memset(&BIG_JSON_BUFFER[startIndex], ' ', i - startIndex + 1);
-				startIndex = -1;
-			}
+		else if (val == '\n' && !bigLiner)
+		{
+			memset(&BIG_JSON_BUFFER[startIndex], ' ', i - startIndex);
+			startIndex = -1;
+		}
+		else if (val == '/' && lastChar == '*' && bigLiner)
+		{
+			memset(&BIG_JSON_BUFFER[startIndex], ' ', i - startIndex + 1);
+			startIndex = -1;
+		}
 
 		lastChar = val;
 	}
@@ -183,7 +185,8 @@ bool NBT::loadFromFile(const Stringo& filePath, NBT& nbt)
 		BIG_JSON_BUFFER[red] = '\0';
 		BIG_JSON_BUFFER[red + 1] = '\0';
 		json j;
-		try {
+		try
+		{
 			j = json::parse(BIG_JSON_BUFFER);
 		}
 		catch (...)
@@ -195,7 +198,6 @@ bool NBT::loadFromFile(const Stringo& filePath, NBT& nbt)
 		o.close();
 		nbt = NBT::fromJson(j);
 		return true;
-
 	}
 	ND_WARN("Cannot load file {}, its too big", filePath);
 	return false;
@@ -289,7 +291,7 @@ void BinarySerializer::write(const NBT& a, const IBinaryStream::WriteFunc& write
 	else if (a.isBool())
 	{
 		bu[0] = BB_BOOL;
-		*(char*)&bu[1] = (bool)a;
+		*&bu[1] = (bool)a;
 		write(bu, 2);
 	}
 	if (a.isMap())
@@ -329,6 +331,7 @@ void BinarySerializer::write(const NBT& a, const IBinaryStream::WriteFunc& write
 
 constexpr uint32_t buffSize = 4096;
 char buffer[buffSize];
+
 bool BinarySerializer::read(NBT& n, const IBinaryStream::ReadFunc& read)
 {
 	char buff[16];
@@ -337,85 +340,85 @@ bool BinarySerializer::read(NBT& n, const IBinaryStream::ReadFunc& read)
 	switch (type)
 	{
 	case BB_STRING:
-	{
 		{
-			Stringo s;
-			uint32_t size;
-			read((char*)&size, 4);
-			uint32_t tempSize=size;
-			while(tempSize!=0)
 			{
-				uint32_t toread = std::min(buffSize, tempSize);
-				tempSize -= toread;
-				read((char*)&buffer, toread);
-				s += Stringo(buffer, toread);
+				Stringo s;
+				uint32_t size;
+				read((char*)&size, 4);
+				uint32_t tempSize = size;
+				while (tempSize != 0)
+				{
+					uint32_t toread = std::min(buffSize, tempSize);
+					tempSize -= toread;
+					read((char*)&buffer, toread);
+					s += Stringo(buffer, toread);
+				}
+				n = s;
 			}
-			n = s;
 		}
-	}
-	break;
+		break;
 	case BB_INT:
-	{
-		int64_t val;
-		read((char*)&val, 8);
-		n = val;
-	}
-	break;
+		{
+			int64_t val;
+			read((char*)&val, 8);
+			n = val;
+		}
+		break;
 	case BB_UINT:
-	{
-		uint64_t val;
-		read((char*)&val, 8);
-		n = val;
-	}
-	break;
+		{
+			uint64_t val;
+			read((char*)&val, 8);
+			n = val;
+		}
+		break;
 	case BB_FLOAT:
-	{
-		double val;
-		read((char*)&val, 8);
-		n = val;
-	}
-	break;
+		{
+			double val;
+			read((char*)&val, 8);
+			n = val;
+		}
+		break;
 	case BB_BOOL:
-	{
-		char val;
-		read(&val, 1);
-		n = (bool)val;
-	}
-	break;
+		{
+			char val;
+			read(&val, 1);
+			n = (bool)val;
+		}
+		break;
 	case BB_MAP_OPEN:
-	{
-		while (true)
 		{
-			read((char*)&type, 1);
-			if (type == BB_MAP_CLOSE)
-				break;
-			//read size of key string
-			uint8_t size;
-			read((char*)&size, 1);
-			read(buffer,size);
-			auto s = Stringo(buffer, size);
-			NBT val;
-			BinarySerializer::read(val, read);
-			n[s] = std::move(val);
+			while (true)
+			{
+				read((char*)&type, 1);
+				if (type == BB_MAP_CLOSE)
+					break;
+				//read size of key string
+				uint8_t size;
+				read((char*)&size, 1);
+				read(buffer, size);
+				auto s = Stringo(buffer, size);
+				NBT val;
+				BinarySerializer::read(val, read);
+				n[s] = std::move(val);
+			}
 		}
-	}
-	break;
+		break;
 	case BB_ARRAY_OPEN:
-	{
-		int index = 0;
-		while (true)
 		{
-			NBT val;
-			if (BinarySerializer::read(val, read))
-				break;
-			n[index++] = std::move(val);
+			int index = 0;
+			while (true)
+			{
+				NBT val;
+				if (BinarySerializer::read(val, read))
+					break;
+				n[index++] = std::move(val);
+			}
 		}
-	}
-	break;
+		break;
 	case BB_ARRAY_CLOSE:
 	case BB_MAP_CLOSE:
 		return true;
 	}
 	return false;
-
+}
 }

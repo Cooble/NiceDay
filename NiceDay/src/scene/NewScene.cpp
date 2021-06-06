@@ -1,3 +1,5 @@
 ﻿#include "NewScene.h"
 
-const Entity Entity::null=Entity();
+namespace nd {
+const Entity Entity::null = Entity();
+}

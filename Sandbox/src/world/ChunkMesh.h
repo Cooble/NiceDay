@@ -3,7 +3,6 @@
 #include "world/World.h"
 #include "graphics/API/Buffer.h"
 #include "graphics/API/Shader.h"
-#include "graphics/API/VertexArray.h"
 
 
 constexpr unsigned int BLOCK_TEXTURE_ATLAS_SIZE =32;//icons in row
@@ -18,19 +17,16 @@ constexpr unsigned int BLOCK_ATLAS_PIXEL_WIDTH = BLOCK_TEXTURE_ATLAS_SIZE * 8;//
 constexpr unsigned int EDGE_COLOR_TRANSFORMATION_FACTOR = 4;//how much should i divide texture pos to get to the border color
 
 
-
-class Renderer;
-
 class ChunkMesh
 {
 
 private:
-	static VertexBufferLayout s_layout;
+	static nd::VertexBufferLayout s_layout;
 	
-	static ShaderPtr s_program;
+	static nd::ShaderPtr s_program;
 	
-	static Texture* s_texture;
-	static Texture* s_texture_corners;
+	static nd::Texture* s_texture;
+	static nd::Texture* s_texture_corners;
 
 public:
 
@@ -42,10 +38,10 @@ public:
 	};
 	
 	static void init();
-	static inline const VertexBufferLayout& getLayout() { return s_layout; }
-	static inline ShaderPtr getProgram() { return s_program; }
-	static inline Texture* getAtlas() { return s_texture; }
-	static inline Texture* getCornerAtlas() { return s_texture_corners; }
+	static inline const nd::VertexBufferLayout& getLayout() { return s_layout; }
+	static inline nd::ShaderPtr getProgram() { return s_program; }
+	static inline nd::Texture* getAtlas() { return s_texture; }
+	static inline nd::Texture* getCornerAtlas() { return s_texture_corners; }
 };
 class ChunkMeshInstance;
 
@@ -90,8 +86,8 @@ private:
 
 	uint8_t* m_light_cache;
 
-	VertexArray* m_vao;
-	VertexBuffer* m_vbo;
+	nd::VertexArray* m_vao;
+	nd::VertexBuffer* m_vbo;
 
 	uint8_t* m_block_buff;
 	uint8_t* m_wall_buff;
@@ -104,7 +100,7 @@ public:
 	void resize(int chunkCount);
 	ChunkMeshInstance* getFreeChunk();
 
-	inline VertexArray& getVAO() { return *m_vao; }
+	inline nd::VertexArray& getVAO() { return *m_vao; }
 
 	inline uint8_t* getLightBuffer(int index) { return m_light_cache + (index * BUFF_LIGHT_SIZE); }
 	inline uint8_t* getBlockBuffer(int index) { return m_block_buff + (index * BUFF_BLOCK_SIZE); }

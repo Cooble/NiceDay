@@ -1,12 +1,11 @@
 ﻿#pragma once
 #include "ChunkPack.h"
 class Chunk;
-class JobAssignment;
 class World;
 
 struct WorldGenAssignment
 {
-	JobAssignment* job;
+	nd::JobAssignment* job;
 
 	enum
 	{
@@ -22,7 +21,7 @@ struct WorldGenAssignment
 	int bitBounds;
 	WorldGenAssignment() = default;
 
-	WorldGenAssignment(JobAssignment* job, int chunkId, Chunk* chunk) :
+	WorldGenAssignment(nd::JobAssignment* job, int chunkId, Chunk* chunk) :
 		job(job),
 		chunk_id(chunkId),
 		chunk(chunk)
@@ -30,7 +29,7 @@ struct WorldGenAssignment
 		type = GENERATION;
 	}
 
-	WorldGenAssignment(JobAssignment* job, const ChunkPack& pack, int bitBounds) :
+	WorldGenAssignment(nd::JobAssignment* job, const ChunkPack& pack, int bitBounds) :
 		job(job),
 		chunkPack(pack),
 		bitBounds(bitBounds)
@@ -40,7 +39,7 @@ struct WorldGenAssignment
 };
 
 
-class ThreadedWorldGen : public Worker<WorldGenAssignment>
+class ThreadedWorldGen : public nd::Worker<WorldGenAssignment>
 {
 private:
 	World* m_world;
@@ -53,7 +52,7 @@ public:
 
 	void proccessAssignments(std::vector<WorldGenAssignment>& assignments) override;
 
-	void assignChunkGen(JobAssignment* job, Chunk* chunk);
-	void assignChunkBoundUpdate(JobAssignment* job, const ChunkPack& pack, int bitBounds);
-	void assignWait(JobAssignmentP job);
+	void assignChunkGen(nd::JobAssignment* job, Chunk* chunk);
+	void assignChunkBoundUpdate(nd::JobAssignment* job, const ChunkPack& pack, int bitBounds);
+	void assignWait(nd::JobAssignmentP job);
 };

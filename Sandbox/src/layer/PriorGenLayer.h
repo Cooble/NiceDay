@@ -3,10 +3,10 @@
 #include "graphics/API/Texture.h"
 
 
-class PriorGenLayer : public Layer
+class PriorGenLayer : public nd::Layer
 {
 private:
-	Texture* m_tex;
+	nd::Texture* m_tex;
 
 public:
 	PriorGenLayer();
@@ -18,5 +18,5 @@ public:
 	void onUpdate() override;
 	void onRender() override;
 	void onImGuiRender() override;
-	void onEvent (Event& e) override;
+	void onEvent (nd::Event& e) override;
 };

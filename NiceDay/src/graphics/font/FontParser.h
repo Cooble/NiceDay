@@ -2,6 +2,8 @@
 #include "ndpch.h"
 #include <optional>
 
+namespace nd {
+
 struct Character
 {
 	int id;
@@ -58,7 +60,8 @@ struct Font
 	const Character& getChar(int id) const
 	{
 		auto it = chars.find(id);
-		if (it == chars.end()) {
+		if (it == chars.end())
+		{
 			//ASSERT(false, "invalid character request: [{}] from font: {}",id,this->texturePath);
 			return nullChar;
 		}
@@ -76,10 +79,10 @@ struct Font
 		int out = 0;
 		int lastC = 0;
 
-		for(int codePoint :textt)
+		for (int codePoint : textt)
 		{
 			//skip blank characters
-			if(codePoint<32) continue;
+			if (codePoint < 32) continue;
 
 			out += getChar(codePoint).xadvance + xSpace + getKerning(lastC, codePoint);
 			lastC = codePoint;
@@ -97,18 +100,19 @@ struct Font
 	static constexpr uint32_t colorToInt(const glm::vec4& vec)
 	{
 		return
-			(
-				((uint8_t)(255.0f * vec.r) << 24) |
-				((uint8_t)(255.0f * vec.g) << 16) |
-				((uint8_t)(255.0f * vec.b) << 8) |
-				((uint8_t)(255.0f * vec.a) << 0)
-				) & 0xffffffff;
+		(
+			((uint8_t)(255.0f * vec.r) << 24) |
+			((uint8_t)(255.0f * vec.g) << 16) |
+			((uint8_t)(255.0f * vec.b) << 8) |
+			((uint8_t)(255.0f * vec.a) << 0)
+		) & 0xffffffff;
 	}
 
 	static std::string colorize(const char* borderColor, const char* color)
 	{
 		return BORDER_PREFIX + std::string(borderColor) + color;
 	}
+
 	static std::string colorizeBorder(const char* borderColor)
 	{
 		return BORDER_PREFIX + std::string(borderColor);
@@ -133,9 +137,9 @@ struct Font
 	inline static const char* BLACK = "&f";
 
 	//the color after prefix is borderColor
-	inline static const char	BORDER_PREFIX = 'b';
+	inline static const char BORDER_PREFIX = 'b';
 	//the color after prefix will be print normally (no color conversion)
-	inline static const char	IGNORE_PREFIX = 'i';
+	inline static const char IGNORE_PREFIX = 'i';
 
 
 	inline const static uint32_t colorTemplates[16]
@@ -198,10 +202,13 @@ struct Font
 	 * & is 2 format: &<0-f>
 	 * # is 7 format: #rrggbb
 	 */
-	static std::optional<uint32_t> tryEntityToColor(std::u32string_view s) { return tryEntityToColor(SUtil::u32StringToString(s)); }
+	static std::optional<uint32_t> tryEntityToColor(std::u32string_view s)
+	{
+		return tryEntityToColor(SUtil::u32StringToString(s));
+	}
 
 	static std::string removeColorEntities(std::string_view s);
-	
+
 	static std::u32string removeColorEntities(std::u32string_view s);
 private:
 	void bakeUVChars();
@@ -232,3 +239,4 @@ public:
 	// parse font from file, returns false if parsing failed
 	static bool parse(Font& font, const std::string& filePath);
 };
+}

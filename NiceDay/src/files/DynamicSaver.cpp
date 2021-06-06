@@ -2,7 +2,7 @@
 #include "DynamicSaver.h"
 
 
-
+namespace nd {
 #ifdef ND_DEBUG
 #define CHECK_STREAM_STATE(x) checkDebugState(x)
 #define CHECK_STREAM_STATE_START(x,y) if(checkDebugState(x)){ND_ERROR("WorldIO: Check if filepath is valid: \"{}\"",y);assert(false);}
@@ -82,22 +82,22 @@ void DynamicSaver::eraseSegment(uint64_t offset)
 
 void DynamicSaver::loadVTable()
 {
-	if (!std::filesystem::exists(m_path)) {
+	if (!std::filesystem::exists(m_path))
+	{
 		//we have to check if file even exists, if not we gotta make it
 		m_stream = new std::fstream(m_path, std::ios::out | std::ios::binary);
 		CHECK_STREAM_STATE_START(m_stream, m_path);
 		/*m_stream->seekp(std::ios::end);
 		if (m_stream->tellp() == 0)//no file here
 		{
-			char c = 0;
-			m_stream->write(&c, 1);
+		char c = 0;
+		m_stream->write(&c, 1);
 		}*/
 		m_stream->close();
 		delete m_stream;
 	}
 
 	beginSession();
-
 
 
 	m_stream->seekg(0, std::ios::end);
@@ -147,6 +147,7 @@ void DynamicSaver::init()
 {
 	loadVTable();
 }
+
 bool DynamicSaver::initIfExist()
 {
 	if (!std::filesystem::exists(m_path))
@@ -174,7 +175,7 @@ void DynamicSaver::saveVTable()
 	m_stream->seekp(m_BASE_TOTAL_OFFSET + sizeof(BigHeaderHeader) + DYNAMIC_SAVER_FREE_SEGMENTS * sizeof(uint64_t));
 	for (auto pair : m_chunk_offsets)
 	{
-		pai p{ pair.first,pair.second };
+		pai p{pair.first, pair.second};
 		m_stream->write((char*)&p, sizeof(pai));
 	}
 }
@@ -191,7 +192,8 @@ DynamicSaver::DynamicSaver(std::string path, uint64_t totalOffset)
 
 void DynamicSaver::beginSession()
 {
-	if (!m_is_opened) {
+	if (!m_is_opened)
+	{
 		m_stream = new std::fstream(m_path, std::ios::in | std::ios::out | std::ios::binary);
 		CHECK_STREAM_STATE_START(m_stream, m_path);
 		m_is_opened = true;
@@ -200,22 +202,21 @@ void DynamicSaver::beginSession()
 
 void DynamicSaver::endSession()
 {
-	if (m_stream) {
+	if (m_stream)
+	{
 		if (!m_has_flushed)
 			flushWrite();
-		if (m_dirty_vtable)//always save vtable just to be sure
+		if (m_dirty_vtable) //always save vtable just to be sure
 			saveVTable();
 		m_stream->close();
 		delete m_stream;
 		m_stream = nullptr;
 	}
 	m_is_opened = false;
-
 }
 
 void DynamicSaver::setWriteChunkID(_DSChunkID chunkID)
 {
-
 	if (!m_has_flushed)
 		flushWrite();
 	m_has_flushed = false;
@@ -355,4 +356,5 @@ bool DynamicSaver::read(char* b, uint64_t length)
 void DynamicSaver::clearEverything()
 {
 	std::filesystem::remove(m_path);
+}
 }

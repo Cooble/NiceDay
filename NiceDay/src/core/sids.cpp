@@ -1,13 +1,14 @@
 #include "ndpch.h"
 #include "sids.h"
 
+using namespace nd;
 
 std::unordered_map<Strid, std::string> StringIdLookup::s_strings;
 
 void StringIdLookup::insertString(Strid key, const std::string& s)
 {
 	auto f = s_strings.find(key);
-	if(f!=s_strings.end()&&f->first!=key)
+	if (f != s_strings.end() && f->first != key)
 	{
 		ERROR("StringIdClash: \"{}\" with already existing value \"{}\". Same ID: {}", s, f->first, key);
 		ASSERT(false, "StringIdClash");

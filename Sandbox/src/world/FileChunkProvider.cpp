@@ -3,6 +3,8 @@
 #include "entity/EntityRegistry.h"
 #include "entity/EntityAllocator.h"
 
+using namespace nd;
+
 FileChunkProvider::FileChunkProvider(const std::string& file_path)
 	: m_file_path(file_path),
 	  m_nbt_saver(file_path + ".entity")

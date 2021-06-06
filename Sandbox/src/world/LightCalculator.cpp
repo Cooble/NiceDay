@@ -5,6 +5,8 @@
 #include "biome/Biome.h"
 #include "biome/BiomeRegistry.h"
 
+using namespace nd;
+
 constexpr int DEFAULT_POS_LIST_SIZE = 500;
 
 template <typename T>
@@ -288,7 +290,7 @@ uint8_t& LightCalculator::blockLightLevel(int x, int y,ChunkPack& res)
 }
 
 void LightCalculator::runFloodLocal(int minX, int minY, int width, int height,
-                                    NDUtil::FifoList<Pos>* current_list, NDUtil::FifoList<Pos>* new_list)
+                                    Utils::FifoList<Pos>* current_list, Utils::FifoList<Pos>* new_list)
 {
 	new_list->clear();
 	int runs = 0;
@@ -362,7 +364,7 @@ void LightCalculator::runFloodLocal(int minX, int minY, int width, int height,
 }
 
 void LightCalculator::runFloodSky(int minX, int minY, int width, int height,
-                                  NDUtil::FifoList<Pos>* current_list, NDUtil::FifoList<Pos>* new_list)
+                                  Utils::FifoList<Pos>* current_list, Utils::FifoList<Pos>* new_list)
 {
 	new_list->clear();
 	int runs = 0;

@@ -5,9 +5,9 @@
 
 
 //ownerid, slotindex, inventory, event
-typedef std::function<void(const std::string&,int,Inventory*,Event& e)> ContainerEventConsumer;
+typedef std::function<void(const std::string&,int,Inventory*, nd::Event& e)> ContainerEventConsumer;
 
-class GUIItemContainer :public GUIElement
+class GUIItemContainer :public nd::GUIElement
 {
 private:
 	int m_slotIndex;
@@ -18,18 +18,17 @@ public:
 	ContainerEventConsumer onContainerEventConsumer;
 public:
 	GUIItemContainer();
-	void onMyEvent(Event& e) override;
+	void onMyEvent(nd::Event& e) override;
 	void setContainerSlot(int slot);
 	void setContainer(Inventory* c, int slot);
 	const ItemStack* getItemStack() const;
 	int getSlot() const { return m_slotIndex; }
 };
-class GUIText;
-class GUIItemTitle:public GUIBlank
+class GUIItemTitle:public nd::GUIBlank
 {
 private:
-	GUIText* m_title;
-	GUIText* m_meta;
+	nd::GUIText* m_title;
+	nd::GUIText* m_meta;
 	
 public:
 	// rectangle should be drawn under text

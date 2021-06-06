@@ -7,6 +7,7 @@
 #include "world/gen/Genom.h"
 #include "core/ImGuiLayer.h"
 
+using namespace nd;
 
 static NBT settings;
 static Genom genom;
@@ -76,7 +77,7 @@ void PriorGenLayer::onRender()
 
 
 	Effect::getDefaultShader()->bind();
-	auto sh = std::static_pointer_cast<GLShader>(Effect::getDefaultShader());
+	auto sh = std::static_pointer_cast<internal::GLShader>(Effect::getDefaultShader());
 	sh->bind();
 	sh->setUniformMat4("transform", trans);
 

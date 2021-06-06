@@ -2,7 +2,7 @@
 #include "core/App.h"
 
 class GUILayer;
-class Sandbox:public App
+class Sandbox:public nd::App
 {
 private:
 	GUILayer* m_guiLayer;
@@ -10,5 +10,5 @@ private:
 public:
 	Sandbox();
 
-	inline auto getGUILayer() { return m_guiLayer; }
+	auto getGUILayer() { return m_guiLayer; }
 };

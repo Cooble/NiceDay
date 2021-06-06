@@ -11,7 +11,7 @@
 
 //should print everything
 #define VERBOSE_TEXTURE_ATLAS 0
-
+using namespace nd;
 struct Icon : Phys::Rectanglei
 {
 	int targetX, targetY;

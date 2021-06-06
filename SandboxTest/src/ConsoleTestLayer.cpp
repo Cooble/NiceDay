@@ -5,7 +5,7 @@
 #include "core/App.h"
 #include "event/KeyEvent.h"
 #include "graphics/Effect.h"
-#include "platform/OpenGL/GLRenderer.h"
+#include "graphics/font/TextBuilder.h"
 
 #include <cstdio>
 #include <iostream>
@@ -18,6 +18,8 @@
 
 #include "imgui_internal.h"
 #include "files/FUtil.h"
+
+using namespace nd;
 
 static TextMesh textMesh;
 static int cursorBlink = 10;
@@ -60,7 +62,7 @@ void ConsoleTestLayer::randomWriter()
 		if (c == '\n')
 			onEvent(KeyPressEvent(KeyCode::ENTER, 0, false));
 		else
-			onEvent(KeyTypeEvent(randomText[currentLetter]));
+			onEvent(KeyTypeEvent(randomText[currentLetter],0));
 	}
 	else
 	{
@@ -182,7 +184,7 @@ void ConsoleTestLayer::onUpdate()
 					onEvent(KeyPressEvent(KeyCode::ENTER, 0, false));
 					break;
 				}
-				onEvent(KeyTypeEvent(randomText[currentLetter]));
+				onEvent(KeyTypeEvent(randomText[currentLetter],0));
 			}
 	}else
 	{
@@ -334,8 +336,8 @@ void ConsoleTestLayer::onRender()
 	fbos->bind();
 	Gcon.clear(BuffBit::COLOR);
 	deformationShader->bind();
-	std::static_pointer_cast<GLShader>(deformationShader)->setUniform1f("u_on_screen", m_on_screen_float);
-	std::static_pointer_cast<GLShader>(deformationShader)->setUniform1f("u_line", line);
+	std::static_pointer_cast<nd::internal::GLShader>(deformationShader)->setUniform1f("u_on_screen", m_on_screen_float);
+	std::static_pointer_cast<nd::internal::GLShader>(deformationShader)->setUniform1f("u_line", line);
 	deformationEffect->getTexture()->bind(0);
 	Effect::renderDefaultVAO();
 	auto outTex = fbos->getOutputTexture();

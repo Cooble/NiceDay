@@ -2,10 +2,11 @@
 #include "ndpch.h"
 #include "graphics/API/Shader.h"
 
+namespace nd::internal {
 
 static const char* s_current_file = "null";
 
-class GLShader:public Shader
+class GLShader : public Shader
 {
 private:
 	ShaderLayout m_layout;
@@ -15,11 +16,13 @@ private:
 	std::unordered_map<std::string, int> cache;
 #ifdef ND_DEBUG
 	bool m_isBound = false;
+
 	void checkIsBound()
 	{
 		if (!m_isBound)
 			ASSERT(false, "Cannot set uniform when no shader is bound");
 	}
+
 #define SHADER_CHECK_BOUNDIN checkIsBound()
 #else
 #define SHADER_CHECK_BOUNDIN 
@@ -27,7 +30,7 @@ private:
 public:
 	GLShader(const ShaderProgramSources& src);
 	GLShader(const std::string& file_path);
-	virtual ~GLShader();
+	~GLShader() override;
 
 	void bind() const override;
 	void unbind() const override;
@@ -44,12 +47,12 @@ public:
 
 	void setUniform1f(const std::string& name, float f0);
 	void setUniform2f(const std::string& name, float f0, float f1);
-	void setUniform3f(const std::string& name, float f0, float f1,float f2);
+	void setUniform3f(const std::string& name, float f0, float f1, float f2);
 	void setUniform1i(const std::string& name, int v);
-	
+
 	void setUniform1iv(const std::string& name, int count, int* v);
 	void setUniform1fv(const std::string& name, int count, float* v);
-	
+
 	void setUniformiv(const std::string& name, int count, int arraySize, int* v);
 	void setUniformuiv(const std::string& name, int count, int arraySize, uint32_t* v);
 	void setUniformfv(const std::string& name, int count, int arraySize, float* v);
@@ -58,7 +61,7 @@ public:
 	{
 		setUniform2f(name, v.x, v.y);
 	}
-	virtual const std::string& getFilePath() const { return m_file_path; }
 
-	
+	const std::string& getFilePath() const override { return m_file_path; }
 };
+}

@@ -2,11 +2,14 @@
 #include "Renderable2D.h"
 #include "IBatchRenderable2D.h"
 
+namespace nd {
+
 using namespace glm;
+
 class SpriteSheetResource
 {
 private:
-	Texture* m_texture;//todo maybe create texture right here to avoid cache misses..
+	Texture* m_texture; //todo maybe create texture right here to avoid cache misses..
 	const uint32_t m_width_icons;
 	const uint32_t m_height_icons;
 public:
@@ -18,7 +21,7 @@ public:
 	inline uint32_t getIconsHeight() const { return m_height_icons; }
 };
 
-class Sprite :public Renderable2D, IBatchRenderable2D
+class Sprite : public Renderable2D, IBatchRenderable2D
 {
 private:
 	SpriteSheetResource* m_resource;
@@ -31,7 +34,8 @@ public:
 	Sprite();
 
 
-	void setSpriteIndex(uint32_t u, uint32_t v,bool horizontalFlip=false,bool verticalFlip=false,bool rotate90=false);
+	void setSpriteIndex(uint32_t u, uint32_t v, bool horizontalFlip = false, bool verticalFlip = false,
+	                    bool rotate90 = false);
 
 	inline void setPosition(const glm::vec3& pos) { m_position = pos; }
 	inline void setSize(const glm::vec2& size) { m_size = size; }
@@ -43,24 +47,23 @@ public:
 	inline const UVQuad& getUV() const override { return m_uv_quad; }
 	inline UVQuad& getUV() { return m_uv_quad; }
 	void render(BatchRenderer2D&) override;
-
 };
 
-class Animation:public Sprite
+class Animation : public Sprite
 {
 private:
 	std::vector<int> m_indexes;
-	int m_current_index=0;
-	bool m_repeat_saw=false;
-	int m_increase_index=1;
+	int m_current_index = 0;
+	bool m_repeat_saw = false;
+	int m_increase_index = 1;
 
 	bool m_horizontalFlip;
 	bool m_verticalFlip;
 
 
-
 public:
-	Animation(SpriteSheetResource* r, std::initializer_list<int> uvs = {}, bool repeatSaw = true,bool  horizontalFlip = false, bool verticalFlip = false);
+	Animation(SpriteSheetResource* r, std::initializer_list<int> uvs = {}, bool repeatSaw = true,
+	          bool horizontalFlip = false, bool verticalFlip = false);
 	Animation() = default;
 	// resets animation to index 0
 	// need call nextFrame to refresh image
@@ -80,3 +83,4 @@ public:
 
 	void nextFrame();
 };
+}

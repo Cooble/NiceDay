@@ -3,7 +3,7 @@
 #include "core/App.h"
 #include "graphics/FontMaterial.h"
 #include "graphics/API/Texture.h"
-
+using namespace nd;
 GUIExampleWindow::GUIExampleWindow()
 {
 	width = APwin()->getWidth() / 3 * 2;

@@ -3,7 +3,11 @@
 #include "EntityManager.h"
 #include "world/WorldTime.h"
 
+namespace nd {
 class NBT;
+}
+
+class nd::NBT;
 class ItemStack;
 constexpr int EFLAG_TEMPORARY =		BIT(0);//will be killed on chunk unload
 constexpr int EFLAG_CHUNK_LOADER =	BIT(1);//will keep chunks around loaded (usually Player)
@@ -61,8 +65,8 @@ public:
 	virtual void onKilled(World& w){}
 
 
-	virtual void save(NBT& src);
-	virtual void load(NBT& src);
+	virtual void save(nd::NBT& src);
+	virtual void load(nd::NBT& src);
 
 	inline virtual std::string toString() const { return "UNDEFINED_ENTITY"; }
 
@@ -89,8 +93,8 @@ public:
 	virtual void onClicked(World& w, WorldEntity* entity);
 
 	BlockStruct& getBlockStruct(World& w);
-	void save(NBT& src) override;
-	void load(NBT& src) override;
+	void save(nd::NBT& src) override;
+	void load(nd::NBT& src) override;
 
 	int getX()const { return m_pos.x; }
 	int getY()const { return m_pos.y; }

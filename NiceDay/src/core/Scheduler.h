@@ -2,8 +2,9 @@
 #include "ndpch.h"
 #include "memory/Pool.h"
 
-typedef std::function<bool()> Task;//return true of should be killed
-typedef std::function<void()> AfterTask;//called when job isDone
+namespace nd {
+typedef std::function<bool()> Task; //return true of should be killed
+typedef std::function<void()> AfterTask; //called when job isDone
 
 class Scheduler
 {
@@ -21,6 +22,7 @@ private:
 		ScheduleTask(Task&& t, int tickPeriod);
 		ScheduleTask(AfterTask&& t, JobAssignmentP job);
 	};
+
 	std::vector<ScheduleTask> m_tasks;
 	std::vector<ScheduleTask> m_new_tasks;
 public:
@@ -31,7 +33,8 @@ public:
 	// deallocates job
 	void callWhenDone(AfterTask&& t, JobAssignmentP assignment);
 	void update();
-	inline int size() { return m_tasks.size()+m_new_tasks.size(); }
-	inline JobAssignmentP allocateJob(){return m_job_pool.allocate();}
-	inline void deallocateJob(JobAssignmentP job){return m_job_pool.deallocate(job);}
+	inline int size() { return m_tasks.size() + m_new_tasks.size(); }
+	inline JobAssignmentP allocateJob() { return m_job_pool.allocate(); }
+	inline void deallocateJob(JobAssignmentP job) { return m_job_pool.deallocate(job); }
 };
+}

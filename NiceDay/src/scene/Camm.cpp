@@ -5,7 +5,7 @@
 #include "core/FakeWindow.h"
 
 
-
+namespace nd {
 
 void CameraController::loadComponentsData()
 {
@@ -107,7 +107,7 @@ void PlayerCameraController::go(const glm::vec3& relativeDirection)
 	glm::quat q((*angles));
 	auto mm = glm::toMat4(q);
 
-	glm::vec4 v = glm::vec4(rel, 0);
+	auto v = glm::vec4(rel, 0);
 	auto t = mm * v;
 	t.y = yy;
 	(*position) += glm::vec3(t);
@@ -230,6 +230,7 @@ void EditCameraController::onEvent(Event& e)
 	}*/
 	getComponent<CameraComponent>().viewMatrix = getViewMatrix();
 }
+
 /*
 void EditCameraController::onEvent(Event& e)
 {
@@ -394,7 +395,7 @@ void EditCameraController::onUpdate()
 			camRot = (*angles);
 			//farPoint = (*position) + facingDirection() * pointDistance;
 			lastdepth = scene->getLookingDepth();
-			fullRotRelativeOverride = lastdepth >= getComponent<CameraComponent>().Far-0.1f;
+			fullRotRelativeOverride = lastdepth >= getComponent<CameraComponent>().Far - 0.1f;
 			farPoint = (*position) + facingDirection() * lastdepth;
 			fullRotRelative = true;
 		}
@@ -443,11 +444,10 @@ void EditCameraController::onUpdate()
 	{
 		auto delta = navBar.drag * metersPerPixel;
 		(*position) = camPos;
-		go({ -delta.x , delta.y , 0 });
+		go({-delta.x, delta.y, 0});
 	}
 	else if (fullRotRelative && !fullRotRelativeOverride)
 	{
-
 		auto delta = navBar.drag;
 
 		(*angles).pitch = camRot.x - delta.y / APwin()->getWidth() * mouseSensitivity;
@@ -478,7 +478,7 @@ void EditCameraController::onUpdate()
 	else if (navBar.scrollActive)
 	{
 		(*position) = camPos;
-		go({ 0, 0, navBar.drag.y * metersPerPixel });
+		go({0, 0, navBar.drag.y * metersPerPixel});
 	}
 
 
@@ -503,7 +503,6 @@ void EditCameraController::onUpdate()
 	if (go != glm::vec3(0, 0, 0))
 		this->go(glm::normalize(go) * speed);*/
 	getComponent<CameraComponent>().viewMatrix = getViewMatrix();
-
 }
 
 void EditCameraController::go(const glm::vec3& relativeDirection)
@@ -511,7 +510,8 @@ void EditCameraController::go(const glm::vec3& relativeDirection)
 	glm::quat q((*angles));
 	auto mm = glm::toMat4(q);
 
-	glm::vec4 v = glm::vec4(relativeDirection, 0);
+	auto v = glm::vec4(relativeDirection, 0);
 	auto t = mm * v;
 	(*position) += glm::vec3(t);
+}
 }

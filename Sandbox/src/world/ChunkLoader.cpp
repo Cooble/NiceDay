@@ -1,6 +1,8 @@
 #include "ndpch.h"
 #include "ChunkLoader.h"
 
+using namespace nd;
+
 
 ChunkLoader::ChunkLoader(World * w)
 	:m_world(w)

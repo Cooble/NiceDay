@@ -3,12 +3,12 @@
 #include <glm/glm.hpp>
 #include <utility>
 
+namespace nd {
 inline glm::vec2 toglm(float f) { return glm::vec2(f, f); }
 
 
-namespace Phys
-{
-	
+namespace Phys {
+
 	typedef glm::vec<2, int> Vecti;
 	struct Polygon;
 	using namespace glm;
@@ -17,27 +17,29 @@ namespace Phys
 	{
 		return *(uint64_t*)&glm::vec2(x, y);
 	}
+
 	inline uint64_t toInt64(const glm::vec2& v)
 	{
 		return *(uint64_t*)&v;
 	}
-	
+
 	inline bool isValidFloat(float f)
 	{
 		return !std::isnan(f) && !std::isinf(f);
 	}
+
 	inline float angleDegrees(const vec2& v)
 	{
 		if (v.x == 0) // special cases
 			return (v.y > 0)
-			? 90
-			: (v.y == 0)
-			? 0
-			: 270;
-		else if (v.y == 0) // special cases
+				       ? 90
+				       : (v.y == 0)
+				       ? 0
+				       : 270;
+		if (v.y == 0) // special cases
 			return (v.x >= 0)
-			? 0
-			: 180;
+				       ? 0
+				       : 180;
 		float ret = atanf((float)v.y / v.x) / 3.14159f * 180;
 		if (v.x < 0 && v.y < 0) // quadrant Ⅲ
 			ret = 180 + ret;
@@ -47,12 +49,14 @@ namespace Phys
 			ret = 270 + (90 + ret); // it actually substracts
 		return ret;
 	}
-	
+
 	inline bool isValid(const vec2& v) { return isValidFloat(v.x) && isValidFloat(v.y); }
+
 	inline vec2 vectFromAngle(float rad)
 	{
 		return {cos(rad), sin(rad)};
 	}
+
 	inline std::ostream& operator<<(std::ostream& os, const vec2& myObject)
 	{
 		if (isValid(myObject))
@@ -66,6 +70,7 @@ namespace Phys
 	{
 		return f / 180.f * 3.14159265f;
 	}
+
 	inline float angleRad(const vec2& v)
 	{
 		return toRad(angleDegrees(v));
@@ -75,12 +80,13 @@ namespace Phys
 	{
 		return f / 3.14159265f * 180.f;
 	}
+
 	inline vec2 invalidVec2()
 	{
-		return { std::numeric_limits<float>::quiet_NaN(), std::numeric_limits<float>::quiet_NaN() };
+		return {std::numeric_limits<float>::quiet_NaN(), std::numeric_limits<float>::quiet_NaN()};
 	}
 
-	template <typename T=float>
+	template <typename T = float>
 	struct Rect
 	{
 		T x0, y0, x1, y1;
@@ -176,8 +182,7 @@ namespace Phys
 	private:
 		Rectangle bounds;
 	public:
-
-		Polygon(std::vector<vec2> v = {}): list(std::move(v))
+		Polygon(std::vector<vec2> v = {}) : list(std::move(v))
 		{
 			count = list.size();
 			recalculateBounds();
@@ -211,13 +216,13 @@ namespace Phys
 
 		inline vec2& operator[](size_t index)
 		{
-			ASSERT(index < count&&index >= 0, "Invalid index");
+			ASSERT(index < count&& index >= 0, "Invalid index");
 			return list[index];
 		}
 
 		inline const vec2& operator[](size_t index) const
 		{
-			ASSERT(index < count&&index >= 0, "Invalid index");
+			ASSERT(index < count&& index >= 0, "Invalid index");
 			return list[index];
 		}
 
@@ -294,7 +299,7 @@ namespace Phys
 	}
 
 	// checks if abscisses a and b intersect at one point
-	inline bool isIntersectAbscisses(const  vec2& pa0, const  vec2& pa1, const  vec2& pb0, const  vec2& pb1)
+	inline bool isIntersectAbscisses(const vec2& pa0, const vec2& pa1, const vec2& pb0, const vec2& pb1)
 	{
 		auto v = intersectLines(pa0, pa1, pb0, pb1);
 		if (!isValid(v))
@@ -314,8 +319,8 @@ namespace Phys
 		if (!a.getBounds().intersects(b.getBounds())) //first check if it is even worth trying
 			return false;
 
-	//	if (a.size() == 3 || b.size() == 3)
-	//		__debugbreak();
+		//	if (a.size() == 3 || b.size() == 3)
+		//		__debugbreak();
 
 
 		//if (a.isRectangle&&b.isRectangle)
@@ -353,19 +358,20 @@ namespace Phys
 		auto& p3 = b[0];
 		return isIntersectAbscisses(p0, p1, p2, p3);
 	}
-	inline bool isIntersects(const Polygon& aa,const vec2& aPos,const Polygon& b, const  vec2& bPos)
+
+	inline bool isIntersects(const Polygon& aa, const vec2& aPos, const Polygon& b, const vec2& bPos)
 	{
 		Polygon a = aa.copy().plus(aPos - bPos);
 		return isIntersects(a, b);
 	}
 
-	inline bool contains(const Polygon& a, const  vec2& point)
+	inline bool contains(const Polygon& a, const vec2& point)
 	{
 		if (!a.getBounds().containsPoint(point))
 			return false;
 		if (a.isRectangle)
 			return true;
-		vec2 secPoint = {0,123451526789.f};
+		vec2 secPoint = {0, 123451526789.f};
 		int intersections = 0;
 		for (int i = 0; i < a.size(); ++i)
 		{
@@ -379,7 +385,7 @@ namespace Phys
 		return intersections & 1;
 	}
 
-	inline  vec2 intersects(const Polygon& a, const Polygon& b)
+	inline vec2 intersects(const Polygon& a, const Polygon& b)
 	{
 		if (a.getBounds().intersects(b.getBounds())) //first check if it is even worth trying
 		{
@@ -424,3 +430,6 @@ namespace Phys
 		return invalidVec2();
 	}
 }
+}
+
+namespace ndPhys = nd::Phys;

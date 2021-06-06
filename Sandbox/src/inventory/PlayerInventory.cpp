@@ -4,6 +4,8 @@
 #include "core/NBT.h"
 #include <stack>
 
+using namespace nd;
+
 PlayerInventory::~PlayerInventory()
 {
 	for (auto item : m_items)

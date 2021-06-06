@@ -7,9 +7,9 @@ class Block;
 class BlockTextureCreator
 {
 private:
-	FrameBufferTexturePair m_fbo;
-	VertexBuffer* m_vbo;
-	VertexArray* m_vao;
+	nd::FrameBufferTexturePair m_fbo;
+	nd::VertexBuffer* m_vbo;
+	nd::VertexArray* m_vao;
 public:
 	void createTextures();
 

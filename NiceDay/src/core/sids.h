@@ -10,13 +10,13 @@
 
 #include <cinttypes>
 
-
+namespace nd {
 /*
-	Makes possible to lookup strings from ids
-	Its significantly slower but awesome for debugging
+Makes possible to lookup strings from ids
+Its significantly slower but awesome for debugging
 
-	To obtain string from id call StringIdLookup::getString(id)
- */
+To obtain string from id call StringIdLookup::getString(id)
+*/
 #define DEBUG_ID_LOOKUP_ENABLE 0
 
 
@@ -35,6 +35,7 @@ constexpr unsigned long long stringIdHash(const char* str)
 {
 	return stringIdHashConcat(0xcbf29ce484222325, str);
 }
+
 constexpr unsigned long long stringIdHash(const std::string& str)
 {
 	return stringIdHashConcat(0xcbf29ce484222325, str.c_str());
@@ -52,10 +53,21 @@ class StringId
 private:
 	Strid m_data;
 public:
-	StringId() : StringId(static_cast<Strid>(0)) { }
-	StringId(Strid data) : m_data(data) { }
-	StringId(const char* str) : m_data(stringIdHash(str)) { }
-	StringId(const std::string& str) : m_data(stringIdHash(str.c_str())) { }
+	StringId() : StringId(static_cast<Strid>(0))
+	{
+	}
+
+	StringId(Strid data) : m_data(data)
+	{
+	}
+
+	StringId(const char* str) : m_data(stringIdHash(str))
+	{
+	}
+
+	StringId(const std::string& str) : m_data(stringIdHash(str.c_str()))
+	{
+	}
 
 	static StringId concat(const StringId& sid, const char* str)
 	{
@@ -66,10 +78,12 @@ public:
 	{
 		return StringId(stringIdHashConcat(m_data, str));
 	}
+
 	StringId concat(char str) const
 	{
 		return StringId(stringIdHashConcat(m_data, &str));
 	}
+
 	StringId concat(const std::string& str) const
 	{
 		return StringId(stringIdHashConcat(m_data, str.c_str()));
@@ -77,8 +91,7 @@ public:
 
 	Strid getValue() const { return m_data; }
 
-	Strid operator()()const {return m_data;}
-
+	Strid operator()() const { return m_data; }
 };
 
 inline std::ostream& operator<<(std::ostream& out, StringId sid)
@@ -107,7 +120,7 @@ class StringIdLookup
 {
 private:
 	StringIdLookup() = default;
-	
+
 	static std::unordered_map<Strid, std::string> s_strings;
 public:
 	static void insertString(Strid key, const std::string& s);
@@ -121,13 +134,11 @@ public:
 };
 
 
-
 #if DEBUG_ID_LOOKUP_ENABLE == 1
-	#define SID(str) (StringIdLookup::sid((str)))
-	#define SIDS(str) (StringIdLookup::sids((str)))
+#define SID(str) (StringIdLookup::sid((str)))
+#define SIDS(str) (StringIdLookup::sids((str)))
 #else
-	#define SID(str) (stringIdHash(str))
-	#define SIDS(str) (StringId(str))
+#define SID(str) (::nd::stringIdHash(str))
+#define SIDS(str) (::nd::StringId(str))
 #endif
-
-
+}

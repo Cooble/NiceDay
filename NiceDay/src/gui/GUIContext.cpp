@@ -3,6 +3,7 @@
 #include "event/WindowEvent.h"
 #include "core/App.h"
 
+namespace nd {
 
 void GUIContext::setFocusedElement(GUIElement* e)
 {
@@ -17,7 +18,7 @@ void GUIContext::openWindow(GUIWindow* win)
 	switch (win->dimInherit)
 	{
 	case GUIDimensionInherit::WIDTH:
-		win->width =dims.x;
+		win->width = dims.x;
 		break;
 	case GUIDimensionInherit::HEIGHT:
 		win->height = dims.y;
@@ -29,30 +30,30 @@ void GUIContext::openWindow(GUIWindow* win)
 		break;
 	}
 	win->onDimensionChange();
-	if(win->alignment==GUIAlign::CENTER)
-	   win->pos = dims / 2.f - win->dim / 2.f;
+	if (win->alignment == GUIAlign::CENTER)
+		win->pos = dims / 2.f - win->dim / 2.f;
 	getWindows().push_back(win);
 }
 
 void GUIContext::onUpdate()
 {
-	currentStackPos = { 0,0 };
+	currentStackPos = {0, 0};
 	for (int i = m_windows.size() - 1; i >= 0; --i)
-		if(m_windows[i]->isEnabled)
+		if (m_windows[i]->isEnabled)
 			m_windows[i]->update();
 	destroyPendingWins();
 }
 
 void GUIContext::onEvent(Event& e)
 {
-	if(e.getEventType()==Event::EventType::WindowResize)
+	if (e.getEventType() == Event::EventType::WindowResize)
 	{
 		auto m = static_cast<WindowResizeEvent&>(e);
 		for (auto window : m_windows)
 		{
-			if(!window->isEnabled)
+			if (!window->isEnabled)
 				continue;
-			if(window->dimInherit==GUIDimensionInherit::WIDTH_HEIGHT)
+			if (window->dimInherit == GUIDimensionInherit::WIDTH_HEIGHT)
 			{
 				window->height = m.getHeight();
 				window->width = m.getWidth();
@@ -82,22 +83,22 @@ void GUIContext::onEvent(Event& e)
 			break;
 		default:
 			e.handled = true;
-			glm::vec2 pos = { 0,0 };
+			glm::vec2 pos = {0, 0};
 			GUIElement* el = m_focused_element->getParent();
 			while (el)
 			{
 				pos += el->pos;
 				el = el->getParent();
 			}
-			this->pushPos(pos.x,pos.y);
+			this->pushPos(pos.x, pos.y);
 			m_focused_element->onEvent(e);
-			this->popPos(pos.x,pos.y);
+			this->popPos(pos.x, pos.y);
 			break;
 		}
 	}
 
 	//element has removed itself from m_focused_element
-	if(m_focused_element==nullptr)
+	if (m_focused_element == nullptr)
 	{
 		int focusIndex = -1;
 		for (int i = m_windows.size() - 1; i >= 0; --i)
@@ -118,7 +119,7 @@ void GUIContext::onEvent(Event& e)
 				continue;
 			}
 
-			if (e.isInCategory(Event::EventCategory::Mouse))
+			if (e.isInCategory(Event::EventCategory::CatMouse))
 			{
 				auto m = dynamic_cast<MouseEvent*>(&e);
 				if (m && m_windows[i]->contains(m->getX(), m->getY()))
@@ -165,4 +166,5 @@ void GUIContext::submitBroadcastEvent(Event& e)
 {
 	m_event_buffer.push_back(e.allocateCopy());
 	destroyPendingWins();
+}
 }

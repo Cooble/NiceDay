@@ -1,26 +1,22 @@
 #pragma once
 #include "ndpch.h"
-
-#include "graphics/API/Buffer.h"
-#include "graphics/API/VertexArray.h"
 #include "graphics/API/Shader.h"
-#include "graphics/API/Texture.h"
 
 class Sprite2D
 {
 private:
-	static VertexBuffer* s_vbo;
-	static VertexArray* s_vao;
-	static ShaderPtr s_program;
+	static nd::VertexBuffer* s_vbo;
+	static nd::VertexArray* s_vao;
+	static nd::ShaderPtr s_program;
 
 public:
 
 	static void init();
-	static inline Shader& getProgramStatic() { return *s_program; }
-	static inline VertexArray& getVAOStatic() { return *s_vao; }
+	static nd::Shader& getProgramStatic() { return *s_program; }
+	static nd::VertexArray& getVAOStatic() { return *s_vao; }
 
 private:
-	Texture* m_texture;
+	nd::Texture* m_texture;
 	glm::vec2 m_scale;
 	glm::vec2 m_position;
 	glm::mat4 m_model_matrix;
@@ -35,23 +31,23 @@ private:
 	void computeModelMatrix();
 	void computeUVMatrix();
 public:
-	Sprite2D(Texture*);
+	Sprite2D(nd::Texture*);
 	Sprite2D(const char* texture_path);
 	~Sprite2D();
 
-	inline void setLightApplied(bool light) { m_is_light_applied = light; }
-	inline bool isLightApplied() { return m_is_light_applied; }
-	inline Shader& getProgram() { return *s_program; }
-	inline VertexArray& getVAO() { return *s_vao; }
+	void setLightApplied(bool light) { m_is_light_applied = light; }
+	bool isLightApplied() { return m_is_light_applied; }
+	nd::Shader& getProgram() { return *s_program; }
+	nd::VertexArray& getVAO() { return *s_vao; }
 
 
-	inline void setModelMatrix(const glm::mat4& m)
+	void setModelMatrix(const glm::mat4& m)
 	{
 		m_model_matrix = m;
 		m_stale_model_matrix = false;
 	}
 
-	inline void setUVMatrix(const glm::mat4& m)
+	void setUVMatrix(const glm::mat4& m)
 	{
 		m_uv_matrix = m;
 		m_stale_uv_matrix = false;
@@ -66,9 +62,9 @@ public:
 	void setCutout();
 
 	void setDimensions(int pixelX, int pixelY);
-	inline const Texture& getTexture() const { return *m_texture; }
+	const nd::Texture& getTexture() const { return *m_texture; }
 	const glm::mat4& getModelMatrix();
 	const glm::mat4& getUVMatrix();
-	inline float getAlpha() const { return m_alpha; }
-	inline void setAlpha(float f) { m_alpha = f; }
+	float getAlpha() const { return m_alpha; }
+	void setAlpha(float f) { m_alpha = f; }
 };

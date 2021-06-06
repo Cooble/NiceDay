@@ -1,5 +1,5 @@
 ﻿#pragma once
-
+#include "ndpch.h"
 class BlockTextureAtlas
 {
 private:

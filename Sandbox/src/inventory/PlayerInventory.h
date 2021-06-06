@@ -52,8 +52,8 @@ public:
 	void setHandIndex(int index);
 	int getHandIndex();
 
-	void save(NBT& src);
-	void load(NBT& src);
+	void save(nd::NBT& src);
+	void load(nd::NBT& src);
 
 	void* getItemDataBox() const
 	{

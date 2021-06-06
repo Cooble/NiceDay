@@ -14,9 +14,9 @@
 #include "ImGuiLayer.h"
 #include "script/MonoLayer.h"
 
+namespace nd {
 
 #define BIND_EVENT_FN(x) std::bind(&App::x, &App::get(), std::placeholders::_1)
-
 
 App* App::s_Instance = nullptr;
 
@@ -31,7 +31,7 @@ App::App()
 	s_Instance = this;
 }
 
-App::App(const App::AppInfo& info):App()
+App::App(const App::AppInfo& info) : App()
 {
 	init(info);
 }
@@ -41,25 +41,28 @@ static void physicalWindowCallback(Event& e);
 
 void App::init(const AppInfo& info)
 {
-	ResourceMan::init();//init location of /res
+	ResourceMan::init(); //init location of /res
 	m_info = info;
 	m_io = info.io;
 	m_settings = new NBT();
 	NBT::loadFromFile("settings.json", *m_settings);
-	if (m_settings->type == NBT::T_NULL) {
+	if (m_settings->type == NBT::T_NULL)
+	{
 		m_settings->access_map("INFO") = "Application temporary file";
 	}
 	ControlMap::init();
 	Log::init();
 	m_Window = new Window(info.width, info.height, info.title);
 	m_Input = new RealInput(m_Window);
-	if (m_io.enableSCENE) {
+	if (m_io.enableSCENE)
+	{
 		m_fakeWindow = new FakeWindow(m_Window, 100, 100, "FakeWindow");
 		m_FakeInput = new FakeInput(m_fakeWindow, m_Input);
 		m_defaultWindow = m_fakeWindow;
 		m_defaultInput = m_FakeInput;
 	}
-	else {
+	else
+	{
 		m_defaultWindow = m_Window;
 		m_defaultInput = m_Input;
 	}
@@ -74,19 +77,17 @@ void App::init(const AppInfo& info)
 	}
 	m_lua_layer = new LuaLayer();
 	m_LayerStack.pushLayer(m_lua_layer);
-	if (m_io.enableMONO) {
+	if (m_io.enableMONO)
+	{
 		m_mono_layer = new MonoLayer();
 		m_LayerStack.pushLayer(m_mono_layer);
 	}
 	if (m_io.enableSOUND)
 		m_LayerStack.pushLayer(new SoundLayer());
-	
-
 }
 
 App::~App()
 {
-
 	delete m_settings;
 	delete m_Window;
 }
@@ -105,7 +106,7 @@ static void eventCallback(Event& e)
 	for (auto it = stack.end(); it != stack.begin();)
 	{
 		(*--it)->onEvent(e);
-		if(e.getEventType()==Event::EventType::WindowResize)
+		if (e.getEventType() == Event::EventType::WindowResize)
 		{
 			auto dim = dynamic_cast<WindowResizeEvent*>(&e);
 			(*it)->onWindowResize(dim->getWidth(), dim->getHeight());
@@ -114,6 +115,7 @@ static void eventCallback(Event& e)
 			break;
 	}
 }
+
 static void physicalWindowCallback(Event& e)
 {
 	fakeWindow->convertEvent(e);
@@ -162,12 +164,12 @@ void App::start()
 		}
 		m_tel_tick_millis = maxMil;
 
-		if(nowTime()-lastRenderTime<1000/m_target_tps)
-		//if (nowTime() - lastRenderTime < 1000 / 50)
+		if (nowTime() - lastRenderTime < 1000 / m_target_tps)
+			//if (nowTime() - lastRenderTime < 1000 / 50)
 			continue; //skip render
 		now = nowTime();
 		lastRenderTime = now;
-		if(!m_Window->isIconified())
+		if (!m_Window->isIconified())
 			render();
 		m_tel_render_millis = nowTime() - now;
 		static int totalMil = 0;
@@ -219,9 +221,10 @@ void App::render()
 	//ND_PROFILE_CALL(m_Window->swapBuffers());
 	m_Window->swapBuffers();
 	Renderer::getDefaultFBO()->bind();
-	Renderer::getDefaultFBO()->clear(BuffBit::COLOR|BuffBit::DEPTH|(m_io.enableSCENE? BuffBit::STENCIL:0));
-	for (Layer* l : m_LayerStack) {
-		ND_PROFILE_SCOPE(("Profiling render of: "+l->getName()).c_str());
+	Renderer::getDefaultFBO()->clear(BuffBit::COLOR | BuffBit::DEPTH | (m_io.enableSCENE ? BuffBit::STENCIL : 0));
+	for (Layer* l : m_LayerStack)
+	{
+		ND_PROFILE_SCOPE(("Profiling render of: " + l->getName()).c_str());
 		l->onRender();
 	}
 
@@ -234,9 +237,9 @@ void App::render()
 		m_ImGuiLayer->begin();
 
 		//render the first main imguiwindow
-		if(m_io.enableSCENE)
+		if (m_io.enableSCENE)
 			m_fakeWindow->renderView();
-		
+
 		for (Layer* l : m_LayerStack)
 			l->onImGuiRender();
 		m_ImGuiLayer->end();
@@ -250,4 +253,5 @@ void App::render()
 void App::stop()
 {
 	m_running = false;
+}
 }

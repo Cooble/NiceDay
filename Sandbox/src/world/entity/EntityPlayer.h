@@ -25,7 +25,7 @@ public:
 	EntityPlayer();
 	virtual ~EntityPlayer() = default;
 
-	void render(BatchRenderer2D& renderer) override;
+	void render(nd::BatchRenderer2D& renderer) override;
 	void setItemSwinging(bool swing);
 	void setFacingDir(bool left);
 	void setCreative(bool cre){m_has_creative = cre;}
@@ -45,8 +45,8 @@ public:
 	TO_ENTITY_STRING(EntityPlayer)
 	ND_FACTORY_METH_ENTITY_BUILD(EntityPlayer)
 
-	void save(NBT& src) override;
-	void load(NBT& src) override;
+	void save(nd::NBT& src) override;
+	void load(nd::NBT& src) override;
 };
 enum MouseState
 {

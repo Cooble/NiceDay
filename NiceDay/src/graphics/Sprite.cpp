@@ -2,6 +2,8 @@
 #include "Sprite.h"
 #include "BatchRenderer2D.h"
 
+namespace nd {
+
 SpriteSheetResource::SpriteSheetResource(Texture* t, uint32_t width, uint32_t height)
 	: m_texture(t), m_width_icons(width), m_height_icons(height)
 {
@@ -29,7 +31,7 @@ void Sprite::setSpriteIndex(uint32_t u, uint32_t v, bool horizontalFlip, bool ve
 	float yPiece = 1.f / m_resource->getIconsHeight();
 
 	m_uv_quad = UVQuad::build(glm::vec2(xPiece * u, yPiece * v), glm::vec2(xPiece, yPiece), horizontalFlip,
-	                          verticalFlip,rotate90);
+	                          verticalFlip, rotate90);
 }
 
 void Sprite::render(BatchRenderer2D& r)
@@ -38,7 +40,8 @@ void Sprite::render(BatchRenderer2D& r)
 		r.submit(*this);
 }
 
-Animation::Animation(SpriteSheetResource* r, std::initializer_list<int> uvs, bool repeatSaw, bool horizontalFlip, bool verticalFlip)
+Animation::Animation(SpriteSheetResource* r, std::initializer_list<int> uvs, bool repeatSaw, bool horizontalFlip,
+                     bool verticalFlip)
 	: Sprite(r),
 	  m_repeat_saw(repeatSaw),
 	  m_horizontalFlip(horizontalFlip),
@@ -84,4 +87,5 @@ void Animation::nextFrame()
 	}
 	else if (m_current_index == 0)
 		m_increase_index = 1;
+}
 }

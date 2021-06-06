@@ -1,9 +1,10 @@
 ﻿#include "audio_handle.h"
 #include "Player.h"
 
+namespace nd {
 AudioHandle::AudioHandle(bool isSound, bool isSpatial)
-	:m_is_spatial(isSpatial),
-	m_is_sound(isSound)
+	: m_is_sound(isSound),
+	  m_is_spatial(isSpatial)
 {
 }
 
@@ -15,8 +16,8 @@ bool AudioHandle::isPlaying()
 void AudioHandle::updateSpatialData(const SpatialData& data)
 {
 	//ASSERT(m_is_spatial, "Changing SpatialData on sound which is not spatial")
-		if (m_spatial_data == data)
-			return;
+	if (m_spatial_data == data)
+		return;
 	m_spatial_data = data;
 	if (m_is_playing)
 		Sounder::get().updateSpatialData(m_handle, data);
@@ -107,4 +108,5 @@ void AudioHandle::setPitch(float f, float fadeTime)
 		as.timeToChangePitch = fadeTime;
 		Sounder::get().submit(as);
 	}
+}
 }

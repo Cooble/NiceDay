@@ -5,6 +5,7 @@
 #include <utility>
 #include <filesystem>
 
+using namespace nd;
 
 #ifdef ND_DEBUG
 #define CHECK_STREAM_STATE(x) checkDebugState(x)
@@ -110,14 +111,14 @@ namespace WorldIO
 		CHECK_STREAM_STATE(m_stream);
 	}
 
-	void Session::saveGenBoolMap(const NDUtil::Bitset* bitset)
+	void Session::saveGenBoolMap(const Utils::Bitset* bitset)
 	{
 		m_stream->seekp(HEADER_TOTAL_START_POINT);
 		bitset->write(*m_stream);
 		CHECK_STREAM_STATE(m_stream);
 	}
 
-	void Session::loadGenBoolMap(NDUtil::Bitset* bitset)
+	void Session::loadGenBoolMap(Utils::Bitset* bitset)
 	{
 		m_stream->seekg(HEADER_TOTAL_START_POINT);
 		bitset->read(*m_stream);

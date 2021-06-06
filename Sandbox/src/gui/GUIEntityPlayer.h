@@ -7,19 +7,19 @@ class PlayerInventory;
 class EntityPlayer;
 class GUISlots;
 
-class GUIActionSlots :public GUIElement
+class GUIActionSlots :public nd::GUIElement
 {
 private:
 	bool m_show_title = false;
 	int main_slot=-1;
 	int old_slot=-1;
 	PlayerInventory* m_inventory;
-	GUIText* m_title;
-	GUIColumn* m_col;
+	nd::GUIText* m_title;
+	nd::GUIColumn* m_col;
 	void showTitleInternal(bool show);
 public:
 	GUIActionSlots(PlayerInventory* c,HUD& hud);
-	void onMyEvent(Event& e) override;
+	void onMyEvent(nd::Event& e) override;
 	void update() override;
 	void setMainSlot(int slot);
 	void showTitle(bool show);
@@ -31,7 +31,7 @@ private:
 	EntityID m_player;
 	GUIActionSlots* m_gui_action_slots;
 	GUISlots* m_gui_slots=nullptr;
-	GUIColumn* m_col;
+	nd::GUIColumn* m_col;
 	//this is really nasty solution.. nevertheless it works
 	EntityPlayer* m_disgusting_player;
 	bool m_is_inventory_open=false;
@@ -40,7 +40,7 @@ public:
 	inline bool isOpenedInventory() { return m_is_inventory_open; }
 	GUIEntityPlayer(EntityPlayer* player);
 	void update(World& w) override;
-	void render(BatchRenderer2D& renderer) override;
+	void render(nd::BatchRenderer2D& renderer) override;
 	void onAttachedToHUD(HUD& hud) override;
 	const std::string& getID() const override;
 	void openInventory(bool open);
@@ -51,9 +51,9 @@ class GUIEntityConsole :public GUIEntity
 {
 private:
 	std::vector<std::string> m_messages;
-	std::vector<GUIText*> m_lines;
+	std::vector<nd::GUIText*> m_lines;
 	std::string m_currentMessage;
-	GUIColumn* m_col;
+	nd::GUIColumn* m_col;
 	int m_max_lines = 4;
 	bool m_opened=false;
 public:
@@ -62,8 +62,8 @@ public:
 	void addMessage(const std::string& message);
 	void updateChat();
 	void update(World& w) override;
-	void onEvent(Event& e) override;
-	void render(BatchRenderer2D& renderer) override;
+	void onEvent(nd::Event& e) override;
+	void render(nd::BatchRenderer2D& renderer) override;
 	void onAttachedToHUD(HUD& hud) override;
 	const std::string& getID() const override;
 	void open(bool open);

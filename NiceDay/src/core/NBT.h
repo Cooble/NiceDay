@@ -2,6 +2,8 @@
 #include "core/json_fwd.h"
 #include "IBinaryStream.h"
 
+
+namespace nd {
 typedef std::string Stringo;
 
 static Stringo NBT_INVALID_STRING = "invalidstring";
@@ -24,6 +26,7 @@ public:
 		T_ARRAY = 64,
 		T_NULL = 0
 	} type = T_NULL;
+
 private:
 	union
 	{
@@ -37,7 +40,12 @@ private:
 
 
 private:
-	static NBT& nullVal() { static NBT s; return s; }
+	static NBT& nullVal()
+	{
+		static NBT s;
+		return s;
+	}
+
 	constexpr bool checkForArray()
 	{
 		if (isNull())
@@ -67,6 +75,7 @@ private:
 		}
 		return true;
 	}
+
 	constexpr void destruct() noexcept
 	{
 		bool des = isArray() || isMap() || isString();
@@ -76,20 +85,23 @@ private:
 			delete val_map;
 		else if (isString())
 			delete val_string;
-		if (des) {
+		if (des)
+		{
 			val_array = nullptr;
 			type = T_NULL;
 		}
 	}
-	template<int vecSize, typename Type>
+
+	template <int vecSize, typename Type>
 	void buildVec(const glm::vec<vecSize, Type>& v)
 	{
-	   if (type != T_NULL || type != T_ARRAY)
-		  destruct();
+		if (type != T_NULL || type != T_ARRAY)
+			destruct();
 		checkForArray();
 		for (int i = 0; i < vecSize; ++i)
 			access_array(i) = glm::value_ptr(v)[i];
 	}
+
 public:
 	const char* c_str() const { return val_string->c_str(); }
 	constexpr bool isContainer() const { return isMap() || isArray(); }
@@ -102,13 +114,20 @@ public:
 	constexpr bool isString() const { return type == T_STRING; }
 	constexpr bool isBool() const { return type == T_BOOL; }
 	constexpr bool isNull() const { return type == T_NULL; }
-	template<int vecSize>
+
+	template <int vecSize>
 	constexpr bool isVec() const { return isArray() && size() == vecSize; }
-	constexpr size_t size() const { return isMap() ? val_map->size() : (isArray() ? val_array->size() : (isString() ? string().size() : 0)); }
+
+	constexpr size_t size() const
+	{
+		return isMap() ? val_map->size() : (isArray() ? val_array->size() : (isString() ? string().size() : 0));
+	}
+
 	NBTType types() const { return type; }
 	NBT() = default;
 
-	~NBT() noexcept {
+	~NBT() noexcept
+	{
 		destruct();
 	}
 
@@ -117,40 +136,48 @@ public:
 		val_int = i;
 		type = T_NUMBER_INT;
 	}
+
 	NBT(uint64_t i)
 	{
 		val_uint = i;
 		type = T_NUMBER_UINT;
 	}
+
 	NBT(double i)
 	{
 		val_float = i;
 		type = T_NUMBER_FLOAT;
 	}
+
 	NBT(int i)
 	{
 		val_int = i;
 		type = T_NUMBER_INT;
 	}
+
 	NBT(float i)
 	{
 		val_float = (double)i;
 		type = T_NUMBER_FLOAT;
 	}
+
 	NBT(bool i)
 	{
 		val_int = i;
 		type = T_BOOL;
 	}
+
 	template <int vecSize, typename Type>
 	NBT(const glm::vec<vecSize, Type>& v)
 	{
 		buildVec(v);
 	}
+
 	int getDigit(char c)
 	{
 		return c - '0';
 	}
+
 	uint64_t toUint64(const Stringo& s)
 	{
 		uint64_t out = 0;
@@ -163,6 +190,7 @@ public:
 		}
 		return out;
 	}
+
 	bool isNumeric(const Stringo& string)
 	{
 		std::size_t pos;
@@ -177,6 +205,7 @@ public:
 		}
 		return pos == string.size() && !std::isnan(value);
 	}
+
 	NBT(const Stringo& i)
 	{
 		if (SUtil::startsWith(i, '#') && isNumeric(i.substr(1)))
@@ -188,6 +217,7 @@ public:
 		val_string = new Stringo(i);
 		type = T_STRING;
 	}
+
 	NBT(Stringo&& i)
 	{
 		if (SUtil::startsWith(i, '#') && isNumeric(i.substr(1)))
@@ -199,7 +229,11 @@ public:
 		val_string = new Stringo(std::move(i));
 		type = T_STRING;
 	}
-	NBT(const char* i) :NBT(Stringo(i)) {}
+
+	NBT(const char* i) : NBT(Stringo(i))
+	{
+	}
+
 	NBT& operator=(bool i)
 	{
 		destruct();
@@ -207,6 +241,7 @@ public:
 		type = T_BOOL;
 		return *this;
 	}
+
 	NBT& operator=(char i)
 	{
 		destruct();
@@ -214,6 +249,7 @@ public:
 		type = T_NUMBER_INT;
 		return *this;
 	}
+
 	NBT& operator=(uint8_t i)
 	{
 		destruct();
@@ -221,6 +257,7 @@ public:
 		type = T_NUMBER_INT;
 		return *this;
 	}
+
 	NBT& operator=(int16_t i)
 	{
 		destruct();
@@ -228,6 +265,7 @@ public:
 		type = T_NUMBER_INT;
 		return *this;
 	}
+
 	NBT& operator=(uint16_t i)
 	{
 		destruct();
@@ -235,6 +273,7 @@ public:
 		type = T_NUMBER_INT;
 		return *this;
 	}
+
 	NBT& operator=(int i)
 	{
 		destruct();
@@ -242,6 +281,7 @@ public:
 		type = T_NUMBER_INT;
 		return *this;
 	}
+
 	NBT& operator=(uint32_t i)
 	{
 		destruct();
@@ -249,6 +289,7 @@ public:
 		type = T_NUMBER_INT;
 		return *this;
 	}
+
 	NBT& operator=(int64_t i)
 	{
 		destruct();
@@ -256,6 +297,7 @@ public:
 		type = T_NUMBER_INT;
 		return *this;
 	}
+
 	NBT& operator=(uint64_t i)
 	{
 		destruct();
@@ -263,6 +305,7 @@ public:
 		type = T_NUMBER_UINT;
 		return *this;
 	}
+
 	NBT& operator=(double i)
 	{
 		destruct();
@@ -270,6 +313,7 @@ public:
 		type = T_NUMBER_FLOAT;
 		return *this;
 	}
+
 	NBT& operator=(float i)
 	{
 		destruct();
@@ -277,6 +321,7 @@ public:
 		type = T_NUMBER_FLOAT;
 		return *this;
 	}
+
 	template <int vecSize, typename Type>
 	NBT& operator=(const glm::vec<vecSize, Type>& i)
 	{
@@ -287,22 +332,26 @@ public:
 		buildVec(i);
 		return *this;
 	}
+
 	NBT& operator=(const Stringo& i)
 	{
 		if (type == T_STRING)
 			*val_string = i;
-		else {
+		else
+		{
 			destruct();
 			val_string = new Stringo(i);
 			type = T_STRING;
 		}
 		return *this;
 	}
+
 	NBT& operator=(Stringo&& i)
 	{
 		if (type == T_STRING)
 			*val_string = std::move(i);
-		else {
+		else
+		{
 			destruct();
 			val_string = new Stringo(std::move(i));
 			type = T_STRING;
@@ -312,56 +361,73 @@ public:
 
 	constexpr bool canCast() const { return isString() && string().size(); }
 
-	int invalidCast() const { /*ASSERT(false, "invalid nbt type cast");*/ return 0; }
+	int invalidCast() const
+	{
+		/*ASSERT(false, "invalid nbt type cast");*/
+		return 0;
+	}
+
 	NBT& operator=(const char* i)
 	{
 		return this->operator=(Stringo(i));
 	}
-	operator bool() const {
-		if (canCast()) {
-			if (strcmp(c_str(), "true")==0)
+
+	operator bool() const
+	{
+		if (canCast())
+		{
+			if (strcmp(c_str(), "true") == 0)
 				return true;
-			if (strcmp(c_str(), "false")==0)
+			if (strcmp(c_str(), "false") == 0)
 				return false;
-			return (bool)stoi(string());
+			return stoi(string());
 		}
 		return isBool() ? (bool)val_int : false;
 	}
-	operator char() const {
+
+	operator char() const
+	{
 		if (canCast())
 			return c_str()[0];
 		return isInt() ? (char)val_int : 0;
 	}
+
 	operator uint8_t() const
 	{
 		return operator uint32_t();
 	}
+
 	operator uint16_t() const
 	{
 		return operator uint32_t();
 	}
+
 	operator int16_t() const
 	{
 		return operator int();
 	}
+
 	operator int() const
 	{
 		if (canCast())
 			return stoi(string());
 		return isInt() ? val_int : (isUInt() ? val_uint : invalidCast());
 	}
+
 	operator uint32_t() const
 	{
 		if (canCast())
 			return stoi(string());
 		return isInt() ? val_int : (isUInt() ? val_uint : invalidCast());
 	}
+
 	operator int64_t() const
 	{
 		if (canCast())
 			return stoi(string());
 		return isInt() ? val_int : (isUInt() ? val_uint : invalidCast());
 	}
+
 	operator uint64_t() const
 	{
 		if (canCast())
@@ -374,26 +440,31 @@ public:
 		ASSERT(isVec<2>(), "invalid cast");
 		return glm::vec2((*this)[0], (*this)[1]);
 	}
+
 	operator glm::vec3() const
 	{
 		ASSERT(isVec<3>(), "invalid cast");
 		return glm::vec3((*this)[0], (*this)[1], (*this)[2]);
 	}
+
 	operator glm::vec4() const
 	{
 		ASSERT(isVec<4>(), "invalid cast");
 		return glm::vec4((*this)[0], (*this)[1], (*this)[2], (*this)[3]);
 	}
+
 	operator glm::ivec2() const
 	{
 		ASSERT(isVec<2>(), "invalid cast");
 		return glm::ivec2((*this)[0], (*this)[1]);
 	}
+
 	operator glm::ivec3() const
 	{
 		ASSERT(isVec<3>(), "invalid cast");
 		return glm::ivec3((*this)[0], (*this)[1], (*this)[2]);
 	}
+
 	operator glm::ivec4() const
 	{
 		ASSERT(isVec<4>(), "invalid cast");
@@ -401,15 +472,15 @@ public:
 	}
 
 
-
-
-
-	operator float() const {
+	operator float() const
+	{
 		if (canCast())
 			return stof(string());
 		return isFloat() ? val_float : (isInt() ? val_int : invalidCast());
 	}
-	operator double() const {
+
+	operator double() const
+	{
 		if (canCast())
 			return stod(string());
 		return isFloat() ? val_float : (isInt() ? val_int : invalidCast());
@@ -428,6 +499,7 @@ public:
 			return stod(string());
 		return 0;
 	}
+
 	Stringo& string() { return isString() ? *val_string : NBT_INVALID_STRING; }
 	const Stringo& string() const { return isString() ? *val_string : NBT_INVALID_STRING; }
 
@@ -469,7 +541,7 @@ public:
 	//move
 	NBT& operator=(NBT&& o) noexcept
 	{
-		destruct();//todo not quite sure
+		destruct(); //todo not quite sure
 		val_int = o.val_int;
 		type = o.type;
 		o.val_int = 0;
@@ -484,6 +556,7 @@ public:
 			return;
 		val_array->push_back(std::move(nbt));
 	}
+
 	void push_back(const NBT& nbt)
 	{
 		if (!checkForArray())
@@ -498,6 +571,7 @@ public:
 			return;
 		val_array->emplace_back(std::forward<Arg>(arg));
 	}
+
 	template <typename Arg>
 	void emplace_map(const char* name, Arg&& arg)
 	{
@@ -505,6 +579,7 @@ public:
 			return;
 		val_map->try_emplace(name, std::forward<Arg>(arg));
 	}
+
 	template <typename Arg>
 	void emplace_map(const Stringo& name, Arg&& arg)
 	{
@@ -526,6 +601,7 @@ public:
 			return val_map->insert_or_assign(name, NBT()).first->second;
 		return it->second;
 	}
+
 	const NBT& access_map_const(const Stringo& name) const
 	{
 		if (!isMap())
@@ -540,14 +616,17 @@ public:
 	{
 		return access_map(name);
 	}
+
 	NBT& operator[](const char* name)
 	{
 		return access_map(Stringo(name));
 	}
+
 	const NBT& operator[](const Stringo& name) const
 	{
 		return access_map_const(name);
 	}
+
 	const NBT& operator[](const char* name) const
 	{
 		return access_map_const(Stringo(name));
@@ -556,6 +635,7 @@ public:
 
 	void reserve(int size) { if (checkForArray())val_array->reserve(size); }
 	void resize(size_t size) { if (checkForArray())val_array->resize(size); }
+
 	bool exists(const Stringo& key) const
 	{
 		return isMap() && (val_map->find(key) != val_map->end());
@@ -573,6 +653,7 @@ public:
 			val_array->push_back(NBT());
 		return val_array->operator[](index);
 	}
+
 	const NBT& access_array_const(int index) const
 	{
 		if (!isArray())
@@ -587,6 +668,7 @@ public:
 	{
 		return access_array(index);
 	}
+
 	const NBT& operator[](int index) const
 	{
 		return access_array_const(index);
@@ -597,6 +679,7 @@ public:
 		ASSERT(checkForArray(), "");
 		return *val_array;
 	}
+
 	auto& maps()
 	{
 		ASSERT(checkForMap(), "");
@@ -608,6 +691,7 @@ public:
 		ASSERT(isArray(), "");
 		return *val_array;
 	}
+
 	auto& maps() const
 	{
 		ASSERT(isMap(), "");
@@ -645,7 +729,8 @@ public:
 	template <typename Arg0, typename Arg1>
 	bool load(const Stringo& key, Arg0& val, Arg1 defaultVal) const
 	{
-		if (!isMap()) {
+		if (!isMap())
+		{
 			val = defaultVal;
 			return false;
 		}
@@ -656,12 +741,14 @@ public:
 		else val = defaultVal;
 		return found;
 	}
+
 	// sets val to nbt value at name or defaultVal if such item does not exist
 	// does not modify nbt
 	template <typename Arg1>
 	bool load(const Stringo& key, Stringo& val, Arg1 defaultVal) const
 	{
-		if (!isMap()) {
+		if (!isMap())
+		{
 			val = defaultVal;
 			return false;
 		}
@@ -672,13 +759,15 @@ public:
 		else val = defaultVal;
 		return found;
 	}
+
 	//specialization for same types
 	// sets val to nbt value at name or defaultVal if such item does not exist
 	// also saves defaultVal if such value does not exist
 	template <typename Arg>
 	bool loadSet(const Stringo& key, Arg& val, Arg defaultVal)
 	{
-		if (!isMap()) {
+		if (!isMap())
+		{
 			val = defaultVal;
 			return false;
 		}
@@ -686,19 +775,22 @@ public:
 		bool found = it != val_map->end();
 		if (found)
 			val = (Arg)it->second;
-		else {
+		else
+		{
 			access_map(key) = defaultVal;
 			val = access_map(key);
 		}
 		return found;
 	}
+
 	//specialization for same types
 	// sets val to nbt value at name or defaultVal if such item does not exist
 	// also saves defaultVal if such value does not exist
 	template <typename Arg>
 	bool loadSet(const Stringo& key, Stringo& val, Arg defaultVal)
 	{
-		if (!isMap()) {
+		if (!isMap())
+		{
 			val = defaultVal;
 			return false;
 		}
@@ -706,12 +798,14 @@ public:
 		bool found = it != val_map->end();
 		if (found && it->second.isString())
 			val = it->second.string();
-		else {
+		else
+		{
 			access_map(key) = defaultVal;
 			val = access_map(key);
 		}
 		return found;
 	}
+
 	// sets val if value exists or returns false
 	template <typename Arg>
 	bool load(const Stringo& key, Arg& val) const
@@ -724,6 +818,7 @@ public:
 			val = (Arg)it->second;
 		return found;
 	}
+
 	// sets val if value exists or returns false
 	template <>
 	bool load(const Stringo& key, Stringo& val) const
@@ -738,7 +833,6 @@ public:
 	}
 
 
-
 	void write(const IBinaryStream::RWStream& write) const;
 	void read(const IBinaryStream::RWStream& read);
 };
@@ -746,11 +840,11 @@ public:
 bool operator==(const NBT& a, const NBT& b);
 inline bool operator!=(const NBT& a, const NBT& b) { return !operator==(a, b); }
 
-namespace BinarySerializer
-{
+namespace BinarySerializer {
 	//writes to a binary stream
 	void write(const NBT& n, const IBinaryStream::WriteFunc& write);
 	//reads from binary stream
 	//ignore return value (it's for inner purposes)
 	bool read(NBT& n, const IBinaryStream::ReadFunc& write);
+}
 }

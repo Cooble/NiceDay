@@ -54,6 +54,6 @@ public:
 	const std::string& getID() const override;
 	int getItemsSize() const override;
 	ItemStack* takeFromIndex(int index, int number) override;
-	void save(NBT& src);
-	void load(NBT& src);
+	void save(nd::NBT& src);
+	void load(nd::NBT& src);
 };

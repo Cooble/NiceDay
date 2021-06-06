@@ -1,5 +1,6 @@
 ﻿#include "Inventory.h"
 
+using namespace nd;
 
 BasicInventory::~BasicInventory()
 {

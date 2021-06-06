@@ -1,7 +1,7 @@
 ﻿#include "ndpch.h"
 #include "core/AppGlobals.h"
 
-AppGlobals& AppGlobals::get()
+nd::AppGlobals& nd::AppGlobals::get()
 {
 	static AppGlobals g;
 	return g;

@@ -17,7 +17,7 @@ public:
 	 */
 	static WorldEntity* createEntity(EntityType id);
 
-	static WorldEntity* loadInstance(NBT& nbt);
+	static WorldEntity* loadInstance(nd::NBT& nbt);
 	/***
 	 * Every entity needs to be destroyed using this method
 	 */

@@ -139,11 +139,11 @@ const half_int WALL_CORNERS_GLASS[16] = {
 	half_int(6+0,0),//15 BLOCK_STATE_BIT INVALID
 };
 
-const Phys::Polygon BLOCK_BOUNDS_DEFAULT[3] = {
-	Phys::toPolygon(Phys::Rectangle::createFromDimensions(0,0,1,1)),//00 BLOCK_STATE_FULL
-	Phys::Polygon({{0,0},{1,0},{1,1}}) ,//00 LEFT_CORNER
-	Phys::Polygon({{0,0},{1,0},{0,1}}) ,//00 RIGHT_CORNER
+const nd::Phys::Polygon BLOCK_BOUNDS_DEFAULT[3] = {
+	nd::Phys::toPolygon(nd::Phys::Rectangle::createFromDimensions(0,0,1,1)),//00 BLOCK_STATE_FULL
+	nd::Phys::Polygon({{0,0},{1,0},{1,1}}) ,//00 LEFT_CORNER
+	nd::Phys::Polygon({{0,0},{1,0},{0,1}}) ,//00 RIGHT_CORNER
 };
-const Phys::Polygon BLOCK_BOUNDS_DOOR = Phys::toPolygon(Phys::Rectangle::createFromDimensions(0.25,0,0.5,1));
-const Phys::Polygon BLOCK_BOUNDS_PLATFORM = Phys::toPolygon(Phys::Rectangle::createFromDimensions(0,0.75,1,0.25));
+const nd::Phys::Polygon BLOCK_BOUNDS_DOOR = nd::Phys::toPolygon(nd::Phys::Rectangle::createFromDimensions(0.25,0,0.5,1));
+const nd::Phys::Polygon BLOCK_BOUNDS_PLATFORM = nd::Phys::toPolygon(nd::Phys::Rectangle::createFromDimensions(0,0.75,1,0.25));
 

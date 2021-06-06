@@ -2,10 +2,11 @@
 #include "Window.h"
 #include "Input.h"
 #include "layer/LayerStack.h"
-#include "event/MouseEvent.h"
 #include "event/WindowEvent.h"
 #include "Scheduler.h"
 #include "memory/StackAllocator.h"
+
+namespace nd {
 
 // allocates string on doublebuffered stack
 // this string is valid for 2 ticks
@@ -21,11 +22,8 @@ class FakeWindow;
 class FakeInput;
 class MonoLayer;
 
-
-
 class App
 {
-
 protected:
 	App();
 public:
@@ -36,12 +34,14 @@ public:
 		bool enableSCENE = false;
 		bool enableMONO = false;
 	};
+
 	struct AppInfo
 	{
 		int width = 1280, height = 720;
 		std::string title = "ND_ENGINE";
 		IO io;
 	};
+
 	App(const App::AppInfo& info);
 	virtual ~App();
 
@@ -65,19 +65,19 @@ public:
 	NBT& getSettings() { return *m_settings; }
 
 	// return target ticks per second (not actual)
-	int getTPS() const{ return m_target_tps; }
+	int getTPS() const { return m_target_tps; }
 
 
 	//=====telemetry====
 
-	float getFPS() const{ return m_fps; }
+	float getFPS() const { return m_fps; }
 	int getTickMillis() const { return m_tel_tick_millis; }
 	int getRenderMillis() const { return m_tel_render_millis; }
 	int getUpdatesPerFrame() { return m_tel_updates_per_frame; }
 	std::thread::id getMainThreadID() { return m_thread_id; }
 
 	const IO& getIO() const { return m_io; }
-	
+
 private:
 	IO m_io;
 	static App* s_Instance;
@@ -88,13 +88,13 @@ private:
 protected:
 	NBT* m_settings;
 	void init(const AppInfo& info);
-	int current_fps=0;
+	int current_fps = 0;
 	long long lastFPSMillis;
 
 	float m_fps;
 	int m_tel_tick_millis;
 	int m_tel_render_millis;
-	int m_target_tps=60;
+	int m_target_tps = 60;
 
 	AppInfo m_info;
 
@@ -107,14 +107,12 @@ protected:
 	Input* m_defaultInput;
 
 	LayerStack m_LayerStack;
-	ImGuiLayer* m_ImGuiLayer=nullptr;
-	LuaLayer* m_lua_layer=nullptr;
-	MonoLayer* m_mono_layer=nullptr;
+	ImGuiLayer* m_ImGuiLayer = nullptr;
+	LuaLayer* m_lua_layer = nullptr;
+	MonoLayer* m_mono_layer = nullptr;
 	Scheduler m_scheduler;
 	DoubleBuffStackAllocator m_dbuff_stackalloc;
-	bool m_running=false;
-
-	
+	bool m_running = false;
 };
 
 //Debug settings variables -> loaded and saved to app.json
@@ -123,3 +121,4 @@ inline auto& APin() { return App::get().getInput(); }
 inline auto APwin() { return App::get().getWindow(); }
 inline auto& APsched() { return App::get().getScheduler(); }
 inline auto APgui() { return App::get().getImGui(); }
+}

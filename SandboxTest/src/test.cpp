@@ -3,6 +3,7 @@
 #include "core/App.h"
 
 #include "scene/EditorLayer.h"
+using namespace nd;
 
 class TestApp:public App
 {

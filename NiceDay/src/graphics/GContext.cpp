@@ -2,6 +2,8 @@
 #include "GContext.h"
 #include "platform/OpenGL/GLContext.h"
 
+namespace nd {
+
 void GContext::init(GraphicsAPI api)
 {
 	switch (api)
@@ -10,7 +12,8 @@ void GContext::init(GraphicsAPI api)
 		ND_ERROR("this api not supported!");
 		break;
 	case GraphicsAPI::OpenGL:
-		s_context = new GLContext();
+		s_context = new internal::GLContext();
 		break;
 	}
+}
 }

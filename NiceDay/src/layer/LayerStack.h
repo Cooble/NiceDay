@@ -1,6 +1,8 @@
 #pragma once
 #include "Layer.h"
 
+namespace nd {
+
 class LayerStack
 {
 public:
@@ -22,13 +24,15 @@ public:
 	std::vector<Layer*>::iterator end() { return m_Layers.end(); }
 private:
 	std::vector<Layer*> m_Layers;
+
 	struct Task
 	{
 		bool overlay;
 		bool add;
 		Layer* l;
 	};
+
 	std::vector<Task> m_tasks;
 	unsigned int m_LayerInsertIndex = 0;
 };
-
+}

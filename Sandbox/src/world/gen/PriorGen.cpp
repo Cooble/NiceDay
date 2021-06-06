@@ -7,6 +7,7 @@
 #include "world/World.h"
 //#include "OpenSimplexNoise.hpp"
 #include "TreeGen.h"
+using namespace nd;
 
 
 PriorGen::PriorGen(const std::string& filePath)

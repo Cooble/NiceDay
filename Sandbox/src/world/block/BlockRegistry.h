@@ -16,7 +16,7 @@ private:
 	std::unordered_map<std::string, int> m_wallIDs;
 	std::unordered_map<std::string, const half_int*> m_block_corners;
 	std::unordered_map<std::string, const half_int*> m_wall_corners;
-	std::unordered_map<std::string, std::pair<const Phys::Polygon*, int>> m_block_bounds;
+	std::unordered_map<std::string, std::pair<const ndPhys::Polygon*, int>> m_block_bounds;
 	int m_currentConnectGroup=0;
 	std::unordered_map<std::string, int> m_connect_groups;
 	int m_currentFlag=0;
@@ -43,12 +43,12 @@ public:
 private:
 	void readAllConnectGroupsJSON();
 	void checkIfConnectGroupRegistered(const std::string& s, const std::string& elementID);
-	void createBlockFromJSON(const std::string& id, NBT& nbt);
-	void updateBlockFromJSON(const std::string& id, NBT& nbt);
+	void createBlockFromJSON(const std::string& id, nd::NBT& nbt);
+	void updateBlockFromJSON(const std::string& id, nd::NBT& nbt);
 	//call after entities were registered
-	void updateBlockFromJSONAfterEntities(const std::string& id, NBT& nbt);
-	void createWallFromJSON(const std::string& id, NBT& nbt);
-	void updateWallFromJSON(const std::string& id, NBT& nbt);
+	void updateBlockFromJSONAfterEntities(const std::string& id, nd::NBT& nbt);
+	void createWallFromJSON(const std::string& id, nd::NBT& nbt);
+	void updateWallFromJSON(const std::string& id, nd::NBT& nbt);
 public:
 	void readExternalIDList();
 	void readJSONRegistry();
@@ -68,13 +68,13 @@ public:
 	const Wall& getWall(const std::string& wall_id) const;
 
 	void registerCorners(const std::string& id, const half_int* data,bool isWall=false);
-	void registerBlockBounds(const std::string& id, const Phys::Polygon* data,int size);
+	void registerBlockBounds(const std::string& id, const ndPhys::Polygon* data,int size);
 
 	int getConnectGroupIndex(const std::string& id);
 	int getFlagIndex(const std::string& id);
 	
 	const half_int* getCorners(const std::string& id,bool isWall) const;
-	const Phys::Polygon* getBlockBounds(const std::string& id, int& size) const;
+	const ndPhys::Polygon* getBlockBounds(const std::string& id, int& size) const;
 
 	BlockID getBlockID(const std::string& block_id) const { return getBlock(block_id).getID(); }
 	int getWallID(const std::string& wall_id) const { return getWall(wall_id).getID(); }

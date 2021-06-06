@@ -10,6 +10,7 @@
 #include "lua/LuaLayer.h"
 #include "core/App.h"
 
+using namespace nd;
 
 static EntityPlayer* player;
 

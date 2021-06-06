@@ -2,6 +2,7 @@
 #include "Scoper.h"
 #include "files/FUtil.h"
 
+namespace nd {
 void Scoper::beginSession(const std::string& name, const std::string& filepath)
 {
 	if (m_outputStream.is_open())
@@ -9,8 +10,8 @@ void Scoper::beginSession(const std::string& name, const std::string& filepath)
 		ND_WARN("Replacing current profiling session: {} with: {}", m_currentSession->name, name);
 		endSession();
 	}
-	
-	auto filep = FUtil::getExecutableFolderPath()+"/profiles/" + filepath;
+
+	auto filep = FUtil::getExecutableFolderPath() + "/profiles/" + filepath;
 	if (filep.find_last_of('/') != std::string::npos)
 	{
 		auto s = filep.substr(0, filep.find_last_of('/'));
@@ -26,8 +27,8 @@ void Scoper::beginSession(const std::string& name, const std::string& filepath)
 
 void Scoper::endSession()
 {
-	
-	if (m_currentSession) {
+	if (m_currentSession)
+	{
 		writeFooter();
 		m_outputStream.close();
 		ND_TRACE("Ending profiling session: {}", m_currentSession->name);
@@ -40,17 +41,18 @@ void Scoper::endSession()
 
 /*static void removeInvalidChars(std::string& s)
 {
-	for (int i = 0; i < s.size(); ++i)
-	{
-		auto& ss = s[i];
-		if (ss < 32 || ss>126 || s == '\\') {
-			ss = ' ';
-			ASSERT(false, "Gotcha");
-		}
-	}
+for (int i = 0; i < s.size(); ++i)
+{
+auto& ss = s[i];
+if (ss < 32 || ss>126 || s == '\\') {
+ss = ' ';
+ASSERT(false, "Gotcha");
+}
+}
 }*/
 // every n writes flush everything
 constexpr int FLUSH_INTERVAL = 30;
+
 void Scoper::writeProfile(const ProfileResult& result)
 {
 	if (!m_currentSession)
@@ -73,7 +75,8 @@ void Scoper::writeProfile(const ProfileResult& result)
 	m_outputStream << "}";
 
 	static int flushInterval = FLUSH_INTERVAL;
-	if (--flushInterval == 0) {
+	if (--flushInterval == 0)
+	{
 		flushInterval = FLUSH_INTERVAL;
 		m_outputStream.flush();
 	}
@@ -103,4 +106,5 @@ void ScoperTimer::stop()
 	Scoper::get().writeProfile({m_name, m_startTimepoint, end, threadID});
 
 	m_stopped = true;
+}
 }

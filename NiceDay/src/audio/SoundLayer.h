@@ -2,10 +2,11 @@
 #include "layer/Layer.h"
 
 
+namespace nd {
 class SoundLayer : public Layer
 {
 private:
-	void* m_stream=nullptr;
+	void* m_stream = nullptr;
 public:
 	SoundLayer();
 
@@ -14,5 +15,5 @@ public:
 	void onUpdate() override;
 	void onImGuiRender() override;
 	void onEvent(Event& e) override;
-	
 };
+}

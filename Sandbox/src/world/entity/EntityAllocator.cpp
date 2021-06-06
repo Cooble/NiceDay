@@ -2,6 +2,9 @@
 #include "EntityRegistry.h"
 #include "core/NBT.h"
 
+using namespace nd;
+
+
 WorldEntity* EntityAllocator::allocate(EntityType id)
 {
 	auto& bucket = EntityRegistry::get().getBucket(id);

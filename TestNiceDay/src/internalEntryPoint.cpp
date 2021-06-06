@@ -7,6 +7,7 @@
 //
 // 
 // FOLLOWING FUNCTION needs to be declared in this project!
+using namespace nd;
 extern void registerTests();
 
 namespace NDT {

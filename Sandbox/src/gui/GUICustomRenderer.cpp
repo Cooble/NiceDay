@@ -5,6 +5,7 @@
 #include "core/App.h"
 #include "GUIItemContainer.h"
 
+using namespace nd;
 GUICustomRenderer::GUICustomRenderer(glm::vec2 windowSize)
 :GUIRenderer(windowSize)
 {

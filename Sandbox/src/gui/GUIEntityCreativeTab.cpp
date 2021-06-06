@@ -1,7 +1,7 @@
 ﻿#include "GUIEntityCreativeTab.h"
 #include "inventory/CreativeInventory.h"
 
-
+using namespace nd;
 GUICreativeTab::GUICreativeTab(HUD& hud) :GUIElement(GETYPE::Other)
 {
 	//isAlwaysPacked = true;

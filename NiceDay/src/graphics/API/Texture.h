@@ -2,6 +2,7 @@
 #include "ndpch.h"
 #include "glad/glad.h"
 
+namespace nd {
 typedef glm::vec<2, uint32_t> TexDimensions;
 
 enum class TextureWrapMode :uint32_t
@@ -23,13 +24,12 @@ enum class TextureFormat :uint32_t
 	RGB = GL_RGB,
 	RED = GL_RED
 };
-enum class TextureType:uint32_t
+
+enum class TextureType :uint32_t
 {
 	_2D = GL_TEXTURE_2D,
 	_CUBE_MAP = GL_TEXTURE_CUBE_MAP,
 	_3D = GL_TEXTURE_3D,
-
-
 };
 
 //if texture type is cubemap ->
@@ -76,6 +76,7 @@ struct TextureInfo
 		height = h;
 		return *this;
 	}
+
 	TextureInfo& size(int d)
 	{
 		width = d;
@@ -88,6 +89,7 @@ struct TextureInfo
 		f_format = form;
 		return *this;
 	}
+
 	TextureInfo& pixels(void* pixels)
 	{
 		this->pixel_data = pixels;
@@ -102,10 +104,11 @@ struct TextureInfo
 		border_color[3] = a;
 		return *this;
 	}
+
 	TextureInfo& type(TextureType type)
 	{
 		texture_type = type;
-	
+
 		return *this;
 	}
 
@@ -120,10 +123,12 @@ struct TextureInfo
 	{
 		file_path = string;
 	}
-	TextureInfo(TextureType type,const std::string& string)
+
+	TextureInfo(TextureType type, const std::string& string)
 	{
 		texture_type = type;
-		if (type == TextureType::_CUBE_MAP) {
+		if (type == TextureType::_CUBE_MAP)
+		{
 			wrapMode(TextureWrapMode::CLAMP_TO_EDGE);
 			format(TextureFormat::RGB);
 		}
@@ -132,7 +137,7 @@ struct TextureInfo
 
 	/*TextureInfo(const char* string)
 	{
-		file_path = string;
+	file_path = string;
 	}*/
 };
 
@@ -146,16 +151,16 @@ public:
 
 	virtual int width() const = 0;
 	virtual int height() const = 0;
-	TexDimensions getDimensions() const { return { width(),height() }; }
+	TexDimensions getDimensions() const { return {width(), height()}; }
 	virtual unsigned int getID() const = 0;
 
 	virtual const std::string& getFilePath() const = 0;
 	virtual void setPixels(float* light_map) = 0; //todo add template anotation to enable more than jut floats
-	virtual void setPixels(uint8_t* light_map) =0; //todo add template anotation to enable more than jut bytes
+	virtual void setPixels(uint8_t* light_map) = 0; //todo add template anotation to enable more than jut bytes
 public:
 	static Texture* create(const TextureInfo&);
-	
 };
+
 typedef Ref<Texture> TexturePtr;
 
 class TextureLib
@@ -164,21 +169,21 @@ private:
 	inline static std::unordered_map<std::string, TexturePtr> m_textures;
 public:
 	// if neccessary, loads texture, otherwise retrives already loaded
-	static TexturePtr loadOrGetTexture(const std::string& path,TextureType type=TextureType::_2D)
+	static TexturePtr loadOrGetTexture(const std::string& path, TextureType type = TextureType::_2D)
 	{
 		auto it = m_textures.find(path);
-		if (it == m_textures.end()) {
-			auto t = std::shared_ptr<Texture>(Texture::create(TextureInfo(type,path)));
+		if (it == m_textures.end())
+		{
+			auto t = std::shared_ptr<Texture>(Texture::create(TextureInfo(type, path)));
 			m_textures[path] = t;
 			return t;
 		}
 		return it->second;
 	}
+
 	static void unloadAll()
 	{
 		m_textures.clear();
 	}
 };
-
-
-
+}

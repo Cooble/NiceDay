@@ -7,6 +7,8 @@
 #include "graphics/Effect.h"
 #include "core/NBT.h"
 
+using namespace nd;
+
 void FlatCam::onEvent(Event& e)
 {
 	if (e.getEventType() == Event::EventType::MousePress)
@@ -135,11 +137,11 @@ void MandelBrotLayer::onRender()
 	//MandelBrot PIe
 	mandelShader->bind();
 
-	std::static_pointer_cast<GLShader>(mandelShader)->setUniformMat4("u_uv_trans", flatCam.getProjMatrix());
-	std::static_pointer_cast<GLShader>(mandelShader)->setUniform1i("u_steps", mandelSteps);
-	std::static_pointer_cast<GLShader>(mandelShader)->setUniform1i("u_wrapAfter", wrapAfter);
+	std::static_pointer_cast<internal::GLShader>(mandelShader)->setUniformMat4("u_uv_trans", flatCam.getProjMatrix());
+	std::static_pointer_cast<internal::GLShader>(mandelShader)->setUniform1i("u_steps", mandelSteps);
+	std::static_pointer_cast<internal::GLShader>(mandelShader)->setUniform1i("u_wrapAfter", wrapAfter);
 	if(quats)
-		std::static_pointer_cast<GLShader>(mandelShader)->setUniformVec2f("u_dimensions", dimensions);
+		std::static_pointer_cast<internal::GLShader>(mandelShader)->setUniformVec2f("u_dimensions", dimensions);
 
 	Effect::getDefaultVAO().bind();
 	Effect::renderDefaultVAO();

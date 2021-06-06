@@ -12,20 +12,20 @@ public:
 	virtual ~GUIEntity() = default;
 	virtual void onAttachedToHUD(HUD& hud)=0;
 	virtual void onDetached() {};
-	virtual void render(BatchRenderer2D& renderer){};
+	virtual void render(nd::BatchRenderer2D& renderer){};
 	virtual void update(World& w){};
-	virtual void onEvent(Event& e){};
+	virtual void onEvent(nd::Event& e){};
 	// if inventory does not exist return null
 	virtual Inventory* getInventory() { return nullptr; };
 };
 
-class HUD :public GUIWindow
+class HUD :public nd::GUIWindow
 {
 	ContainerEventConsumer m_container_consumer;
 	struct GUIEntityBundle
 	{
 		GUIEntity* entity;
-		std::vector<GEID> children;
+		std::vector<nd::GEID> children;
 		GUIEntityBundle(GUIEntity* e) :entity(e) {}
 	};
 	std::vector<GUIEntityBundle> m_entities;
@@ -53,9 +53,9 @@ public:
 	GUIEntity* getEntity(const std::string& id);
 	Inventory* getInventory(const std::string& id);
 	void update() override;
-	void onMyEvent(Event& e) override;
+	void onMyEvent(nd::Event& e) override;
 	void appendChild(GUIElement* element,const std::string& ownerID);
 	void appendChild(GUIElement* element) override;
-	void consumeContainerEvent(const std::string& id, int slot, Inventory* inv, Event& e);
+	void consumeContainerEvent(const std::string& id, int slot, Inventory* inv, nd::Event& e);
 	inline const auto& getEntities() { return m_entities; }
 };

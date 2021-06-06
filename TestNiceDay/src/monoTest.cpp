@@ -2,6 +2,8 @@
 #include "NDTests.h"
 #include "script/MonoLayer.h"
 
+using namespace nd;
+
 int monoTest()
 {
 	MonoLayer l;

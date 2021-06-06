@@ -4,13 +4,17 @@
 #include "GLTexture.h"
 #include "core/App.h"
 
+namespace nd::internal {
+
 //todo add possibility to add depth buffer when using external textures
 
 void GLFrameBuffer::bindColorAttachments()
 {
 	unsigned int id_offset = 0;
 	for (auto& attachment : m_attachments)
-		GLCall(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + (id_offset++), GL_TEXTURE_2D, attachment.texture->getID(), 0));
+		GLCall(
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + (id_offset++), GL_TEXTURE_2D, attachment.texture->
+			getID(), 0));
 
 	//specifies specific color attachments to be drawn into
 	constexpr int maxAttachments = 16;
@@ -33,7 +37,8 @@ void GLFrameBuffer::resizeAttachments()
 	}
 	bindColorAttachments();
 
-	if (m_special_attachment_id != 0) {
+	if (m_special_attachment_id != 0)
+	{
 		switch (m_special_attachment)
 		{
 		case FBAttachment::DEPTH_STENCIL:
@@ -56,13 +61,14 @@ void GLFrameBuffer::createBindSpecialAttachment()
 	case FBAttachment::DEPTH_STENCIL:
 		glGenRenderbuffers(1, &m_special_attachment_id);
 		glBindRenderbuffer(GL_RENDERBUFFER, m_special_attachment_id);
-		if(multiSampleLevel>1)
-			glRenderbufferStorageMultisample(GL_RENDERBUFFER, multiSampleLevel, GL_DEPTH24_STENCIL8, m_dimensions.x, m_dimensions.y);
+		if (multiSampleLevel > 1)
+			glRenderbufferStorageMultisample(GL_RENDERBUFFER, multiSampleLevel, GL_DEPTH24_STENCIL8, m_dimensions.x,
+			                                 m_dimensions.y);
 		else
 			glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, m_dimensions.x, m_dimensions.y);
 
 		GLCall(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER,
-		                          m_special_attachment_id));
+			m_special_attachment_id));
 		break;
 	case FBAttachment::DEPTH_STENCIL_ACCESSIBLE:
 		glGenTextures(1, &m_special_attachment_id);
@@ -74,7 +80,9 @@ void GLFrameBuffer::createBindSpecialAttachment()
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-		GLCall(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, m_special_attachment_id, 0));
+		GLCall(
+			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, m_special_attachment_id, 0
+			));
 		break;
 	case FBAttachment::NONE: break;
 	default: ;
@@ -84,10 +92,12 @@ void GLFrameBuffer::createBindSpecialAttachment()
 
 void GLFrameBuffer::clearAttachments()
 {
-	for (auto& attachment : m_attachments) {
+	for (auto& attachment : m_attachments)
+	{
 		delete attachment.texture;
 	}
-	if (m_special_attachment_id != 0) {
+	if (m_special_attachment_id != 0)
+	{
 		switch (m_special_attachment)
 		{
 		case FBAttachment::DEPTH_STENCIL:
@@ -101,17 +111,19 @@ void GLFrameBuffer::clearAttachments()
 	}
 }
 
-GLFrameBuffer::GLFrameBuffer(const FrameBufferInfo& info):m_special_attachment(FBAttachment::NONE)
+GLFrameBuffer::GLFrameBuffer(const FrameBufferInfo& info): m_special_attachment(FBAttachment::NONE)
 {
 	m_id = 0;
 	m_type = info.type;
-	
+
 	if (m_type == FBType::WINDOW_TARGET)
 		return;
-	
+
 	GLCall(glGenFramebuffers(1, &m_id));
-	if (m_type == FBType::NORMAL_TARGET) {
-		ASSERT(info.textureInfoCount, "At least one color attachment is neccessary (for some reason idk, Because I said so..)");
+	if (m_type == FBType::NORMAL_TARGET)
+	{
+		ASSERT(info.textureInfoCount,
+		       "At least one color attachment is neccessary (for some reason idk, Because I said so..)");
 		m_dimensions.x = info.textureInfos[0].width;
 		m_dimensions.y = info.textureInfos[0].height;
 		//ASSERT((bool)m_dimensions.x && (bool)m_dimensions.y, "Invalid fbo dimensions");
@@ -122,23 +134,24 @@ GLFrameBuffer::GLFrameBuffer(const FrameBufferInfo& info):m_special_attachment(F
 		for (int i = 0; i < m_attachments.size(); ++i)
 		{
 			auto& a = m_attachments[i];
-			if(info.textureInfos[i].width==0||info.textureInfos[i].height==0)
+			if (info.textureInfos[i].width == 0 || info.textureInfos[i].height == 0)
 			{
 				//we have made invalid proxy
-				a.texture = new GLTexture(0,info.textureInfos[i]);
+				a.texture = new GLTexture(0, info.textureInfos[i]);
 				noDimSpecified = true;
-			}else
+			}
+			else
 			{
 				a.texture = new GLTexture(info.textureInfos[i]);
 			}
 		}
-		if (!noDimSpecified) {
+		if (!noDimSpecified)
+		{
 			bind();
 			bindColorAttachments();
 			createBindSpecialAttachment();
 		}
 	}
-
 }
 
 
@@ -152,8 +165,9 @@ GLFrameBuffer::~GLFrameBuffer()
 
 void GLFrameBuffer::createBindSpecialAttachment(FBAttachment attachment, TexDimensions dim)
 {
-	if (m_type == FBType::NORMAL_TARGET_EXTERNAL_TEXTURES) {
-		if (m_special_attachment== FBAttachment::NONE)
+	if (m_type == FBType::NORMAL_TARGET_EXTERNAL_TEXTURES)
+	{
+		if (m_special_attachment == FBAttachment::NONE)
 		{
 			m_dimensions = dim;
 			m_special_attachment = attachment;
@@ -184,7 +198,6 @@ void GLFrameBuffer::bind()
 	{
 		//viewport cannot be established since size is not known
 	}
-
 }
 
 void GLFrameBuffer::unbind()
@@ -230,7 +243,8 @@ void GLFrameBuffer::attachTexture(Texture* t, uint32_t attachmentNumber)
 	ASSERT(m_type != FBType::WINDOW_TARGET, "Cannot attach texture to window target");
 	bind();
 	glViewport(0, 0, t->width(), t->height());
-	GLCall(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + attachmentNumber, GL_TEXTURE_2D, t->getID(), 0));
+	GLCall(
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + attachmentNumber, GL_TEXTURE_2D, t->getID(), 0));
 }
 
 uint32_t GLFrameBuffer::getAttachmentID(uint32_t attachmentIndex, FBAttachment type) const
@@ -242,19 +256,21 @@ uint32_t GLFrameBuffer::getAttachmentID(uint32_t attachmentIndex, FBAttachment t
 
 const Texture* GLFrameBuffer::getAttachment(uint32_t attachmentIndex, FBAttachment type)
 {
-	switch (type) { 
-	case FBAttachment::COLOR:
+	switch (type)
 	{
-		if (attachmentIndex >= m_attachments.size())
-			return nullptr;
-		//ASSERT(attachmentIndex < m_attachments.size(),"Invalid attachment index");
-		return m_attachments[attachmentIndex].texture;
-	}
+	case FBAttachment::COLOR:
+		{
+			if (attachmentIndex >= m_attachments.size())
+				return nullptr;
+			//ASSERT(attachmentIndex < m_attachments.size(),"Invalid attachment index");
+			return m_attachments[attachmentIndex].texture;
+		}
 	case FBAttachment::DEPTH_STENCIL_ACCESSIBLE:
 		//todo add depth stencil attachment texture retsrieveal
-		
+
 	default:
 		ASSERT(false, "Invalid textureattachment request");
 		return nullptr;
 	}
+}
 }

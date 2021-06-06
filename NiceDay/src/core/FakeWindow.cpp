@@ -10,13 +10,13 @@
 #include "scene/GlobalAccess.h"
 #include "scene/components_imgui_access.h"
 
+namespace nd {
 static Texture* templateTex = nullptr;
 
-
-
-FakeWindow::FakeWindow(WindowTemplate* realWindow,int width, int height, const std::string& title, bool fullscreen)
-:
-	m_window(realWindow){
+FakeWindow::FakeWindow(WindowTemplate* realWindow, int width, int height, const std::string& title, bool fullscreen)
+	:
+	m_window(realWindow)
+{
 	m_data.width = width;
 	m_data.height = height;
 	m_data.title = title;
@@ -27,9 +27,10 @@ FakeWindow::FakeWindow(WindowTemplate* realWindow,int width, int height, const s
 		height = 100;
 	if (width == 0)
 		width = 100;
-	
-	m_fbo = FrameBuffer::create(FrameBufferInfo(width,height,TextureFormat::RGBA).special(FBAttachment::DEPTH_STENCIL));
-	m_fbo->clear(BuffBit::COLOR|BuffBit::DEPTH, { 1,0,0,1 });
+
+	m_fbo = FrameBuffer::create(
+		FrameBufferInfo(width, height, TextureFormat::RGBA).special(FBAttachment::DEPTH_STENCIL));
+	m_fbo->clear(BuffBit::COLOR | BuffBit::DEPTH, {1, 0, 0, 1});
 	Renderer::setDefaultFBO(m_fbo);
 
 	templateTex = Texture::create(TextureInfo("res/images/gui_back.png"));
@@ -72,7 +73,6 @@ void FakeWindow::setCursorPos(glm::vec2 pos)
 {
 	//m_window->setCursorPos(pos + m_real_window_offset);
 	m_window->setCursorPos(pos + getOffset());
-	
 }
 
 void FakeWindow::setClipboard(const char* c)
@@ -107,8 +107,6 @@ void FakeWindow::swapBuffers()
 		m_fbo->resize(m_dim.x, m_dim.y);
 		auto e = WindowResizeEvent(m_data.width, m_data.height);
 		App::get().fireEvent(e);
-
-		
 	}
 }
 
@@ -119,17 +117,17 @@ void FakeWindow::drawNavBar()
 	m_nav_bar.freshRelease = false;
 
 	auto width = icons.getSubImage("move_icon").pixelSize.x;
-	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{ 0,0 });
-	
+	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{0, 0});
+
 	ImGui::SameLine(ImGui::GetWindowContentRegionMax().x - 4 * width - 5);
 	components_imgui_access::Image("move_icon", icons);
-	if(!m_nav_bar.moveActive&&ImGui::IsItemClicked())
+	if (!m_nav_bar.moveActive && ImGui::IsItemClicked())
 	{
 		m_nav_bar = {};
 		m_nav_bar.moveActive = true;
 		m_nav_bar.freshPress = true;
 	}
-	ImGui::SameLine(ImGui::GetWindowContentRegionMax().x-3* width - 5);
+	ImGui::SameLine(ImGui::GetWindowContentRegionMax().x - 3 * width - 5);
 	components_imgui_access::Image("zoom_icon", icons);
 	if (!m_nav_bar.scrollActive && ImGui::IsItemClicked())
 	{
@@ -137,7 +135,7 @@ void FakeWindow::drawNavBar()
 		m_nav_bar.scrollActive = true;
 		m_nav_bar.freshPress = true;
 	}
-	
+
 	ImGui::SameLine(ImGui::GetWindowContentRegionMax().x - 2 * width - 5);
 	components_imgui_access::Image("rot_icon", icons);
 	if (!m_nav_bar.rotationActive && ImGui::IsItemClicked())
@@ -158,14 +156,15 @@ void FakeWindow::drawNavBar()
 	ImGui::PopStyleVar();
 
 	bool dragging = ImGui::IsMouseDragging(ImGuiMouseButton_Left, 0);
-	if(!dragging&&m_nav_bar.isAnyActive())
+	if (!dragging && m_nav_bar.isAnyActive())
 	{
 		m_nav_bar = {};
 		m_nav_bar.freshRelease = true;
 	}
-	else {
+	else
+	{
 		auto v = ImGui::GetMouseDragDelta(ImGuiMouseButton_Left, 0);
-		m_nav_bar.drag = *(glm::vec2*) &v;
+		m_nav_bar.drag = *(glm::vec2*)&v;
 	}
 }
 
@@ -179,8 +178,8 @@ void FakeWindow::renderView()
 	ImGui::Begin("FakeWindow", &opened, ImGuiWindowFlags_NoDecoration);
 	m_is_hovered = ImGui::IsWindowHovered();
 	m_is_focused = ImGui::IsWindowFocused();
-	
-	
+
+
 	ImGui::PopStyleVar(2);
 	m_real_window_offset = glm::vec2(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y);
 
@@ -188,25 +187,24 @@ void FakeWindow::renderView()
 	if (m_enableNavigationBar)
 	{
 		drawNavBar();
-		m_real_window_offset.y += ImGui::GetItemRectMax().y - m_real_window_offset.y;	
+		m_real_window_offset.y += ImGui::GetItemRectMax().y - m_real_window_offset.y;
 	}
-	
-	
+
+
 	m_relative_offset = m_real_window_offset - m_window->getPos();
-	
+
 	auto lastDim = m_dim;
-	m_dim = { ImGui::GetContentRegionAvail().x,ImGui::GetContentRegionAvail().y };
+	m_dim = {ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y};
 	m_data.width = m_dim.x;
 	m_data.height = m_dim.y;
 	m_dirty_dim |= lastDim != m_dim;
 
-	ImGui::Image((void*)m_fbo->getAttachmentID(0), { m_dim.x,m_dim.y }, { 0,1 }, { 1,0 });
+	ImGui::Image((void*)m_fbo->getAttachmentID(0), {m_dim.x, m_dim.y}, {0, 1}, {1, 0});
 	ImGui::End();
 }
 
 void FakeWindow::pollEvents()
 {
-	
 }
 
 bool FakeWindow::shouldClose()
@@ -217,18 +215,19 @@ bool FakeWindow::shouldClose()
 
 void FakeWindow::convertEvent(Event& e)
 {
-	if(e.getEventCategories() & Event::EventCategory::Mouse)
+	if (e.getEventCategories() & Event::EventCategory::CatMouse)
 	{
 		auto& ee = dynamic_cast<MouseEvent&>(e);
 		auto pos = ee.getPos() - m_relative_offset;
 
 		//check if mouse cursor is in the window and is normal
-		if((pos.x<0||pos.y<0||pos.x>m_dim.x||pos.y>m_dim.y)&&m_window->getCursorPolicy()==CURSOR_ENABLED)
+		if ((pos.x < 0 || pos.y < 0 || pos.x > m_dim.x || pos.y > m_dim.y) && m_window->getCursorPolicy() ==
+			CURSOR_ENABLED)
 		{
 			e.handled = true;
 			return;
 		}
-		ee.setPos(pos.x,pos.y);
+		ee.setPos(pos.x, pos.y);
 	}
 	//ignore change of physical window
 	if (e.getEventType() == Event::EventType::WindowResize)
@@ -248,7 +247,8 @@ const char* FakeWindow::getClipboard() const
 //=========================INPUT====================================================
 
 FakeInput::FakeInput(FakeWindow* window, Input* realInput)
-	:m_window(window), m_input(realInput) {
+	: m_window(window), m_input(realInput)
+{
 }
 
 bool FakeInput::isKeyPressed(KeyCode button)
@@ -258,14 +258,14 @@ bool FakeInput::isKeyPressed(KeyCode button)
 	return m_input->isKeyPressed(button);
 }
 
-bool FakeInput::isKeyFreshlyPressed(KeyCode  button)
+bool FakeInput::isKeyFreshlyPressed(KeyCode button)
 {
 	if (!m_window->isFocused())
 		return false;
 	return m_input->isKeyFreshlyPressed(button);
 }
 
-bool FakeInput::isKeyFreshlyReleased(KeyCode  button)
+bool FakeInput::isKeyFreshlyReleased(KeyCode button)
 {
 	if (!m_window->isFocused())
 		return false;
@@ -297,4 +297,5 @@ bool FakeInput::isMouseFreshlyPressed(MouseCode button)
 glm::vec2 FakeInput::getDragging()
 {
 	return m_input->getDragging();
+}
 }

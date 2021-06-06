@@ -6,6 +6,7 @@
 #include "core/Stats.h"
 #include "event/SandboxControls.h"
 
+using namespace nd;
 
 GUIActionSlots::GUIActionSlots(PlayerInventory* player, HUD& hud)
 	:GUIElement(GETYPE::Other),m_inventory(player)

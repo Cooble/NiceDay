@@ -3,6 +3,7 @@
 #include "API/VertexArray.h"
 
 
+namespace nd {
 
 //should use mapbuffer or subdata
 
@@ -26,6 +27,7 @@ class ParticleRenderer
 		int textureSlot;
 		float mix;
 	};
+
 private:
 	std::vector<mat4> m_transformation_stack;
 	std::vector<const Texture*> m_textures;
@@ -37,7 +39,7 @@ private:
 	FrameBuffer* m_fbo;
 
 #if !USE_MAP_BUF
-	VertexData* m_buff;
+		VertexData* m_buff;
 #endif
 	VertexData* m_vertex_data;
 	int m_indices_count;
@@ -47,19 +49,22 @@ public:
 	ParticleRenderer();
 	~ParticleRenderer();
 
-	void push(const mat4& trans){
+	void push(const mat4& trans)
+	{
 		m_transformation_stack.push_back(m_back * trans);
 		m_back = m_transformation_stack[m_transformation_stack.size() - 1];
 	}
-	void pop(){
+
+	void pop()
+	{
 		if (m_transformation_stack.size() > 1)
 			m_transformation_stack.pop_back();
 		m_back = m_transformation_stack[m_transformation_stack.size() - 1];
 	}
 
-	void begin(FrameBuffer* fbo=nullptr);
-	void submit(const glm::vec3& pos, const glm::vec2& size, const UVQuad& uv0, const UVQuad& uv1, Texture* t, float mix);
+	void begin(FrameBuffer* fbo = nullptr);
+	void submit(const glm::vec3& pos, const glm::vec2& size, const UVQuad& uv0, const UVQuad& uv1, Texture* t,
+	            float mix);
 	void flush();
-
-
 };
+}

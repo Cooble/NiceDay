@@ -8,12 +8,15 @@
 	ItemRegistry::get().registerItem(item);
 
 
+namespace nd {
+class TextureAtlas;
+}
+
 constexpr int ITEMSTACK_POOL_SIZE = 1000;
 
 class WorldEntity;
 class World;
 class ItemRegistry;
-class TextureAtlas;
 class ItemStack;
 typedef uint64_t ItemID;
 
@@ -32,8 +35,6 @@ constexpr int ITEM_FLAG_ARMOR_CHEST = 4;
 constexpr int ITEM_FLAG_ARMOR_LEGGINS = 5;
 constexpr int ITEM_FLAG_ARMOR_BOOTS = 6;
 constexpr int ITEM_FLAG_AMMO = 7;
-
-
 
 
 
@@ -70,7 +71,7 @@ public:
 
   int getMaxMeta()const { return m_max_metadata; }
 
-  virtual void onTextureLoaded(const TextureAtlas& atlas);
+  virtual void onTextureLoaded(const nd::TextureAtlas& atlas);
   virtual int getTextureOffset(const ItemStack& b) const;
 
   int getMaxStackSize() const { return m_max_stack_size; }
@@ -149,7 +150,7 @@ public:
 
   inline const auto& getItems() { return m_items; }
 
-  void initTextures(const TextureAtlas& atlas);
+  void initTextures(const nd::TextureAtlas& atlas);
 
   static inline ItemRegistry& get() {
   static ItemRegistry s_instance;
@@ -164,17 +165,17 @@ public:
 class ItemStack
 {
 private:
-  static Pool<ItemStack>& s_stack_pool();
+  static nd::Pool<ItemStack>& s_stack_pool();
 public:
   static ItemStack* create(ItemID id, int  count = 1);
   static ItemStack* create(const ItemStack* itemstack);
-  static ItemStack* deserialize(const NBT& nbt);
+  static ItemStack* deserialize(const nd::NBT& nbt);
   static void destroy(ItemStack* stack);
 private:
   ItemID m_item;
   uint64_t m_metadata = 0;
   int m_size;
-  NBT m_nbt;
+  nd::NBT m_nbt;
 public:
   ItemStack(ItemID item, int size = 1);
   ItemStack(const ItemStack& s);
@@ -187,8 +188,8 @@ public:
   bool isEmpty() const { return m_size == 0; }
   ItemID getItemID() const { return m_item; }
   const Item& getItem() const { return ItemRegistry::get().getItem(m_item); }
-  const NBT& getNBT() const { return m_nbt; }
-  NBT& getNBT() { return m_nbt; }
+  const nd::NBT& getNBT() const { return m_nbt; }
+  nd::NBT& getNBT() { return m_nbt; }
   void destroy() { ItemStack::destroy(this); }
   ItemStack* copy() const { return ItemStack::create(this); }
   bool equals(const ItemStack* stack) const;
@@ -202,7 +203,7 @@ public:
 	if (m_size < 0)
 	  m_size = 0;
   }
-  void serialize(NBT& nbt);
+  void serialize(nd::NBT& nbt);
   bool isFullStack() const;
 };
 bool operator==(const ItemStack& a, const ItemStack& b);

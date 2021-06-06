@@ -4,6 +4,9 @@
 //PlayerEntity======================================================
 
 
+using namespace glm;
+using namespace nd;
+
 EntityPlayer::EntityPlayer()
 	:m_inventory(this)
 {

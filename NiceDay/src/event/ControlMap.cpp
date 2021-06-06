@@ -3,7 +3,7 @@
 #include "GLFW/glfw3.h"
 #include "core/NBT.h"
 
-
+namespace nd {
 std::unordered_map<std::string, ControlButton> ControlMap::s_buttons;
 std::unordered_map<uint64_t, std::string> ControlMap::s_button_names;
 
@@ -53,6 +53,7 @@ void ControlMap::deserialize(NBT& t)
 }
 
 #define CM_ADD_KEY(x) s_button_names[x] = std::string(#x).substr(9)
+
 void ControlMap::init()
 {
 	CM_ADD_KEY(GLFW_KEY_UNKNOWN);
@@ -189,4 +190,5 @@ void ControlMap::init()
 const std::string& ControlMap::getKeyName(uint64_t key)
 {
 	return s_button_names[key];
+}
 }

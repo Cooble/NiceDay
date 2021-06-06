@@ -22,12 +22,15 @@
 #include "graphics/Effect.h"
 #include "core/ImGuiLayer.h"
 
+namespace nd {
+
 static Entity sphere0;
 static Entity sphere1;
 static Entity sphere2;
 
 
 ShaderPtr oneColorShader;
+
 struct Env
 {
 	glm::mat4 view;
@@ -45,27 +48,29 @@ struct Env
 	float quadratic;
 } env;
 
-namespace Spacer3D
-{
-	glm::vec3 getPointOnPlane(const glm::vec3& planeNormal, const glm::vec3& planePos, const glm::vec3& rayDir, const glm::vec3& rayPos)
+namespace Spacer3D {
+	glm::vec3 getPointOnPlane(const glm::vec3& planeNormal, const glm::vec3& planePos, const glm::vec3& rayDir,
+	                          const glm::vec3& rayPos)
 	{
 		float dot = glm::dot(planeNormal, rayDir);
 		if (dot == 0.0)
-			return glm::vec3(0, 0, 0);//todo return some kind of invalid value
+			return glm::vec3(0, 0, 0); //todo return some kind of invalid value
 
 		float t = -glm::dot(planeNormal, rayPos - planePos) / dot;
 		return t * rayDir + rayPos;
 	}
-	glm::vec3 screenToRay(const glm::vec2& src, const glm::mat4 proj, const glm::mat4& view, const glm::vec2& screenResolution)
+
+	glm::vec3 screenToRay(const glm::vec2& src, const glm::mat4 proj, const glm::mat4& view,
+	                      const glm::vec2& screenResolution)
 	{
 		glm::vec2 s = src;
 		s /= screenResolution;
 		s = s * 2.f - 1.f;
 
 		auto p = glm::inverse(proj) * glm::vec4(s, 0, 1);
-		p.w = 0;//we care only about direction
-		p.z = -1;//looking towards
-		return  glm::normalize(glm::vec3(glm::inverse(view) * p));
+		p.w = 0; //we care only about direction
+		p.z = -1; //looking towards
+		return glm::normalize(glm::vec3(glm::inverse(view) * p));
 	}
 
 	/*
@@ -85,7 +90,7 @@ namespace Spacer3D
 		Y -= Y.z / Z.z * Z;
 		X -= X.y / Y.y * Y;
 
-		glm::vec3 ret = { X.w / X.x, Y.w / Y.y, Z.w / Z.z };
+		glm::vec3 ret = {X.w / X.x, Y.w / Y.y, Z.w / Z.z};
 		return ret;
 	}
 
@@ -93,7 +98,8 @@ namespace Spacer3D
 		const glm::vec3& lineDir, const glm::vec3& linePos,
 		const glm::vec3& secondDir, const glm::vec3& secondPos)
 	{
-		auto abc = matrixSolver(secondDir, glm::normalize(glm::cross(glm::normalize(secondDir), glm::normalize(lineDir))), -lineDir, linePos - secondPos);
+		auto abc = matrixSolver(secondDir, glm::normalize(glm::cross(glm::normalize(secondDir), glm::normalize(lineDir))),
+		                        -lineDir, linePos - secondPos);
 		/*{
 			auto& tra = sphere0.get<TransformComponent>();
 			tra.pos = secondPos + secondDir * abc.x;
@@ -128,77 +134,93 @@ namespace Spacer3D
 }
 
 
-
-
-
 float thic = 2;
 int ringSegments = 30;
+
 static MeshData* buildRing(int segments)
 {
-	constexpr  float thickness = 0.05f;
+	constexpr float thickness = 0.05f;
 	VertexBufferLayout l{
 		g_typ::VEC3,
 		g_typ::VEC3
 	};
-	auto mesh = new MeshData(segments * 6 * 3+segments*2, l.getStride(), 0, l);
-	glm::vec3* buff = (glm::vec3*)mesh->getVertices();
+	auto mesh = new MeshData(segments * 6 * 3 + segments * 2, l.getStride(), 0, l);
+	auto buff = (glm::vec3*)mesh->getVertices();
 	float stepAngle = 2 * glm::pi<float>() / segments;
 	float currentAngle = 0;
 
 	// X AXIS
-	glm::vec3 color = { 1.f,0.f,0.f };
+	glm::vec3 color = {1.f, 0.f, 0.f};
 	for (int seg = 0; seg < segments; ++seg)
 	{
-		glm::vec3 p0 = { -thickness,glm::sin(currentAngle),glm::cos(currentAngle) };
-		glm::vec3 p1 = { thickness,p0.y,p0.z };
+		glm::vec3 p0 = {-thickness, glm::sin(currentAngle), glm::cos(currentAngle)};
+		glm::vec3 p1 = {thickness, p0.y, p0.z};
 		currentAngle += stepAngle;
-		glm::vec3 p2 = { -thickness,glm::sin(currentAngle),glm::cos(currentAngle) };
-		glm::vec3 p3 = { thickness,p2.y,p2.z };
+		glm::vec3 p2 = {-thickness, glm::sin(currentAngle), glm::cos(currentAngle)};
+		glm::vec3 p3 = {thickness, p2.y, p2.z};
 
-		*buff++ = p0;	*buff++ = color;
-		*buff++ = p1;	*buff++ = color;
-		*buff++ = p3;	*buff++ = color;
-		
-		*buff++ = p0;	*buff++ = color;
-		*buff++ = p3;	*buff++ = color;
-		*buff++ = p2;	*buff++ = color;
+		*buff++ = p0;
+		*buff++ = color;
+		*buff++ = p1;
+		*buff++ = color;
+		*buff++ = p3;
+		*buff++ = color;
+
+		*buff++ = p0;
+		*buff++ = color;
+		*buff++ = p3;
+		*buff++ = color;
+		*buff++ = p2;
+		*buff++ = color;
 	}
 	// Y AXIS
-	color = { 0.f,1.f,0.f };
+	color = {0.f, 1.f, 0.f};
 	for (int seg = 0; seg < segments; ++seg)
 	{
-		glm::vec3 p0 = { glm::cos(currentAngle) ,-thickness,glm::sin(currentAngle) };
-		glm::vec3 p1 = { p0.x, thickness,p0.z };
+		glm::vec3 p0 = {glm::cos(currentAngle), -thickness, glm::sin(currentAngle)};
+		glm::vec3 p1 = {p0.x, thickness, p0.z};
 		currentAngle += stepAngle;
-		glm::vec3 p2 = { glm::cos(currentAngle) ,-thickness,glm::sin(currentAngle) };
-		glm::vec3 p3 = { p2.x, thickness,p2.z };
+		glm::vec3 p2 = {glm::cos(currentAngle), -thickness, glm::sin(currentAngle)};
+		glm::vec3 p3 = {p2.x, thickness, p2.z};
 
-		*buff++ = p0;	*buff++ = color;
-		*buff++ = p1;	*buff++ = color;
-		*buff++ = p3;	*buff++ = color;
+		*buff++ = p0;
+		*buff++ = color;
+		*buff++ = p1;
+		*buff++ = color;
+		*buff++ = p3;
+		*buff++ = color;
 
-		*buff++ = p0;	*buff++ = color;
-		*buff++ = p3;	*buff++ = color;
-		*buff++ = p2;	*buff++ = color;
+		*buff++ = p0;
+		*buff++ = color;
+		*buff++ = p3;
+		*buff++ = color;
+		*buff++ = p2;
+		*buff++ = color;
 	}
 	// Z AXIS
-	color = { 0.f,0.f,1.f };
+	color = {0.f, 0.f, 1.f};
 	for (int seg = 0; seg < segments; ++seg)
 	{
-		glm::vec3 p0 = { glm::sin(currentAngle) ,glm::cos(currentAngle) ,-thickness};
-		glm::vec3 p1 = { p0.x, p0.y, thickness };
+		glm::vec3 p0 = {glm::sin(currentAngle), glm::cos(currentAngle), -thickness};
+		glm::vec3 p1 = {p0.x, p0.y, thickness};
 		currentAngle += stepAngle;
-		glm::vec3 p2 = { glm::sin(currentAngle) ,glm::cos(currentAngle) ,-thickness };
-		glm::vec3 p3 = { p2.x, p2.y, thickness };
-		
+		glm::vec3 p2 = {glm::sin(currentAngle), glm::cos(currentAngle), -thickness};
+		glm::vec3 p3 = {p2.x, p2.y, thickness};
 
-		*buff++ = p0;	*buff++ = color;
-		*buff++ = p1;	*buff++ = color;
-		*buff++ = p3;	*buff++ = color;
 
-		*buff++ = p0;	*buff++ = color;
-		*buff++ = p3;	*buff++ = color;
-		*buff++ = p2;	*buff++ = color;
+		*buff++ = p0;
+		*buff++ = color;
+		*buff++ = p1;
+		*buff++ = color;
+		*buff++ = p3;
+		*buff++ = color;
+
+		*buff++ = p0;
+		*buff++ = color;
+		*buff++ = p3;
+		*buff++ = color;
+		*buff++ = p2;
+		*buff++ = color;
 	}
 
 	// Outer ring
@@ -220,22 +242,23 @@ static MeshData* buildRing(int segments)
 		*buff++ = p3;	*buff++ = color;
 		*buff++ = p2;	*buff++ = color;
 	}*/
-	color = { 0.5f,0.5f,0.5f };
+	color = {0.5f, 0.5f, 0.5f};
 	for (int seg = 0; seg < segments; ++seg)
 	{
-		glm::vec3 p0 = { glm::sin(currentAngle) ,glm::cos(currentAngle) ,0 };
+		glm::vec3 p0 = {glm::sin(currentAngle), glm::cos(currentAngle), 0};
 		currentAngle += stepAngle;
-		glm::vec3 p1 = { glm::sin(currentAngle) ,glm::cos(currentAngle) ,0 };
+		glm::vec3 p1 = {glm::sin(currentAngle), glm::cos(currentAngle), 0};
 
 
-		*buff++ = p0;	*buff++ = color;
-		*buff++ = p1;	*buff++ = color;
+		*buff++ = p0;
+		*buff++ = color;
+		*buff++ = p1;
+		*buff++ = color;
 	}
 
 	return mesh;
-
-
 }
+
 struct EditorHUD
 {
 	TransOp mode = TRANSOP_MOVE;
@@ -243,17 +266,17 @@ struct EditorHUD
 	Entity selectedEntity;
 	FrameBuffer* fbo;
 	ShaderPtr shader;
-	glm::mat4 world_trans;//trans applied to cross
+	glm::mat4 world_trans; //trans applied to cross
 	MeshPtr cubeMesh;
-	float rescale = 1;//distance to camera
+	float rescale = 1; //distance to camera
 	glm::vec4 color;
 	bool dragging = false;
-	glm::vec3 oldPos;//position before dragging
-	glm::vec3 oldScale;//scale before dragging
-	glm::vec3 scaler = glm::vec3(1);//amount of relative current scale
-	glm::vec3 oldPosOffset;//delta between proper line pos and real object position
-	glm::vec3 oldPlanePoint;//point on directional_plane (dir is normal to that plane)
-	glm::vec3 oldAngles;//rotation before dragging
+	glm::vec3 oldPos; //position before dragging
+	glm::vec3 oldScale; //scale before dragging
+	glm::vec3 scaler = glm::vec3(1); //amount of relative current scale
+	glm::vec3 oldPosOffset; //delta between proper line pos and real object position
+	glm::vec3 oldPlanePoint; //point on directional_plane (dir is normal to that plane)
+	glm::vec3 oldAngles; //rotation before dragging
 	VertexBuffer* lineVBO;
 	glm::vec3* lineBuff;
 	VertexArray* lineVAO;
@@ -261,23 +284,32 @@ struct EditorHUD
 	float quantizationScale;
 	float quantizationRotate;
 	MeshPtr ring;
+
 	enum DIR
 	{
-		X, Y, Z, NONE
+		X,
+		Y,
+		Z,
+		NONE
 	} dir = NONE;
-	static glm::vec3 getDir(DIR d) {
-		switch (d) {
-		case X: return { 1,0,0 };
-		case Y: return { 0,1,0 };
-		case Z: return { 0,0,1 };
-		default: return { 0,0,0 };
+
+	static glm::vec3 getDir(DIR d)
+	{
+		switch (d)
+		{
+		case X: return {1, 0, 0};
+		case Y: return {0, 1, 0};
+		case Z: return {0, 0, 1};
+		default: return {0, 0, 0};
 		}
 	}
+
 	void init()
 	{
 		shader = Shader::create("res/shaders/Arrow.shader");
 
-		fbo = FrameBuffer::create(FrameBufferInfo().defaultTarget(1920, 1080, TextureFormat::RGBA).special(FBAttachment::DEPTH_STENCIL));
+		fbo = FrameBuffer::create(
+			FrameBufferInfo().defaultTarget(1920, 1080, TextureFormat::RGBA).special(FBAttachment::DEPTH_STENCIL));
 		cubeMesh = MeshLibrary::buildNewMesh(MeshDataFactory::buildCube(0.001f * thic));
 		constexpr int size = 12 * sizeof(glm::vec3);
 		lineBuff = (glm::vec3*)malloc(size);
@@ -301,8 +333,6 @@ struct EditorHUD
 		lineBuff[index++] = blue;
 
 
-
-
 		lineVBO = VertexBuffer::create(lineBuff, size);
 		VertexBufferLayout layout{
 			g_typ::VEC3,
@@ -316,38 +346,44 @@ struct EditorHUD
 		auto ringsData = buildRing(ringSegments);
 
 		VertexBufferLayout lay{
-			g_typ::VEC3,//pos
-			g_typ::VEC3,//color
+			g_typ::VEC3, //pos
+			g_typ::VEC3, //color
 		};
 		ring = MeshLibrary::buildNewMesh(ringsData);
 		//MeshData nData = MeshData(ringsData->getVerticesCount() * 2, ringsData->getOneVertexSize() * 2, 0);
 		//ring = MeshLibrary::loadOrGet("res/examples/models/circle.fbx");
-
-
 	}
+
 	void onScreenResize(int width, int height)
 	{
 		fbo->resize(width, height);
 	}
+
 	void renderRing(const glm::mat4& trans)
 	{
-		auto sh = std::static_pointer_cast<GLShader>(shader);
+		auto sh = std::static_pointer_cast<nd::internal::GLShader>(shader);
 		sh->setUniform4f("color", 1, 1, 1, 1);
-		sh->setUniformMat4("world", trans * glm::translate(glm::mat4(1.f), glm::vec3(0, 0, 0)) * glm::scale(glm::mat4(1.f), glm::vec3(0.1f)));
+		sh->setUniformMat4(
+			"world",
+			trans * glm::translate(glm::mat4(1.f), glm::vec3(0, 0, 0)) * glm::scale(glm::mat4(1.f), glm::vec3(0.1f)));
 		ring->vao_temp->bind();
-		Gcon.cmdDrawArrays(ring->data->getTopology(), 6*ringSegments*3);
+		Gcon.cmdDrawArrays(ring->data->getTopology(), 6 * ringSegments * 3);
 
 		GLCall(glLineWidth(3));
-		auto pos = env.view  *glm::vec4(selectedEntity.get<TransformComponent>().pos,1);
+		auto pos = env.view * glm::vec4(selectedEntity.get<TransformComponent>().pos, 1);
 		//pos.z = +0.5f;
-		sh->setUniformMat4("world", env.proj * glm::scale(glm::translate(glm::mat4(1.f),glm::vec3(pos)),glm::vec3(rescale*0.1f)));
-		Gcon.cmdDrawArrays(Topology::LINES, ringSegments*2, 6 * ringSegments * 3);
+		sh->setUniformMat4(
+			"world", env.proj * glm::scale(glm::translate(glm::mat4(1.f), glm::vec3(pos)), glm::vec3(rescale * 0.1f)));
+		Gcon.cmdDrawArrays(Topology::LINES, ringSegments * 2, 6 * ringSegments * 3);
 	}
+
 	void renderCross(const glm::mat4& trans)
 	{
-		auto sh = std::static_pointer_cast<GLShader>(shader);
+		auto sh = std::static_pointer_cast<nd::internal::GLShader>(shader);
 		sh->setUniform4f("color", 1, 1, 1, 1);
-		sh->setUniformMat4("world", trans * glm::translate(glm::mat4(1.f), glm::vec3(0, 0, 0)) * glm::scale(glm::mat4(1.f), glm::vec3(0.1f)));
+		sh->setUniformMat4(
+			"world",
+			trans * glm::translate(glm::mat4(1.f), glm::vec3(0, 0, 0)) * glm::scale(glm::mat4(1.f), glm::vec3(0.1f)));
 		lineVAO->bind();
 		GLCall(glLineWidth(5));
 		Gcon.cmdDrawArrays(Topology::LINES, 6);
@@ -367,15 +403,15 @@ struct EditorHUD
 		if (!enable || !selectedEntity)
 			return;
 		fbo->bind();
-		fbo->clear(BuffBit::COLOR | BuffBit::DEPTH, { 0,0,0,0 });
+		fbo->clear(BuffBit::COLOR | BuffBit::DEPTH, {0, 0, 0, 0});
 		cubeMesh->vao_temp->bind();
 		shader->bind();
-		auto sh = std::static_pointer_cast<GLShader>(shader);
+		auto sh = std::static_pointer_cast<nd::internal::GLShader>(shader);
 		if (mode == TRANSOP_MOVE || mode == TRANSOP_SCALE)
 			renderCross(env.proj * env.view * world_trans * glm::scale(glm::mat4(1.f), glm::vec3(rescale)));
 		else if (mode == TRANSOP_ROTATE)
 		{
-			renderRing(env.proj * env.view * world_trans* glm::scale(glm::mat4(1.f), glm::vec3(rescale)));
+			renderRing(env.proj * env.view * world_trans * glm::scale(glm::mat4(1.f), glm::vec3(rescale)));
 		}
 		auto t = glm::mat4(glm::mat3(env.view));
 		t[3][3] = 1;
@@ -399,9 +435,11 @@ struct EditorHUD
 
 	glm::vec3 quantize(glm::vec3 t, glm::vec3 offset, DIR dir, float quantization)
 	{
-		if (quantization) {
+		if (quantization)
+		{
 			t = (t - offset) / quantization;
-			switch (dir) {
+			switch (dir)
+			{
 			case X:
 				t.x = glm::round(t.x);
 				break;
@@ -416,17 +454,20 @@ struct EditorHUD
 		}
 		return t;
 	}
+
 	void onUpdate()
 	{
 		if (!enable || !selectedEntity)
 			return;
 
 		auto rot = selectedEntity.get<TransformComponent>().rot;
-		world_trans = glm::translate(glm::mat4(1.f), selectedEntity.get<TransformComponent>().pos) * glm::eulerAngleYXZ(rot.x, rot.y, rot.z) * glm::scale(glm::mat4(1.f), scaler);
+		world_trans = glm::translate(glm::mat4(1.f), selectedEntity.get<TransformComponent>().pos) *
+			glm::eulerAngleYXZ(rot.x, rot.y, rot.z) * glm::scale(glm::mat4(1.f), scaler);
 		rescale = glm::distance(selectedEntity.get<TransformComponent>().pos, env.camera_pos);
 
 		//ND_BUG("loc {} {}", APin().getMouseLocation().x, APin().getMouseLocation().y);
-		if (!dragging) {
+		if (!dragging)
+		{
 			if (APin().isMouseFreshlyPressed(MouseCode::LEFT))
 			{
 				if (color == glm::vec4(0, 0, 0, 0))
@@ -445,10 +486,15 @@ struct EditorHUD
 					oldPos = trans.pos;
 					oldScale = trans.scale;
 					oldAngles = trans.rot;
-					auto s = Spacer3D::screenToRay(glm::vec2(APin().getMouseLocation().x, APwin()->getDimensions().y - APin().getMouseLocation().y), env.proj, env.view, APwin()->getDimensions());
-					oldPosOffset = selectedEntity.get<TransformComponent>().pos - Spacer3D::getClosestPointOnLine(glm::vec3(glm::eulerAngleYXZ(oldAngles.x, oldAngles.y, oldAngles.z) * glm::vec4(getDir(dir), 0.f)), oldPos, s, env.camera_pos);
-					oldPlanePoint = Spacer3D::getPointOnPlane(glm::vec3(glm::eulerAngleYXZ(oldAngles.x, oldAngles.y, oldAngles.z) * glm::vec4(getDir(dir), 0.f)), oldPos, s, env.camera_pos) /*+ oldPosOffset*/;
-
+					auto s = Spacer3D::screenToRay(
+						glm::vec2(APin().getMouseLocation().x, APwin()->getDimensions().y - APin().getMouseLocation().y),
+						env.proj, env.view, APwin()->getDimensions());
+					oldPosOffset = selectedEntity.get<TransformComponent>().pos - Spacer3D::getClosestPointOnLine(
+						glm::vec3(glm::eulerAngleYXZ(oldAngles.x, oldAngles.y, oldAngles.z) * glm::vec4(getDir(dir), 0.f)),
+						oldPos, s, env.camera_pos);
+					oldPlanePoint = Spacer3D::getPointOnPlane(
+						glm::vec3(glm::eulerAngleYXZ(oldAngles.x, oldAngles.y, oldAngles.z) * glm::vec4(getDir(dir), 0.f)),
+						oldPos, s, env.camera_pos) /*+ oldPosOffset*/;
 				}
 			}
 		}
@@ -461,79 +507,102 @@ struct EditorHUD
 			}
 			else
 			{
-				switch (mode) {
+				switch (mode)
+				{
 				case TRANSOP_MOVE:
-				{
-					auto s = Spacer3D::screenToRay(glm::vec2(APin().getMouseLocation().x, APwin()->getDimensions().y - APin().getMouseLocation().y), env.proj, env.view, APwin()->getDimensions());
-					auto& trans = selectedEntity.get<TransformComponent>();
+					{
+						auto s = Spacer3D::screenToRay(
+							glm::vec2(APin().getMouseLocation().x, APwin()->getDimensions().y - APin().getMouseLocation().y),
+							env.proj, env.view, APwin()->getDimensions());
+						auto& trans = selectedEntity.get<TransformComponent>();
 
-					trans.pos = Spacer3D::getClosestPointOnLine(glm::vec3(glm::eulerAngleYXZ(oldAngles.x, oldAngles.y, oldAngles.z) * glm::vec4(getDir(dir), 0.f)), oldPos, s, env.camera_pos) + oldPosOffset;
-					trans.pos = quantize(trans.pos, oldPos, dir, quantizationPos);
-					trans.recomputeMatrix();
-				}
-				break;
-				case TRANSOP_SCALE:
-				{
-					auto s = Spacer3D::screenToRay(glm::vec2(APin().getMouseLocation().x, APwin()->getDimensions().y - APin().getMouseLocation().y), env.proj, env.view, APwin()->getDimensions());
-					auto& trans = selectedEntity.get<TransformComponent>();
-
-					auto scale = Spacer3D::getClosestPointOnLine(getDir(dir), oldPos, s, env.camera_pos) + oldPosOffset;
-					scale -= oldPos;
-					float len = 0;
-					switch (dir) {
-					case X: len = scale.x; break;
-					case Y: len = scale.y; break;
-					case Z: len = scale.z; break;
+						trans.pos = Spacer3D::getClosestPointOnLine(
+							glm::vec3(glm::eulerAngleYXZ(oldAngles.x, oldAngles.y, oldAngles.z) * glm::vec4(getDir(dir), 0.f)),
+							oldPos, s, env.camera_pos) + oldPosOffset;
+						trans.pos = quantize(trans.pos, oldPos, dir, quantizationPos);
+						trans.recomputeMatrix();
 					}
-					len /= rescale / 10;
-
-					if (quantizationScale)
-						len = glm::round(len / quantizationScale) * quantizationScale;
-					if (APin().isKeyPressed(KeyCode::LEFT_CONTROL))
-						scaler = glm::vec3(len + 1.f);
-					else
-						scaler = glm::vec3(1) + getDir(dir) * len;
-					trans.scale = oldScale * scaler;
-					trans.recomputeMatrix();
-
 					break;
-				}
-				case TRANSOP_ROTATE:
-				{
-					auto s = Spacer3D::screenToRay(glm::vec2(APin().getMouseLocation().x, APwin()->getDimensions().y - APin().getMouseLocation().y), env.proj, env.view, APwin()->getDimensions());
-					auto& trans = selectedEntity.get<TransformComponent>();
+				case TRANSOP_SCALE:
+					{
+						auto s = Spacer3D::screenToRay(
+							glm::vec2(APin().getMouseLocation().x, APwin()->getDimensions().y - APin().getMouseLocation().y),
+							env.proj, env.view, APwin()->getDimensions());
+						auto& trans = selectedEntity.get<TransformComponent>();
 
-					auto planePoint = Spacer3D::getPointOnPlane(glm::vec3(glm::eulerAngleYXZ(oldAngles.x, oldAngles.y, oldAngles.z)*glm::vec4(getDir(dir),0.f)), trans.pos, s, env.camera_pos) /*+ oldPosOffset*/;
-					//sphere1.get<TransformComponent>().pos = planePoint;
-					//sphere1.get<TransformComponent>().recomputeMatrix();
-					float angle = glm::acos(glm::dot(glm::normalize(planePoint - trans.pos), glm::normalize(oldPlanePoint - trans.pos)))/*/glm::length(planePoint - trans.pos)/glm::length(oldPlanePoint - trans.pos)*/;
-					if (!(glm::abs(glm::length2(glm::normalize(glm::cross(planePoint - trans.pos, oldPlanePoint - trans.pos)) - glm::normalize(glm::vec3(glm::eulerAngleYXZ(oldAngles.x, oldAngles.y, oldAngles.z) * glm::vec4(getDir(dir), 0.f))))) > 0.1f))
-						angle *= -1;
-					if (quantizationRotate)
-						angle = glm::round(angle / quantizationRotate) * quantizationRotate;
-					switch (dir) {
-					case X:  trans.rot.y = oldAngles.y + angle; 
-						break;
-					case Y:
-						trans.rot.x = oldAngles.x + angle;
-						break;
-					case Z:trans.rot.z = oldAngles.z + angle;
+						auto scale = Spacer3D::getClosestPointOnLine(getDir(dir), oldPos, s, env.camera_pos) + oldPosOffset;
+						scale -= oldPos;
+						float len = 0;
+						switch (dir)
+						{
+						case X: len = scale.x;
+							break;
+						case Y: len = scale.y;
+							break;
+						case Z: len = scale.z;
+							break;
+						}
+						len /= rescale / 10;
+
+						if (quantizationScale)
+							len = glm::round(len / quantizationScale) * quantizationScale;
+						if (APin().isKeyPressed(KeyCode::LEFT_CONTROL))
+							scaler = glm::vec3(len + 1.f);
+						else
+							scaler = glm::vec3(1) + getDir(dir) * len;
+						trans.scale = oldScale * scaler;
+						trans.recomputeMatrix();
+
 						break;
 					}
-					trans.recomputeMatrix();
+				case TRANSOP_ROTATE:
+					{
+						auto s = Spacer3D::screenToRay(
+							glm::vec2(APin().getMouseLocation().x, APwin()->getDimensions().y - APin().getMouseLocation().y),
+							env.proj, env.view, APwin()->getDimensions());
+						auto& trans = selectedEntity.get<TransformComponent>();
 
+						auto planePoint = Spacer3D::getPointOnPlane(
+							glm::vec3(glm::eulerAngleYXZ(oldAngles.x, oldAngles.y, oldAngles.z) * glm::vec4(getDir(dir), 0.f)),
+							trans.pos, s, env.camera_pos) /*+ oldPosOffset*/;
+						//sphere1.get<TransformComponent>().pos = planePoint;
+						//sphere1.get<TransformComponent>().recomputeMatrix();
+						float angle = glm::acos(glm::dot(glm::normalize(planePoint - trans.pos),
+						                                 glm::normalize(oldPlanePoint - trans.pos)))
+							/*/glm::length(planePoint - trans.pos)/glm::length(oldPlanePoint - trans.pos)*/;
+						if (!(glm::abs(glm::length2(
+								glm::normalize(glm::cross(planePoint - trans.pos, oldPlanePoint - trans.pos)) - glm::normalize(
+									glm::vec3(
+										glm::eulerAngleYXZ(oldAngles.x, oldAngles.y, oldAngles.z) * glm::vec4(getDir(dir),
+											0.f))))) >
+							0.1f))
+							angle *= -1;
+						if (quantizationRotate)
+							angle = glm::round(angle / quantizationRotate) * quantizationRotate;
+						switch (dir)
+						{
+						case X: trans.rot.y = oldAngles.y + angle;
+							break;
+						case Y:
+							trans.rot.x = oldAngles.x + angle;
+							break;
+						case Z: trans.rot.z = oldAngles.z + angle;
+							break;
+						}
+						trans.recomputeMatrix();
+					}
+					break;
+				default: ;
 				}
-				break;
-				default:;
-				}
-
 			}
 		}
 	}
 };
+
 static EditorHUD hud;
 
-static glm::vec3 worldToScreen(const glm::vec3& src, const glm::mat4 proj, const glm::mat4& view, const glm::vec2& screenResolution)
+static glm::vec3 worldToScreen(const glm::vec3& src, const glm::mat4 proj, const glm::mat4& view,
+                               const glm::vec2& screenResolution)
 {
 	glm::vec4 s = view * glm::vec4(src.x, src.y, src.z, 1);
 	auto depth = s.z;
@@ -546,16 +615,14 @@ static glm::vec3 worldToScreen(const glm::vec3& src, const glm::mat4 proj, const
 }
 
 
-
 UniformLayout envLayout;
 static MaterialPtr enviroment;
 
 static void onCamComponentDestroyed(entt::registry& reg, entt::entity ent)
 {
-
 }
 
-struct WireMoveScript :NativeScript
+struct WireMoveScript : NativeScript
 {
 	void onUpdate()
 	{
@@ -563,19 +630,21 @@ struct WireMoveScript :NativeScript
 		auto& camTrans = scene->currentCamera().get<TransformComponent>();
 
 		bool rec = false;
-		if (abs((transform.pos.x + 20 * 4) - camTrans.pos.x) > 4) {
+		if (abs((transform.pos.x + 20 * 4) - camTrans.pos.x) > 4)
+		{
 			transform.pos.x = camTrans.pos.x - 20 * 4;
 			rec = true;
 		}
-		if (abs((transform.pos.z + 20 * 4) - camTrans.pos.z) > 4) {
+		if (abs((transform.pos.z + 20 * 4) - camTrans.pos.z) > 4)
+		{
 			transform.pos.z = camTrans.pos.z - 20 * 4;
 			rec = true;
 		}
 		if (rec)
 			transform.recomputeMatrix();
-
 	}
 };
+
 static float centerDepth;
 static float* depth_buff;
 static Entity sphere;
@@ -599,11 +668,11 @@ void EditorLayer::onAttach()
 	depth_buff = &centerDepth;
 	//depth_buff = (float*)malloc(1920 * 1080 * sizeof(float));
 	components_imgui_access::windows.init();
-	auto t = Atelier::get();//just init atelier
+	auto t = Atelier::get(); //just init atelier
 	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 	ImGuiIO& io = ImGui::GetIO();
-        if(FUtil::exists("res/engine/fonts/OpenSans-Regular.ttf"))
-	  io.Fonts->AddFontFromFileTTF(ND_RESLOC("res/engine/fonts/OpenSans-Regular.ttf").c_str(), 20);
+	if (FUtil::exists("res/engine/fonts/OpenSans-Regular.ttf"))
+		io.Fonts->AddFontFromFileTTF(ND_RESLOC("res/engine/fonts/OpenSans-Regular.ttf").c_str(), 20);
 
 	//adding JP (merging with current font) -> nihongode ok kedo, mada nai to omou
 	/*ImFontConfig config;
@@ -632,13 +701,13 @@ void EditorLayer::onAttach()
 	envLayout.emplaceElement(g_typ::FLOAT, 1, "glo.constant");
 	envLayout.emplaceElement(g_typ::FLOAT, 1, "glo.linear");
 	envLayout.emplaceElement(g_typ::FLOAT, 1, "glo.quadratic");
-	enviroment = Material::create({ nullptr, "GLO", "Enviroment", &envLayout });
+	enviroment = Material::create({nullptr, "GLO", "Enviroment", &envLayout});
 
 
 	auto modelMat = Material::create({
 		std::shared_ptr<Shader>(ShaderLib::loadOrGetShader("res/shaders/Model.shader")), "MAT",
 		"modelMaterial"
-		});
+	});
 	modelMat->setValue("color", glm::vec4(1.0, 1.0, 0, 1));
 	modelMat->setValue("shines", 64.f);
 
@@ -647,9 +716,9 @@ void EditorLayer::onAttach()
 
 
 	auto simpleMat = MaterialLibrary::create({
-	std::shared_ptr<Shader>(ShaderLib::loadOrGetShader("res/shaders/Model.shader")), "MAT",
-	"simpleColorMat"
-		});
+		std::shared_ptr<Shader>(ShaderLib::loadOrGetShader("res/shaders/Model.shader")), "MAT",
+		"simpleColorMat"
+	});
 	simpleMat->setValue("color", glm::vec4(1.0, 1.0, 0.5, 1));
 	simpleMat->setValue("shines", 64.f);
 
@@ -665,11 +734,15 @@ void EditorLayer::onAttach()
 		auto mesh = MeshLibrary::registerMesh(MeshDataFactory::buildCube(40.f));
 
 		auto flags = MaterialFlags::DEFAULT_FLAGS;
-		flags = (~(MaterialFlags::FLAG_CULL_FACE | MaterialFlags::FLAG_DEPTH_MASK) & flags) | MaterialFlags::FLAG_CHOP_VIEW_MAT_POS;
+		flags = (~(MaterialFlags::FLAG_CULL_FACE | MaterialFlags::FLAG_DEPTH_MASK) & flags) |
+			MaterialFlags::FLAG_CHOP_VIEW_MAT_POS;
 
 		ND_INFO("Loading cubemaps");
-		auto mat = MaterialLibrary::create({ ShaderLib::loadOrGetShader("res/shaders/CubeMap.shader"),"MAT","SkyMaterial2" ,nullptr,flags });
-		mat->setValue("cubemap", std::shared_ptr<Texture>(Texture::create(TextureInfo(TextureType::_CUBE_MAP, "res/examples/images/skymap2/*.png"))));
+		auto mat = MaterialLibrary::create({
+			ShaderLib::loadOrGetShader("res/shaders/CubeMap.shader"), "MAT", "SkyMaterial2", nullptr, flags
+		});
+		mat->setValue("cubemap", std::shared_ptr<Texture>(
+			              Texture::create(TextureInfo(TextureType::_CUBE_MAP, "res/examples/images/skymap2/*.png"))));
 		/*auto mat1 = MaterialLibrary::create({ ShaderLib::loadOrGetShader("res/shaders/CubeMap.shader"),"MAT","SkyMaterial3" ,nullptr,flags });
 		mat1->setValue("cubemap", std::shared_ptr<Texture>(Texture::create(TextureInfo(TextureType::_CUBE_MAP, "res/images/skymap3/*.png"))));
 		auto mat2 = MaterialLibrary::create({ ShaderLib::loadOrGetShader("res/shaders/CubeMap.shader"),"MAT","SkyMaterial4" ,nullptr,flags });
@@ -687,7 +760,7 @@ void EditorLayer::onAttach()
 
 		//auto mesh = NewMeshFactory::buildNewMesh(Colli::buildMesh(ND_RESLOC("res/examples/models/cube.fbx")));
 
-		auto mat = MaterialLibrary::copy(modelMat,"crateMaterial");
+		auto mat = MaterialLibrary::copy(modelMat, "crateMaterial");
 		mat->setValue("diffuse", std::shared_ptr<Texture>(diffuse));
 		mat->setValue("specular", std::shared_ptr<Texture>(specular));
 		mat->setValue("color", glm::vec4(1.0, 1.0, 0, 0));
@@ -715,7 +788,6 @@ void EditorLayer::onAttach()
 		ent.emplaceOrReplace<TransformComponent>(glm::vec3(0.f, 0.f, 0.f), glm::vec3(1.f), glm::vec3(0.f));
 		ent.emplaceOrReplace<ModelComponent>(mesh->getID(), mat->getID());
 		{
-
 			auto mat = MaterialLibrary::copy(simpleMat, "SphereMat0");
 			mat->setValue("color", glm::vec4(1.0, 0.0, 0, 1));
 			mat->setValue("diffuse", std::shared_ptr<Texture>(diffuse));
@@ -781,7 +853,9 @@ void EditorLayer::onAttach()
 		ent.emplaceOrReplace<TransformComponent>(glm::vec3(0.f), glm::vec3(4.f), glm::vec3(0.f));
 
 		auto mesh = MeshLibrary::registerMesh(MeshDataFactory::buildWirePlane(40, 40));
-		auto mat = MaterialLibrary::create({ ShaderLib::loadOrGetShader("res/shaders/Model.shader"),"MAT","WireMat" ,nullptr,MaterialFlags::DEFAULT_FLAGS });
+		auto mat = MaterialLibrary::create({
+			ShaderLib::loadOrGetShader("res/shaders/Model.shader"), "MAT", "WireMat", nullptr, MaterialFlags::DEFAULT_FLAGS
+		});
 		mat->setValue("shines", 0.f);
 		mat->setValue("color", glm::vec4(0.5f, 0.5f, 0.5f, 1));
 
@@ -804,14 +878,17 @@ void EditorLayer::onUpdate()
 	for (auto entity : view)
 	{
 		auto& script = view.get(entity);
-		if (!script.ptr) {
+		if (!script.ptr)
+		{
 			script.construct(m_scene->wrap(entity), m_scene);
 			script.onCreate();
 		}
 		script.onUpdate();
 	}
 }
+
 static glm::vec2 minMaxCam;
+
 void EditorLayer::onRender()
 {
 	GLCall(glLineWidth(1));
@@ -822,15 +899,15 @@ void EditorLayer::onRender()
 	Entity camEntity = m_scene->currentCamera();
 	//Renderer::getDefaultFBO()->clear(BuffBit::COLOR, { 0,1,0,1 });
 	auto& camCom = camEntity.get<CameraComponent>();
-	minMaxCam = { camCom.Near,camCom.Far };
+	minMaxCam = {camCom.Near, camCom.Far};
 	auto& transCom = camEntity.get<TransformComponent>();
 	env.camera_pos = transCom.pos;
 
 	env.view = camCom.viewMatrix;
 	env.proj = glm::perspective(camCom.fov,
-		(float)APwin()->getWidth() / (float)App::get()
-		.getWindow()->getHeight(),
-		camCom.Near, camCom.Far);
+	                            (float)APwin()->getWidth() / (float)App::get()
+	                                                                .getWindow()->getHeight(),
+	                            camCom.Near, camCom.Far);
 
 	auto lights = m_scene->view<LightComponent>();
 	for (auto light : lights)
@@ -866,12 +943,13 @@ void EditorLayer::onRender()
 		mesh->vao_temp->bind();
 
 		//bind other vars
-		auto s = std::static_pointer_cast<GLShader>(material->getShader());
+		auto s = std::static_pointer_cast<internal::GLShader>(material->getShader());
 		//if(mod.material->getShader()->getLayout().getLayoutByName("world"))
 		s->setUniformMat4("world", trans.trans);
 
 		auto flags = material->getFlags();
-		if (flags != MaterialFlags::DEFAULT_FLAGS) {
+		if (flags != MaterialFlags::DEFAULT_FLAGS)
+		{
 			Gcon.depthMask(flags & MaterialFlags::FLAG_DEPTH_MASK);
 			Gcon.enableCullFace(flags & MaterialFlags::FLAG_CULL_FACE);
 			Gcon.enableDepthTest(flags & MaterialFlags::FLAG_DEPTH_TEST);
@@ -886,7 +964,6 @@ void EditorLayer::onRender()
 			Gcon.enableStencilTest(true);
 			Gcon.stencilOp(StencilOp::KEEP, StencilOp::REPLACE, StencilOp::REPLACE);
 			Gcon.stencilFunc(StencilFunc::ALWAYS, 1);
-
 		}
 		if (mesh->indexData.exists())
 			Gcon.cmdDrawElements(mesh->data->getTopology(), mesh->indexData.count);
@@ -896,7 +973,8 @@ void EditorLayer::onRender()
 			Gcon.enableStencilTest(false);
 
 		//reset if neccessary
-		if (flags != MaterialFlags::DEFAULT_FLAGS) {
+		if (flags != MaterialFlags::DEFAULT_FLAGS)
+		{
 			Gcon.depthMask(true);
 			Gcon.enableCullFace(true);
 			Gcon.enableDepthTest(true);
@@ -918,7 +996,7 @@ void EditorLayer::onRender()
 
 		oneColorShader->bind();
 		mesh->vao_temp->bind();
-		auto sha = dynamic_cast<GLShader*>(oneColorShader.get());
+		auto sha = dynamic_cast<internal::GLShader*>(oneColorShader.get());
 		sha->setUniform4f("color", 0, 1, 0, 1);
 		sha->setUniformMat4("world", env.proj * env.view * glm::scale(trans.trans, glm::vec3(1.05f)));
 		if (mesh->indexData.exists())
@@ -928,15 +1006,14 @@ void EditorLayer::onRender()
 
 		Gcon.enableStencilTest(false);
 		Gcon.enableDepthTest(true);
-
 	}
 
 	hud.render();
-
-
 }
+
 // get world distance based on depth pixel value d
-static float transformDepth(float d, float min, float max) {
+static float transformDepth(float d, float min, float max)
+{
 	return (max * min / (max - min)) / (-d + max / (max - min));
 }
 
@@ -956,8 +1033,6 @@ void EditorLayer::onImGuiRender()
 	static glm::vec3 defPos = sphere.get<TransformComponent>().pos;
 	sphere.get<TransformComponent>().pos = getClosestPointOnLine(glm::vec3(1,0 ,0), glm::vec3(0.0f), s,env.camera_pos);
 	sphere.get<TransformComponent>().recomputeMatrix();*/
-
-
 }
 
 void EditorLayer::onEvent(Event& e)
@@ -972,7 +1047,8 @@ void EditorLayer::onEvent(Event& e)
 	}
 }
 
-float EditorLayer::getCurrentDepth() {
+float EditorLayer::getCurrentDepth()
+{
 	//float f = *(depth_buff + APwin()->getWidth() * APwin()->getHeight() / 2);
 	float f = *depth_buff;
 	return transformDepth(f, minMaxCam.x, minMaxCam.y);
@@ -980,7 +1056,6 @@ float EditorLayer::getCurrentDepth() {
 
 void EditorLayer::onWindowResize(int width, int height)
 {
-
 	hud.onScreenResize(width, height);
 }
-
+}

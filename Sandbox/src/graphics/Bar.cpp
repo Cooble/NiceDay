@@ -1,8 +1,9 @@
 ﻿#include "ndpch.h"
 #include "Bar.h"
 #include "graphics/BatchRenderer2D.h"
-#include "glm/gtx/component_wise.hpp"
 #include "graphics/API/Texture.h"
+
+using namespace nd;
 
 Bar::Bar(const Sprite& back, const Sprite& fore): m_back_sprite(back), m_fore_sprite(fore)
 {

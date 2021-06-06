@@ -9,14 +9,13 @@
 #include "graphics/ParticleRenderer.h"
 
 
-class BatchRenderer2D;
 class EntityPlayer;
-class WorldLayer : public Layer
+class WorldLayer : public nd::Layer
 {
 private:
-	std::vector<Sprite*> m_sprites;
-	BatchRenderer2D* m_batch_renderer;
-	ParticleRenderer* m_particle_renderer;
+	std::vector<nd::Sprite*> m_sprites;
+	nd::BatchRenderer2D* m_batch_renderer;
+	nd::ParticleRenderer* m_particle_renderer;
 	World* m_world=nullptr;
 	ChunkLoader* m_chunk_loader;
 	
@@ -49,9 +48,9 @@ public:
 	void onImGuiRender() override;
 	void onImGuiRenderWorld();
 	void onImGuiRenderChunks();
-	virtual void onEvent(Event& e) override;
-	virtual void onCreativeEvent(Event& e);
-	virtual void onSurvivalEvent(Event& e);
+	virtual void onEvent(nd::Event& e) override;
+	virtual void onCreativeEvent(nd::Event& e);
+	virtual void onSurvivalEvent(nd::Event& e);
 	
 
 };

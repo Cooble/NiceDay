@@ -5,7 +5,7 @@
 
 class TileEntityChest;
 
-class GUISlots :public GUIElement
+class GUISlots :public nd::GUIElement
 {
 	std::vector<GUIItemContainer*> m_slots;
 public:

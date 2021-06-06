@@ -14,23 +14,23 @@ class WorldLayer;
 class GUIEntityPlayer;
 class GUIEntityConsole;
 class GUIEntityCreativeTab;
-class GUILayer : public Layer
+class GUILayer : public nd::Layer
 {
 private:
 	enum GameScreen:int{
 		GUI,World,Pause
 	}m_game_screen;
-	
-	GUIContextID m_gui_context;
+
+	nd::GUIContextID m_gui_context;
 	GUICustomRenderer m_gui_renderer;
-	BatchRenderer2D m_renderer;
-	TextureAtlas m_gui_atlas;
-	Texture* m_background;
+	nd::BatchRenderer2D m_renderer;
+	nd::TextureAtlas m_gui_atlas;
+	nd::Texture* m_background;
 	bool m_background_enable = true;
 	std::vector<MessageEvent> m_window_event_buffer;
 	MessageConsumer m_bound_func;
 
-	GUIWindow* m_currentWindow=nullptr;
+	nd::GUIWindow* m_currentWindow=nullptr;
 	
 	//all ingame gui: inventory, health bar ...
 	HUD* m_hud;
@@ -54,7 +54,7 @@ public:
 	void onDetach() override;
 	void onUpdate() override;
 	void onRender() override;
-	void onEvent(Event& e) override;
+	void onEvent(nd::Event& e) override;
 	void onImGuiRender() override;
 
 };

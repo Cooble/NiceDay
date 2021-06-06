@@ -2,11 +2,9 @@
 #include "player.h"
 #include "core/App.h"
 #include "files/FUtil.h"
-
-
 #include <portaudio.h>
 
-
+namespace nd {
 static int paSoundCallback(const void* inputBuffer, void* outputBuffer,
                            unsigned long framesPerBuffer,
                            const PaStreamCallbackTimeInfo* timeInfo,
@@ -14,8 +12,8 @@ static int paSoundCallback(const void* inputBuffer, void* outputBuffer,
                            void* userData)
 {
 	/* Cast data passed through stream to our structure. */
-	SoundData* data = (SoundData*)userData;
-	float* out = (float*)outputBuffer;
+	auto data = (SoundData*)userData;
+	auto out = (float*)outputBuffer;
 	int channels = data->sound_buff->buffer.getChannels();
 	float* samples = data->sound_buff->buffer.getData();
 	size_t totalSamples = data->sound_buff->buffer.getTotalSamples();
@@ -82,8 +80,8 @@ static int paMusicCallback(const void* inputBuffer, void* outputBuffer,
                            void* userData)
 {
 	/* Cast data passed through stream to our structure. */
-	MusicData* data = (MusicData*)userData;
-	float* out = (float*)outputBuffer;
+	auto data = (MusicData*)userData;
+	auto out = (float*)outputBuffer;
 	//int floatsInFrame = data->ring_buffer->getFrameSize() / sizeof(float);
 	int channels = data->file_stream.getChannels();
 	int samplesInFrame = data->ring_buffer->getFrameSize() / sizeof(float) / channels;
@@ -103,9 +101,9 @@ static int paMusicCallback(const void* inputBuffer, void* outputBuffer,
 	{
 		for (unsigned int i = 0; i < framesPerBuffer; i++)
 		{
-			*out++ = data->left_phase * data->logVolume*  data->spatialMultiplier*leftDir;
+			*out++ = data->left_phase * data->logVolume * data->spatialMultiplier * leftDir;
 			if (channels == 2)
-				*out++ = data->right_phase * data->logVolume *data->spatialMultiplier*rightDir;
+				*out++ = data->right_phase * data->logVolume * data->spatialMultiplier * rightDir;
 
 			if ((size_t)data->currentFloatSampleIndex >= samplesInFrame)
 			{
@@ -160,8 +158,8 @@ static int paMusicCallback(const void* inputBuffer, void* outputBuffer,
 
 Sounder::Sounder()
 	:
-	m_sound_buff_pool(SOUNDER_SOUND_BUFF_COUNT),
-	m_rings(SOUNDER_RING_BUFF_COUNT)
+	m_rings(SOUNDER_RING_BUFF_COUNT),
+	m_sound_buff_pool(SOUNDER_SOUND_BUFF_COUNT)
 {
 }
 
@@ -171,7 +169,7 @@ static PaError paStartSoundAudioStream(Sound* sound)
 
 	PaStreamParameters* inParam = nullptr;
 
-	PaStreamParameters* outParam = new PaStreamParameters();
+	auto outParam = new PaStreamParameters();
 	outParam->channelCount = sound->soundBuffer()->buffer.getChannels();
 	outParam->device = defaultOut;
 	outParam->sampleFormat = paFloat32;
@@ -203,7 +201,7 @@ static PaError paStartMusicAudioStream(Music* music)
 	PaStreamParameters* inParam = nullptr;
 
 	//todo who is responsible for deleting PaStreamParameters?
-	PaStreamParameters* outParam = new PaStreamParameters();
+	auto outParam = new PaStreamParameters();
 	outParam->channelCount = music->musicStream().getChannels();
 	outParam->device = defaultOut;
 	outParam->sampleFormat = paFloat32;
@@ -298,11 +296,11 @@ void Sounder::startRingFill()
 	t.detach();
 }
 
-void Sounder::prepareMusic(Music** musi, const SoundAssignment& command, bool buffFill,bool justLoad)
+void Sounder::prepareMusic(Music** musi, const SoundAssignment& command, bool buffFill, bool justLoad)
 {
 	//try to obtain ringbuffer
 	//forgive me but I know what I am doing (I hope)
-	auto ring = reinterpret_cast<NDUtil::RingBufferLite*>(m_rings.allocate());
+	auto ring = reinterpret_cast<Utils::RingBufferLite*>(m_rings.allocate());
 	if (!ring)
 	{
 		//we don't have enough ringbuffers
@@ -325,9 +323,9 @@ void Sounder::prepareMusic(Music** musi, const SoundAssignment& command, bool bu
 	job->assign();
 	music->optional_job = job;
 	music->data.volume = 0;
-	music->data.targetVolume = justLoad?0:command.volume;
+	music->data.targetVolume = justLoad ? 0 : command.volume;
 	music->data.shouldLoop = !justLoad && command.loop;
-	music->data.pitch = justLoad?2:command.pitch;//loading twice as fast
+	music->data.pitch = justLoad ? 2 : command.pitch; //loading twice as fast
 	music->data.targetPitch = justLoad ? 2 : command.pitch;
 	music->isFileOpened = false;
 	music->data.deltaVolumeRate = command.timeToChangeVolume; //will be converted after file load
@@ -377,7 +375,7 @@ void Sounder::preparePlaySound(Sound** soun, const SoundAssignment& command)
 	sound->spatialData = command.spatialData;
 
 	auto error = paStartSoundAudioStream(sound);
-	ASSERT(error == paNoError, "cannot open audio stream: {}",command.soundFile);
+	ASSERT(error == paNoError, "cannot open audio stream: {}", command.soundFile);
 
 	m_sound_ids[command.id] = sound;
 	sound->soundid = command.id;
@@ -399,46 +397,44 @@ void Sounder::preparePlaySound(Sound** soun, const SoundAssignment& command)
 #endif
 }
 
-static void getVolume(const SpatialData& target, const SpatialData& source,float& outVolume,float& outDirection)
+static void getVolume(const SpatialData& target, const SpatialData& source, float& outVolume, float& outDirection)
 {
 	float dist = glm::distance(target.pos, source.pos);
 	float minDist = glm::max(dist, source.maxDistances.x);
-	outVolume = glm::max(0.f, 1- (minDist - source.maxDistances.x) / (source.maxDistances.y - source.maxDistances.x));
+	outVolume = glm::max(0.f, 1 - (minDist - source.maxDistances.x) / (source.maxDistances.y - source.maxDistances.x));
 
 	outDirection = (source.pos.x - target.pos.x);
 	if (outDirection == 0)
 		return;
 	///prizpusobit radiusnormal kdyz se bude delit glmabs(outdir)
-	outDirection = glm::clamp((glm::abs(outDirection) - source.maxDistances.x) / (source.maxDistances.y - source.maxDistances.x),0.f,1.f)
-	*(glm::abs(outDirection)/outDirection)
-	;
-	
-	
+	outDirection = glm::clamp(
+			(glm::abs(outDirection) - source.maxDistances.x) / (source.maxDistances.y - source.maxDistances.x), 0.f, 1.f)
+		* (glm::abs(outDirection) / outDirection);
 }
 
 void Sounder::recalculateSpatialData()
 {
-	
 	for (auto& sound : m_music_streams)
 	{
-		if (sound->spatialData.isValid()) {
+		if (sound->spatialData.isValid())
+		{
 			float vol;
 			float dir;
-			getVolume(m_target_data, sound->spatialData,vol,dir);
-			sound->data.spatialMultiplier = vol*vol*vol*vol;
+			getVolume(m_target_data, sound->spatialData, vol, dir);
+			sound->data.spatialMultiplier = vol * vol * vol * vol;
 			sound->data.spatialDirection = dir;
 		}
 	}
 	for (auto& sound : m_sound_streams)
 	{
-		if (sound->spatialData.isValid()) {
+		if (sound->spatialData.isValid())
+		{
 			float vol;
 			float dir;
 			getVolume(m_target_data, sound->spatialData, vol, dir);
 			sound->data.spatialDirection = 1;
 		}
 	}
-	
 }
 
 void Sounder::loopInternal()
@@ -488,207 +484,207 @@ void Sounder::loopInternal()
 			switch (command.type)
 			{
 			case SoundAssignment::STOP_ALL:
-			{
-				for (auto music_stream : m_music_streams)
 				{
-					if (music_stream->optional_sound_buffer)
+					for (auto music_stream : m_music_streams)
 					{
-						music_stream->data.targetVolume = 0;
-						music_stream->data.deltaVolumeRate = 10000;
-					}
-					else
-						music_stream->data.shouldClose = true;
-					music_stream->data.shouldLoop = false;
-				}
-				for (auto sound_stream : m_sound_streams)
-				{
-					sound_stream->data.shouldClose = true;
-				}
-			}
-			break;
-			//just load soundbuffer if doesn't exist already
-			case SoundAssignment::LOAD:
-			{
-				auto sid = SID(command.soundFile);
-				auto it = m_sound_buff_map.find(sid);
-				if (it == m_sound_buff_map.end())
-				{
-					auto music = new Music;
-					prepareMusic(&music, command, true, true);
-				}
-			}
-			break;
-			//play sound or music or resume if paused
-			case SoundAssignment::PLAY:
-			{
-				//check if was only paused to resume
-				SoundID id = command.id;
-				auto it = m_sound_ids.find(id);
-				if (it != m_sound_ids.end())
-				{
-					//forgive me! Devil shall call my name again
-					auto sound = (Sound*)it->second;
-					auto music = (Music*)it->second;
-					if (sound->isSound)
-					{
-						if (sound->data.isPaused)
+						if (music_stream->optional_sound_buffer)
 						{
-							sound->data.isPaused = false;
-							break;
+							music_stream->data.targetVolume = 0;
+							music_stream->data.deltaVolumeRate = 10000;
 						}
+						else
+							music_stream->data.shouldClose = true;
+						music_stream->data.shouldLoop = false;
 					}
-					else if (music->data.isPaused)
+					for (auto sound_stream : m_sound_streams)
 					{
-						music->data.isPaused = false;
-						break;
+						sound_stream->data.shouldClose = true;
 					}
 				}
-
-				if (command.sound_or_music)
+				break;
+				//just load soundbuffer if doesn't exist already
+			case SoundAssignment::LOAD:
 				{
 					auto sid = SID(command.soundFile);
 					auto it = m_sound_buff_map.find(sid);
 					if (it == m_sound_buff_map.end())
 					{
-						//not sound buffer ready? create a music stream instead
-						Music* music;
-						prepareMusic(&music, command, true, false);
+						auto music = new Music;
+						prepareMusic(&music, command, true, true);
+					}
+				}
+				break;
+				//play sound or music or resume if paused
+			case SoundAssignment::PLAY:
+				{
+					//check if was only paused to resume
+					SoundID id = command.id;
+					auto it = m_sound_ids.find(id);
+					if (it != m_sound_ids.end())
+					{
+						//forgive me! Devil shall call my name again
+						auto sound = (Sound*)it->second;
+						auto music = (Music*)it->second;
+						if (sound->isSound)
+						{
+							if (sound->data.isPaused)
+							{
+								sound->data.isPaused = false;
+								break;
+							}
+						}
+						else if (music->data.isPaused)
+						{
+							music->data.isPaused = false;
+							break;
+						}
+					}
+
+					if (command.sound_or_music)
+					{
+						auto sid = SID(command.soundFile);
+						auto it = m_sound_buff_map.find(sid);
+						if (it == m_sound_buff_map.end())
+						{
+							//not sound buffer ready? create a music stream instead
+							Music* music;
+							prepareMusic(&music, command, true, false);
+						}
+						else
+						{
+							//we have already buffer ready
+							Sound* sound;
+							preparePlaySound(&sound, command);
+						}
 					}
 					else
 					{
-						//we have already buffer ready
-						Sound* sound;
-						preparePlaySound(&sound, command);
+						//play music -> no sound buffer will be stored for later usage
+						Music* music;
+						prepareMusic(&music, command, false, false);
 					}
 				}
-				else
-				{
-					//play music -> no sound buffer will be stored for later usage
-					Music* music;
-					prepareMusic(&music, command, false, false);
-				}
-			}
-			break;
+				break;
 			case SoundAssignment::PAUSE:
-			{
-				SoundID id = command.id;
-				auto it = m_sound_ids.find(id);
-				if (it == m_sound_ids.end())
-					break;
-				//forgive me! Devil shall call my name again
-				auto sound = (Sound*)it->second;
-				auto music = (Music*)it->second;
-				if (sound->isSound)
-					sound->data.isPaused = true;
-				else
-					music->data.isPaused = true;
-			}
-			break;
+				{
+					SoundID id = command.id;
+					auto it = m_sound_ids.find(id);
+					if (it == m_sound_ids.end())
+						break;
+					//forgive me! Devil shall call my name again
+					auto sound = (Sound*)it->second;
+					auto music = (Music*)it->second;
+					if (sound->isSound)
+						sound->data.isPaused = true;
+					else
+						music->data.isPaused = true;
+				}
+				break;
 			case SoundAssignment::FADE:
-			{
-				SoundID id = command.id;
-				auto it = m_sound_ids.find(id);
-				if (it == m_sound_ids.end())
-					break;
-				//forgive me! Devil shall call my name again
-				auto sound = (Sound*)it->second;
-				auto music = (Music*)it->second;
-				if (sound->isSound)
 				{
-					if (command.timeToChangeVolume >= 0)
+					SoundID id = command.id;
+					auto it = m_sound_ids.find(id);
+					if (it == m_sound_ids.end())
+						break;
+					//forgive me! Devil shall call my name again
+					auto sound = (Sound*)it->second;
+					auto music = (Music*)it->second;
+					if (sound->isSound)
 					{
-						if (command.timeToChangeVolume)
-							sound->data.deltaRate = 1.f / command.timeToChangeVolume / sound
-							->soundBuffer()->buffer.
-							getRate();
-						else sound->data.deltaRate = 10000;
-						sound->data.targetVolume = command.volume;
+						if (command.timeToChangeVolume >= 0)
+						{
+							if (command.timeToChangeVolume)
+								sound->data.deltaRate = 1.f / command.timeToChangeVolume / sound
+									->soundBuffer()->buffer.
+									getRate();
+							else sound->data.deltaRate = 10000;
+							sound->data.targetVolume = command.volume;
+						}
+						sound->data.pitch = command.pitch;
 					}
-					sound->data.pitch = command.pitch;
+					else
+					{
+						if (command.timeToChangeVolume >= 0)
+						{
+							if (command.timeToChangeVolume)
+								music->data.deltaVolumeRate = 1.f / command.timeToChangeVolume / music
+									->musicStream().
+									getRate();
+							else music->data.deltaVolumeRate = 10000;
+							music->data.targetVolume = command.volume;
+						}
+						if (command.timeToChangePitch >= 0)
+						{
+							if (command.timeToChangePitch)
+								music->data.deltaPitchRate = 1.f / command.timeToChangePitch / music
+									->musicStream().
+									getRate();
+							else music->data.deltaPitchRate = 10000;
+							music->data.targetPitch = command.pitch;
+						}
+					}
 				}
-				else
-				{
-					if (command.timeToChangeVolume >= 0)
-					{
-						if (command.timeToChangeVolume)
-							music->data.deltaVolumeRate = 1.f / command.timeToChangeVolume / music
-							->musicStream().
-							getRate();
-						else music->data.deltaVolumeRate = 10000;
-						music->data.targetVolume = command.volume;
-					}
-					if (command.timeToChangePitch >= 0)
-					{
-						if (command.timeToChangePitch)
-							music->data.deltaPitchRate = 1.f / command.timeToChangePitch / music
-							->musicStream().
-							getRate();
-						else music->data.deltaPitchRate = 10000;
-						music->data.targetPitch = command.pitch;
-					}
-				}
-			}
-			break;
-			//kill stream
+				break;
+				//kill stream
 			case SoundAssignment::CLOSE:
-			{
-				SoundID id = command.id;
-				auto it = m_sound_ids.find(id);
-				if (it == m_sound_ids.end())
-					break;
-				//forgive me! Devil shall call my name again
-				auto sound = (Sound*)it->second;
-				auto music = (Music*)it->second;
-				if (sound->isSound)
 				{
-					if (command.timeToChangeVolume > 0)
-						sound->data.deltaRate = 1.f / command.timeToChangeVolume / sound
-						->soundBuffer()->buffer.
-						getRate();
-					else sound->data.deltaRate = 10000;
+					SoundID id = command.id;
+					auto it = m_sound_ids.find(id);
+					if (it == m_sound_ids.end())
+						break;
+					//forgive me! Devil shall call my name again
+					auto sound = (Sound*)it->second;
+					auto music = (Music*)it->second;
+					if (sound->isSound)
+					{
+						if (command.timeToChangeVolume > 0)
+							sound->data.deltaRate = 1.f / command.timeToChangeVolume / sound
+								->soundBuffer()->buffer.
+								getRate();
+						else sound->data.deltaRate = 10000;
 
-					sound->data.targetVolume = 0;
-					sound->data.terminateOnFadeOut = true;
-				}
-				else
-				{
-					music->data.shouldLoop = false;
+						sound->data.targetVolume = 0;
+						sound->data.terminateOnFadeOut = true;
+					}
+					else
+					{
+						music->data.shouldLoop = false;
 
-					if (command.timeToChangeVolume > 0)
-						music->data.deltaVolumeRate = 1.f / command.timeToChangeVolume / music
-						->musicStream().getRate();
-					else sound->data.deltaRate = 10000;
-					music->data.targetVolume = 0;
-					music->data.terminateOnFadeOut = !music->optional_sound_buffer;
+						if (command.timeToChangeVolume > 0)
+							music->data.deltaVolumeRate = 1.f / command.timeToChangeVolume / music
+								->musicStream().getRate();
+						else sound->data.deltaRate = 10000;
+						music->data.targetVolume = 0;
+						music->data.terminateOnFadeOut = !music->optional_sound_buffer;
+					}
 				}
-			}
-			break;
+				break;
 			case SoundAssignment::SET_SPATIAL_DATA:
-			{
-				SoundID id = command.id;
-				if(id==PLAYER_ID)
 				{
-					m_target_data = command.spatialData;
-					break;
+					SoundID id = command.id;
+					if (id == PLAYER_ID)
+					{
+						m_target_data = command.spatialData;
+						break;
+					}
+					auto it = m_sound_ids.find(id);
+					if (it == m_sound_ids.end())
+						break;
+					//forgive me! Devil shall call my name again
+					auto sound = (Sound*)it->second;
+					auto music = (Music*)it->second;
+					if (sound->isSound)
+						sound->spatialData = command.spatialData;
+					else
+						music->spatialData = command.spatialData;
 				}
-				auto it = m_sound_ids.find(id);
-				if (it == m_sound_ids.end())
-					break;
-				//forgive me! Devil shall call my name again
-				auto sound = (Sound*)it->second;
-				auto music = (Music*)it->second;
-				if (sound->isSound)
-					sound->spatialData = command.spatialData;
-				else
-					music->spatialData = command.spatialData;
-			}
-			break;
+				break;
 			case SoundAssignment::FLUSH_SPATIAL_DATA:
-			{
-				recalculateSpatialData();
-			}
-			break;
-			default:;
+				{
+					recalculateSpatialData();
+				}
+				break;
+			default: ;
 			}
 
 			totalTime = staper.getUS();
@@ -714,10 +710,9 @@ void Sounder::loopInternal()
 					//compute deltaRate once we know the stream rate
 					if (music->data.deltaVolumeRate)
 						music->data.deltaVolumeRate = 1.f / music->data.deltaVolumeRate / music
-						->musicStream().getRate();
+							->musicStream().getRate();
 					else music->data.deltaVolumeRate = 10000;
 
-					
 
 					music->isFileOpened = true;
 					// sound buffer to be filled if marked as such
@@ -740,12 +735,12 @@ void Sounder::loopInternal()
 								SOUNDER_SOUND_BUFF_SAMPLE_MEMORY_SIZE)
 								memory = nullptr;
 							buff->buffer.allocate(music->data.file_stream.getTotalSamples(),
-								music->data.file_stream.getVorbisInfo(), memory);
+							                      music->data.file_stream.getVorbisInfo(), memory);
 						}
 						else music->optional_sound_buffer = nullptr; // no memory left for cache
 					}
 					auto error = paStartMusicAudioStream(music);
-					ASSERT(error == paNoError, "cannot open audio stream, {}",music->fileName);
+					ASSERT(error == paNoError, "cannot open audio stream, {}", music->fileName);
 
 					//insert music stream into ring filler
 					std::lock_guard<std::mutex> guard(m_ringfill_mutex);
@@ -897,7 +892,6 @@ void Sounder::loopInternal()
 						state.looping = music->data.shouldLoop;
 						state.timestamp = music->musicStream().getCurrentMillis();
 						state.spatialMultiplier = glm::sqrt(glm::sqrt(music->data.spatialMultiplier));
-
 					}
 				}
 			}
@@ -921,26 +915,23 @@ SoundBuff* Sounder::allocateSoundBuffer(Strid id)
 	{
 		return m_sound_buff_pool.allocate();
 	}
-	else
+	//pick the buffer which nobody uses and which lastUsage was long time ago
+	float now = TimerStaper::getNowMicros();
+	float lastUsed = 0;
+	for (auto& sound_buff : m_sound_buff_map)
 	{
-		//pick the buffer which nobody uses and which lastUsage was long time ago
-		float now = TimerStaper::getNowMicros();
-		float lastUsed = 0;
-		for (auto& sound_buff : m_sound_buff_map)
-		{
-			if (sound_buff.second->usages == 0)
-				lastUsed = glm::max(now - sound_buff.second->lastTimeUsage, lastUsed);
-		}
-		for (auto& sound_buff : m_sound_buff_map)
-		{
-			if (sound_buff.second->usages == 0)
-				if ((now - sound_buff.second->lastTimeUsage) == lastUsed)
-				{
-					m_sound_buff_pool.deallocate(sound_buff.second);
-					m_sound_buff_map.erase(m_sound_buff_map.find(sound_buff.first));
-					return m_sound_buff_pool.allocate();
-				}
-		}
+		if (sound_buff.second->usages == 0)
+			lastUsed = glm::max(now - sound_buff.second->lastTimeUsage, lastUsed);
+	}
+	for (auto& sound_buff : m_sound_buff_map)
+	{
+		if (sound_buff.second->usages == 0)
+			if ((now - sound_buff.second->lastTimeUsage) == lastUsed)
+			{
+				m_sound_buff_pool.deallocate(sound_buff.second);
+				m_sound_buff_map.erase(m_sound_buff_map.find(sound_buff.first));
+				return m_sound_buff_pool.allocate();
+			}
 	}
 	return nullptr;
 }
@@ -1012,17 +1003,17 @@ SoundID Sounder::playAudio(const std::string& filePath, bool sound_or_music, flo
 
 	auto out = m_current_id++;
 	submit({
-			SoundAssignment::PLAY,
-			ND_RESLOC(filePath),
-			sound_or_music,
-			loop,
-			volume,
-			pitch,
-			out,
-			fadeTime,
-			-1,
-			data
-		});
+		SoundAssignment::PLAY,
+		ND_RESLOC(filePath),
+		sound_or_music,
+		loop,
+		volume,
+		pitch,
+		out,
+		fadeTime,
+		-1,
+		data
+	});
 	{
 		std::lock_guard<std::mutex> guarde(m_states_mutex);
 		m_states[out] = true;
@@ -1030,14 +1021,16 @@ SoundID Sounder::playAudio(const std::string& filePath, bool sound_or_music, flo
 	return out;
 }
 
-SoundID Sounder::playSound(const std::string& filePath, float volume, float pitch, bool loop, float fadeTime, const SpatialData& data)
+SoundID Sounder::playSound(const std::string& filePath, float volume, float pitch, bool loop, float fadeTime,
+                           const SpatialData& data)
 {
-	return playAudio(filePath, true, volume, pitch, loop, fadeTime,data);
+	return playAudio(filePath, true, volume, pitch, loop, fadeTime, data);
 }
 
-SoundID Sounder::playMusic(const std::string& filePath, float volume, float pitch, bool loop, float fadeTime, const SpatialData& data)
+SoundID Sounder::playMusic(const std::string& filePath, float volume, float pitch, bool loop, float fadeTime,
+                           const SpatialData& data)
 {
-	return playAudio(filePath, false, volume, pitch, loop, fadeTime,data);
+	return playAudio(filePath, false, volume, pitch, loop, fadeTime, data);
 }
 
 bool Sounder::isPlaying(SoundID id)
@@ -1067,4 +1060,4 @@ AudioStateMap Sounder::getDebugInfo()
 }
 
 #endif
-
+}

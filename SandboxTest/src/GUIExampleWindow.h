@@ -1,7 +1,7 @@
 ﻿#pragma once
 #include "gui/GUIBasic.h"
 
-class GUIExampleWindow:public GUIWindow
+class GUIExampleWindow:public nd::GUIWindow
 {
 public:
 	GUIExampleWindow();
