@@ -25,5 +25,6 @@ public:
 	static bool show_collisionBox;
 	static World* world;
 	static int particle_count;
+	static int particle_submit_millis;
 };
 

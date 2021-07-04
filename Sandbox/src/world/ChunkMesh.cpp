@@ -215,6 +215,7 @@ void ChunkMeshInstance::updateMesh(const World& world, const Chunk& chunk)
 			const Block& blok = blockRegistry.getBlock(bs.block_id);
 			half_int t_offset = blok.getTextureOffset(x, y, bs);
 			half_int t_corner_offset = blok.getCornerOffset(x, y, bs);
+			
 			auto point = (ChunkMesh::PosVertexData*)&m_block_buff[(sizeof(ChunkMesh::PosVertexData)*(y*WORLD_CHUNK_SIZE+x))*6];
 			int oldX = x;
 			if(t_offset==-1)

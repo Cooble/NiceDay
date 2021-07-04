@@ -293,7 +293,7 @@ void BlockRegistry::createWallFromJSON(const std::string& id, NBT& nbt) { regist
 void BlockRegistry::updateWallFromJSON(const std::string& id, NBT& nbt)
 {
 	Wall* wall = m_walls[m_wallIDs[id]];
-	nbt.load("isTransparent", wall->m_transparent);
+	wall->setFlag(BLOCK_FLAG_TRANSPARENT, nbt["isTransparent"]);
 
 	//corners it can id of corners or 'false' or '0' to not use anything
 	if (nbt.exists("corners") && nbt["corners"].isString())

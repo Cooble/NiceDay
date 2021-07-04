@@ -14,6 +14,7 @@ res/images/blockAtlas/atlas.png
 res/images/itemAtlas/atlas.png
 res/images/particleAtlas/atlas.png
 res/images/itemAtlas/item_block
+res/images/itemAtlas/item_wall
 
 #resources ignored by git
 res/examples/

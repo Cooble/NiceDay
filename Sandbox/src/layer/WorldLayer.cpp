@@ -32,6 +32,7 @@
 #include "graphics/BlockTextureCreator.h"
 #include "event/SandboxControls.h"
 #include "audio/player.h"
+#include "core/imgui_utils.h"
 #include "world/nd_registry.h"
 #include "gui/GUIContext.h"
 #include "world/particle/luabinder_particles.h"
@@ -205,7 +206,7 @@ void WorldLayer::onWorldLoaded()
 		TextureInfo("res/images/blockAtlas/atlas.png")
 		.filterMode(TextureFilterMode::NEAREST)
 		.format(TextureFormat::RGBA));
-	*m_world->particleManager() = new ParticleManager(10000, particleAtlasT, particleAtlasSize, blockAtlas,
+	*m_world->particleManager() = new ParticleManager(100000, particleAtlasT, particleAtlasSize, blockAtlas,
 		BLOCK_TEXTURE_ATLAS_SIZE);
 
 	//load entity manager
@@ -377,6 +378,7 @@ static int fpsCount;
 
 //mouse was pressed and is held rightnow
 static bool isDragging = false;
+static bool mouseButtonLeft = true;
 
 
 void WorldLayer::onUpdate()
@@ -549,13 +551,13 @@ void WorldLayer::onCreativeUpdate()
 
 			else
 			{
-				if (m_world->getBlock(CURSOR_X, CURSOR_Y)->isWallOccupied())
+				if (m_world->getBlock(CURSOR_X, CURSOR_Y)->isWallFullyOccupied())
 				{
 					if (m_world->getBlock(CURSOR_X, CURSOR_Y)->wallID() != BLOCK_PALLETE_SELECTED)
-						m_world->setWall(CURSOR_X, CURSOR_Y, BLOCK_PALLETE_SELECTED);
+						m_world->setWallWithNotify(CURSOR_X, CURSOR_Y, BLOCK_PALLETE_SELECTED);
 				}
 				else
-					m_world->setWall(CURSOR_X, CURSOR_Y, BLOCK_PALLETE_SELECTED);
+					m_world->setWallWithNotify(CURSOR_X, CURSOR_Y, BLOCK_PALLETE_SELECTED);
 			}
 		}
 	}
@@ -575,7 +577,7 @@ void WorldLayer::onSurvivalUpdate()
 
 		if (inHand)
 		{
-			inHand->getItem().onInteraction(*m_world, *inHand, getPlayer().getInventory().getItemDataBox(), getPlayer(), CURSOR_X, CURSOR_Y, Item::PRESSED, pressedTicks - 1);
+			inHand->getItem().onItemInteraction(*m_world, *inHand, getPlayer().getInventory().getItemDataBox(), getPlayer(), CURSOR_X, CURSOR_Y, Item::PRESSED, pressedTicks - 1);
 
 			if (inHand->size() == 0) {
 				inHand->destroy();
@@ -637,7 +639,7 @@ void WorldLayer::onSurvivalEvent(Event& e)
 		auto& inHand = getPlayer().getInventory().itemInHand();
 		if (inHand && lastPressedTicks != 0)//check if this release had pressed first (there cannot be released with lastPressedTicks==0)
 		{
-			inHand->getItem().onInteraction(*m_world, *inHand, getPlayer().getInventory().getItemDataBox(), getPlayer(), CURSOR_X, CURSOR_Y, Item::RELEASED, lastPressedTicks);
+			inHand->getItem().onItemInteraction(*m_world, *inHand, getPlayer().getInventory().getItemDataBox(), getPlayer(), CURSOR_X, CURSOR_Y, Item::RELEASED, lastPressedTicks);
 			if (inHand->size() == 0) {
 				inHand->destroy();
 				inHand = nullptr;
@@ -806,6 +808,11 @@ void WorldLayer::onImGuiRenderWorld()
 
 	ImGui::InputFloat("Debug X: ", &Stats::edge_scale);
 	ImGui::SliderFloat("slider float", &Stats::edge_scale, 0.0f, 1.0f, "ratio = %.2f");
+	if (ImGui::TreeNode("Parti"))
+	{
+		ImGui::PlotVar("ms per sumbit", Stats::particle_submit_millis, false);
+		ImGui::TreePop();
+	}
 
 
 	ImGui::Text("World filepath: %s", m_world->getFilePath());
@@ -829,13 +836,16 @@ void WorldLayer::onImGuiRenderWorld()
 	if (auto current = m_world->getBlock(CURSOR_X, CURSOR_Y))
 	{
 		CURRENT_BLOCK = current;
+
+		std::bitset<8> x(CURRENT_BLOCK->block_corner);
+		auto cornerBits = x.to_string();
 		quarter_int metaSections = CURRENT_BLOCK->block_metadata;
-		ImGui::Text("Current Block: %s (id: %d, corner: %d, meta: %d ->[%d,%d,%d,%d])", CURRENT_BLOCK_ID.c_str(),
+		ImGui::Text("Current Block: %s (id: %d, corner: %d, %s, meta: %d ->[%d,%d,%d,%d])", CURRENT_BLOCK_ID.c_str(),
 			CURRENT_BLOCK->block_id,
-			CURRENT_BLOCK->block_corner, CURRENT_BLOCK->block_metadata, metaSections.x, metaSections.y,
+			CURRENT_BLOCK->block_corner,cornerBits.c_str(), CURRENT_BLOCK->block_metadata, metaSections.x, metaSections.y,
 			metaSections.z, metaSections.w);
 		int wallid = CURRENT_BLOCK->wall_id[0];
-		if (!CURRENT_BLOCK->isWallOccupied())
+		if (!CURRENT_BLOCK->isWallFullyOccupied())
 			wallid = -1;
 		ImGui::Text("Current Wall: %s (id: %d)",
 			BlockRegistry::get().getWall(CURRENT_BLOCK->wall_id[0]).getStringID().c_str(), wallid);
@@ -1070,6 +1080,14 @@ void WorldLayer::onEvent(Event& e)
 	if (getPlayer().hasCreative())
 		onCreativeEvent(e);
 	else onSurvivalEvent(e);
+
+	//toggle auto dig selector
+	if(KeyPressEvent::getKeyNumber(e)==Controls::AUTO_BLOCK_PICKER)
+	{
+		auto b = App::get().getSettings()["auto_block_picker"];
+		App::get().getSettings()["auto_block_picker"]=!b;
+		ND_TRACE("Toggled auto block picker to: "+(!b));
+	}
 }
 
 void WorldLayer::onCreativeEvent(Event& e)

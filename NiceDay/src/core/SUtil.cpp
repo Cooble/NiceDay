@@ -114,7 +114,7 @@ std::u32string utf8toCodePoints(const char* c)
 		}
 		else if ((byte1 & 0b11111000) == 0b11110000)
 		{
-			//starts with 1110
+			//starts with 11110
 			uint8_t byte2 = *c++;
 			uint8_t byte3 = *c++;
 			uint8_t byte4 = *c++;

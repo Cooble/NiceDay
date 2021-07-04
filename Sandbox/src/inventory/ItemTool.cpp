@@ -3,40 +3,13 @@
 
 #include "core/AppGlobals.h"
 #include "audio/Player.h"
+#include "core/App.h"
 #include "world/entity/EntityPlayer.h"
 
 using namespace nd;
 std::vector<glm::vec3> ItemTool::s_dug_blocks;
 
-// number of blocks that can be dug simultaneously
-constexpr int ITEM_TOOL_DUG_BLOCKS_MAX_SIZE = 20;
 
-// the mass that needs to be removed to dig that block
-// -1 means block has not been dug yet
-static int getDiggingIndex(int x, int y)
-{
-	for (int i = 0; i < ItemTool::getDugBlocks().size(); i++) {
-		auto& block = ItemTool::getDugBlocks()[i];
-		if (x == block.x && y == block.y)
-			return i;
-	}
-	return -1;
-}
-
-static glm::vec3& getDiggingBlock(int x, int y)
-{
-	auto& blocks = ItemTool::getDugBlocks();
-	for (int i = 0; i < blocks.size(); i++) {
-		auto& block = blocks[i];
-		if (x == block.x && y == block.y)
-			return block;
-	}
-	if (blocks.size() == ITEM_TOOL_DUG_BLOCKS_MAX_SIZE)
-		blocks.erase(blocks.end() - 1);
-
-	blocks.emplace_back(glm::vec3(x, y, -1));
-	return blocks[blocks.size() - 1];
-}
 
 ItemTool::ItemTool(ItemID id, const std::string& textName, ToolType type)
 	:Item(id, textName), m_tool_type(type)
@@ -44,11 +17,7 @@ ItemTool::ItemTool(ItemID id, const std::string& textName, ToolType type)
 	m_max_stack_size = 1;
 }
 
-struct ItemToolDataBox
-{
-	int ticksForNextSwing;
-	int blockX, blockY;
-};
+
 void* ItemTool::instantiateDataBox() const
 {
 	return new ItemToolDataBox();
@@ -64,9 +33,17 @@ void ItemTool::onEquipped(World& world, ItemStack& stack, WorldEntity& owner) co
 	getDugBlocks().clear();
 }
 
-void ItemTool::onInteraction(World& w, ItemStack& stack, void* dataBox, WorldEntity& owner, float x, float y, Interaction interaction, int ticksPressed) const
+void ItemTool::onItemInteraction(World& w, ItemStack& stack, void* dataBox, WorldEntity& owner, float x, float y, Interaction interaction, int ticksPressed) const
 {
-	auto newPos = EntityPlayer::pickBlockToDig(w, owner.getNPos(), glm::vec2(x, y), 6);
+	glm::ivec2 newPos;
+	if(App::get().getSettings()["auto_block_picker"])
+	{
+		newPos = EntityPlayer::pickBlockToDig(w, owner.getNPos(), glm::vec2(x, y), 6);
+	}
+	else {
+		newPos = glm::ivec2(x, y);
+		AppGlobals::get().nbt["diggingPos"] = NBT();//remove gui selector
+	}
 	if (newPos.x != -1)
 		AppGlobals::get().nbt["diggingPos"] = newPos;
 	else 
@@ -123,7 +100,10 @@ void ItemTool::onInteraction(World& w, ItemStack& stack, void* dataBox, WorldEnt
 		{//spawn particles and update block cracks
 			w.spawnBlockBreakParticles(x, y, 4);
 			//flip cracks
-			structInWorld->block_corner ^= BLOCK_STATE_CRACKED;
+			structInWorld->block_corner |= BLOCK_STATE_CRACKED;//set cracks to true
+			structInWorld->block_corner ^= BLOCK_STATE_VARIABLE;//flip cracks
+			structInWorld->block_corner &= ~BLOCK_STATE_HAMMER;//no hammer
+
 			// mark chunk dirty for graphical update
 			w.getChunkM(World::toChunkCoord(x), World::toChunkCoord(y))->markDirty(true);
 		}

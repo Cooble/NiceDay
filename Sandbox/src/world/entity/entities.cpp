@@ -784,7 +784,7 @@ void Creature::render(BatchRenderer2D& renderer)
 		renderer.pop();
 		if (getID() == ENTITY_TYPE_PLAYER)
 		{
-			/*auto& entityRectangle = m_bound.getBounds();
+			auto& entityRectangle = m_bound.getBounds();
 			for (int x = entityRectangle.x0-1; x < ceil(entityRectangle.x1)+1; ++x)
 			{
 				for (int y = entityRectangle.y0-1; y < ceil(entityRectangle.y1)+1; ++y)
@@ -792,7 +792,7 @@ void Creature::render(BatchRenderer2D& renderer)
 					glm::vec2 blockPos(x, y);
 					blockPos += m_pos;
 
-					auto stru = Stats::world->getLoadedBlockPointer((int)blockPos.x, (int)blockPos.y);
+					auto stru = Stats::world->getBlockM((int)blockPos.x, (int)blockPos.y);
 					if (stru == nullptr || stru->block_id == BLOCK_AIR)
 						continue;
 					auto& block = BlockRegistry::get().getBlock(stru->block_id);
@@ -806,7 +806,7 @@ void Creature::render(BatchRenderer2D& renderer)
 						ND_INFO("we have render intersction");
 					}
 				}
-			}*/
+			}
 
 
 			for (int y = -4; y < 4; ++y)
@@ -1000,7 +1000,7 @@ void TileEntityRadio::update(World& w)
 		w.spawnParticle(
 			ParticleList::note,
 			m_pos + glm::vec2(1.f + randDispersedFloat(0.05f), 1.5f),
-			{ randDispersedFloat(0.001f), randFloat(0.001f) + 0.001f },
+			{ randDispersedFloat(0.003f), randFloat(0.003f) + 0.001f },
 			vec2(0),
 			0,
 			half_int(std::rand() & 3, 0)
@@ -1009,7 +1009,7 @@ void TileEntityRadio::update(World& w)
 		w.spawnParticle(
 			ParticleList::note,
 			m_pos + glm::vec2(0.5f + randDispersedFloat(0.05f), 1),
-			{ randDispersedFloat(0.01f), randFloat(0.005f) + 0.01f },
+			{ randDispersedFloat(0.03f), randFloat(0.01f) + 0.01f },
 			vec2(0),
 			0,
 			half_int(std::rand() & 3, 0));
@@ -1077,7 +1077,7 @@ void EntityTNT::boom(World& w)
 {
 	//auto point = w.getBlock(m_pos.x, m_pos.y);
 	//if (point)
-	//	w.setWall(m_pos.x, m_pos.y, 0);//leave the wall be
+	//	w.setWallWithNotify(m_pos.x, m_pos.y, 0);//leave the wall be
 
 	//w.beginBlockSet();
 	for (int i = -m_radius; i < m_radius; ++i)
@@ -1091,7 +1091,7 @@ void EntityTNT::boom(World& w)
 					w.spawnBlockBreakParticles(m_pos.x + i, m_pos.y + j);
 					w.setBlockWithNotify(m_pos.x + i, m_pos.y + j, 0);
 					if (m_deleteWalls)
-						w.setWall(m_pos.x + i, m_pos.y + j, 0);
+						w.setWallWithNotify(m_pos.x + i, m_pos.y + j, 0);
 				}
 		}
 
@@ -1177,7 +1177,7 @@ void EntityBomb::boom(World& w)
 {
 	//auto point = w.getBlock(m_pos.x, m_pos.y);
 	//if (point)
-	//	w.setWall(m_pos.x, m_pos.y, 0);//leave the wall be
+	//	w.setWallWithNotify(m_pos.x, m_pos.y, 0);//leave the wall be
 
 	//w.beginBlockSet();
 	for (int i = -m_blastRadius; i < m_blastRadius; ++i)
@@ -1194,7 +1194,7 @@ void EntityBomb::boom(World& w)
 						w.setBlockWithNotify(m_pos.x + i, m_pos.y + j, 0);
 					}
 					if (!point->isWallFree() && m_deleteWalls)
-						w.setWall(m_pos.x + i, m_pos.y + j, 0);
+						w.setWallWithNotify(m_pos.x + i, m_pos.y + j, 0);
 				}
 		}
 

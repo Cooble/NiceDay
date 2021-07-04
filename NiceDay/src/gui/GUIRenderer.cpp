@@ -35,7 +35,6 @@ void GUIRenderer::render(BatchRenderer2D& renderer)
 	Gcon.enableDepthTest(true);
 	m_stackPos = {0, 0};
 	m_z_pos = 0;
-	std::srand(123);
 
 	for (auto& window : m_context->getWindows())
 		renderElements(renderer, *window);

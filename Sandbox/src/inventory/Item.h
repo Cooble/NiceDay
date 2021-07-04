@@ -132,7 +132,7 @@ public:
   //		ticksPressed number of ticks this item is pressed. When clicked first ticksPressed is 0
   //		stack held item, if stack.size() is zero stack will be automatically destroyed. -> don't destroy the item!
   //		dataBox custom data structure pointer returned by instantiateDataBox() call (will be reset each onEquipped())
-  virtual void onInteraction(World& w, ItemStack& stack, void* dataBox, WorldEntity& owner, float x, float y, Interaction interaction, int ticksPressed) const {}
+  virtual void onItemInteraction(World& w, ItemStack& stack, void* dataBox, WorldEntity& owner, float x, float y, Interaction interaction, int ticksPressed) const {}
 
   virtual std::string getTitle(ItemStack* stack)const;
 };

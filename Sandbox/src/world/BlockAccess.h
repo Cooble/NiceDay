@@ -13,6 +13,6 @@ public:
 	void setBlock(int x, int y, int blockid);
 	virtual void setBlockWithNotify(int x, int y, BlockStruct& block) = 0;
 	void setBlockWithNotify(int x, int y, int blockid);
-	virtual void setWall(int x, int y, int wallid) = 0;
+	virtual void setWallWithNotify(int x, int y, int wallid) = 0;
 };
 

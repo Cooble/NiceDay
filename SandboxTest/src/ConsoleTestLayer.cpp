@@ -218,6 +218,23 @@ void ConsoleTestLayer::onUpdate()
 	
 
 }
+
+template< typename T >
+std::string int_to_hex( T i )
+{
+  std::stringstream stream;
+  stream << std::setfill ('0') << std::setw(6) 
+         << std::hex << i;
+  return stream.str();
+}
+
+std::u32string randomColor()
+{
+	int r = std::rand()%0xFFFFFF;
+	return U"#" +
+		SUtil::utf8toCodePoints(int_to_hex(r));
+	
+}
 void ConsoleTestLayer::onEvent(Event& e)
 {
 	auto key = KeyPressEvent::getKeyNumber(e);
@@ -255,8 +272,11 @@ void ConsoleTestLayer::onEvent(Event& e)
 		{
 			lines.erase(lines.begin());
 		}
-		lines[0] = U"#008800";
-		lines.emplace_back(U"#008800");
+		auto color = randomColor();
+		//lines[0] = U"#008800";
+		//lines.emplace_back(U"#008800");
+		lines[0] = color;
+		lines.emplace_back(color);
 
 		rebuildMesh();
 		e.handled = true;

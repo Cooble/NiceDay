@@ -11,11 +11,7 @@
 
 namespace nd {
 
-#define MAX_TEXTURES 16
 
-#define MAX_QUADS 10000
-#define MAX_VERTICES (MAX_QUADS * 4)
-#define MAX_INDICES (MAX_QUADS * 6)
 
 
 ParticleRenderer::ParticleRenderer()
@@ -26,14 +22,14 @@ ParticleRenderer::ParticleRenderer()
 	m_transformation_stack.push_back(glm::mat4(1.0f));
 	m_back = m_transformation_stack[0];
 
-	auto uniforms = new int[MAX_TEXTURES];
-	for (int i = 0; i < MAX_TEXTURES; ++i)
+	auto uniforms = new int[PR_MAX_TEXTURES];
+	for (int i = 0; i < PR_MAX_TEXTURES; ++i)
 	{
 		uniforms[i] = i;
 	}
 	m_shader = ShaderLib::loadOrGetShader("res/shaders/ParticleSprite.shader");
 	m_shader->bind();
-	std::static_pointer_cast<internal::GLShader>(m_shader)->setUniform1iv("u_textures", MAX_TEXTURES, uniforms);
+	std::static_pointer_cast<internal::GLShader>(m_shader)->setUniform1iv("u_textures", PR_MAX_TEXTURES, uniforms);
 	std::static_pointer_cast<internal::GLShader>(m_shader)->setUniformMat4("u_projectionMatrix", mat4(1.0f));
 	m_shader->unbind();
 	delete[] uniforms;
@@ -46,15 +42,15 @@ ParticleRenderer::ParticleRenderer()
 		g_typ::FLOAT, //MIX_CONSTANT
 	};
 
-	m_vbo = VertexBuffer::create(nullptr, MAX_VERTICES * sizeof(VertexData), BufferUsage::STREAM_DRAW);
+	m_vbo = VertexBuffer::create(nullptr, PR_MAX_VERTICES * sizeof(VertexData), BufferUsage::STREAM_DRAW);
 	m_vbo->setLayout(l);
 
 	m_vao = VertexArray::create();
 	m_vao->addBuffer(*m_vbo);
 
-	auto indices = new uint32_t[MAX_INDICES]; //use shorts instead
+	auto indices = new uint32_t[PR_MAX_INDICES]; //use shorts instead
 	uint32_t offset = 0;
-	for (int i = 0; i < MAX_INDICES; i += 6)
+	for (int i = 0; i < PR_MAX_INDICES; i += 6)
 	{
 		indices[i + 0] = offset + 0;
 		indices[i + 1] = offset + 1;
@@ -66,7 +62,7 @@ ParticleRenderer::ParticleRenderer()
 
 		offset += 4;
 	}
-	m_ibo = IndexBuffer::create(indices, MAX_INDICES);
+	m_ibo = IndexBuffer::create(indices, PR_MAX_INDICES);
 	delete[] indices;
 }
 
@@ -80,22 +76,7 @@ ParticleRenderer::~ParticleRenderer()
 #endif
 }
 
-int ParticleRenderer::bindTexture(const Texture* t)
-{
-	for (int i = 0; i < m_textures.size(); ++i)
-		if (t == m_textures[i])
-			return i;
 
-	if (m_textures.size() != MAX_TEXTURES)
-	{
-		m_textures.push_back(t);
-		return m_textures.size() - 1;
-	}
-
-	flush();
-	begin();
-	return bindTexture(t);
-}
 
 void ParticleRenderer::begin(FrameBuffer* fbo)
 {
@@ -154,7 +135,7 @@ void ParticleRenderer::submit(const glm::vec3& pos, const glm::vec2& size, const
 	++m_vertex_data;
 
 	m_indices_count += 6;
-	if (m_indices_count == MAX_INDICES)
+	if (m_indices_count == PR_MAX_INDICES)
 	{
 		flush();
 		begin();

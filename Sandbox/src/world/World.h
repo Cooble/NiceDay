@@ -91,7 +91,7 @@ public:
 		return m_light_levels[y << WORLD_CHUNK_BIT_SIZE | x];
 	}
 
-	void markDirty(bool dirty)
+	void markDirty(bool dirty=true)
 	{
 		if (dirty) m_flags |= CHUNK_DIRTY_FLAG;
 		else m_flags &= ~CHUNK_DIRTY_FLAG;
@@ -298,7 +298,9 @@ public:
 	int getChunkSaveOffset(int id) const
 	{
 		return getChunkSaveOffset(half_int::X(id),half_int::Y(id));
-	};
+	}
+
+	
 	int getChunkSaveOffset(int cx,int cy) const
 	{
 		return cx + cy*m_info.chunk_width;
@@ -337,16 +339,20 @@ public:
 	const BlockStruct* getBlockOrAir(int x, int y) const;
 
 	//return nullptr if invalid coords 
-	//(may cause chunk load)
 	BlockStruct* getBlockM(int x, int y) override;
 
 
-	//return is block at coords is air and true if outside the map
-	//(may cause chunk load)
+	//return is block at coords is air or true if outside the map
 	bool isAir(int x, int y)
 	{
 		auto b = getBlockM(x, y);
 		return b == nullptr || b->isAir();
+	}
+	//return is wall at coords is air or shared or true if outside the map
+	bool isWallFree(int x, int y)
+	{
+		auto b = getBlockM(x, y);
+		return b == nullptr || b->isWallFree();
 	}
 
 	//automatically calls chunk.markdirty() to update graphics and call onNeighborBlockChange()
@@ -359,7 +365,7 @@ public:
 
 
 	//automatically calls chunk.markdirty() to update graphics and call onNeighbourWallChange()
-	void setWall(int x, int y, int wall_id) override;
+	void setWallWithNotify(int x, int y, int wall_id) override;
 
 	// ====buffering block changes====
 	//opens block set session
@@ -400,6 +406,12 @@ public:
 	//		- 1 means smallest probability of spawning
 	//		- 32 means every particle is spawned
 	void spawnBlockBreakParticles(int x, int y,int amount=32);
+
+	// spawn break particles around wall
+	// amount in interval 1 - 32 is probability of spawning one particle
+	//		- 1 means smallest probability of spawning
+	//		- 32 means every particle is spawned
+	void spawnWallBreakParticles(int x, int y,int amount=32);
 
 
 	WorldEntity* getLoadedEntity(EntityID id)

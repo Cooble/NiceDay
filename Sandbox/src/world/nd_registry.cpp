@@ -86,11 +86,41 @@ void nd_registry::registerItemBlocks()
 	ND_TRACE(out);
 }
 
+void nd_registry::registerItemWalls()
+{
+	nd::temp_string out = "[Registered ItemWalls]: ";
+	out.reserve(200);
+	for (auto& wall : BlockRegistry::get().getWalls())
+	{
+		bool missing = true;
+		if (!wall->hasItemVersion())
+			continue;
+
+		for (auto& item : ItemRegistry::get().getItems())
+		{
+			if (item.second->getID() == SID(wall->getItemIDFromWall()))
+			{
+				missing = false;
+				break;
+			}
+		}
+		if (missing)
+		{
+			ND_REGISTER_ITEM(
+				new ItemWall(SID(wall->getStringID()+"_wall"), wall->getID(), wall->getStringID()));
+			out += ", " + wall->getStringID();
+		}
+	}
+	ND_TRACE(out);
+}
+
 void nd_registry::registerItems()
 {
 	//items
 	ND_REGISTER_ITEM(new ItemPickaxeCopper());
 	ND_REGISTER_ITEM(new ItemElPickaxo());
+	ND_REGISTER_ITEM(new ItemHammer());
+	ND_REGISTER_ITEM(new ItemMagicWand());
 	ND_REGISTER_ITEM(new ItemShotgun());
 	ND_REGISTER_ITEM(new ItemTnt());
 	ND_REGISTER_ITEM(new ItemIronHelmet());
@@ -99,8 +129,9 @@ void nd_registry::registerItems()
 	ND_REGISTER_ITEM(new ItemWoodLeggins());
 	ND_REGISTER_ITEM(new ItemWoodBoots());
 	ND_REGISTER_ITEM(
-		&(new ItemBlock(SID("door"), BlockRegistry::get().getBlockID("door_close"), "door"))->setNoBlockTexture(true));
+		&(new ItemBlock(SID("door"), BlockRegistry::get().getBlockID("door_close"), "door"))->setCustomTexture(true));
 	registerItemBlocks();
+	registerItemWalls();
 }
 
 void nd_registry::registerBlocks()

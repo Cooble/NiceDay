@@ -84,8 +84,8 @@ bool BlockGrass::onNeighborBlockChange(BlockAccess& world, int x, int y) const
 	int lastCorner = block.block_corner;
 	//bool custombit = (lastCorner & BIT(4)); //perserve custombit
 	//block.block_corner &= ~BIT(4);
-	bool custombit = lastCorner & BLOCK_STATE_CRACKED; //perserve custombit
-	block.block_corner &= ~BLOCK_STATE_CRACKED;
+	bool custombit = lastCorner & BLOCK_STATE_HAMMER; //perserve custombit
+	block.block_corner &= ~BLOCK_STATE_HAMMER;
 
 
 	Block::onNeighborBlockChange(world, x, y); //update corner state
@@ -109,7 +109,7 @@ bool BlockGrass::onNeighborBlockChange(BlockAccess& world, int x, int y) const
 		block.block_metadata = half_int((x & 1) + 2, 0);
 	else
 		block.block_metadata = half_int(x & 3, 1);
-	block.block_corner |= BLOCK_STATE_CRACKED * custombit; //put back custombit
+	block.block_corner |= BLOCK_STATE_HAMMER * custombit; //put back custombit
 	return lastCorner != block.block_corner || lastid != block.block_id; //we have a change (or not)
 }
 

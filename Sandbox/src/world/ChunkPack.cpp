@@ -45,7 +45,7 @@ void ChunkPack::setBlockWithNotify(int x, int y, BlockStruct& newBlock)
 	//ASSERT(false, "setblockwith notify doesn't work for chunkpack");
 }
 
-void ChunkPack::setWall(int x, int y, int wall_id)
+void ChunkPack::setWallWithNotify(int x, int y, int wall_id)
 {
 	auto oldBlock = getBlockM(x, y);
 	if (oldBlock == nullptr)
@@ -53,7 +53,7 @@ void ChunkPack::setWall(int x, int y, int wall_id)
 	//set block from old block acordingly
 	auto& blok = *oldBlock;
 
-	if (!blok.isWallOccupied() && wall_id == 0) //cannot erase other blocks parts on this shared block
+	if (!blok.isWallFullyOccupied() && wall_id == 0) //cannot erase other blocks parts on this shared block
 		return;
 	blok.setWall(wall_id);
 }

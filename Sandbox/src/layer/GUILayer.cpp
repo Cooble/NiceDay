@@ -354,6 +354,10 @@ void GUILayer::onImGuiRender()
 
 	if (ImGui::Begin("GUILayer", &ImGUIopen))
 	{
+		if (ImGui::Button("Reload Dictionary"))
+		{
+			AppLanguages::loadLanguage(AppLanguages::getCurrentLanguage());
+		}
 		if (Translator::getNumberOfUnknowns() == 0)
 			ImGui::TextColored({ 0.f,1.f,0.f,1.f }, "No unknown entries :D");
 		else {

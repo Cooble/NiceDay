@@ -39,7 +39,7 @@ public:
 
 	PlayerInventory& getInventory() { return m_inventory; }
 
-	static glm::ivec2 pickBlockToDig(World& w, glm::vec2 pos, glm::vec2 cursorPos, float radius);
+	static glm::ivec2 pickBlockToDig(World& w, glm::vec2 pos, glm::vec2 cursorPos, float radius,bool block_or_wall=true);
 	static std::vector<glm::ivec2> pickBlocksToDig(World& w, glm::vec2 pos, glm::vec2 cursorPos, float radius);
 	
 	TO_ENTITY_STRING(EntityPlayer)

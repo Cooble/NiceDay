@@ -92,6 +92,8 @@ public:
 	void submitTextureQuad(const glm::vec3& pos, const glm::vec2& size, const UVQuad& uv, const Texture* t,
 	                       float alpha = 1);
 	void submitColorQuad(const glm::vec3& pos, const glm::vec2& size, const glm::vec4& color);
+	void submitColorTriangle(const glm::vec2& pos0,const glm::vec2& pos1,const glm::vec2& pos2, float z, const glm::vec4& color);
+
 	void submitText(const TextMesh& mesh, const FontMaterial* material);
 	void flush();
 };

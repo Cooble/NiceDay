@@ -2,6 +2,7 @@
 
 #include "graphics/Effect.h"
 
+class Wall;
 class Block;
 
 class BlockTextureCreator
@@ -14,4 +15,5 @@ public:
 	void createTextures();
 
 	void createTexture(const Block& block);
+	void createTexture(const Wall& wall);
 };

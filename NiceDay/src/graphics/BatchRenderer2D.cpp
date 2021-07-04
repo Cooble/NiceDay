@@ -353,6 +353,46 @@ void BatchRenderer2D::submitColorQuad(const glm::vec3& pos, const glm::vec2& siz
 	}
 }
 
+void BatchRenderer2D::submitColorTriangle(const glm::vec2& pos0, const glm::vec2& pos1, const glm::vec2& pos2, float z,
+	const glm::vec4& color)
+{
+	
+	uint32_t col = (
+		((int)(color.r * 255) << 0) |
+		((int)(color.g * 255) << 8) |
+		((int)(color.b * 255) << 16) |
+		((int)(color.a * 255) << 24));
+	m_vertex_data->position = (m_back) * glm::vec3(pos0,z);
+	m_vertex_data->textureSlot = std::numeric_limits<int>::max();
+	m_vertex_data->color = col;
+	++m_vertex_data;
+
+	m_vertex_data->position = (m_back)  * glm::vec3(pos1,z);
+	m_vertex_data->textureSlot = std::numeric_limits<int>::max();
+	m_vertex_data->color = col;
+	++m_vertex_data;
+
+	m_vertex_data->position = (m_back)  * glm::vec3(pos2,z);
+	m_vertex_data->textureSlot = std::numeric_limits<int>::max();
+	m_vertex_data->color = col;
+	++m_vertex_data;
+
+	
+	//in order to get triangle and not quad, last vertex is same as the previous (so discarding second triangle)
+	m_vertex_data->position = (m_back)  * glm::vec3(pos2,z);
+	m_vertex_data->textureSlot = std::numeric_limits<int>::max();
+	m_vertex_data->color = col;
+	++m_vertex_data;
+
+	m_indices_count += 6;
+	if (m_indices_count == MAX_INDICES)
+	{
+		flushQuad();
+		beginQuad();
+	}	
+}
+
+
 void BatchRenderer2D::submitText(const TextMesh& mesh, const FontMaterial* material)
 {
 	if (mesh.getVertexCount() == 0)

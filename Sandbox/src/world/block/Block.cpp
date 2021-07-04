@@ -38,6 +38,14 @@ const Phys::Polygon& Block::getCollisionBox(int x, int y, const BlockStruct& b) 
 		return m_collision_box[1 * i];
 	case BLOCK_STATE_CORNER_UP_RIGHT:
 		return m_collision_box[2 * i];
+	case BLOCK_STATE_CORNER_DOWN_LEFT:
+		return m_collision_box[3 * i];
+	case BLOCK_STATE_CORNER_DOWN_RIGHT:
+		return m_collision_box[4 * i];
+	case BLOCK_STATE_LINE_UP:
+		return m_collision_box[5 * i * (bool)(b.block_corner&BLOCK_STATE_HAMMER)];//needs to be hammer to work
+	case BLOCK_STATE_LINE_DOWN:
+		return m_collision_box[6 * i * (bool)(b.block_corner&BLOCK_STATE_HAMMER)];//needs to be hammer to work
 	default:
 		return m_collision_box[0];
 	}
@@ -60,7 +68,8 @@ int Block::getTextureOffset(int x, int y, const BlockStruct& b) const
 
 int Block::getCornerOffset(int x, int y, const BlockStruct& b) const
 {
-	return m_corner_translate_array ? m_corner_translate_array[(int)b.block_corner].i : BLOCK_STATE_FULL;
+	auto index = (int)b.block_corner;
+	return m_corner_translate_array ? m_corner_translate_array[index].i : BLOCK_STATE_FULL;
 }
 
 bool Block::isInGroup(BlockAccess& w, int x, int y, int group) const
@@ -91,7 +100,7 @@ bool Block::onNeighborBlockChange(BlockAccess& world, int x, int y) const
 
 	BlockStruct& block = *world.getBlockM(x, y);
 	int lastCorner = block.block_corner;
-	block.block_corner = mask;
+	block.block_corner = mask | (lastCorner & ~BLOCK_STATE_PURE_MASK);
 	return lastCorner != block.block_corner; //we have a change (or not)
 }
 
@@ -154,7 +163,7 @@ const ItemBlock& Block::getItemFromBlock() const
 	return dynamic_cast<const ItemBlock&>(ItemRegistry::get().getItem(SID(getItemIDFromBlock())));
 }
 
-std::string Block::getItemIDFromBlock() const { return getStringID(); }
+std::string Block::getItemIDFromBlock() const { return m_string_id; }
 
 ItemStack* Block::createItemStackFromBlock(const BlockStruct& b) const
 {
@@ -250,8 +259,11 @@ bool MultiBlock::canBePlaced(World& w, int xx, int yy) const
 Wall::Wall(std::string id)
 	: m_string_id(std::move(id)),
 	  m_texture_pos(0),
-	  m_corner_translate_array(BlockRegistry::get().getCorners("dirt", true)),
-	  m_transparent(false) {}
+	  m_corner_translate_array(BlockRegistry::get().getCorners("dirt", true))
+{
+	setFlag(BLOCK_FLAG_HAS_ITEM_VERSION, true);
+	setFlag(BLOCK_FLAG_SOLID, true);
+}
 
 Wall::~Wall() = default;
 
@@ -367,3 +379,26 @@ void Wall::onNeighbourWallChange(BlockAccess& w, int x, int y) const
 		b.wall_corner[2] = BLOCK_STATE_CORNER_DOWN_RIGHT;
 	}
 }
+
+bool Wall::canBePlaced(World& w, int x, int y) const
+{
+	auto block = w.getBlockM(x, y);
+	return block->isWallFree() || BlockRegistry::get().getWall(block->wallID()).isReplaceable();
+}
+
+const ItemWall& Wall::getItemFromWall() const
+{
+	return dynamic_cast<const ItemWall&>(ItemRegistry::get().getItem(SID(getItemIDFromWall())));
+}
+
+ItemStack* Wall::createItemStackFromWall(const BlockStruct& b) const
+{
+	if (!hasItemVersion())
+		return nullptr;
+	auto out = ItemStack::create(SID(getItemIDFromWall()), 1);
+	//if (m_max_metadata != 0)
+	//	out->setMetadata(b.block_metadata);
+	return out;
+}
+
+std::string Wall::getItemIDFromWall() const { return m_string_id + "_wall"; }

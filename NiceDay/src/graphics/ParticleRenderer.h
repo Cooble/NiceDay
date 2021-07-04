@@ -9,6 +9,11 @@ namespace nd {
 
 #define USE_MAP_BUF 1
 
+constexpr int PR_MAX_TEXTURES = 16;
+constexpr int PR_MAX_QUADS = 10000;
+constexpr int PR_MAX_VERTICES = (PR_MAX_QUADS * 4);
+constexpr int PR_MAX_INDICES = (PR_MAX_QUADS * 6);
+
 
 struct UVQuad;
 class Texture;
@@ -44,7 +49,23 @@ private:
 	VertexData* m_vertex_data;
 	int m_indices_count;
 private:
-	int bindTexture(const Texture* t);
+	int bindTexture(const Texture* t)
+	{
+		for (int i = 0; i < m_textures.size(); ++i)
+			if (t == m_textures[i])
+				return i;
+
+		if (m_textures.size() != PR_MAX_TEXTURES)
+		{
+			m_textures.push_back(t);
+			return m_textures.size() - 1;
+		}
+
+		flush();
+		begin();
+		return bindTexture(t);
+	}
+
 public:
 	ParticleRenderer();
 	~ParticleRenderer();

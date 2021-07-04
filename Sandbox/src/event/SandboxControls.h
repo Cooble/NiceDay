@@ -16,6 +16,7 @@ namespace Controls {
 	extern ControlType SPAWN_BULLETS;
 
 	extern ControlType FLY_MODE;
+	extern ControlType AUTO_BLOCK_PICKER;
 	
 	extern void init();
 

@@ -15,7 +15,7 @@ public:
 	BlockStruct* getBlockM(int x, int y) override;
 	void setBlock(int x, int y, BlockStruct& block) override;
 	void setBlockWithNotify(int x, int y, BlockStruct& block) override;
-	void setWall(int x, int y, int wall_id) override;
+	void setWallWithNotify(int x, int y, int wall_id) override;
 	Chunk* getChunkM(int cx,int cy)override;
 	uint8_t* getLightLevel(int x, int y);
 

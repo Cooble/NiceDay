@@ -185,8 +185,10 @@ void PriorGen::genLayer0()
 					{
 						block.block_id = BLOCK_GOLD;
 					}
-					else
+					else {
 						block.block_id = BLOCK_STONE;
+					}
+					block.block_corner = std::rand() & 1 << 4;//set random data
 						//block.block_id = BLOCK_ICE;
 				}
 				continue;

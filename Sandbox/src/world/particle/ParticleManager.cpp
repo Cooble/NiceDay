@@ -147,6 +147,8 @@ void ParticleManager::createBlockParticle(half_int textureOffset, int xPos, int 
 
 void ParticleManager::render(ParticleRenderer& renderer)
 {
+	TimerStaper t("Particleshit");
+	
 	ND_PROFILE_METHOD();
 
 	float piece1 = 1.f / m_atlas_segment_count;
@@ -222,4 +224,5 @@ void ParticleManager::render(ParticleRenderer& renderer)
 		}
 		renderer.pop();
 	}
+	Stats::particle_submit_millis = t.getUS() / 1000;
 }

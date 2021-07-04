@@ -4,6 +4,7 @@
 #include "world/entity/EntityManager.h"
 #include "world/entity/entity_datas.h"
 #include "inventory/Item.h"
+class ItemWall;
 class BlockRegistry;
 class BlockAccess;
 class BlockTextureAtlas;
@@ -12,14 +13,16 @@ class BlockTextureAtlas;
 constexpr int BLOCK_STATE_FULL = 0;
 //		  ______________
 //		 <              >
-//		 >			    <
+//		 >			       <
 //		 <\/\/\/\/\/\/\/>
 //
 constexpr int BLOCK_STATE_LINE_UP = BIT(0);
 constexpr int BLOCK_STATE_LINE_DOWN = BIT(2);
 constexpr int BLOCK_STATE_LINE_LEFT = BIT(1);
 constexpr int BLOCK_STATE_LINE_RIGHT = BIT(3);
-constexpr int BLOCK_STATE_CRACKED = BIT(4);
+constexpr int BLOCK_STATE_VARIABLE = BIT(4);
+constexpr int BLOCK_STATE_CRACKED = BIT(5);
+constexpr int BLOCK_STATE_HAMMER = BIT(6);
 
 //all bits except for cracked
 constexpr int BLOCK_STATE_PURE_MASK = BLOCK_STATE_LINE_UP | BLOCK_STATE_LINE_DOWN | BLOCK_STATE_LINE_LEFT |
@@ -39,7 +42,7 @@ constexpr int BLOCK_STATE_CORNER_DOWN_RIGHT = BLOCK_STATE_LINE_DOWN | BLOCK_STAT
 constexpr int BLOCK_STATE_BIT = BLOCK_STATE_CORNER_UP_LEFT | BLOCK_STATE_CORNER_DOWN_RIGHT;
 //		  ______________
 //		 <              >
-//		 >			    <
+//		 >			       <
 //		 <______________>
 //
 constexpr int BLOCK_STATE_LINE_HORIZONTAL = BLOCK_STATE_LINE_UP | BLOCK_STATE_LINE_DOWN;
@@ -47,7 +50,7 @@ constexpr int BLOCK_STATE_LINE_VERTICAL = BLOCK_STATE_LINE_LEFT | BLOCK_STATE_LI
 
 //______________
 //              \
-//				|
+//				    |
 //______________/
 //
 constexpr int BLOCK_STATE_LINE_END_UP = BLOCK_STATE_LINE_VERTICAL | BLOCK_STATE_LINE_UP;
@@ -92,16 +95,11 @@ struct BlockStruct
 	}
 
 	//block is either full block or full air
-	bool isWallOccupied() const
+	// i.e is not partially filled
+	bool isWallFullyOccupied() const
 	{
-		return wall_corner[0] == BLOCK_STATE_FULL
-			&& wall_corner[1] == BLOCK_STATE_FULL
-			&& wall_corner[2] == BLOCK_STATE_FULL
-			&& wall_corner[3] == BLOCK_STATE_FULL
-			|| wall_id[0] == 0
-			&& wall_id[1] == 0
-			&& wall_id[2] == 0
-			&& wall_id[3] == 0;
+		return (*((int*)wall_corner) == (BLOCK_STATE_FULL << 24) | (BLOCK_STATE_FULL << 16) | (BLOCK_STATE_FULL << 8) | (BLOCK_STATE_FULL << 0))
+		||(*((int*)wall_corner) == 0);
 	}
 };
 
@@ -128,6 +126,9 @@ constexpr int BLOCK_FLAG_SOLID = 5;
 //can be replaced by another block for example flowers
 constexpr int BLOCK_FLAG_REPLACEABLE = 6;
 
+//can be replaced by another block for example flowers
+constexpr int BLOCK_FLAG_TRANSPARENT = 7;
+
 
 class ItemBlock;
 
@@ -142,12 +143,6 @@ protected:
 	float m_hardness = 1;
 	int m_tier = 1;
 	int m_required = 0;
-	//bool m_has_item_version=true;
-	//bool m_has_metatextures_in_row=true;
-	//block needs wall behind it (e.g Painting)
-	//bool m_needs_wall=false;
-	//block cannot float in the air
-	//bool m_cannot_float = false;
 
 	/**
 	 * when one block has for example more flower species this number tells us how many
@@ -271,7 +266,7 @@ protected:
 	template <int Width, int Height>
 	void generateCollisionBoxFromDimensions()
 	{
-		static Phys::Polygon p = Phys::toPolygon(Phys::Rectangle::createFromDimensions(0, 0, Width, Height));
+		static ndPhys::Polygon p = ndPhys::toPolygon(ndPhys::Rectangle::createFromDimensions(0, 0, Width, Height));
 		m_collision_box = &p;
 	}
 
@@ -306,12 +301,12 @@ class Wall
 private:
 	int m_id;
 	const std::string m_string_id;
+	int m_flags=0;
 protected:
 	//offset in block texture atlas
 	half_int m_texture_pos;
 	//array[BLOCK_STATE]=TEXTURE_OFFSET
 	const half_int* m_corner_translate_array;
-	bool m_transparent;
 public:
 	Wall(std::string id);
 	Wall(const Wall& c) = delete;
@@ -319,7 +314,19 @@ public:
 	virtual ~Wall();
 	virtual void onTextureLoaded(const BlockTextureAtlas& atlas);
 	int getID() const { return m_id; };
-	bool isTransparent() const { return m_transparent; }
+
+	//flags
+
+	void setFlag(int flag, bool value = true)
+	{
+		if (value)
+			m_flags |= 1 << flag;
+		else
+			m_flags &= ~(1 << flag);
+	}
+	constexpr bool hasItemVersion() const { return m_flags & 1 << BLOCK_FLAG_HAS_ITEM_VERSION; }
+	constexpr bool isReplaceable() const { return m_flags & 1 << BLOCK_FLAG_REPLACEABLE; }
+	constexpr bool isTransparent() const { return m_flags & 1 << BLOCK_FLAG_TRANSPARENT; }
 
 	//returns -1 if not render
 	virtual int getTextureOffset(int wx, int wy, const BlockStruct&) const;
@@ -327,6 +334,11 @@ public:
 
 	//returns true if this block was changed as well
 	virtual void onNeighbourWallChange(BlockAccess& world, int x, int y) const;
+	virtual bool canBePlaced(World& w, int x, int y) const;
+	virtual const ItemWall& getItemFromWall() const;
+	virtual ItemStack* createItemStackFromWall(const BlockStruct& b) const;
 
+
+	virtual std::string getItemIDFromWall() const;
 	const std::string& getStringID() const { return m_string_id; }
 };

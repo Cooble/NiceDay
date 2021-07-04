@@ -15,6 +15,7 @@ ControlType Controls::GO_RIGHT =			(ControlType)KeyCode::RIGHT;
 ControlType Controls::SPAWN_TNT =			(ControlType)KeyCode::T;
 ControlType Controls::SPAWN_BULLETS =		(ControlType)KeyCode::B;
 ControlType Controls::FLY_MODE =			(ControlType)KeyCode::C;
+ControlType Controls::AUTO_BLOCK_PICKER =			(ControlType)KeyCode::V;
 
 void Controls::init()
 {
@@ -30,4 +31,5 @@ void Controls::init()
 	ControlMap::registerControl("SPAWN_TNT",		&SPAWN_TNT);
 	ControlMap::registerControl("SPAWN_BULLETS",	&SPAWN_BULLETS);
 	ControlMap::registerControl("FLY_MODE",	&FLY_MODE);
+	ControlMap::registerControl("AUTO_BLOCK_PICKER",	&AUTO_BLOCK_PICKER);
 }

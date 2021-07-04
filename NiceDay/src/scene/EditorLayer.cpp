@@ -936,7 +936,7 @@ void EditorLayer::onRender()
 		auto& mesh = mod.Mesh();
 		//bind mat vars
 		material->bind();
-
+		
 		//bind enviroment vars
 		enviroment->setRaw(env);
 		enviroment->bind(0, material->getShader());

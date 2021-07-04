@@ -182,14 +182,14 @@ void WorldGen::genLayer0(World& w,Chunk& c)
 			{
 				//5 block of dirt
 				block.block_id = BLOCK_DIRT;
-				block.setWall(WALL_DIRT);
+				block.setWallWithNotify(WALL_DIRT);
 			}
 			else if (c.m_x < 2)
 				block.block_id = BLOCK_ADAMANTITE;
 			else
 			{
 				block.block_id = BLOCK_STONE;
-				block.setWall(WALL_STONE);
+				block.setWallWithNotify(WALL_STONE);
 			}
 		}
 	}

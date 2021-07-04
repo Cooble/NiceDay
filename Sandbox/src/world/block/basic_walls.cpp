@@ -4,7 +4,10 @@
 
 //AIR=============================
 WallAir::WallAir()
-	: Wall("air") {}
+	: Wall("air")
+{
+	setFlag(BLOCK_FLAG_HAS_ITEM_VERSION, false);
+}
 
 int WallAir::getTextureOffset(int wx, int wy, const BlockStruct&) const { return -1; }
 

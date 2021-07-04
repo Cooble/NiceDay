@@ -17,4 +17,6 @@ nd::Sprite* Stats::bound_sprite = nullptr;
 bool Stats::show_collisionBox = false;
 World* Stats::world = nullptr;
 int Stats::particle_count = 0;
+int Stats::particle_submit_millis = 0;
+
 

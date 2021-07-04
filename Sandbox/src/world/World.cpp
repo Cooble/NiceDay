@@ -164,6 +164,8 @@ bool World::isChunkGenerated(int chunkId)
 	return m_is_chunk_gen_map[getChunkSaveOffset(chunkId)];
 }
 
+
+
 const Chunk* World::getChunk(int cx, int cy) const
 {
 	int index = getChunkIndex(half_int(cx, cy));
@@ -746,7 +748,7 @@ void World::updateChunkBounds(BlockAccess& world, int cx, int cy, int bitBounds)
 			auto worldx = wx + x;
 			auto worldy = wy + WORLD_CHUNK_SIZE - 1;
 			BlockRegistry::get().getBlock(block.block_id).onNeighborBlockChange(world, worldx, worldy);
-			if (block.isWallOccupied())
+			if (block.isWallFullyOccupied())
 				BlockRegistry::get().getWall(block.wallID()).onNeighbourWallChange(world, worldx, worldy);
 		}
 	if ((bitBounds & maskDown) != 0)
@@ -756,7 +758,7 @@ void World::updateChunkBounds(BlockAccess& world, int cx, int cy, int bitBounds)
 			auto worldx = wx + x;
 			auto worldy = wy;
 			BlockRegistry::get().getBlock(block.block_id).onNeighborBlockChange(world, worldx, worldy);
-			if (block.isWallOccupied())
+			if (block.isWallFullyOccupied())
 				BlockRegistry::get().getWall(block.wallID()).onNeighbourWallChange(world, worldx, worldy);
 		}
 	if ((bitBounds & maskLeft) != 0)
@@ -766,7 +768,7 @@ void World::updateChunkBounds(BlockAccess& world, int cx, int cy, int bitBounds)
 			auto worldx = wx;
 			auto worldy = wy + y;
 			BlockRegistry::get().getBlock(block.block_id).onNeighborBlockChange(world, worldx, worldy);
-			if (block.isWallOccupied())
+			if (block.isWallFullyOccupied())
 				BlockRegistry::get().getWall(block.wallID()).onNeighbourWallChange(world, worldx, worldy);
 		}
 	if ((bitBounds & maskRight) != 0)
@@ -776,7 +778,7 @@ void World::updateChunkBounds(BlockAccess& world, int cx, int cy, int bitBounds)
 			auto worldx = wx + WORLD_CHUNK_SIZE - 1;
 			auto worldy = wy + y;
 			BlockRegistry::get().getBlock(block.block_id).onNeighborBlockChange(world, worldx, worldy);
-			if (block.isWallOccupied())
+			if (block.isWallFullyOccupied())
 				BlockRegistry::get().getWall(block.wallID()).onNeighbourWallChange(world, worldx, worldy);
 		}
 }
@@ -926,7 +928,7 @@ void World::setBlock(int x, int y, BlockStruct& newBlock)
 	*blok = newBlock;
 }
 
-#define MAX_BLOCK_UPDATE_DEPTH 20
+constexpr int MAX_BLOCK_UPDATE_DEPTH = 20;
 
 void World::onBlocksChange(int x, int y, int deep)
 {
@@ -965,7 +967,7 @@ void World::onBlocksChange(int x, int y, int deep)
 
 //=========================WALLS===========================
 
-void World::setWall(int x, int y, int wall_id)
+void World::setWallWithNotify(int x, int y, int wall_id)
 {
 	auto blok = getBlockM(x, y);
 	if (blok == nullptr)
@@ -973,7 +975,7 @@ void World::setWall(int x, int y, int wall_id)
 
 	auto& regOld = BlockRegistry::get().getBlock(blok->block_id);
 
-	if (!blok->isWallOccupied() && wall_id == 0) //cannot erase other blocks parts on this shared block
+	if (!blok->isWallFullyOccupied() && wall_id == 0) //cannot erase other blocks parts on this shared block
 		return;
 	blok->setWall(wall_id);
 	onWallsChange(x, y, *blok);
@@ -996,7 +998,7 @@ void World::onWallsChange(int xx, int yy, BlockStruct& blok)
 				continue;
 			if (isValidBlock(x + xx, y + yy)) {
 				BlockStruct& b = *getBlock(x + xx, y + yy);
-				if (b.isWallOccupied())//i cannot call this method on some foreign wall pieces
+				if (b.isWallFullyOccupied())//i cannot call this method on some foreign wall pieces
 					BlockRegistry::get().getWall(b.wallID()).onNeighbourWallChange(*this, x + xx, y + yy);
 			}
 		}
@@ -1014,7 +1016,7 @@ void World::onWallsChange(int xx, int yy, BlockStruct& blok)
 			if (isBlockValid(x + xx, y + yy))
 			{
 				auto& b = *getBlockM(x + xx, y + yy);
-				if (b.isWallOccupied())
+				if (b.isWallFullyOccupied())
 				{
 					//i cannot call this method on some foreign wall pieces
 					BlockRegistry::get().getWall(b.wallID()).onNeighbourWallChange(*this, x + xx, y + yy);
@@ -1198,6 +1200,27 @@ void World::spawnBlockBreakParticles(int x, int y, int amount)
 	if (blok == nullptr||blok->isAir())
 		return;
 	auto offset = BlockRegistry::get().getBlock(blok->block_id).getTextureOffset(x, y, *blok);
+	
+	glm::vec2 middle(0.5f,0);
+	for (int xx = 0; xx < particleBlockDivision; ++xx)
+		for (int yy = 0; yy < particleBlockDivision; ++yy) {
+			if( (std::rand() & 31) >= amount)
+				continue;
+			float xxx = xx / (float)particleBlockDivision;
+			float yyy = yy / (float)particleBlockDivision;
+			float mutt = 0.5f;
+			auto velocity = (glm::vec2(xxx, yyy) - middle)*0.3f* mutt;
+			velocity += glm::vec2(std::rand() % 2048 / 2048.f-0.5f, std::rand() % 2048 / 2048.f-0.5f) * 0.15f* mutt;
+			m_particle_manager->createBlockParticle(offset, xx, yy, { x + xxx,y +yyy}, velocity, { -velocity.x/35* mutt,-0.011f* mutt }, 30, 0);
+		}
+}
+
+void World::spawnWallBreakParticles(int x, int y, int amount)
+{
+	auto blok = getBlock(x, y);
+	if (blok == nullptr||blok->isWallFree())
+		return;
+	auto offset = BlockRegistry::get().getWall(blok->wallID()).getTextureOffset(x, y, *blok);//todo fix wall offset vs block offset texture
 	
 	glm::vec2 middle(0.5f,0);
 	for (int xx = 0; xx < particleBlockDivision; ++xx)

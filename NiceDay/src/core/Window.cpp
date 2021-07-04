@@ -19,7 +19,7 @@ using namespace nd;
 
 //forces driver to use nvidia and not integrated
 extern "C" {
-_declspec(dllexport) DWORD NvOptimusEnablement = 0;
+_declspec(dllexport) DWORD NvOptimusEnablement = 1;
 }
 
 namespace nd {

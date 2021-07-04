@@ -79,6 +79,14 @@ grass_plant:3	=Grass
 pickaxe			=Copper Pickaxe
 el_pickaxo		=El Pickaxo
 shotgun			=ShotGun Extreme
+hammer			=El Hammero
+
+iron_helmet=Iron Helmet
+wood_boots=Barking Boots
+wood_chestplate=Splinter Shirt
+wood_helmet=Hemp Helmet
+wood_leggins=Prickly Pants
+
 
 # miscellaneous
 tnt:0			=Small Bum

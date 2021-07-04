@@ -6,6 +6,7 @@ namespace nd_registry
 	void registerEverything(bool loadTextures);
 
 	void registerItemBlocks();
+	void registerItemWalls();
 	void registerItems();
 	void registerBlocks();
 	void registerEntities();
