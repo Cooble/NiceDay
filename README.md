@@ -21,7 +21,7 @@ And yes, I like to use '"' a lot.
 
 ## Installation
 For now the whole clone-and-run proccess should as simple as:
-1. `git clone --recurse-submodules (--depth=1) https://github.com/Cooble/NiceDay.git`
+1. `git clone --recurse-submodules --depth=1 https://github.com/Cooble/NiceDay.git`
 2. In parallel can be run:
    - `External-WIN32-Build.bat` (create build directory)
    - `DownloadAdditionalResources.bat` (download resources that are not part of git VCS)
