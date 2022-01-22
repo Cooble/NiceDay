@@ -51,6 +51,7 @@ door		=Door
 painting	=Painting
 sapling		=Sapling
 
+salt		=Salt
 # flowers
 flower:0	=Whitey
 flower:1	=Dandelion
@@ -79,7 +80,9 @@ grass_plant:3	=Grass
 pickaxe			=Copper Pickaxe
 el_pickaxo		=El Pickaxo
 shotgun			=ShotGun Extreme
-hammer			=El Hammero
+hammer			=Copper Hammer
+el_hammero			=El Hammero
+
 
 iron_helmet=Iron Helmet
 wood_boots=Barking Boots

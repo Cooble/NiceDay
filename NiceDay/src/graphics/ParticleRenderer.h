@@ -7,7 +7,7 @@ namespace nd {
 
 //should use mapbuffer or subdata
 
-#define USE_MAP_BUF 1
+#define USE_MAP_BUF_PARTICLE 1
 
 constexpr int PR_MAX_TEXTURES = 16;
 constexpr int PR_MAX_QUADS = 10000;
@@ -43,7 +43,7 @@ private:
 	IndexBuffer* m_ibo;
 	FrameBuffer* m_fbo;
 
-#if !USE_MAP_BUF
+#if !USE_MAP_BUF_PARTICLE
 		VertexData* m_buff;
 #endif
 	VertexData* m_vertex_data;

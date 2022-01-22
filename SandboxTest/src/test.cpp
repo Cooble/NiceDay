@@ -1,5 +1,6 @@
 #define ND_TEST
 #include "ConsoleTestLayer.h"
+#include "MandelBrotLayer.h"
 #include "core/App.h"
 
 #include "scene/EditorLayer.h"

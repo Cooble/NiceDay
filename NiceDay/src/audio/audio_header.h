@@ -4,6 +4,7 @@
 namespace nd {
 // unique identifier of each audio stream of Sounder
 typedef int64_t SoundID;
+constexpr int64_t INVALID_SOUND_ID = 0;
 
 static const float invalidSpatial = std::numeric_limits<float>::max() - 1;
 

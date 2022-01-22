@@ -35,6 +35,7 @@
 #include "core/imgui_utils.h"
 #include "world/nd_registry.h"
 #include "gui/GUIContext.h"
+#include "inventory/ItemStack.h"
 #include "world/particle/luabinder_particles.h"
 
 using namespace nd;

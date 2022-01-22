@@ -1,0 +1,107 @@
+{
+  /*
+	"item_name": {
+    "maxStackSize": 999,
+    "metaTexturesInRow": true,
+	
+	//number of meta for example tnt has 3 types based on size
+    "maxMeta": 0,
+
+	// add template to inherit its attributes
+	// and add new ones.
+	// Template that has attribut starting with 'global.'
+	// will override attribute specified in item
+	// to prevent that behavior -> redefine attribut here inside (still musts start with global)
+
+	"normalItemAttribute":10, 
+	"tool":{
+		"type":"pickaxe", //tool.type attribute is set
+		"damage": 1,  //tool.damage attribute is set
+		"efficiency":1.0,
+		"tier":1,
+		"digTime":20,
+
+		// normalItemAttribute attribute is set (no tool prefix)
+		"global.normalItemAttribute"=5 //will override definition in item as well as in template
+	},
+	"armor": {
+		"global.flags": ["ARMOR_HEAD"],
+		"defense": 10
+	}
+
+	
+*/
+	"salt":{
+		"maxStackSize": 8
+	},
+	"pickaxe":{
+		"tool":{
+			"type":"pickaxe",
+			"efficiency":0.5,
+			"tier":1
+		}
+	},
+	"el_pickaxo":{
+		"tool":{
+			"type":"pickaxe",
+			"efficiency":100,
+			"tier":10000,
+			"digTime":1
+		}
+	},
+	"hammer":{
+		"tool":{
+			"type":"hammer"
+		}
+	},
+	"el_hammero":{
+		"tool":{
+			"type":"hammer",
+			"efficiency":100,
+			"tier":10000,
+			"digTime":1
+		}
+	},
+	"wood_helmet":{
+		"armor":{
+			"defense": 1,
+			"global.flags": ["ARMOR_HEAD"]
+		}
+	},
+	"iron_helmet":{
+		"armor":{
+			"defense": 10,
+			"global.flags": ["ARMOR_HEAD"]
+		}
+	},
+	"wood_chestplate":{
+		"armor":{
+			"defense": 2,
+			"global.flags": ["ARMOR_CHEST"]
+		}
+	},
+	"wood_leggins":{
+		"armor":{
+			"defense": 1,
+			"global.flags": ["ARMOR_LEGGINS"]
+		}
+	},
+	"wood_boots":{
+		"armor":{
+			"defense": 1,
+			"global.flags": ["ARMOR_BOOTS"]
+		}
+	},
+	"tnt":{
+		"maxStackSize":5,
+		"flags":["USE_META_AS_TEXTURE"],
+		"maxMetadata":3
+	},
+	"vinyl":{
+		"maxStackSize": 1,
+		"flags":["HAS_NBT"],
+		"maxMetadata":2
+	}
+
+
+}

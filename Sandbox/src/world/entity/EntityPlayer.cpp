@@ -1,6 +1,7 @@
 ﻿#include "EntityPlayer.h"
 #include "graphics/API/Texture.h"
 #include "core/Stats.h"
+#include "inventory/ItemStack.h"
 //PlayerEntity======================================================
 
 

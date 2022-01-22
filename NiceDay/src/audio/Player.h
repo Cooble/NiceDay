@@ -214,6 +214,7 @@ private:
 	std::queue<SoundAssignment> m_queue; // Have I found everybody a fun assignment to do today?
 	std::mutex m_states_mutex;
 	std::unordered_map<SoundID, bool> m_states;
+	bool m_disabled_new_sounds = false;
 #if SOUNDER_DEBUG_INFO == 1
 	std::mutex m_debug_states_mutex;
 	AudioStateMap m_debug_states;
@@ -249,6 +250,12 @@ public:
 	void stop();
 	// returns true when sound thread stopped
 	bool isRunning() const { return m_is_running; }
+	// all calls to playAudio will be ignored
+	void disableNewSounds(bool disable)
+	{
+		ND_TRACE("Sounds dissabled: {}", disable);
+		this->m_disabled_new_sounds = disable;
+	}
 
 	// sets pos and range of sound source or target
 	// When specifying target:
@@ -274,6 +281,8 @@ public:
 	int getNumberOfSoundStreams() const { return m_sound_streams_size; }
 	int getNumberOfMusicStreams() const { return m_music_streams_size; }
 	int getSoundBufferCount() const { return m_sound_buffers_count; }
+
+	bool isEnabled() { return !m_disabled_new_sounds; }
 
 #if SOUNDER_DEBUG_INFO == 1
 	AudioStateMap getDebugInfo();

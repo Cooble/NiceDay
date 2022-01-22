@@ -1,5 +1,8 @@
 ﻿#include "CreativeInventory.h"
 
+#include "ItemRegistry.h"
+#include "ItemStack.h"
+
 CreativeInventory::CreativeInventory()
 {
 	m_id = "creative";

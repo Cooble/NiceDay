@@ -4,6 +4,8 @@
 #include "core/NBT.h"
 #include <stack>
 
+#include "ItemStack.h"
+
 using namespace nd;
 
 PlayerInventory::~PlayerInventory()

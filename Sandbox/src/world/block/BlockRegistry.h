@@ -1,5 +1,6 @@
 #pragma once
 #include "ndpch.h"
+#include "core/NBT.h"
 #include "Block.h"
 
 #define ND_REGISTER_BLOCK(block)\

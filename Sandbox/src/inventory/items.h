@@ -2,16 +2,6 @@
 #include "Item.h"
 #include "ItemTool.h"
 
-class ItemPickaxeCopper :public ItemTool
-{
-public:
-   ItemPickaxeCopper();
-};
-class ItemElPickaxo :public ItemTool
-{
-public:
-   ItemElPickaxo();
-};
 class ItemMagicWand :public Item
 {
 public:
@@ -21,35 +11,21 @@ public:
 class ItemHammer :public ItemTool
 {
 public:
-   ItemHammer();
+   ItemHammer(ItemID id,const std::string& name);
 	void onItemInteraction(World& w, ItemStack& stack, void* dataBox, WorldEntity& owner, float x, float y, Interaction interaction, int ticksPressed) const override;
 	bool onRightClickOnBlock(World& world, ItemStack& stack, WorldEntity& owner, int x, int y, BlockStruct& block) const override;
 };
+class ItemArmor :public Item
+{
+protected:
+	friend ItemRegistry;
+	int m_defense = 1;
 
-class ItemWoodHelmet :public Item
-{
 public:
-   ItemWoodHelmet();
-};
-class ItemIronHelmet :public Item
-{
-public:
-   ItemIronHelmet();
-};
-class ItemWoodChestplate :public Item
-{
-public:
-   ItemWoodChestplate();
-};
-class ItemWoodLeggins :public Item
-{
-public:
-   ItemWoodLeggins();
-};
-class ItemWoodBoots :public Item
-{
-public:
-   ItemWoodBoots();
+   ItemArmor(ItemID id,const std::string& name);
+
+   int getDefense() const { return m_defense; }
+   
 };
 
 class ItemShotgun : public Item
@@ -61,6 +37,7 @@ public:
 
    std::string getTitle(ItemStack* stack) const override;
 };
+
 class ItemTnt : public Item
 {
 public:

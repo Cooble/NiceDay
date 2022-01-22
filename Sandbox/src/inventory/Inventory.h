@@ -1,5 +1,7 @@
 ﻿#pragma once
+#include "core/NBT.h"
 #include "Item.h"
+
 
 /**
  * Container methods always transfer ownership of itemstacks

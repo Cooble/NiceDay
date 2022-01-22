@@ -95,7 +95,7 @@ void ItemTool::onItemInteraction(World& w, ItemStack& stack, void* dataBox, Worl
 	auto efficiency = getEfficiencyOnBlock(block, &stack);//60 ticks will take to dig the block
 
 	if (data->ticksForNextSwing == 0) {//we haven't started digging yet
-		data->ticksForNextSwing = m_dig_interval;
+		data->ticksForNextSwing = m_dig_time;
 
 		{//spawn particles and update block cracks
 			w.spawnBlockBreakParticles(x, y, 4);

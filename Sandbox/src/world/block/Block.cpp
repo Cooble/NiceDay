@@ -8,6 +8,8 @@
 #include "world/entity/EntityAllocator.h"
 #include "inventory/Item.h"
 #include "inventory/ItemBlock.h"
+#include "inventory/ItemRegistry.h"
+#include "inventory/ItemStack.h"
 
 using namespace nd;
 

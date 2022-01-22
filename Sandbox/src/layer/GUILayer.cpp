@@ -27,6 +27,7 @@ using namespace nd;
 
 GUILayer::GUILayer()
 {
+	m_name = "GUI";
 	ND_PROFILE_METHOD();
 	m_bound_func = std::bind(&GUILayer::consumeWindowEvent, this, std::placeholders::_1);
 	m_gui_context = GUIContext::create();
@@ -245,7 +246,7 @@ void GUILayer::onRender()
 			{ 2.f / APwin()->getWidth(), 2.f / APwin()->getHeight(), 1 }));
 	//todo gui renderer does not need depth test possibly?
 	m_gui_renderer.render(m_renderer);
-	m_renderer.flush();
+	ND_PROFILE_CALL(m_renderer.flush());
 	m_renderer.pop();
 	m_renderer.pop();
 }

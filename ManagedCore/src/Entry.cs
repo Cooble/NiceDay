@@ -119,6 +119,7 @@ namespace ND
         //check if assembly changed in exe folder
         public static bool CheckForModification()
         {
+            //Log.ND_INFO("checking for modification of "+NEW_DOMAIN_PATH);
             if (File.Exists(NEW_DOMAIN_PATH))
             {
                 DateTime current = File.GetLastWriteTime(NEW_DOMAIN_PATH);

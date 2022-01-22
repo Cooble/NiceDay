@@ -1,4 +1,6 @@
 ﻿#include "ItemBlock.h"
+
+#include "ItemStack.h"
 #include "graphics/TextureAtlas.h"
 #include "world/block/BlockRegistry.h"
 #include "world/World.h"

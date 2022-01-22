@@ -368,6 +368,10 @@ void SoundLayer::onImGuiRender()
 	int delayPlay = 0;
 	if (ImGui::Begin("Sound Editor", &ImGUIopen))
 	{
+		bool enable = Sounder::get().isEnabled();
+		if (ImGui::Checkbox("Enabled", &enable))
+			Sounder::get().disableNewSounds(!enable);
+		
 		if (ImGui::SmallButton("PlaySound"))
 		{
 			if (delayPlay == 0)

@@ -1,0 +1,65 @@
+{
+	/*
+		Define templates that can be used by items
+		If item includes attribute matching certain template
+		template attributes will be added to the item (starting with prefix 'templatename.')
+		
+		To change default attributes of the item itself such as maxStackSize,
+		it is neccessary for such attribute to pe preneded with prefix 'global.' 
+
+		To change default attributes of the template itself 
+		only redefinition of these attributes 
+		is required inside the template attribute in such item
+
+		// attribute with the same name is required for an item to use the template
+		"tool": {
+			"type": "pickaxe",
+
+			// this will change global attribute of the item
+			"global.maxStackSize": 1,
+
+			// this will add new attribute tool.damage
+			"damage": 1, 
+			"efficiency":0.5,
+			"tier":1,
+			"digTime":20,
+			"global.flags": {
+				"USE_META_AS_TEXTURE": false
+			}
+		},
+
+		//to use it inside an item:
+		myItem:{
+			"tool":{
+				"damage": 3, //changed default value of the template
+
+				// override global attribute 
+				// !note that specifying such attribute inside item namespace 
+				// (and not template namespace) won't override default template value!)
+				"global.maxStackSize": 2
+			},
+			"maxStackSize": 3 //will be ignored since template overrides it
+		}
+		
+	
+	*/
+	"tool": {
+		"type": "pickaxe",
+		"global.maxStackSize": 1,
+		"damage": 1,
+		"efficiency":0.5,
+		"tier":1,
+		"digTime":20,
+		"global.flags": {
+			"USE_META_AS_TEXTURE": false
+		}
+	},
+	"armor": {
+		"defense": 1,
+		"global.flags": ["ARMOR_HEAD"],
+		"global.maxStackSize":1
+	},
+	"ammo":{
+		"global.flags": ["AMMO"]
+	}
+}

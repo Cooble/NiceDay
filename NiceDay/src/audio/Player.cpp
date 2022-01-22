@@ -168,7 +168,7 @@ static PaError paStartSoundAudioStream(Sound* sound)
 	outParam->channelCount = sound->soundBuffer()->buffer.getChannels();
 	outParam->device = defaultOut;
 	outParam->sampleFormat = paFloat32;
-	outParam->suggestedLatency = 0.05;
+	outParam->suggestedLatency = 0.1;
 
 
 	auto error = Pa_OpenStream(&sound->pa_stream,
@@ -973,6 +973,9 @@ void Sounder::flushSpatialData()
 SoundID Sounder::playAudio(const std::string& filePath, bool sound_or_music, float volume, float pitch, bool loop,
                            float fadeTime, const SpatialData& data)
 {
+	if (this->m_disabled_new_sounds)
+		return INVALID_SOUND_ID;
+	
 	FUTIL_ASSERT_EXIST(filePath);
 
 	auto out = m_current_id++;
@@ -989,6 +992,7 @@ SoundID Sounder::playAudio(const std::string& filePath, bool sound_or_music, flo
 		data
 	});
 	{
+		ND_PROFILE_SCOPE("Waitin for mutex");
 		std::lock_guard<std::mutex> guarde(m_states_mutex);
 		m_states[out] = true;
 	}

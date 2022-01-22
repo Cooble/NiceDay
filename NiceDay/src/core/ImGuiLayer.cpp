@@ -437,6 +437,9 @@ void ImGuiLayer::renderBaseImGui()
 		{
 			for (auto& win : m_wins)
 				ImGui::MenuItem(win.name.c_str(), "", win.opened);
+			bool fullscreen = App::get().getPhysicalWindow()->isFullscreen();
+			if (ImGui::MenuItem("Fullscreen", NULL, &fullscreen))
+				App::get().getPhysicalWindow()->setFullScreen(fullscreen);
 			ImGui::EndMenu();
 		}
 		ImGui::SameLine(ImGui::GetWindowContentRegionMax().x - 60);

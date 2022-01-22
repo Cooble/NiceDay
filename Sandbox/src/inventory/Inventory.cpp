@@ -1,4 +1,5 @@
 ﻿#include "Inventory.h"
+#include "ItemStack.h"
 
 using namespace nd;
 

@@ -219,8 +219,8 @@ void BatchRenderer2D::flushText()
 			lengths[i] = fontMat.second[i].length;
 			indices[i] = fontMat.second[i].fromIndex * sizeof(int);
 		}
-		Gcon.cmdDrawMultiElements(Topology::TRIANGLES, reinterpret_cast<uint32_t*>(indices), lengths,
-		                          fontMat.second.size());
+		ND_PROFILE_CALL(Gcon.cmdDrawMultiElements(Topology::TRIANGLES, reinterpret_cast<uint32_t*>(indices), lengths,
+		                          fontMat.second.size()));
 		fontMat.second.clear();
 	}
 }
@@ -456,8 +456,8 @@ void BatchRenderer2D::submitText(const TextMesh& mesh, const FontMaterial* mater
 
 void BatchRenderer2D::flush()
 {
-	m_fbo->bind();
-	flushQuad();
-	flushText();
+	ND_PROFILE_CALL(m_fbo->bind());
+	ND_PROFILE_CALL(flushQuad());
+	ND_PROFILE_CALL(flushText());
 }
 }

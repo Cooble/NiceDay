@@ -16,7 +16,7 @@ namespace nd {
 
 ParticleRenderer::ParticleRenderer()
 {
-#if !USE_MAP_BUF
+#if !USE_MAP_BUF_PARTICLE
 	m_buff = new ParticleBatchRenderer2D::VertexData[MAX_VERTICES];
 #endif
 	m_transformation_stack.push_back(glm::mat4(1.0f));
@@ -71,7 +71,7 @@ ParticleRenderer::~ParticleRenderer()
 	delete m_vbo;
 	delete m_vao;
 	delete m_ibo;
-#if !USE_MAP_BUF
+#if !USE_MAP_BUF_PARTICLE
 	delete m_buff;
 #endif
 }
@@ -85,7 +85,7 @@ void ParticleRenderer::begin(FrameBuffer* fbo)
 	ASSERT(m_fbo, "Renderer Target must be specified");
 	m_indices_count = 0;
 	m_textures.clear();
-#if USE_MAP_BUF
+#if USE_MAP_BUF_PARTICLE
 	ND_PROFILE_CALL(m_vbo->bind());
 	ND_PROFILE_CALL(m_vertex_data = (VertexData*)m_vbo->mapPointer());
 #else
@@ -146,7 +146,7 @@ void ParticleRenderer::flush()
 {
 	m_fbo->bind();
 
-#if USE_MAP_BUF
+#if USE_MAP_BUF_PARTICLE
 	m_vbo->unMapPointer();
 #else
 	m_vbo->bind();

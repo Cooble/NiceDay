@@ -1,10 +1,12 @@
 ﻿#include "HUD.h"
 #include "core/App.h"
+#include "core/NBT.h"
+#include "core/Stats.h"
 #include "GUIItemContainer.h"
 #include "Translator.h"
-#include "core/Stats.h"
 #include "event/Event.h"
 #include "GLFW/glfw3.h"
+#include "inventory/ItemStack.h"
 
 using namespace nd;
 

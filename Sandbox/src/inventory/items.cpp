@@ -1,5 +1,6 @@
 ﻿#include "items.h"
 
+#include "ItemStack.h"
 #include "audio/player.h"
 #include "core/App.h"
 #include "core/AppGlobals.h"
@@ -8,21 +9,6 @@
 
 struct ItemToolDataBox;
 using namespace nd;
-
-ItemPickaxeCopper::ItemPickaxeCopper()
-	: ItemTool(SID("pickaxe"), "pickaxe", TOOL_TYPE_PICKAXE)
-{
-	m_tier = 1;
-	m_efficiency = 0.5f;
-}
-
-ItemElPickaxo::ItemElPickaxo()
-	: ItemTool(SID("el_pickaxo"), "el_pickaxo", TOOL_TYPE_PICKAXE)
-{
-	m_tier = 10000;
-	m_efficiency = 100.f;
-	m_dig_interval = 1;
-}
 
 ItemMagicWand::ItemMagicWand()
 	: Item(SID("magic_wand"), "magic_wand") {}
@@ -45,7 +31,8 @@ bool ItemMagicWand::onRightClickOnBlock(World& world, ItemStack& stack, WorldEnt
 	return true;
 }
 
-ItemHammer::ItemHammer() : ItemTool(SID("hammer"), "hammer", TOOL_TYPE_HAMMER) {}
+
+ItemHammer::ItemHammer(ItemID id, const std::string& name) : ItemTool(id,name, TOOL_TYPE_HAMMER) {}
 
 
 void ItemHammer::onItemInteraction(World& w, ItemStack& stack, void* dataBox, WorldEntity& owner, float x, float y,
@@ -119,7 +106,7 @@ void ItemHammer::onItemInteraction(World& w, ItemStack& stack, void* dataBox, Wo
 	if (data->ticksForNextSwing == 0)
 	{
 		//we haven't started digging yet
-		data->ticksForNextSwing = m_dig_interval;
+		data->ticksForNextSwing = m_dig_time;
 
 		{
 			//spawn particles and update block cracks
@@ -206,38 +193,8 @@ bool ItemHammer::onRightClickOnBlock(World& world, ItemStack& stack, WorldEntity
 	return true;
 }
 
-ItemWoodHelmet::ItemWoodHelmet()
-	: Item(SID("wood_helmet"), "wood_helmet")
+ItemArmor::ItemArmor(ItemID id, const std::string& name) :Item(id,name)
 {
-	setFlag(ITEM_FLAG_ARMOR_HEAD);
-	m_max_stack_size = 1;
-}
-
-ItemIronHelmet::ItemIronHelmet()
-	: Item(SID("iron_helmet"), "iron_helmet")
-{
-	setFlag(ITEM_FLAG_ARMOR_HEAD);
-	m_max_stack_size = 1;
-}
-
-ItemWoodChestplate::ItemWoodChestplate()
-	: Item(SID("wood_chestplate"), "wood_chestplate")
-{
-	setFlag(ITEM_FLAG_ARMOR_CHEST);
-	m_max_stack_size = 1;
-}
-
-ItemWoodLeggins::ItemWoodLeggins()
-	: Item(SID("wood_leggins"), "wood_leggins")
-{
-	setFlag(ITEM_FLAG_ARMOR_LEGGINS);
-	m_max_stack_size = 1;
-}
-
-ItemWoodBoots::ItemWoodBoots()
-	: Item(SID("wood_boots"), "wood_boots")
-{
-	setFlag(ITEM_FLAG_ARMOR_BOOTS);
 	m_max_stack_size = 1;
 }
 
@@ -275,13 +232,7 @@ std::string ItemShotgun::getTitle(ItemStack* stack) const
 	return Font::colorize(Font::BLACK, Font::DARK_GREY) + "SuperShotgun" + Font::BLACK + "XXX";
 }
 
-ItemTnt::ItemTnt()
-	: Item(SID("tnt"), "tnt")
-{
-	m_max_stack_size = 111;
-	setFlag(ITEM_FLAG_USE_META_AS_TEXTURE);
-	m_max_metadata = 3;
-}
+ItemTnt::ItemTnt(): Item(SID("tnt"), "tnt"){}
 
 bool ItemTnt::onRightClick(World& world, ItemStack& stack, WorldEntity& owner, int x, int y) const
 {
@@ -297,13 +248,7 @@ bool ItemTnt::onRightClick(World& world, ItemStack& stack, WorldEntity& owner, i
 static std::array<const char*, 2> vinylPlays = {"Neon", "Tower Clock"};
 static std::array<const char*, 2> vinylPlaysPath = {"neon.ogg", "tower_clock.ogg"};
 
-ItemVinyl::ItemVinyl()
-	: Item(SID("vinyl"), "vinyl")
-{
-	m_max_stack_size = 1;
-	setFlag(ITEM_FLAG_HAS_NBT);
-	m_max_metadata = 2;
-}
+ItemVinyl::ItemVinyl(): Item(SID("vinyl"), "vinyl"){}
 
 std::string ItemVinyl::getTitle(ItemStack* stack) const
 {

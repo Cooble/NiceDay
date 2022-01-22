@@ -3,6 +3,9 @@
 #include "graphics/API/Texture.h"
 
 
+namespace nd {
+class NBT;
+}
 
 class OpenSimplexNoise;
 class Genom

@@ -27,12 +27,13 @@ struct ItemToolDataBox
 class ItemTool : public Item
 {
 protected:
+	friend ItemRegistry;
 	ToolType m_tool_type;
 	int m_damage;
 	float m_efficiency;
 	int m_tier = 1;
 	//ticks between two digs/swings (of the same block)
-	int m_dig_interval = 20;
+	int m_dig_time = 20;
 	static std::vector<glm::vec3> s_dug_blocks;
 public:
 	ItemTool(ItemID id, const std::string& textName, ToolTypes type);

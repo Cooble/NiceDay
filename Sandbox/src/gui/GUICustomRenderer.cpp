@@ -4,6 +4,7 @@
 #include "graphics/GContext.h"
 #include "core/App.h"
 #include "GUIItemContainer.h"
+#include "inventory/ItemStack.h"
 
 using namespace nd;
 GUICustomRenderer::GUICustomRenderer(glm::vec2 windowSize)

@@ -18,6 +18,7 @@
 #include "EntityAllocator.h"
 #include "EntityPlayer.h"
 #include "core/NBT.h"
+#include "inventory/ItemStack.h"
 
 using namespace glm;
 using namespace nd;

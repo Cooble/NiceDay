@@ -5,6 +5,7 @@
 #include "GLFW/glfw3.h"
 #include "core/Stats.h"
 #include "event/SandboxControls.h"
+#include "inventory/ItemStack.h"
 
 using namespace nd;
 
