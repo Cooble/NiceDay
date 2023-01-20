@@ -108,7 +108,9 @@ public:
 	void computePhysics(World& w);
 	bool moveOrCollide(World& w, float dt);
 	//regards this as dimensionless structure, checks for collisions only blocks
-	bool moveOrCollideOnlyBlocksNoBounds(World& w);
+	bool moveOrCollideOnlyBlocksNoBounds(const World& w);
+	// checks if line is clear of any blocks -> line sight
+	bool collideLine(const World& w, glm::vec2 from, glm::vec2 to) const;
 	void computeVelocity(World& w);
 	void computeWindResistance(World& w,float windResistance=0.01f);
 

@@ -275,7 +275,7 @@ bool PhysEntity::moveOrCollide(World& w, float dt)
 	return false;
 }
 
-bool PhysEntity::moveOrCollideOnlyBlocksNoBounds(World& w)
+bool PhysEntity::moveOrCollideOnlyBlocksNoBounds(const World& w)
 {
 	auto possiblePos = m_pos + m_velocity;
 	auto b = w.getBlock(possiblePos.x, possiblePos.y);
@@ -292,6 +292,34 @@ bool PhysEntity::moveOrCollideOnlyBlocksNoBounds(World& w)
 	}
 	m_pos = possiblePos;
 	return true;
+}
+
+bool PhysEntity::collideLine(const World& w, const glm::vec2 from, const glm::vec2 to) const
+{
+	const float DIVIDER = 1/2.f;
+	auto vector = to - from;
+	float length = glm::length(vector);
+
+	auto slider = vector / length * DIVIDER;
+
+
+	for (int i = 0; i < (int)(length/DIVIDER); ++i)
+	{
+		auto pos = from + ((float)i * slider)+glm::vec2(0,1);
+		const auto bb = w.getBlockOrAir((int)pos.x,(int)pos.y);
+
+		auto& block = BlockRegistry::get().getBlock(bb->block_id);
+		if (block.hasCollisionBox())
+		{
+			auto& blockBounds = block.getCollisionBox((int)pos.x, (int)pos.y, *bb);
+			if (Phys::contains(blockBounds,
+				{ (pos.x - (int)pos.x), (pos.y - (int)pos.y) }))
+				return false;
+		}
+	}
+	return true;
+
+
 }
 
 void PhysEntity::computeVelocity(World& w)
@@ -540,7 +568,11 @@ void EntityItem::update(World& w)
 						}
 					}
 				}
-				else if (entity->getID() != m_ignore_target && entity->isItemConsumer() && entity->wantsItem(m_item_stack))
+				else if (
+					entity->getID() != m_ignore_target 
+					&& entity->isItemConsumer() 
+					&& entity->wantsItem(m_item_stack) 
+					&& !PhysEntity::collideLine(w,m_pos,entity->getPosition()))
 				{
 					m_target = entity->getID();
 					goto FROWARD;
@@ -555,7 +587,7 @@ void EntityItem::update(World& w)
 		//add half block up to compensate for player's loc on the ground
 		auto pos = e->getPosition() + glm::vec2(0, 0.5f);
 		float dist2 = glm::distance2(m_pos, pos);
-		if (e == nullptr || dist2 > maxDistance * maxDistance)
+		if (e == nullptr /* || dist2 > maxDistance * maxDistance*/)
 		{
 			m_target = ENTITY_ID_INVALID;
 		}
@@ -599,7 +631,7 @@ void EntityItem::update(World& w)
 		m_acceleration.y = entityItemGravityLower;
 	}
 	PhysEntity::computeVelocity(w);
-	PhysEntity::computeWindResistance(w, m_speed_mode_ticks_remaining ? 0.003f : 0.01);
+	PhysEntity::computeWindResistance(w, m_speed_mode_ticks_remaining ? 0.003f : 0.01f);
 	if (!PhysEntity::moveOrCollideOnlyBlocksNoBounds(w) && m_speed_mode_ticks_remaining)
 	{
 		m_max_velocity = glm::vec2(entityItemMaxVelocityNormal);

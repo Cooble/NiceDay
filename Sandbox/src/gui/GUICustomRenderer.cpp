@@ -229,8 +229,8 @@ void GUICustomRenderer::renderTextBox(BatchRenderer2D& renderer, GUITextBox& e)
 									 m_stackPos.y + (e.height - e.fontMaterial->font->lineHeight) / 2,
 									 m_z_pos
 		}));
-	renderer.submitText(e.textMesh, e.fontMaterial);
 
+	renderer.submitText(e.textMesh, e.fontMaterial);
 
 	renderer.pop();
 
