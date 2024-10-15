@@ -23,12 +23,12 @@ namespace components_imgui_access {
 
 	inline void Image(StringId id, const TextureAtlasUV& atlas)
 	{
-		Image(reinterpret_cast<ImTextureID>(atlas.getTexture()->getID()), atlas.getSubImage(id));
+		Image(atlas.getTexture()->getID(), atlas.getSubImage(id));
 	}
 
 	inline void Image(StringId id, const TextureAtlasUV& atlas, ImVec2 size)
 	{
-		Image(reinterpret_cast<ImTextureID>(atlas.getTexture()->getID()), atlas.getSubImage(id), size);
+		Image(atlas.getTexture()->getID(), atlas.getSubImage(id), size);
 	}
 
 

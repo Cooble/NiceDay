@@ -4,7 +4,7 @@
 #include "imgui.h"
 #include "memory/RingBuffer.h"
 #include "player.h"
-#include "imguifiledialog/ImGuiFileDialog.h"
+#include "ImGuiFileDialog.h"
 #include "event/KeyEvent.h"
 #include "GLFW/glfw3.h"
 #include "event/MessageEvent.h"
@@ -394,19 +394,19 @@ void SoundLayer::onImGuiRender()
 
 		if (ImGui::SmallButton("OpenMusic"))
 		{
-			ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey2", "Open Music", ".ogg\0\0", ".");
+			ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey2", "Open Music", ".ogg\0\0");
 		}
 		// display
-		if (ImGuiFileDialog::Instance()->FileDialog("ChooseFileDlgKey2"))
+		if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey2"))
 		{
 			// action if OK
-			if (ImGuiFileDialog::Instance()->IsOk == true)
+			if (ImGuiFileDialog::Instance()->IsOk())
 			{
-				std::string filePathName = ImGuiFileDialog::Instance()->GetFilepathName();
+				std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
 				Sounder::get().playMusic(filePathName, vol);
 			}
 			// close
-			ImGuiFileDialog::Instance()->CloseDialog("ChooseFileDlgKey2");
+			ImGuiFileDialog::Instance()->Close();
 		}
 
 		if (delayPlay > 0)

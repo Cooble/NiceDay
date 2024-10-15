@@ -12,7 +12,7 @@
 
 #include <lua.hpp>
 #include "nd_luabinder.h"
-#include "imguifiledialog/ImGuiFileDialog.h"
+#include "ImGuiFileDialog.h"
 #include "core/NBT.h"
 #include "core/ImGuiLayer.h"
 #include "files/FUtil.h"
@@ -259,22 +259,22 @@ struct LuaConsole
 					else
 					{
 						keepDefaultFile = false;
-						ImGuiFileDialog::Instance()->OpenDialog("SaveFileDlgKey", "Save File", ".lua\0\0", ".");
+						ImGuiFileDialog::Instance()->OpenDialog("SaveFileDlgKey", "Save File", ".lua\0\0");
 					}
 				}
 				ImGui::SameLine();
 				if (ImGui::SmallButton("Save As"))
 				{
 					keepDefaultFile = true;
-					ImGuiFileDialog::Instance()->OpenDialog("SaveFileDlgKey", "Save File", ".lua\0\0", ".");
+					ImGuiFileDialog::Instance()->OpenDialog("SaveFileDlgKey", "Save File", ".lua\0\0");
 				}
 				// display
-				if (ImGuiFileDialog::Instance()->FileDialog("SaveFileDlgKey"))
+				if (ImGuiFileDialog::Instance()->Display("SaveFileDlgKey"))
 				{
 					// action if OK
-					if (ImGuiFileDialog::Instance()->IsOk == true)
+					if (ImGuiFileDialog::Instance()->IsOk())
 					{
-						std::string filePathName = ImGuiFileDialog::Instance()->GetFilepathName();
+						std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
 						std::string filePath = ImGuiFileDialog::Instance()->GetCurrentPath();
 
 						FILE* file = fopen(filePathName.c_str(), "w");
@@ -299,23 +299,23 @@ struct LuaConsole
 						}
 					}
 					// close
-					ImGuiFileDialog::Instance()->CloseDialog("SaveFileDlgKey");
+					ImGuiFileDialog::Instance()->Close();
 				}
 				ImGui::SameLine();
 				if (ImGui::SmallButton("Open"))
 				{
-					ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", "Open File", ".lua\0\0", ".");
+					ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", "Open File", ".lua\0\0");
 				}
 				// display
-				if (ImGuiFileDialog::Instance()->FileDialog("ChooseFileDlgKey"))
+				if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey"))
 				{
 					// action if OK
-					if (ImGuiFileDialog::Instance()->IsOk == true)
+					if (ImGuiFileDialog::Instance()->IsOk())
 					{
 						int length = strlen(text);
 						s_files[s_currentFileIndex].text = std::string(text);
 
-						std::string filePathName = ImGuiFileDialog::Instance()->GetFilepathName();
+						std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
 						std::string filePath = ImGuiFileDialog::Instance()->GetCurrentPath();
 
 						FILE* file = fopen(filePathName.c_str(), "r");
@@ -338,7 +338,8 @@ struct LuaConsole
 						}
 					}
 					// close
-					ImGuiFileDialog::Instance()->CloseDialog("ChooseFileDlgKey");
+					//CND ImGuiFileDialog::Instance()->CloseDialog("ChooseFileDlgKey");
+					ImGuiFileDialog::Instance()->Close();
 				}
 				ImGui::SameLine();
 				ImGui::SmallButton("       ");

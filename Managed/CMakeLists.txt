@@ -15,8 +15,8 @@ LIST( APPEND CMAKE_MODULE_PATH
     add_library(Managed SHARED ${SOURCES})
     #target_include_directories(Managed "../ManagedCore/src")
 
-    set_property(TARGET Managed PROPERTY VS_DOTNET_TARGET_FRAMEWORK_VERSION "v4.5")
-    target_compile_options(Managed PRIVATE "/langversion:6")
+    set_property(TARGET Managed PROPERTY VS_DOTNET_TARGET_FRAMEWORK_VERSION "v4.8")
+    target_compile_options(Managed PRIVATE "/langversion:10")
     target_link_libraries(Managed ManagedCore)
 
 # Include files

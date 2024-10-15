@@ -17,16 +17,19 @@ FakeWindow::FakeWindow(WindowTemplate* realWindow, int width, int height, const 
 	:
 	m_window(realWindow)
 {
-	m_data.width = width;
-	m_data.height = height;
-	m_data.title = title;
-	m_data.fullscreen = fullscreen;
 
 	//just to be sure
 	if (height == 0)
 		height = 100;
 	if (width == 0)
 		width = 100;
+
+	m_data.width = width;
+	m_data.height = height;
+	m_data.title = title;
+	m_data.fullscreen = fullscreen;
+
+	
 
 	m_fbo = FrameBuffer::create(
 		FrameBufferInfo(width, height, TextureFormat::RGBA).special(FBAttachment::DEPTH_STENCIL));
@@ -104,8 +107,11 @@ void FakeWindow::swapBuffers()
 	if (m_dirty_dim)
 	{
 		m_dirty_dim = false;
+		ND_BUG("Resizing fbo to {}, {}", m_dim.x, m_dim.y);
 		m_fbo->resize(m_dim.x, m_dim.y);
+
 		auto e = WindowResizeEvent(m_data.width, m_data.height);
+		ND_BUG("Firing WindowsResizeEvent, {}, {}", m_data.width, m_data.height);
 		App::get().fireEvent(e);
 	}
 }
@@ -195,11 +201,15 @@ void FakeWindow::renderView()
 
 	auto lastDim = m_dim;
 	m_dim = {ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y};
+
+	//NDC clamping Imgui::getcontentregionavail
+	m_dim = glm::clamp(m_dim, 700.f, 10000.f);
+
 	m_data.width = m_dim.x;
 	m_data.height = m_dim.y;
 	m_dirty_dim |= lastDim != m_dim;
 
-	ImGui::Image((void*)m_fbo->getAttachmentID(0), {m_dim.x, m_dim.y}, {0, 1}, {1, 0});
+	ImGui::Image(m_fbo->getAttachmentID(0), {m_dim.x, m_dim.y}, {0, 1}, {1, 0},ImVec4(1,1,1,1),ImVec4(0.5f,0.5f,0.5f,0.5f));
 	ImGui::End();
 }
 

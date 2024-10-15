@@ -1,9 +1,6 @@
 [submodule "NiceDay/vendor/spdlog"]
 	path = NiceDay/vendor/spdlog
 	url = https://github.com/gabime/spdlog.git
-[submodule "NiceDay/vendor/glfw"]
-	path = NiceDay/vendor/glfw
-	url = https://github.com/Cooble/glfw.git
 [submodule "NiceDay/vendor/glm"]
 	path = NiceDay/vendor/glm
 	url = https://github.com/g-truc/glm.git
@@ -19,13 +16,16 @@
 [submodule "NiceDay/vendor/vorbis"]
 	path = NiceDay/vendor/vorbis
 	url = https://github.com/xiph/vorbis
-[submodule "NiceDay/vendor/portaudio"]
-	path = NiceDay/vendor/portaudio
-	url = https://git.assembla.com/portaudio.git
-[submodule "NiceDay/vendor/imgui"]
-	path = NiceDay/vendor/imgui
-	url = https://github.com/Cooble/imgui.git
-	branch = docking
 [submodule "NiceDay/vendor/assimp"]
 	path = NiceDay/vendor/assimp
 	url = https://github.com/Cooble/assimp.git
+[submodule ".\\NiceDay\\vendor\\portaudio"]
+	path = .\\NiceDay\\vendor\\portaudio
+	url = https://github.com/PortAudio/portaudio.git
+[submodule ".\\NiceDay\\vendor\\glfw"]
+	path = .\\NiceDay\\vendor\\glfw
+	url = https://github.com/Cooble/glfw
+[submodule ".\\NiceDay\\vendor\\imgui"]
+	path = .\\NiceDay\\vendor\\imgui
+	url = https://github.com/Cooble/imgui
+	branch = docking

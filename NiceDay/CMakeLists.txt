@@ -31,7 +31,7 @@ LIST( APPEND CMAKE_MODULE_PATH
         "src/*.h" 
         #"vendor/glm/**.hpp"
         "vendor/stb_image/include/*.cpp"
-        "vendor/imguifiledialog/include/*.cpp"
+        "vendor/imguifiledialog/*.cpp"
         #This is not required, imgui_build.cpp builds these
         #"vendor/imguidocking/examples/imgui_impl_glfw.cpp"
         #"vendor/imguidocking/examples/imgui_impl_opengl3.cpp"
@@ -46,7 +46,8 @@ LIST( APPEND CMAKE_MODULE_PATH
     target_include_directories(NiceDay PUBLIC 
         "src"
         "vendor/stb_image/include"
-        "vendor/imguifiledialog/include"
+        "vendor/glm"
+        "vendor/imguifiledialog"
         "vendor/sol2/include"
         "vendor/json/include"
         "vendor/entt/include"
@@ -68,6 +69,7 @@ LIST( APPEND CMAKE_MODULE_PATH
     target_compile_definitions(NiceDay PUBLIC 
         "_CRT_SECURE_NO_WARNINGS"
         #"LUA_BINARIES"
+        "GLM_ENABLE_EXPERIMENTAL"
         "$<$<PLATFORM_ID:Windows>:ND_PLATFORM_WINDOWS>"
         "$<$<PLATFORM_ID:Linux>:ND_PLATFORM_LINUX>"
         )
@@ -104,6 +106,8 @@ LIST( APPEND CMAKE_MODULE_PATH
     
     # simple libs (no config needed and directory is same as target name)
     add_my_lib(glad)
+    
+
     add_my_lib(imgui)
     add_my_lib(lua)
 
@@ -118,7 +122,7 @@ LIST( APPEND CMAKE_MODULE_PATH
     # == glm (no need to subdir (header-only))
     #set(GLM_TEST_ENABLE OFF CACHE BOOL "" FORCE)
     #add_my_lib(glm glm_static)
-    target_include_directories(NiceDay PUBLIC "vendor/glm") 
+    #target_include_directories(NiceDay PUBLIC "vendor/glm") 
 
     # == GLFW
     set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
@@ -136,10 +140,11 @@ LIST( APPEND CMAKE_MODULE_PATH
     nd_enable_find_package()
     
     # == portadio
-    set(PA_BUILD_SHARED OFF CACHE BOOL "" FORCE)
-    set(PA_USE_ASIO OFF CACHE BOOL "" FORCE)
-    set(PA_DISABLE_INSTALL ON CACHE BOOL "" FORCE)
-    add_my_lib(portaudio portaudio_static)
+    # set(PA_BUILD_SHARED OFF CACHE BOOL "" FORCE)
+    # set(PA_USE_ASIO OFF CACHE BOOL "" FORCE)
+    # set(PA_DISABLE_INSTALL ON CACHE BOOL "" FORCE)
+    set(PA_BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+    add_my_lib(portaudio PortAudio)
   
     # == assimp    
     set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)

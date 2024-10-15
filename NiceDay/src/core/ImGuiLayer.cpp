@@ -1,7 +1,7 @@
 ﻿#include "ImGuiLayer.h"
 #include "imgui.h"
-#include <examples/imgui_impl_glfw.h>
-#include <examples/imgui_impl_opengl3.h>
+#include <backends/imgui_impl_glfw.h>
+#include <backends/imgui_impl_opengl3.h>
 #include "App.h"
 #include "GLFW/glfw3.h"
 #include "AppGlobals.h"
@@ -137,7 +137,7 @@ void ImGuiLayer::renderViewWindows()
 		ImGui::PopStyleVar(2);
 		auto size = ImGui::GetWindowSize();
 
-		ImGui::Image((void*)view.texture->getID(), size, {0, 1}, {1, 0});
+		ImGui::Image(view.texture->getID(), size, {0, 1}, {1, 0});
 		ImGui::End();
 	}
 }
@@ -341,9 +341,13 @@ void ImGuiLayer::renderBaseImGui()
 	if (opt_fullscreen)
 	{
 		ImGuiViewport* viewport = ImGui::GetMainViewport();
-		ImGui::SetNextWindowPos(viewport->GetWorkPos());
-		ImGui::SetNextWindowSize(viewport->GetWorkSize());
+
+
+
+		ImGui::SetNextWindowPos(viewport->WorkPos);
+		ImGui::SetNextWindowSize(viewport->WorkSize);
 		ImGui::SetNextWindowViewport(viewport->ID);
+
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
 		window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize |
@@ -827,7 +831,7 @@ static bool renameName(const char* name)
 		//ImGui::IsAnyWindowFocused()
 		//if (ImGui::IsRootWindowOrAnyChildFocused() && !ImGui::IsAnyItemActive() && !ImGui::IsMouseClicked(0))
 		//todo imdoc
-		if (ImGui::IsAnyWindowFocused() && !ImGui::IsAnyItemActive() && !ImGui::IsMouseClicked(0))
+		if (ImGui::IsWindowFocused(ImGuiFocusedFlags_AnyWindow) && !ImGui::IsAnyItemActive() && !ImGui::IsMouseClicked(0))
 			ImGui::SetKeyboardFocusHere();
 		if (ImGui::InputText("##heheheehj", c, 127, ImGuiInputTextFlags_EnterReturnsTrue))
 		{

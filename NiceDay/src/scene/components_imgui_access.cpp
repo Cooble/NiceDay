@@ -74,14 +74,14 @@ static Entity loadEntity(NewScene* s, const std::string& path)
 static void drawTexOrNo(MaterialPtr& c, int width, int height)
 {
 	static auto no = TextureLib::loadOrGetTexture("res/images/no.png")->getID();
-	ImGui::Image(reinterpret_cast<ImTextureID>(c ? Atelier::get().getPhoto(c)->getID() : no),
+	ImGui::Image(c ? Atelier::get().getPhoto(c)->getID() : no,
 	             {(float)width, (float)height}, {0.f, 1.f}, {1.f, 0.f});
 }
 
 static void drawTexOrNo(MeshPtr& c, int width, int height)
 {
 	static auto no = TextureLib::loadOrGetTexture("res/images/no.png")->getID();
-	ImGui::Image(reinterpret_cast<ImTextureID>(c ? Atelier::get().getPhoto(c)->getID() : no),
+	ImGui::Image(c ? Atelier::get().getPhoto(c)->getID() : no,
 	             {(float)width, (float)height}, {0.f, 1.f}, {1.f, 0.f});
 }
 
@@ -97,7 +97,7 @@ static void makeDragDropSource(MeshPtr& ptr)
 		// the filename and a small preview of the image, etc.)
 		ImGui::Text(ptr->getName().c_str());
 		ImGui::SameLine();
-		ImGui::Image(reinterpret_cast<ImTextureID>(Atelier::get().getPhoto(ptr)->getID()), {32.f, 32.f}, {0.f, 1.f},
+		ImGui::Image(Atelier::get().getPhoto(ptr)->getID(), {32.f, 32.f}, {0.f, 1.f},
 		             {1.f, 0.f});
 		ImGui::EndDragDropSource();
 	}
@@ -130,7 +130,7 @@ static void makeDragDropSource(MaterialPtr& ptr)
 		// the filename and a small preview of the image, etc.)
 		ImGui::Text(ptr->getName().c_str());
 		ImGui::SameLine();
-		ImGui::Image(reinterpret_cast<ImTextureID>(Atelier::get().getPhoto(ptr)->getID()), {32.f, 32.f}, {0.f, 1.f},
+		ImGui::Image(Atelier::get().getPhoto(ptr)->getID(), {32.f, 32.f}, {0.f, 1.f},
 		             {1.f, 0.f});
 		ImGui::EndDragDropSource();
 	}
@@ -584,7 +584,7 @@ static std::string textureCombo(const std::string& currentCombo, TextureType typ
 			          ? TextureLib::loadOrGetTexture(currentCombo)->getID()
 			          : TextureLib::loadOrGetTexture("res/images/no.png")->getID();
 		if (id)
-			ImGui::Image(reinterpret_cast<ImTextureID>(id), {(float)AtelierDim::width, (float)AtelierDim::height},
+			ImGui::Image(id, {(float)AtelierDim::width, (float)AtelierDim::height},
 			             {0.f, 1.f}, {1.f, 0.f});
 		//else ImGui::TextColored({ 1,0,0,1 }, "Image %s not found", currentCombo.c_str());
 
@@ -683,7 +683,7 @@ bool drawWindow(MaterialPtr& c)
 	ImGui::End();
 	ImGui::Begin("LeftMaterial");
 
-	ImGui::Image(reinterpret_cast<ImTextureID>(Atelier::get().getPhoto(c)->getID()),
+	ImGui::Image(Atelier::get().getPhoto(c)->getID(),
 	             {(float)AtelierDim::width, (float)AtelierDim::height}, {0.f, 1.f}, {1.f, 0.f});
 	if (ImGui::IsItemClicked(ImGuiMouseButton_Right))
 		ImGui::OpenPopup("materialPop");
@@ -1095,7 +1095,7 @@ bool drawMaterialManager(bool clickOnNew)
 		}
 
 		ImGui::BeginGroup();
-		ImGui::Image(reinterpret_cast<ImTextureID>(Atelier::get().getPhoto(material)->getID()), {128.f, 128.f},
+		ImGui::Image(Atelier::get().getPhoto(material)->getID(), {128.f, 128.f},
 		             {0.f, 1.f}, {1.f, 0.f});
 		if (ImGui::IsItemClicked(ImGuiMouseButton_Right))
 			ImGui::OpenPopup(c);
@@ -1194,7 +1194,7 @@ bool drawModelManager(bool clickOnNew)
 		c[14] = 0;
 
 		ImGui::BeginGroup();
-		ImGui::Image(reinterpret_cast<ImTextureID>(Atelier::get().getPhoto(new_mesh)->getID()), {128.f, 128.f},
+		ImGui::Image(Atelier::get().getPhoto(new_mesh)->getID(), {128.f, 128.f},
 		             {0.f, 1.f}, {1.f, 0.f});
 		if (ImGui::IsItemClicked(ImGuiMouseButton_Right))
 			ImGui::OpenPopup(c);

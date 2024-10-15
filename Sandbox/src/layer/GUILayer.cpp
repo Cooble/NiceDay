@@ -1,6 +1,6 @@
 ﻿#include "GUILayer.h"
 
-#include <imguifiledialog/ImGuiFileDialog.h>
+#include "ImGuiFileDialog.h"
 
 
 #include "imgui.h"
@@ -366,19 +366,21 @@ void GUILayer::onImGuiRender()
 			s = "Save Unknown Dictionary Entries (" + std::to_string(Translator::getNumberOfUnknowns()) + ")";
 			if (ImGui::Button(s.c_str()))
 			{
-				ImGuiFileDialog::Instance()->OpenDialog("ChooseDictDump", "Save to", ".lang\0\0", ".");
+				//CND ImGuiFileDialog::Instance()->OpenDialog("ChooseDictDump", "Save to", ".lang\0\0", ".");
+				ImGuiFileDialog::Instance()->OpenDialog("ChooseDictDump", "Save to", ".lang\0\0");
 			}
 			// display
-			if (ImGuiFileDialog::Instance()->FileDialog("ChooseDictDump"))
+			if (ImGuiFileDialog::Instance()->Display("ChooseDictDump"))
 			{
 				// action if OK
-				if (ImGuiFileDialog::Instance()->IsOk == true)
+				if (ImGuiFileDialog::Instance()->IsOk())
 				{
-					std::string filePathName = ImGuiFileDialog::Instance()->GetFilepathName();
+					std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
 					Translator::saveUnknownEntries(filePathName.c_str());
 				}
 				// close
-				ImGuiFileDialog::Instance()->CloseDialog("ChooseDictDump");
+				//CND ImGuiFileDialog::Instance()->CloseDialog("ChooseDictDump");
+				ImGuiFileDialog::Instance()->Close();
 			}
 		}
 	}

@@ -61,6 +61,7 @@ Sandbox::Sandbox() :
    info.title = title;
    info.io.enableSCENE = true;
    info.io.enableMONO = true;
+   //info.io.enableIMGUI = false;
    init(info);
 
 
