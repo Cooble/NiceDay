@@ -1,7 +1,7 @@
 # NiceDay
 [![build_sandbox_and_test_w64](https://github.com/Cooble/NiceDay/actions/workflows/build_sandbox_and_test_w64.yml/badge.svg?branch=master)](https://github.com/Cooble/NiceDay/actions/workflows/build_sandbox_and_test_w64.yml)
 
-[![Build Status](https://travis-ci.com/Cooble/NiceDay.svg?branch=master)](https://travis-ci.com/Cooble/NiceDay)
+<!-- kept here just out of nostalgia, travis went fully commercial years ago. [![Build Status](https://travis-ci.com/Cooble/NiceDay.svg?branch=master)](https://travis-ci.com/Cooble/NiceDay) -->
 
 Let's make Terraria in C++!  
 I decided to make a "simple" clone of Terraria in C++ using my own engine which is being created on the go. 
