@@ -331,7 +331,7 @@ static PaStream* microStream = nullptr;
 
 void SoundLayer::onDetach()
 {
-	ND_PROFILE_END_SESSION();
+	//ND_PROFILE_END_SESSION();
 	/*PaError err = paNoError;
 	if (m_stream && Pa_IsStreamActive(m_stream))
 	    err = Pa_StopStream(m_stream);

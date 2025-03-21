@@ -144,7 +144,7 @@ LIST( APPEND CMAKE_MODULE_PATH
     # set(PA_USE_ASIO OFF CACHE BOOL "" FORCE)
     # set(PA_DISABLE_INSTALL ON CACHE BOOL "" FORCE)
     set(PA_BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
-    add_my_lib(portaudio PortAudio)
+    add_my_lib(portaudio portaudio)
   
     # == assimp    
     set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
