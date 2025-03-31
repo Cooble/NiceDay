@@ -208,6 +208,7 @@ Window::~Window()
 	if (!m_destroyed)
 		glfwDestroyWindow(m_window);
 	glfwTerminate();
+	ND_TRACE("Window destroyed, glfw terminated");
 }
 
 glm::vec2 Window::getPos()

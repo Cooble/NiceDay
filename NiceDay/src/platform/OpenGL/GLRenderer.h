@@ -6,7 +6,7 @@ namespace nd::internal {
 #ifdef ND_DEBUG
 
 #define GLCall(x) { \
-    for (int i = 0; i < 10 && glGetError() != GL_NO_ERROR; ++i); /* Clear previous errors */ \
+    for (int i = 0; i < 5 && glGetError() != GL_NO_ERROR; ++i); /* Clear previous errors */ \
     x; \
     nd::internal::checkGLError(__LINE__, #x, __FILE__); \
 }

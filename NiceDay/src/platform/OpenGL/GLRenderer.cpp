@@ -7,7 +7,7 @@ namespace nd::internal
 
 void checkGLError(int line, const char* method_name, const char* file)
 {
-	constexpr int MAX_TRIES = 5;
+	constexpr int MAX_TRIES = 1;
 
 	bool shit = false;
 	for (int i = 0, e; i < MAX_TRIES && (e = glGetError()) != GL_NO_ERROR; i++)

@@ -775,13 +775,13 @@ void EditorLayer::onAttach()
 
 	//adding sphere
 	{
-		auto diffuse = Texture::create(TextureInfo("res/examples/images/crate.png"));
+		auto diffusePtr = std::shared_ptr<Texture>(Texture::create(TextureInfo("res/examples/images/crate.png")));
 
 		auto mesh = MeshLibrary::loadOrGet("res/examples/models/sphere.fbx");
 
 		auto mat = MaterialLibrary::copy(modelMat, "SphereMat");
 		mat->setValue("color", glm::vec4(1.0, 1.0, 0, 0));
-		mat->setValue("diffuse", std::shared_ptr<Texture>(diffuse));
+		mat->setValue("diffuse", diffusePtr);
 
 		auto ent = m_scene->createEntity("Sphere");
 		//ent.emplaceOrReplace<TransformComponent>(glm::vec3(0.f, 5.f, 0.f), glm::vec3(1.f), glm::vec3(0.f));
@@ -790,7 +790,7 @@ void EditorLayer::onAttach()
 		{
 			auto mat = MaterialLibrary::copy(simpleMat, "SphereMat0");
 			mat->setValue("color", glm::vec4(1.0, 0.0, 0, 1));
-			mat->setValue("diffuse", std::shared_ptr<Texture>(diffuse));
+			mat->setValue("diffuse", diffusePtr);
 
 			sphere0 = m_scene->createEntity("Sphere0");
 			sphere0.emplaceOrReplace<TransformComponent>(glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.2f), glm::vec3(0.f));
@@ -798,7 +798,7 @@ void EditorLayer::onAttach()
 			{
 				auto mat = MaterialLibrary::copy(simpleMat, "SphereMat1");
 				mat->setValue("color", glm::vec4(0.0, 1.0, 0, 1));
-				mat->setValue("diffuse", std::shared_ptr<Texture>(diffuse));
+				mat->setValue("diffuse", diffusePtr);
 
 				sphere1 = m_scene->createEntity("Sphere1");
 				sphere1.emplaceOrReplace<TransformComponent>(glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.2f), glm::vec3(0.f));
@@ -807,7 +807,7 @@ void EditorLayer::onAttach()
 			{
 				auto mat = MaterialLibrary::copy(simpleMat, "SphereMat2");
 				mat->setValue("color", glm::vec4(0.0, 0.0, 1, 1));
-				mat->setValue("diffuse", std::shared_ptr<Texture>(diffuse));
+				mat->setValue("diffuse", diffusePtr);
 
 				sphere2 = m_scene->createEntity("Sphere2");
 				sphere2.emplaceOrReplace<TransformComponent>(glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.2f), glm::vec3(0.f));
