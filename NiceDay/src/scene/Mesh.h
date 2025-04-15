@@ -85,11 +85,12 @@ public:
 typedef Ref<Mesh> MeshPtr;
 
 namespace MeshLibrary {
-	static VertexArray* buildVAO(Mesh* mesh);
+	VertexArray* buildVAO(Mesh* mesh);
 	MeshPtr buildNewMesh(MeshData* data);
 
 	MeshPtr loadOrGet(const std::string& filePath);
 	MeshPtr registerMesh(MeshData* meshData);
+	void registerMesh(MeshPtr mesh);
 	std::unordered_map<Strid, MeshPtr>& getList();
 
 

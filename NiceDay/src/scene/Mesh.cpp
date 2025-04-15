@@ -56,6 +56,11 @@ MeshPtr registerMesh(MeshData* meshData)
 	return t;
 }
 
+void registerMesh(MeshPtr mesh)
+{
+	s_meshes[mesh->getID()] = mesh;
+}
+
 std::unordered_map<Strid, MeshPtr>& getList()
 {
 	return s_meshes;

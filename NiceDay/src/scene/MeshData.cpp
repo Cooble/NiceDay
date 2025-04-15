@@ -330,6 +330,7 @@ namespace MeshDataFactory {
 		for (int i = 0; i < mesh->getVerticesCount(); ++i)
 			*mesh->vertex<glm::vec3>(i) *= scale;
 		mesh->setID(("BuildCube" + std::to_string(scale)).c_str());
+		mesh->m_topology = Topology::TRIANGLES;
 		return mesh;
 	}
 

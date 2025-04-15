@@ -1,4 +1,4 @@
-#define ND_TEST
+//#define ND_TEST
 #include "ConsoleTestLayer.h"
 #include "MandelBrotLayer.h"
 #include "core/App.h"
@@ -30,8 +30,6 @@ public:
 int main()
 {
 	Log::init();
-
-	
 	
 	TestApp t;
 

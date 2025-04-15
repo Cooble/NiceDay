@@ -22,7 +22,8 @@ enum class TextureFormat :uint32_t
 {
 	RGBA = GL_RGBA,
 	RGB = GL_RGB,
-	RED = GL_RED
+	RED = GL_RED,
+	RED_32F = GL_R32F
 };
 
 enum class TextureType :uint32_t

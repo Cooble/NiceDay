@@ -185,8 +185,7 @@ void Material::serialize(NBT& nbt)
 		case g_typ::TEXTURE_2D:
 		case g_typ::TEXTURE_CUBE:
 			{
-				auto& tex = m_textures[m_tex_indexes[SID(element.name)]];
-				if (tex)
+				if (auto& tex = m_textures[m_tex_indexes[SID(element.name)]])
 					list.save(element.name.substr(m_layout->name.size() + 1), tex->getFilePath());
 				break;
 			}

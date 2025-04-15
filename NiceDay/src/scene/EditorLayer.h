@@ -19,5 +19,12 @@ public:
 
 	float getCurrentDepth();
 	void onWindowResize(int width, int height) override;
+
+	auto& scene() { return *m_scene; }
+
+
+	void addExampleObjects();
+	void initDefaultScene();
+	//void initDefaultCamera();
 };
 }

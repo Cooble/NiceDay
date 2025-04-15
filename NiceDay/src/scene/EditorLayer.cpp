@@ -703,22 +703,227 @@ void EditorLayer::onAttach()
 	envLayout.emplaceElement(g_typ::FLOAT, 1, "glo.quadratic");
 	enviroment = Material::create({nullptr, "GLO", "Enviroment", &envLayout});
 
+	initDefaultScene();
+	//addExampleObjects();
+}
 
+void EditorLayer::onDetach()
+{
+}
+
+void EditorLayer::onUpdate()
+{
+	hud.onUpdate();
+	auto view = m_scene->reg().view<NativeScriptComponent>();
+	for (auto entity : view)
+	{
+		auto& script = view.get(entity);
+		if (!script.ptr)
+		{
+			script.construct(m_scene->wrap(entity), m_scene);
+			script.onCreate();
+		}
+		script.onUpdate();
+	}
+}
+
+static glm::vec2 minMaxCam;
+
+void EditorLayer::onRender()
+{
+	GLCall(glLineWidth(1));
+	Atelier::get().makePendingPhotos();
+	Renderer::getDefaultFBO()->bind();
+	Gcon.enableCullFace(true);
+	Gcon.enableDepthTest(true);
+	Entity camEntity = m_scene->currentCamera();
+	//Renderer::getDefaultFBO()->clear(BuffBit::COLOR, { 0,1,0,1 });
+	auto& camCom = camEntity.get<CameraComponent>();
+	minMaxCam = {camCom.Near, camCom.Far};
+	auto& transCom = camEntity.get<TransformComponent>();
+	env.camera_pos = transCom.pos;
+
+	env.view = camCom.viewMatrix;
+	env.proj = glm::perspective(camCom.fov,
+	                            (float)APwin()->getWidth() / (float)App::get()
+	                                                                .getWindow()->getHeight(),
+	                            camCom.Near, camCom.Far);
+
+	auto lights = m_scene->view<LightComponent>();
+	for (auto light : lights)
+	{
+		auto& l = lights.get(light);
+		env.ambient = l.ambient;
+		env.diffuse = l.diffuse;
+		env.specular = l.specular;
+		env.constant = l.constant;
+		env.linear = l.linear;
+		env.quadratic = l.quadratic;
+		env.sunPos = m_scene->wrap(light).get<TransformComponent>().pos;
+	}
+	auto models = m_scene->group<TransformComponent, ModelComponent,TagComponent>();
+	int index = 0;
+	entt::entity selectedE = entt::null;
+	for (auto model : models)
+	{
+		auto& l = m_scene->reg().get<TagComponent>(model);
+		if (std::string(l.name) == "terrain")
+		{
+			//std::cout << "fff";
+			//ND_BUG("foo");
+		}
+
+		if (!m_scene->reg().get<TagComponent>(model).enabled)
+			continue;
+		//auto& [trans, mod] = models.get<TransformComponent,ModelComponent>(model);
+		auto& trans = models.get<TransformComponent>(model);
+		trans.recomputeMatrix();
+		auto& mod = models.get<ModelComponent>(model);
+		auto& material = mod.Material();
+		auto& mesh = mod.Mesh();
+		//bind mat vars
+		material->bind();
+		
+		//bind enviroment vars
+		enviroment->setRaw(env);
+		enviroment->bind(0, material->getShader());
+		mesh->vao_temp->bind();
+
+		//bind other vars
+		auto s = std::static_pointer_cast<internal::GLShader>(material->getShader());
+		//if(mod.material->getShader()->getLayout().getLayoutByName("world"))
+		s->setUniformMat4("world", trans.trans);
+
+		auto flags = material->getFlags();
+		if (flags != MaterialFlags::DEFAULT_FLAGS)
+		{
+			Gcon.depthMask(flags & MaterialFlags::FLAG_DEPTH_MASK);
+			Gcon.enableCullFace(flags & MaterialFlags::FLAG_CULL_FACE);
+			Gcon.enableDepthTest(flags & MaterialFlags::FLAG_DEPTH_TEST);
+			if (flags & MaterialFlags::FLAG_CHOP_VIEW_MAT_POS)
+				s->setUniformMat4("glo.view", glm::mat4(glm::mat3(env.view)) * glm::scale(glm::mat4(1.f), trans.scale));
+		}
+		bool selected = hud.selectedEntity == m_scene->wrap(model);
+
+		if (selected)
+		{
+			selectedE = model;
+			Gcon.enableStencilTest(true);
+			Gcon.stencilOp(StencilOp::KEEP, StencilOp::REPLACE, StencilOp::REPLACE);
+			Gcon.stencilFunc(StencilFunc::ALWAYS, 1);
+		}
+		if (mesh->indexData.exists())
+			Gcon.cmdDrawElements(mesh->data->getTopology(), mesh->indexData.count);
+		else
+			Gcon.cmdDrawArrays(mesh->data->getTopology(), mesh->vertexData.binding.count);
+		if (selected)
+			Gcon.enableStencilTest(false);
+
+		//reset if neccessary
+		if (flags != MaterialFlags::DEFAULT_FLAGS)
+		{
+			Gcon.depthMask(true);
+			Gcon.enableCullFace(true);
+			Gcon.enableDepthTest(true);
+		}
+	}
+	auto size = Renderer::getDefaultFBO()->getSize();
+	GLCall(glReadPixels(size.x / 2, size.y / 2, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, depth_buff));
+	m_scene->getLookingDepth() = getCurrentDepth();
+
+	if (selectedE != entt::null)
+	{
+		
+
+		auto& trans = models.get<TransformComponent>(selectedE);
+		auto& mod = models.get<ModelComponent>(selectedE);
+		auto& mesh = mod.Mesh();
+		Gcon.enableDepthTest(false);
+		Gcon.enableStencilTest(true);
+		Gcon.stencilOp(StencilOp::KEEP, StencilOp::KEEP, StencilOp::KEEP);
+		Gcon.stencilFunc(StencilFunc::EQUAL, 0);
+
+		oneColorShader->bind();
+		mesh->vao_temp->bind();
+		auto sha = dynamic_cast<internal::GLShader*>(oneColorShader.get());
+		sha->setUniform4f("color", 0, 1, 0, 1);
+		sha->setUniformMat4("world", env.proj * env.view * glm::scale(trans.trans, glm::vec3(1.05f)));
+		if (mesh->indexData.exists())
+			Gcon.cmdDrawElements(mesh->data->getTopology(), mesh->indexData.count);
+		else
+			Gcon.cmdDrawArrays(mesh->data->getTopology(), mesh->vertexData.binding.count);
+
+		Gcon.enableStencilTest(false);
+		Gcon.enableDepthTest(true);
+	}
+
+	hud.render();
+}
+
+// get world distance based on depth pixel value d
+static float transformDepth(float d, float min, float max)
+{
+	return (max * min / (max - min)) / (-d + max / (max - min));
+}
+
+void EditorLayer::onImGuiRender()
+{
+	components_imgui_access::windows.activeCamera = m_scene->currentCamera();
+	components_imgui_access::windows.drawWindows();
+	hud.mode = components_imgui_access::windows.transformOperation;
+	hud.selectedEntity = components_imgui_access::windows.selectedEntity;
+
+	m_scene->currentCamera() = components_imgui_access::windows.activeCamera;
+	/*auto s = screenToRay(glm::vec2(APin().getMouseLocation().x, APwin()->getDimensions().y -APin().getMouseLocation().y), env.proj, env.view, APwin()->getDimensions());
+	//ImGui::Text("x=%f y=%f z=%f", s.x, s.y, s.z);
+	ImGui::ColorEdit4("color", (float*)&hud.color);
+
+	//sphere.get<TransformComponent>().pos = s * 10.f + env.camera_pos;
+	static glm::vec3 defPos = sphere.get<TransformComponent>().pos;
+	sphere.get<TransformComponent>().pos = getClosestPointOnLine(glm::vec3(1,0 ,0), glm::vec3(0.0f), s,env.camera_pos);
+	sphere.get<TransformComponent>().recomputeMatrix();*/
+}
+
+void EditorLayer::onEvent(Event& e)
+{
+	auto view = m_scene->reg().view<NativeScriptComponent>();
+	for (auto entity : view)
+	{
+		auto& script = view.get(entity);
+		if (!script.ptr)
+			script.construct(m_scene->wrap(entity), m_scene);
+		script.onEvent(e);
+	}
+}
+
+float EditorLayer::getCurrentDepth()
+{
+	//float f = *(depth_buff + APwin()->getWidth() * APwin()->getHeight() / 2);
+	float f = *depth_buff;
+	return transformDepth(f, minMaxCam.x, minMaxCam.y);
+}
+
+void EditorLayer::onWindowResize(int width, int height)
+{
+	hud.onScreenResize(width, height);
+}
+
+void EditorLayer::addExampleObjects()
+{
 	auto modelMat = Material::create({
 		std::shared_ptr<Shader>(ShaderLib::loadOrGetShader("res/shaders/Model.shader")), "MAT",
 		"modelMaterial"
-	});
+		});
 	modelMat->setValue("color", glm::vec4(1.0, 1.0, 0, 1));
 	modelMat->setValue("shines", 64.f);
 
 
 	auto crate1Mesh = MeshLibrary::loadOrGet("res/examples/models/cube.fbx");
 
-
 	auto simpleMat = MaterialLibrary::create({
 		std::shared_ptr<Shader>(ShaderLib::loadOrGetShader("res/shaders/Model.shader")), "MAT",
 		"simpleColorMat"
-	});
+		});
 	simpleMat->setValue("color", glm::vec4(1.0, 1.0, 0.5, 1));
 	simpleMat->setValue("shines", 64.f);
 
@@ -740,9 +945,9 @@ void EditorLayer::onAttach()
 		ND_INFO("Loading cubemaps");
 		auto mat = MaterialLibrary::create({
 			ShaderLib::loadOrGetShader("res/shaders/CubeMap.shader"), "MAT", "SkyMaterial2", nullptr, flags
-		});
+			});
 		mat->setValue("cubemap", std::shared_ptr<Texture>(
-			              Texture::create(TextureInfo(TextureType::_CUBE_MAP, "res/examples/images/skymap2/*.png"))));
+			Texture::create(TextureInfo(TextureType::_CUBE_MAP, "res/examples/images/skymap2/*.png"))));
 		/*auto mat1 = MaterialLibrary::create({ ShaderLib::loadOrGetShader("res/shaders/CubeMap.shader"),"MAT","SkyMaterial3" ,nullptr,flags });
 		mat1->setValue("cubemap", std::shared_ptr<Texture>(Texture::create(TextureInfo(TextureType::_CUBE_MAP, "res/images/skymap3/*.png"))));
 		auto mat2 = MaterialLibrary::create({ ShaderLib::loadOrGetShader("res/shaders/CubeMap.shader"),"MAT","SkyMaterial4" ,nullptr,flags });
@@ -830,7 +1035,11 @@ void EditorLayer::onAttach()
 		ent.emplaceOrReplace<TransformComponent>(glm::vec3(0.f), glm::vec3(1.f), glm::vec3(0.f));
 		ent.emplaceOrReplace<ModelComponent>(mesh, mat);
 	}*/
+	
+}
 
+void EditorLayer::initDefaultScene()
+{
 	//adding light
 	{
 		auto ent = m_scene->createEntity("Light");
@@ -855,7 +1064,7 @@ void EditorLayer::onAttach()
 		auto mesh = MeshLibrary::registerMesh(MeshDataFactory::buildWirePlane(40, 40));
 		auto mat = MaterialLibrary::create({
 			ShaderLib::loadOrGetShader("res/shaders/Model.shader"), "MAT", "WireMat", nullptr, MaterialFlags::DEFAULT_FLAGS
-		});
+			});
 		mat->setValue("shines", 0.f);
 		mat->setValue("color", glm::vec4(0.5f, 0.5f, 0.5f, 1));
 
@@ -865,197 +1074,5 @@ void EditorLayer::onAttach()
 		auto& script = ent.get<NativeScriptComponent>();
 		script.bind<WireMoveScript>();
 	}
-}
-
-void EditorLayer::onDetach()
-{
-}
-
-void EditorLayer::onUpdate()
-{
-	hud.onUpdate();
-	auto view = m_scene->reg().view<NativeScriptComponent>();
-	for (auto entity : view)
-	{
-		auto& script = view.get(entity);
-		if (!script.ptr)
-		{
-			script.construct(m_scene->wrap(entity), m_scene);
-			script.onCreate();
-		}
-		script.onUpdate();
-	}
-}
-
-static glm::vec2 minMaxCam;
-
-void EditorLayer::onRender()
-{
-	GLCall(glLineWidth(1));
-	Atelier::get().makePendingPhotos();
-	Renderer::getDefaultFBO()->bind();
-	Gcon.enableCullFace(true);
-	Gcon.enableDepthTest(true);
-	Entity camEntity = m_scene->currentCamera();
-	//Renderer::getDefaultFBO()->clear(BuffBit::COLOR, { 0,1,0,1 });
-	auto& camCom = camEntity.get<CameraComponent>();
-	minMaxCam = {camCom.Near, camCom.Far};
-	auto& transCom = camEntity.get<TransformComponent>();
-	env.camera_pos = transCom.pos;
-
-	env.view = camCom.viewMatrix;
-	env.proj = glm::perspective(camCom.fov,
-	                            (float)APwin()->getWidth() / (float)App::get()
-	                                                                .getWindow()->getHeight(),
-	                            camCom.Near, camCom.Far);
-
-	auto lights = m_scene->view<LightComponent>();
-	for (auto light : lights)
-	{
-		auto& l = lights.get(light);
-		env.ambient = l.ambient;
-		env.diffuse = l.diffuse;
-		env.specular = l.specular;
-		env.constant = l.constant;
-		env.linear = l.linear;
-		env.quadratic = l.quadratic;
-		env.sunPos = m_scene->wrap(light).get<TransformComponent>().pos;
-	}
-	auto models = m_scene->group<TransformComponent, ModelComponent>();
-	int index = 0;
-	entt::entity selectedE = entt::null;
-	for (auto model : models)
-	{
-		if (!m_scene->reg().get<TagComponent>(model).enabled)
-			continue;
-		//auto& [trans, mod] = models.get<TransformComponent,ModelComponent>(model);
-		auto& trans = models.get<TransformComponent>(model);
-		trans.recomputeMatrix();
-		auto& mod = models.get<ModelComponent>(model);
-		auto& material = mod.Material();
-		auto& mesh = mod.Mesh();
-		//bind mat vars
-		material->bind();
-		
-		//bind enviroment vars
-		enviroment->setRaw(env);
-		enviroment->bind(0, material->getShader());
-		mesh->vao_temp->bind();
-
-		//bind other vars
-		auto s = std::static_pointer_cast<internal::GLShader>(material->getShader());
-		//if(mod.material->getShader()->getLayout().getLayoutByName("world"))
-		s->setUniformMat4("world", trans.trans);
-
-		auto flags = material->getFlags();
-		if (flags != MaterialFlags::DEFAULT_FLAGS)
-		{
-			Gcon.depthMask(flags & MaterialFlags::FLAG_DEPTH_MASK);
-			Gcon.enableCullFace(flags & MaterialFlags::FLAG_CULL_FACE);
-			Gcon.enableDepthTest(flags & MaterialFlags::FLAG_DEPTH_TEST);
-			if (flags & MaterialFlags::FLAG_CHOP_VIEW_MAT_POS)
-				s->setUniformMat4("glo.view", glm::mat4(glm::mat3(env.view)) * glm::scale(glm::mat4(1.f), trans.scale));
-		}
-		bool selected = hud.selectedEntity == m_scene->wrap(model);
-
-		if (selected)
-		{
-			selectedE = model;
-			Gcon.enableStencilTest(true);
-			Gcon.stencilOp(StencilOp::KEEP, StencilOp::REPLACE, StencilOp::REPLACE);
-			Gcon.stencilFunc(StencilFunc::ALWAYS, 1);
-		}
-		if (mesh->indexData.exists())
-			Gcon.cmdDrawElements(mesh->data->getTopology(), mesh->indexData.count);
-		else
-			Gcon.cmdDrawArrays(mesh->data->getTopology(), mesh->vertexData.binding.count);
-		if (selected)
-			Gcon.enableStencilTest(false);
-
-		//reset if neccessary
-		if (flags != MaterialFlags::DEFAULT_FLAGS)
-		{
-			Gcon.depthMask(true);
-			Gcon.enableCullFace(true);
-			Gcon.enableDepthTest(true);
-		}
-	}
-	auto size = Renderer::getDefaultFBO()->getSize();
-	GLCall(glReadPixels(size.x / 2, size.y / 2, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, depth_buff));
-	m_scene->getLookingDepth() = getCurrentDepth();
-
-	if (selectedE != entt::null)
-	{
-		auto& trans = models.get<TransformComponent>(selectedE);
-		auto& mod = models.get<ModelComponent>(selectedE);
-		auto& mesh = mod.Mesh();
-		Gcon.enableDepthTest(false);
-		Gcon.enableStencilTest(true);
-		Gcon.stencilOp(StencilOp::KEEP, StencilOp::KEEP, StencilOp::KEEP);
-		Gcon.stencilFunc(StencilFunc::EQUAL, 0);
-
-		oneColorShader->bind();
-		mesh->vao_temp->bind();
-		auto sha = dynamic_cast<internal::GLShader*>(oneColorShader.get());
-		sha->setUniform4f("color", 0, 1, 0, 1);
-		sha->setUniformMat4("world", env.proj * env.view * glm::scale(trans.trans, glm::vec3(1.05f)));
-		if (mesh->indexData.exists())
-			Gcon.cmdDrawElements(mesh->data->getTopology(), mesh->indexData.count);
-		else
-			Gcon.cmdDrawArrays(mesh->data->getTopology(), mesh->vertexData.binding.count);
-
-		Gcon.enableStencilTest(false);
-		Gcon.enableDepthTest(true);
-	}
-
-	hud.render();
-}
-
-// get world distance based on depth pixel value d
-static float transformDepth(float d, float min, float max)
-{
-	return (max * min / (max - min)) / (-d + max / (max - min));
-}
-
-void EditorLayer::onImGuiRender()
-{
-	components_imgui_access::windows.activeCamera = m_scene->currentCamera();
-	components_imgui_access::windows.drawWindows();
-	hud.mode = components_imgui_access::windows.transformOperation;
-	hud.selectedEntity = components_imgui_access::windows.selectedEntity;
-
-	m_scene->currentCamera() = components_imgui_access::windows.activeCamera;
-	/*auto s = screenToRay(glm::vec2(APin().getMouseLocation().x, APwin()->getDimensions().y -APin().getMouseLocation().y), env.proj, env.view, APwin()->getDimensions());
-	//ImGui::Text("x=%f y=%f z=%f", s.x, s.y, s.z);
-	ImGui::ColorEdit4("color", (float*)&hud.color);
-
-	//sphere.get<TransformComponent>().pos = s * 10.f + env.camera_pos;
-	static glm::vec3 defPos = sphere.get<TransformComponent>().pos;
-	sphere.get<TransformComponent>().pos = getClosestPointOnLine(glm::vec3(1,0 ,0), glm::vec3(0.0f), s,env.camera_pos);
-	sphere.get<TransformComponent>().recomputeMatrix();*/
-}
-
-void EditorLayer::onEvent(Event& e)
-{
-	auto view = m_scene->reg().view<NativeScriptComponent>();
-	for (auto entity : view)
-	{
-		auto& script = view.get(entity);
-		if (!script.ptr)
-			script.construct(m_scene->wrap(entity), m_scene);
-		script.onEvent(e);
-	}
-}
-
-float EditorLayer::getCurrentDepth()
-{
-	//float f = *(depth_buff + APwin()->getWidth() * APwin()->getHeight() / 2);
-	float f = *depth_buff;
-	return transformDepth(f, minMaxCam.x, minMaxCam.y);
-}
-
-void EditorLayer::onWindowResize(int width, int height)
-{
-	hud.onScreenResize(width, height);
 }
 }
