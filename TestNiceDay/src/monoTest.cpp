@@ -7,7 +7,7 @@ using namespace nd;
 int monoTest()
 {
 	MonoLayer l;
-	l.hotSwapEnable = false;
+	l.hotSwapEnable = true;
 	l.onAttach();
 	NDT_ASSERT(l.isMonoLoaded());
 	l.onDetach();

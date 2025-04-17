@@ -1,0 +1,14 @@
+{
+    "elements": {
+        "color": [
+            1.0,
+            1.0,
+            0.0,
+            1.0
+        ],
+        "shines": 64.0
+    },
+    "name": "dragoonMat",
+    "shader": "res/shaders/Model.shader",
+    "structName": "MAT"
+}

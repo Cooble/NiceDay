@@ -4,11 +4,15 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Runtime.ConstrainedExecution;
 using System.Runtime.InteropServices;
 
+
+
 namespace ND
 {
+ 
 
     /*
      * Supports layers
@@ -23,8 +27,10 @@ namespace ND
                 Instance = new EntryHotSwap();
             else Instance = new EntryCold();
             //Log.ND_TRACE("Initialized Entry as " + (hotSwapEnable ? "EntryHotSwap" : "EntryCold"));
+            Console.WriteLine("Initialized Entry as " + (hotSwapEnable ? "EntryHotSwap" : "EntryCold"));
             return Instance;
         }
+        public static void Test(){}
         /** 
          * how frequently check for new assembly in exe directory
          * 0 means never (to reload you need to call ReloadAssembly())
@@ -42,9 +48,53 @@ namespace ND
 
         public  abstract List<string> GetLayers();
         public int GetLayersSize() => GetLayers() == null ? -1 : GetLayers().Count;
+    }
 
+    public static class EntryCaller
+    {
+        [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+        public static void Init(int hotswap)
+        {
+            Entry.Init(hotswap!=0);
+        }
 
+        [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+        public static void OnAttach()
+        {
+            try
+            {
+                Entry.Instance.OnAttach();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Exception in OnAttach: " + e);
+            }
+        }
+        [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
 
+        public static void OnDetach()
+        {
+            try
+            {
+                Entry.Instance.OnDetach();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Exception in OnDetach: " + e);
+            }
+        }
+        [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+        public static void OnUpdate()
+        {
+            try
+            {
+                Entry.Instance.OnUpdate();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Exception in OnUpdate: " + e);
+            }
+        }
     }
 
     public static class AssemblyLocator

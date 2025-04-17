@@ -42,28 +42,32 @@ namespace ND
            [CallerMemberName] string memberName = "",
            [CallerLineNumber] int line = 0)
         {
-            nd_trace(buildMessage(fileName, memberName, line, message));
+            //nd_trace(buildMessage(fileName, memberName, line, message));
+            Console.WriteLine(buildMessage(fileName, memberName, line, message));
         }
         public static void ND_INFO(string message,
           [CallerFilePath] string fileName = "",
           [CallerMemberName] string memberName = "",
           [CallerLineNumber] int line = 0)
         {
-            nd_info(buildMessage(fileName, memberName, line, message));
+            //nd_info(buildMessage(fileName, memberName, line, message));
+            Console.WriteLine(buildMessage(fileName, memberName, line, message));
         }
         public static void ND_WARN(string message,
          [CallerFilePath] string fileName = "",
          [CallerMemberName] string memberName = "",
          [CallerLineNumber] int line = 0)
         {
-            nd_warn(buildMessage(fileName, memberName, line, message));
+            //nd_warn(buildMessage(fileName, memberName, line, message));
+            Console.WriteLine(buildMessage(fileName, memberName, line, message));
         }
         public static void ND_ERROR(string message,
        [CallerFilePath] string fileName = "",
        [CallerMemberName] string memberName = "",
        [CallerLineNumber] int line = 0)
         {
-            nd_error(buildMessage(fileName, memberName, line, message));
+            //nd_error(buildMessage(fileName, memberName, line, message));
+            Console.WriteLine(buildMessage(fileName, memberName, line, message));
         }
       
     }

@@ -1,3 +1,4 @@
+#if no
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -29,9 +30,9 @@ namespace ND
 
         private void ValidatePath(string path)
         {
-            if (path == null) throw new ArgumentNullException("path");
+            if (path == null) throw new ArgumentNullException(nameof(path));
             if (!System.IO.File.Exists(path))
-                throw new ArgumentException(String.Format("path \"{0}\" does not exist", path));
+                throw new ArgumentException($"path \"{path}\" does not exist");
         }
         public void LoadLayers()
         {
@@ -39,7 +40,7 @@ namespace ND
             {
                 // ND.Log.ND_INFO("got " + ass.GetType("ManagedStart").GetMethod("Start").Invoke(null, null));
 
-                var lays = ass.GetTypes().Where(x => { return x.BaseType == typeof(Layer); });
+                var lays = ass.GetTypes().Where(x => x.BaseType == typeof(Layer));
                 string layersList = " ";
                 foreach (var tempClass in lays)
                 {
@@ -99,9 +100,9 @@ namespace ND
 
         private void ValidatePath(string path)
         {
-            if (path == null) throw new ArgumentNullException("path");
+            if (path == null) throw new ArgumentNullException(nameof(path));
             if (!System.IO.File.Exists(path))
-                throw new ArgumentException(String.Format("path \"{0}\" does not exist", path));
+                throw new ArgumentException($"path \"{path}\" does not exist");
         }
         public void LoadLayers()
         {
@@ -109,7 +110,7 @@ namespace ND
             {
                 // ND.Log.ND_INFO("got " + ass.GetType("ManagedStart").GetMethod("Start").Invoke(null, null));
 
-                var lays = ass.GetTypes().Where(x => { return x.BaseType == typeof(Layer); });
+                var lays = ass.GetTypes().Where(x => x.BaseType == typeof(Layer));
                 string layersList="";
                 foreach (var tempClass in lays)
                 {
@@ -143,6 +144,84 @@ namespace ND
         {
             layers.Clear();
         }
+        public void UpdateLayers()
+        {
+            foreach (Layer l in layers)
+                l.OnUpdate();
+        }
+    }
+}
+#endif
+
+using System.Collections.Generic;
+using System.Reflection;
+using System.Runtime.Loader;
+using System;
+using System.Linq;
+
+namespace ND
+{
+    public class ProxyAssLoaderMarschal : MarshalByRefObject
+    {
+        private Assembly ass;
+        public List<Layer> layers = new();
+
+        public void Load(string path)
+        {
+            ValidatePath(path);
+            ass = Assembly.Load(path);
+        }
+
+        public void LoadFrom(string path, AssemblyLoadContext context)
+        {
+            ValidatePath(path);
+            ass = context.LoadFromAssemblyPath(path);
+        }
+
+        private void ValidatePath(string path)
+        {
+            if (path == null) throw new ArgumentNullException(nameof(path));
+            if (!System.IO.File.Exists(path))
+                throw new ArgumentException($"path \"{path}\" does not exist");
+        }
+
+        public void LoadLayers()
+        {
+            try
+            {
+                var lays = ass.GetTypes().Where(x => x.BaseType == typeof(Layer));
+                string layersList = " ";
+                foreach (var tempClass in lays)
+                {
+                    layersList += ", " + tempClass.Name;
+                    var curInstance = Activator.CreateInstance(tempClass);
+                    layers.Add((Layer)curInstance);
+                }
+                Log.ND_TRACE("Loaded C# layers: " + layersList.Substring(1));
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.ToString());
+            }
+        }
+
+        public void AttachLayers()
+        {
+            foreach (Layer l in layers)
+                l.OnAttach();
+        }
+
+        public void DetachLayers()
+        {
+            foreach (Layer l in layers)
+                l.OnDetach();
+        }
+
+        public void UnloadLayers()
+        {
+            layers.Clear();
+        }
+
         public void UpdateLayers()
         {
             foreach (Layer l in layers)
