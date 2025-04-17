@@ -13,5 +13,9 @@ LIST( APPEND CMAKE_MODULE_PATH
 
 # Target creation
     add_library(ManagedCore SHARED ${SOURCES})
-    set_property(TARGET ManagedCore PROPERTY VS_DOTNET_TARGET_FRAMEWORK_VERSION "v4.8")
-    target_compile_options(ManagedCore PRIVATE "/langversion:10")
+    #set_property(TARGET ManagedCore PROPERTY VS_DOTNET_TARGET_FRAMEWORK_VERSION "net8.0")
+	set_target_properties(ManagedCore PROPERTIES 
+    DOTNET_SDK "Microsoft.NET.Sdk"
+    DOTNET_TARGET_FRAMEWORK "net8.0")
+
+    target_compile_options(ManagedCore PRIVATE "/langversion:12" "/unsafe")

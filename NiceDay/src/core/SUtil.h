@@ -451,7 +451,14 @@ inline std::u32string utf8toCodePoints(const Stringo& c) { return utf8toCodePoin
 // use only if you know that there are only ascii characters
 Stringo u32StringToString(std::u32string_view s);
 
-
+inline std::wstring toWString(const Stringo& s)
+{
+	return std::wstring(s.begin(), s.end());
+}
+inline std::string toStdString(const std::wstring& s)
+{
+	return std::string(s.begin(), s.end());
+}
 // returns first occurrence of digit or nullptr
 inline const char* skipToNextDigit(const char* c)
 {

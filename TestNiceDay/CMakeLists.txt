@@ -30,6 +30,13 @@ project(TestNiceDay)
     COMMAND  ${CMAKE_COMMAND} -DTT_TARGET_DIR=${CMAKE_CURRENT_BINARY_DIR} -P ${CMAKE_SOURCE_DIR}/CopyMonoDll.cmake
     COMMENT "copying mono dll to build dir..."
 )
+	add_custom_command(TARGET TestNiceDay 
+	POST_BUILD
+    COMMAND  ${CMAKE_COMMAND} -DTT_TARGET_DIR=${CMAKE_CURRENT_BINARY_DIR} -DTT_SOURCE_DIR=${CMAKE_SOURCE_DIR} -P ${CMAKE_SOURCE_DIR}/CopyMonoConfig.cmake
+    COMMENT "copying mono config to build dir..."
+)
+
+
 
 
 # Dependencies

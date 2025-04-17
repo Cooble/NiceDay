@@ -54,7 +54,7 @@ LIST( APPEND CMAKE_MODULE_PATH
         "vendor/rapidxml/include"
 
         #MONO_BRANCH
-        "C:/Program Files/Mono/include/mono-2.0"
+        #"C:/Program Files/Mono/include/mono-2.0"
 
     )
 
@@ -205,7 +205,20 @@ LIST( APPEND CMAKE_MODULE_PATH
     SET(MONO_FIND_QUIETLY OFF CACHE BOOL "" FORCE)
     SET(MONO_ONLY_LIBRARIES_REQUIRED ON CACHE BOOL "" FORCE)
     SET(MONO_ROOT "C:/Program Files/Mono")
-    FIND_PACKAGE( Mono )
-    target_link_directories(NiceDay PUBLIC ${MONO_LIBRARY_DIRS})
-    TARGET_LINK_LIBRARIES(NiceDay PUBLIC ${MONO_LIBRARIES})
+    #FIND_PACKAGE( Mono )
+    #target_link_directories(NiceDay PUBLIC ${MONO_LIBRARY_DIRS})
+    #TARGET_LINK_LIBRARIES(NiceDay PUBLIC ${MONO_LIBRARIES})
 
+
+    #obtain dotnet
+    set(ENV{DOTNET_ROOT} "C:/Program Files/dotnet")
+
+    FIND_PACKAGE( Dotnet )
+
+    message("FOund directory include " ${DOTNET_INCLUDE_DIRS})
+    
+    target_link_directories(NiceDay PUBLIC ${DOTNET_INCLUDE_DIRS})
+    target_include_directories(NiceDay PUBLIC ${DOTNET_INCLUDE_DIRS})
+    target_link_libraries(NiceDay PUBLIC ${DOTNET_IJWHOST_LIB} ${DOTNET_NETHOST_LIB} ${DOTNET_LIBNETHOST_LIB})
+
+    
