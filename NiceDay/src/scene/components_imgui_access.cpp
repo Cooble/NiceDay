@@ -1333,9 +1333,9 @@ void SceneWindows::drawWindows()
 {
 	if (open_material)
 		open_material = drawWindow(material);
-	drawEntityManager();
-	drawMMBrowser();
-	drawToolPanel();
+	//drawEntityManager();
+	//drawMMBrowser();
+	//drawToolPanel();
 }
 
 void SceneWindows::init()
