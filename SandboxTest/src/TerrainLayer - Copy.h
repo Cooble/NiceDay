@@ -4,26 +4,14 @@
 
 
 namespace nd {class EditorLayer;}
-/*
-using gvec2 = glm::vec2;
-using gvec3 = glm::vec3;
-using gvec4 = glm::vec4;
-
-using gfloat = float;
-*/
-using gvec2 = glm::dvec2;
-using gvec3 = glm::dvec3;
-using gvec4 = glm::dvec4;
-
-using gfloat = double;
 
 struct Ground
 {
-	std::vector<gfloat> terrain_height;
-	std::vector<gfloat> water_height;
-	std::vector<gfloat> sediment;
-	std::vector<gvec4> flux;
-	std::vector<gvec2> velocity;
+	std::vector<float> terrain_height;
+	std::vector<float> water_height;
+	std::vector<float> sediment;
+	std::vector<glm::vec4> flux;
+	std::vector<glm::vec2> velocity;
 
 	int width, height;
 
@@ -68,5 +56,5 @@ public:
 	void onUpdate() override;
 	void createGround();
 	void createMaterial();
-	void simulate(Ground& now, Ground& next,gfloat delta);
+	void simulate(Ground& now, Ground& next,float delta);
 };
