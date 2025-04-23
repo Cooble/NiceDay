@@ -25,8 +25,40 @@ elseif(APPLE)
     set(DOTNET_PACK "Microsoft.NETCore.App.Host.osx-x64")
 endif()
 
-# Specify the version of .NET Core you are using
-set(DOTNET_VERSION "8.0.10")
+# Specify the Major version of .NET Core you are using
+set(DOTNET_MAJOR_VERSION "8.*") # dont forget to change this also in CopyMonoDll.cmake
+
+
+# Get highest version starting with 
+file(GLOB version_dirs "${DOTNET_SDK_DIR}/packs/${DOTNET_PACK}/${DOTNET_MAJOR_VERSION}")
+set(highest_version "")
+foreach(ver ${version_dirs})
+    get_filename_component(file_name ${ver} NAME)
+
+    # Normalize version to list of numbers
+    string(REPLACE "." ";" version_parts ${file_name})
+    list(GET version_parts 0 major)
+    list(GET version_parts 1 minor)
+    list(GET version_parts 2 patch)
+
+    if(NOT DEFINED best_major)
+        set(best_major ${major})
+        set(best_minor ${minor})
+        set(best_patch ${patch})
+        set(highest_version ${file_name})
+    else()
+        if(minor GREATER best_minor OR (minor EQUAL best_minor AND patch GREATER best_patch))
+            set(best_minor ${minor})
+            set(best_patch ${patch})
+            set(highest_version ${file_name})
+        endif()
+    endif()
+endforeach()
+
+message(STATUS "Highest version starting with ${DOTNET_MAJOR_VERSION}: ${highest_version}")
+set(DOTNET_VERSION "${highest_version}")
+
+
 
 # Define the path to the native runtime files (adjust the pack location and structure)
 set(DOTNET_INCLUDE_DIRS "${DOTNET_SDK_DIR}/packs/${DOTNET_PACK}/${DOTNET_VERSION}/runtimes/win-x64/native")
