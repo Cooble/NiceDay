@@ -19,6 +19,8 @@ namespace MaterialFlags {
 		// default false
 		// glo.view matrix (passed globally) wont be translational 
 		FLAG_CHOP_VIEW_MAT_POS = 1 << 3,
+
+		FLAG_BLEND = 1 << 4,
 	};
 
 	inline int DEFAULT_FLAGS = (FLAG_CULL_FACE | FLAG_DEPTH_MASK | FLAG_DEPTH_TEST);
@@ -174,6 +176,7 @@ public:
 	static void clearUnused();
 	static std::unordered_map<Strid, MaterialPtr>& getList();
 	static void remove(Strid mat);
+	static void registerMaterial(MaterialPtr&);
 
 	static bool& isDirty(Strid mat);
 

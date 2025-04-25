@@ -54,6 +54,7 @@ class TerrainLayer:public nd::Layer
 private:
 	nd::EditorLayer& m_editorLayer;
 	nd::Entity m_entity;
+	nd::Entity m_water_entity;
 	Ground* m_currentGround;
 	Ground* m_nextGround;
 	Ground a, b;

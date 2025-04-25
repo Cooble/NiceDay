@@ -25,6 +25,9 @@ public:
 
 	void addExampleObjects();
 	void initDefaultScene();
+
+	// normalized world direction
+	glm::vec3 screenToWorld(const glm::vec2& screenPos);
 	//void initDefaultCamera();
 };
 }

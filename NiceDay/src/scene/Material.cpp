@@ -334,6 +334,11 @@ void MaterialLibrary::remove(Strid mat)
 	m_dirties.erase(m_dirties.find(mat));
 }
 
+void MaterialLibrary::registerMaterial(MaterialPtr& m)
+{
+	m_materials[m->getID()] = m;
+}
+
 bool& MaterialLibrary::isDirty(Strid mat)
 {
 	auto it = m_dirties.find(mat);

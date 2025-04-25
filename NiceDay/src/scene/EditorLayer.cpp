@@ -764,23 +764,31 @@ void EditorLayer::onRender()
 	auto models = m_scene->group<TransformComponent, ModelComponent,TagComponent>();
 	int index = 0;
 	entt::entity selectedE = entt::null;
+	for(int order = 0;order<2;order++)
 	for (auto model : models)
 	{
+		Gcon.disableBlend();
+
 		auto& l = m_scene->reg().get<TagComponent>(model);
-		if (std::string(l.name) == "terrain")
-		{
-			//std::cout << "fff";
-			//ND_BUG("foo");
-		}
 
 		if (!m_scene->reg().get<TagComponent>(model).enabled)
 			continue;
+
 		//auto& [trans, mod] = models.get<TransformComponent,ModelComponent>(model);
-		auto& trans = models.get<TransformComponent>(model);
-		trans.recomputeMatrix();
 		auto& mod = models.get<ModelComponent>(model);
 		auto& material = mod.Material();
+
+		//ensure that alpha materials are drawn after opaque ones
+		if (material->getFlags() & MaterialFlags::FLAG_BLEND && order == 0)
+			continue;
+		if (!(material->getFlags() & MaterialFlags::FLAG_BLEND) && order == 1)
+			continue;
+	
 		auto& mesh = mod.Mesh();
+
+		auto& trans = models.get<TransformComponent>(model);
+		trans.recomputeMatrix();
+
 		//bind mat vars
 		material->bind();
 		
@@ -800,6 +808,14 @@ void EditorLayer::onRender()
 			Gcon.depthMask(flags & MaterialFlags::FLAG_DEPTH_MASK);
 			Gcon.enableCullFace(flags & MaterialFlags::FLAG_CULL_FACE);
 			Gcon.enableDepthTest(flags & MaterialFlags::FLAG_DEPTH_TEST);
+			if (flags & MaterialFlags::FLAG_BLEND)
+			{
+				Gcon.enableBlend();
+				Gcon.setBlendEquation(BlendEquation::FUNC_ADD);
+				Gcon.setBlendFunc(Blend::SRC_ALPHA, Blend::ONE_MINUS_SRC_ALPHA);
+			}
+			else
+				Gcon.disableBlend();
 			if (flags & MaterialFlags::FLAG_CHOP_VIEW_MAT_POS)
 				s->setUniformMat4("glo.view", glm::mat4(glm::mat3(env.view)) * glm::scale(glm::mat4(1.f), trans.scale));
 		}
@@ -825,6 +841,7 @@ void EditorLayer::onRender()
 			Gcon.depthMask(true);
 			Gcon.enableCullFace(true);
 			Gcon.enableDepthTest(true);
+			Gcon.disableBlend();
 		}
 	}
 	auto size = Renderer::getDefaultFBO()->getSize();
@@ -833,8 +850,6 @@ void EditorLayer::onRender()
 
 	if (selectedE != entt::null)
 	{
-		
-
 		auto& trans = models.get<TransformComponent>(selectedE);
 		auto& mod = models.get<ModelComponent>(selectedE);
 		auto& mesh = mod.Mesh();
@@ -1074,5 +1089,12 @@ void EditorLayer::initDefaultScene()
 		auto& script = ent.get<NativeScriptComponent>();
 		script.bind<WireMoveScript>();
 	}
+}
+
+glm::vec3 EditorLayer::screenToWorld(const glm::vec2& screenPos)
+{
+	return Spacer3D::screenToRay(
+		glm::vec2(screenPos.x, APwin()->getDimensions().y - screenPos.y),
+		env.proj, env.view, APwin()->getDimensions());
 }
 }

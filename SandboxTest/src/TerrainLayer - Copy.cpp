@@ -1,4 +1,5 @@
-﻿#include "TerrainLayer.h"
+﻿#if 0
+#include "TerrainLayer.h"
 
 #include "event/MouseEvent.h"
 #include "core/App.h"
@@ -875,3 +876,4 @@ void TerrainLayer::simulate(Ground& now, Ground& next, float delta)
 
 	calculateStatistics(next);
 }
+#endif

@@ -1,4 +1,6 @@
-﻿#pragma once
+﻿#if 0
+#pragma once
+
 #include "layer/Layer.h"
 #include "scene/NewScene.h"
 
@@ -58,3 +60,5 @@ public:
 	void createMaterial();
 	void simulate(Ground& now, Ground& next,float delta);
 };
+
+#endif
