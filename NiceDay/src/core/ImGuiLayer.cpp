@@ -662,7 +662,8 @@ static void imguiProfile()
 				in.close();
 
 				auto location = ND_RESLOC("res/engine/tracing/index.html");
-				system(("start chrome \"" + location + "\"").c_str());
+				//todo pick browser to open tracing results in dynamically
+				system(("start brave \"" + location + "\"").c_str());
 			}
 		}
 	}

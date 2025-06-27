@@ -205,6 +205,8 @@ void App::start()
 
 void App::update()
 {
+	ND_PROFILE_METHOD();
+
 	m_Window->pollEvents();
 	m_Input->update();
 	for (Layer* l : m_LayerStack)

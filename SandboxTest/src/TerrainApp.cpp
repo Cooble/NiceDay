@@ -2,7 +2,7 @@
 
 #include "core/App.h"
 #include "scene/EditorLayer.h"
-#include "TerrainLayer.h"
+#include "terrain/TerrainLayer.h"
 
 using namespace nd;
 
@@ -14,11 +14,12 @@ public:
 		AppInfo info;
 		info.io.enableSCENE = true;
 		info.io.enableIMGUI = true;
-
+		m_target_tps = 120;
 		init(info);
 		auto editor = new EditorLayer();
 		m_LayerStack.pushLayer(editor);
 		m_LayerStack.pushLayer(new TerrainLayer(*editor));
+
 	}
 };
 

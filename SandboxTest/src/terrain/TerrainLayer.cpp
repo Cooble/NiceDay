@@ -1,9 +1,11 @@
 ﻿#include "TerrainLayer.h"
 
+#include "DropletSim.h"
+#include "EulerSim.h"
 #include "event/MouseEvent.h"
 #include "core/App.h"
 #include "imgui.h"
-#include "MandelBrotLayer.h"
+#include "TUtils.h"
 #include "../../TestNiceDay/src/NDTests.h"
 #include "graphics/API/Shader.h"
 #include "platform/OpenGL/GLShader.h"
@@ -18,168 +20,21 @@
 #include "scene/NewScene.h"
 #include "glm/gtc/noise.hpp"
 
+
 using namespace nd;
-
-static gfloat interpolate2D(const std::vector<gfloat>& data, int width, int height, gfloat x, gfloat y)
-{
-	int x0 = (int)x;
-	int y0 = (int)y;
-	int x1 = x0 + 1;
-	int y1 = y0 + 1;
-
-	x0 = glm::clamp(x0, 0, width - 1);
-	y0 = glm::clamp(y0, 0, height - 1);
-	x1 = glm::clamp(x1, 0, width - 1);
-	y1 = glm::clamp(y1, 0, height - 1);
-
-	gfloat xLerp = x - x0;
-	gfloat yLerp = y - y0;
-
-	gfloat h00 = data[y0 * width + x0];
-	gfloat h01 = data[y0 * width + x1];
-	gfloat h10 = data[y1 * width + x0];
-	gfloat h11 = data[y1 * width + x1];
-	return h00 * (1 - xLerp) * (1 - yLerp) +
-		h01 * (xLerp) * (1 - yLerp) +
-		h10 * (yLerp) * (1 - xLerp) +
-		h11 * (xLerp) * (yLerp);
-}
-static gvec2 gradAt(std::vector<gfloat>& scalarField, int x, int y, int w)
-{
-	auto x0 = glm::clamp(x, 0, w - 1);
-	auto y0 = glm::clamp(y, 0, w - 1);
-	auto x1 = glm::clamp(x + 1, 0, w - 1);
-	auto y1 = glm::clamp(y + 1, 0, w - 1);
-	auto gradX = scalarField[y0 * w + x1] - scalarField[y0 * w + x0];
-	auto gradY = scalarField[y1 * w + x0] - scalarField[y0 * w + x0];
-	return { gradX, gradY };
-}
-static gvec2 interPol(gvec2 v00, gvec2 v01, gvec2 v10, gvec2 v11, gvec2 pos)
-{
-	return v00 * (1 - pos.x) * (1 - pos.y) +
-		v01 * (pos.x) * (1 - pos.y) +
-		v10 * (pos.y) * (1 - pos.x) +
-		v11 * (pos.x) * (pos.y);
-}
 
 
 static Entity sphere;
-struct Droplet
-{
-	gvec2 pos;
-	gvec2 direction;
-	gfloat speed;
-	gvec2 grad;
-	gfloat sediment;
-	gfloat water;
-	gfloat oldHeight;
 
-	// debug
-	gfloat newHeight;
-	gfloat heightDiff;
-	gfloat capacity;
-	gfloat toDeposit;
-	gfloat toErode;
-
-
-	static constexpr gfloat pMomentum = 0.05;
-	static constexpr gfloat pMinSlope = 0.01;
-	static constexpr gfloat pCapacity = 4;
-	static constexpr gfloat pDeposition = 0.3;
-	static constexpr gfloat pErosion = 0.3;
-	static constexpr gfloat pEvaporation = 0.01;
-	static constexpr gfloat pGravity = 4;
-
-	void init(Ground& g)
-	{
-		auto w = g.width;
-		auto h = g.height;
-		pos.x = std::rand() % w;
-		pos.y = std::rand() % h;
-		oldHeight = interpolate2D(g.terrain_height, w, h, pos.x, pos.y);
-		sediment = 0;
-		water = 1;
-		direction = gvec2(0, 0.1);
-		speed = 0;
-	}
-
-	bool step(Ground& g)
-	{
-		auto w = g.width;
-		auto h = g.height;
-
-		// 2. gradient
-		grad = interPol(
-			gradAt(g.terrain_height, (int)pos.x, (int)pos.y, w),
-			gradAt(g.terrain_height, (int)pos.x, (int)(pos.y + 1), w),
-			gradAt(g.terrain_height, (int)(pos.x + 1), (int)pos.y, w),
-			gradAt(g.terrain_height, (int)(pos.x + 1), (int)(pos.y + 1), w),
-			pos - (gvec2)glm::ivec2(pos)
-		);
-
-
-		// 3. update velocity
-		auto dirRaw = direction * (1 - pMomentum) - grad * pMomentum;
-		direction = glm::normalize(dirRaw);
-
-		// handle result of normalize(0)
-		if (glm::length2(dirRaw)<0.000000000001)
-			direction = { 0,1 };
-		
-
-		auto oldPos = glm::ivec2(pos);
-		// 4. move to next cell based on velocity
-		pos += normalize(direction);
-
-		auto newPos = glm::ivec2(pos);
-		if (clamp(newPos, 0, w - 1) != newPos)
-			return false; //we are out of map
-
-		auto newHeight = interpolate2D(g.terrain_height, w, h, pos.x, pos.y);
-		auto heightDiff = newHeight - oldHeight;
-
-
-		capacity = glm::max(-heightDiff, pMinSlope) * speed * pCapacity;
-
-		toDeposit = glm::max((gfloat)0, (sediment - capacity) * pDeposition);
-		toErode = glm::max((gfloat)0, (capacity - sediment) * pErosion);
-
-
-		auto& oldHeightPtr = g.terrain_height[oldPos.y * w + oldPos.x];
-
-		// cannot deposit sediment on old location higher than current location
-		toDeposit = glm::clamp(toDeposit, (gfloat)0, heightDiff);
-
-		// deposit some sediment for which there is now no capacity at oldPos
-		oldHeightPtr += toDeposit;
-		sediment -= toDeposit;
-
-		// cannot erode old location lower than current loc
-		toErode = glm::clamp(toErode, (gfloat)0, -heightDiff);
-
-		// erode some sediment
-		oldHeightPtr -= toErode;
-		sediment += toErode;
-
-
-		speed = glm::sqrt(glm::max((gfloat)0,speed * speed - heightDiff * pGravity));
-
-		if (speed < 0.00000001)//tno speed pick some random direction
-			direction = gvec2(rand() % 64 -32,rand() % 64 -32);
-
-		water *= 1 - pEvaporation;
-
-		oldHeight = newHeight;
-
-		return water>0;// if no water is left this is the end
-	}
-};
 
 static Droplet droplet;
+static Euler euler;
 
 static NBT settings;
 
-TerrainLayer::TerrainLayer(nd::EditorLayer& l) : m_editorLayer(l) {}
+TerrainLayer::TerrainLayer(nd::EditorLayer& l) : m_editorLayer(l)
+{
+}
 
 
 struct TerrainMesh
@@ -288,23 +143,6 @@ static MaterialPtr waterMatPtr;
 static glm::vec3 pointer_relative_pos;
 
 
-static gfloat myPerlin(gvec2 uv)
-{
-	// Use glm::perlin (which expects a vec2)
-	auto out =
-		glm::perlin(uv) +
-		glm::perlin((uv - (gfloat)20) * (gfloat)2.f) * (gfloat)0.5f +
-		glm::perlin((uv - (gfloat)1235.4) * (gfloat)4.f) * (gfloat)0.25f;
-
-	// normalize to [-1, 1]
-	out /= 1.75f;
-
-	// normalize to [0, 1]
-	out = (out + 1.f) / 2.f;
-
-	return out;
-}
-
 void TerrainLayer::onAttach()
 {
 	NBT::loadFromFile("terrain.settings", settings);
@@ -397,7 +235,9 @@ void TerrainLayer::onDetach()
 }
 
 
-void TerrainLayer::onRender() {}
+void TerrainLayer::onRender()
+{
+}
 
 void TerrainLayer::onEvent(Event& e)
 {
@@ -407,8 +247,8 @@ void TerrainLayer::onEvent(Event& e)
 
 		auto rain = event.getScrollX() + event.getScrollY();
 
-		auto w = a.width;
-		auto h = a.height;
+		auto w = g.width;
+		auto h = g.height;
 		for (int y = 1; y < h - 1; y++)
 			for (int x = 1; x < w - 1; x++)
 			{
@@ -416,7 +256,7 @@ void TerrainLayer::onEvent(Event& e)
 				auto xx = (gfloat)x / w;
 				gvec2 pos = {xx, yy};
 				if (glm::distance(pos, gvec2(pointer_relative_pos.x, pointer_relative_pos.z)) < (gfloat)0.1)
-					m_currentGround->water_height[x + y * w] += rain * 0.01;
+					g.water_height[x + y * w] += rain * 0.01;
 			}
 	}
 }
@@ -469,7 +309,7 @@ void TerrainLayer::createMaterial()
 			{
 
 				vec3 central = vec3(a_pos.x,texture2D(mat.height_texture, a_pos).r,a_pos.y);
-				const float eps = 0.05;
+				const float eps = 0.02;
 
 
 				float hL = texture2D(mat.height_texture, a_pos - vec2(eps, 0.0)).r;
@@ -661,11 +501,6 @@ void TerrainLayer::createMaterial()
 }
 
 
-static bool e_rain = false;
-static bool e_flow = false;
-static bool e_erosion = false;
-static bool e_evaporation = false;
-static bool e_landslide = false;
 
 static int groundSize = 128;
 static gfloat totalGround = 0;
@@ -676,38 +511,15 @@ static gfloat currentWater = 0;
 static gfloat minTerrain = 0, maxTerrain = 0;
 
 
-static gfloat K_rain = 0.01f;
-static gfloat K_g = 9.81f;
-// Sediment Capacity
-static gfloat K_sediment_capacity = 0.05f;
-// Dissolving constant 
-static gfloat K_s_dissolving = 0.1f;
-// Depositing constant
-static gfloat K_d_depositing = 0.03f;
-// Evaporation constant
-static gfloat K_evaporation = 0.03f;
-static gfloat K_tilt_minimum = 0.15f;
-static gfloat K_landSlideSpeed = 20.5f;
-static gfloat K_landSlideCutoffAngle = 0.80f;
+static bool toggle_sim_drop = false;
+static bool toggle_sim_euler = false;
+static int playspeed_sim_drop = 1;
+static int playspeed_sim_euler = 1;
 
-
-template <typename T>
-static void InputGFloat(const char* label, T* v, float step = 0.0f, float step_fast = 0.0f, const char* format = "%.3f",
-                        ImGuiInputTextFlags flags = 0)
-{
-	if constexpr (std::is_same_v<T, float>)
-	{
-		ImGui::InputFloat(label, v, step, step_fast, format, flags);
-	}
-	else if constexpr (std::is_same_v<T, double>)
-	{
-		ImGui::InputDouble(label, v, step, step_fast, format, flags);
-	}
-	else static_assert(false, "Unsupported type for InputGFloat");
-}
 
 void TerrainLayer::onImGuiRender()
 {
+	using namespace ter;
 	static bool showBase = true;
 
 	if (!ImGui::Begin("WorldInfo", &showBase))
@@ -715,89 +527,117 @@ void TerrainLayer::onImGuiRender()
 		ImGui::End();
 		return;
 	}
-	static bool showChunks = true;
-	ImGui::Checkbox("Show Chunks", &showChunks);
-
 	ImGui::InputInt("Ground Size", &groundSize);
 	if (ImGui::Button("Recreate Ground"))
 		createGround();
 
 
-	ImGui::SeparatorText("Simulation");
-	ImGui::PushID("Drop Sim");
-	if (ImGui::Button("Init"))
-		droplet.init(*m_currentGround);
+	if(ImGui::CollapsingHeader("DropSim"))
+	{
+		static bool stepSucces = true;
 
-	static bool stepSucces = true;
-	if (ImGui::Button("Step"))
-		stepSucces = droplet.step(*m_currentGround);
+		ImGui::SeparatorText("Simulation");
+		ImGui::PushID("Drop Sim");
+		if (ImGui::Button("Init")) {
+			stepSucces = true;
+			droplet.init(g);
+		}
 
-	ImGui::Text("Droplet pos: %.1f,%.1f", droplet.pos.x, droplet.pos.y);
-	ImGui::Text("Droplet height %.1f", interpolate2D(m_currentGround->terrain_height,a.width,a.height,droplet.pos.x,droplet.pos.y));
-	ImGui::Text("Droplet direction %.1f,%.1f", droplet.direction.x, droplet.direction.y);
-	ImGui::Text("Droplet speed %.1f", droplet.speed);
-	ImGui::Text("Droplet grad %.1f,%.1f", droplet.grad.x, droplet.grad.y);
+		ImGui::BeginDisabled(!stepSucces);
+		if (ImGui::Button("Step"))
+			stepSucces = droplet.step(g);
+		ImGui::EndDisabled();
 
-	ImGui::Text("Droplet sediment %.1f", droplet.sediment);
-	ImGui::Text("Droplet water %.1f", droplet.water);
-	ImGui::Text("Droplet old height %.1f", droplet.oldHeight);
-	ImGui::Text("Droplet capacity %.1f", droplet.capacity);
-	ImGui::Text("Droplet to deposit %.1f", droplet.toDeposit);
-	ImGui::Text("Droplet to erode %.1f", droplet.toErode);
-	ImGui::PopID();
 
-	ImGui::Checkbox("Rain", &e_rain);
-	ImGui::Checkbox("Flow", &e_flow);
-	ImGui::Checkbox("Erosion", &e_erosion);
-	ImGui::Checkbox("Evaporation", &e_evaporation);
-	ImGui::Checkbox("Landslide", &e_landslide);
+		if (ImGui::Button("One Whole Drop"))
+		{
+			stepSucces = true;
+			droplet.init(g);
+			while (droplet.step(g));
+		}
+		ImGui::PushStyleColor(ImGuiCol_Button, toggle_sim_drop ? ImVec4(0.2f, 0.7f, 0.2f, 1.0f) : ImVec4(0.7f, 0.2f, 0.2f, 1.0f));
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered,
+			toggle_sim_drop ? ImVec4(0.3f, 0.8f, 0.3f, 1.0f) : ImVec4(0.8f, 0.3f, 0.3f, 1.0f));
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive,
+			toggle_sim_drop ? ImVec4(0.1f, 0.6f, 0.1f, 1.0f) : ImVec4(0.6f, 0.1f, 0.1f, 1.0f));
+		if (ImGui::Button("Play"))
+		{
+			toggle_sim_drop = !toggle_sim_drop;
+		}
+		ImGui::PopStyleColor(3);
 
-	ImGui::SeparatorText("Info");
-	ImGui::Text("Initial Ground: %.1f", totalGround);
-	ImGui::Text("Ground Diff: %.1f", totalGround - currentGround);
-	ImGui::Text("Water: %.1f", currentWater);
-	ImGui::Text("Ground: %.1f", currentGround);
-	ImGui::Text("Sediment: %.1f", currentSediment);
-	ImGui::Text("Max Sediment: %.1f", maxSediment);
-	ImGui::Text("Total Soil: %.1f", currentGround + currentSediment);
-	ImGui::Text("Min/Max Terrain Height: %.3f/%.3f", minTerrain, maxTerrain);
-	ImGui::Text("Relative pos on: %.3f,%.3f,%.3f", pointer_relative_pos.x, pointer_relative_pos.y,
-	            pointer_relative_pos.z);
+		int min = 1;
+		int max = 1000000;
+		ImGui::SliderScalar("Speed", ImGuiDataType_U32, &playspeed_sim_drop, &min, &max, "%ld", ImGuiSliderFlags_Logarithmic);
 
-	ImGui::SeparatorText("Settings");
-	ImGui::PushID("Settings");
 
-	InputGFloat("Rain", &K_rain, 0, 0, "%.6f");
-	InputGFloat("Gravity", &K_g, 0, 0, "%.6f");
-	InputGFloat("Sediment Capacity", &K_sediment_capacity, 0, 0, "%.6f");
-	InputGFloat("Dissolving", &K_s_dissolving, 0, 0, "%.6f");
-	InputGFloat("Depositing", &K_d_depositing, 0, 0, "%.6f");
-	InputGFloat("Evaporation", &K_evaporation, 0, 0, "%.6f");
-	InputGFloat("Tilt Minimum", &K_tilt_minimum, 0, 0, "%.6f");
-	InputGFloat("Land Slide Speed", &K_landSlideSpeed, 0, 0, "%.6f");
-	InputGFloat("Land Slide Cutoff Angle", &K_landSlideCutoffAngle, 0, 0, "%.6f");
+		ImGui::Text("Droplet height %.1f",
+			ter::interpolate2D(g.terrain_height, g.width, g.height, droplet.pos.x, droplet.pos.y));
 
-	ImGui::PopID();
+		ImGui::PopID();
+
+		droplet.imguiRender();
+
+	}
+	if (ImGui::CollapsingHeader("EulerSim"))
+	{
+		if (ImGui::Button("Init"))
+			euler.init(g);
+		if (ImGui::Button("Step"))
+			euler.step(g);
+
+		ImGui::PushStyleColor(ImGuiCol_Button, toggle_sim_euler ? ImVec4(0.2f, 0.7f, 0.2f, 1.0f) : ImVec4(0.7f, 0.2f, 0.2f, 1.0f));
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered,
+			toggle_sim_euler ? ImVec4(0.3f, 0.8f, 0.3f, 1.0f) : ImVec4(0.8f, 0.3f, 0.3f, 1.0f));
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive,
+			toggle_sim_euler ? ImVec4(0.1f, 0.6f, 0.1f, 1.0f) : ImVec4(0.6f, 0.1f, 0.1f, 1.0f));
+
+		toggle_sim_euler ^= ImGui::Button("Play");
+		ImGui::PopStyleColor(3);
+
+		int min = 1;
+		int max = 100;
+		ImGui::SliderScalar("Speed", ImGuiDataType_U32, &playspeed_sim_euler, &min, &max, "%ld", ImGuiSliderFlags_Logarithmic);
+
+
+		euler.imguiRender();
+	}
+
+
+
+	if (ImGui::BeginTable("Stats", 2, ImGuiTableFlags_BordersOuter | ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit))
+	{
+		ImGuiAddTableRow("Initial Ground", "%.1f", totalGround);
+		ImGuiAddTableRow("Ground Diff", "%.1f", totalGround - currentGround);
+		ImGuiAddTableRow("Water", "%.1f", currentWater);
+		ImGuiAddTableRow("Ground", "%.1f", currentGround);
+		ImGuiAddTableRow("Sediment", "%.1f", currentSediment);
+		ImGuiAddTableRow("Max Sediment", "%.1f", maxSediment);
+		ImGuiAddTableRow("Total Soil", "%.1f", currentGround + currentSediment);
+		ImGuiAddTableRow("Min/Max Terrain", "%.3f / %.3f", minTerrain, maxTerrain);
+		ImGuiAddTableRow("Pointer Pos (Rel)", "%.3f, %.3f, %.3f", pointer_relative_pos.x, pointer_relative_pos.y, pointer_relative_pos.z);
+		ImGui::EndTable();
+	}
 
 	ImGui::SeparatorText("Looking At");
 	ImGui::PushID("LookingAt");
 
 	auto idx =
-		glm::clamp((int)(pointer_relative_pos.x * a.width), 0, a.width - 1) +
-		glm::clamp((int)(pointer_relative_pos.z * a.height), 0, a.height - 1) * a.width;
+		glm::clamp((int)(pointer_relative_pos.x * g.width), 0, g.width - 1) +
+		glm::clamp((int)(pointer_relative_pos.z * g.height), 0, g.height - 1) * g.width;
 
 
-	ImGui::Text("Terrain Height: %.3f, %.3f, %.3f", (float)pointer_relative_pos.x * a.width,
-	            m_currentGround->terrain_height[idx], (float)pointer_relative_pos.z * a.height);
-	ImGui::Text("Water Height: %.3f, %.3f, %.3f", (float)pointer_relative_pos.x * a.width,
-	            m_currentGround->water_height[idx], (float)pointer_relative_pos.z * a.height);
+	ImGui::Text("Terrain Height: %.3f, %.3f, %.3f", (float)pointer_relative_pos.x * g.width,
+	            g.terrain_height[idx], (float)pointer_relative_pos.z * g.height);
+	ImGui::Text("Water Height: %.3f, %.3f, %.3f", (float)pointer_relative_pos.x * g.width,
+	            g.water_height[idx], (float)pointer_relative_pos.z * g.height);
 
 	ImGui::PopID();
 	ImGui::End();
 }
 
 
-void generateGroundSine(Ground& a, Ground& b, gfloat& totalGround)
+void generateGroundSine(Ground& a, gfloat& totalGround)
 {
 	for (int x = 0; x < a.width; x++)
 	{
@@ -819,14 +659,12 @@ void generateGroundSine(Ground& a, Ground& b, gfloat& totalGround)
 			d *= a.width;
 
 			a.terrain_height[x + y * a.width] = d;
-			b.terrain_height[x + y * a.width] = d;
-
 			totalGround += d;
 		}
 	}
 }
 
-void generateGroundBasin(Ground& a, Ground& b, gfloat& totalGround)
+void generateGroundBasin(Ground& a, gfloat& totalGround)
 {
 	for (int x = 0; x < a.width; x++)
 	{
@@ -843,7 +681,6 @@ void generateGroundBasin(Ground& a, Ground& b, gfloat& totalGround)
 			d *= a.width;
 
 			a.terrain_height[x + y * a.width] = d;
-			b.terrain_height[x + y * a.width] = d;
 
 			totalGround += d;
 		}
@@ -851,51 +688,29 @@ void generateGroundBasin(Ground& a, Ground& b, gfloat& totalGround)
 }
 
 
-std::vector<gfloat> perlinMap;
-std::vector<gfloat> originalHeightMap;
-
-static void precomputePerlin(int size)
-{
-	perlinMap.resize(size * size);
-
-	for (int x = 0; x < size; x++)
-		for (int y = 0; y < size; y++)
-		{
-			auto idx = y * size + x;
-			perlinMap[idx] = myPerlin(gvec2((gfloat)x / size, (gfloat)y / size) * (gfloat)10);
-		}
-}
-
 void TerrainLayer::createGround()
 {
-	a.resize(groundSize);
-	b.resize(groundSize);
-	originalHeightMap.resize(groundSize * groundSize);
+	g.resize(groundSize);
 
-	precomputePerlin(groundSize);
 
-	m_currentGround = &a;
-	m_nextGround = &b;
-
-	mesh.createGrid(a);
-	waterMesh.createGrid(a);
+	mesh.createGrid(g);
+	waterMesh.createGrid(g);
 
 	totalGround = 0;
 
-	generateGroundBasin(a, b, totalGround);
+	//generateGroundBasin(a, b, totalGround);
+	generateGroundSine(g, totalGround);
 
-	// save it for reference
-	originalHeightMap = a.terrain_height;
 
-	mesh.refreshHeight(a);
-	waterMesh.refreshWaterHeight(a);
+	mesh.refreshHeight(g);
+	waterMesh.refreshWaterHeight(g);
 
 	static MeshData* data = nullptr;
 	delete data;
 	data = new MeshData;
 
 	VertexBufferLayout layout = {g_typ::VEC2};
-	data->allocate(mesh.pos_vbo->getSize(), 3 * sizeof(gfloat), (a.width - 1) * (a.height - 1) * 6, layout);
+	data->allocate(mesh.pos_vbo->getSize(), 3 * sizeof(gfloat), (g.width - 1) * (g.height - 1) * 6, layout);
 	data->setID("terrainMesh");
 	{
 		meshPtr = std::make_shared<Mesh>();
@@ -930,30 +745,40 @@ void TerrainLayer::createGround()
 
 static void calculateStatistics(Ground& g);
 
+
+void TerrainLayer::simulate(Ground& g, gfloat delta)
+{
+	if (toggle_sim_drop)
+	{
+		for (int i = 0; i < playspeed_sim_drop; i++)
+		{
+			if (!droplet.step(g))
+				droplet.init(g);
+		}
+	}
+	else if (toggle_sim_euler)
+	{
+		for (int i = 0; i < playspeed_sim_euler; i++)
+		{
+			euler.step(g);
+		}
+	}
+}
+
+
 void TerrainLayer::onUpdate()
 {
-	// well this is shit per excellance
-	static int i = 0;
-	//if (i++ % 60)
-	//	return;
-
 	constexpr gfloat deltaTime = 0.004f;
 
 
-	for (int i = 0; i < 4; i++)
-	{
-		simulate(*m_currentGround, *m_nextGround, deltaTime);
+	simulate(g, deltaTime);
 
-		// swap
-		auto t = m_currentGround;
-		m_currentGround = m_nextGround;
-		m_nextGround = t;
-	}
-	calculateStatistics(*m_currentGround);
+	calculateStatistics(g);
 
 
-	mesh.refreshHeight(*m_currentGround);
-	waterMesh.refreshWaterHeight(*m_currentGround);
+
+	mesh.refreshHeight(g);
+	waterMesh.refreshWaterHeight(g);
 
 	auto cam = m_editorLayer.scene().currentCamera();
 	auto worldPos = cam.get<TransformComponent>().pos + m_editorLayer.screenToWorld(APin().getMouseLocation()) *
@@ -965,7 +790,11 @@ void TerrainLayer::onUpdate()
 	pointer_relative_pos = glm::vec3(glm::vec4(worldPos, 1) * glm::inverse(meshWorldMatrix.trans));
 
 
-	gvec3 totalPos = gvec3(droplet.pos.x / m_currentGround->width, m_currentGround->terrain_height[(int)(droplet.pos.y)*m_currentGround->width+(int)droplet.pos.x]/m_currentGround->width, droplet.pos.y / m_currentGround->width);
+	gvec3 totalPos = gvec3(droplet.pos.x / g.width,
+	                       g.terrain_height[glm::clamp(
+		                       (int)(droplet.pos.y) * g.width + (int)droplet.pos.x, 0,
+		                       g.width * g.width - 1)] / g.width,
+	                       droplet.pos.y / g.width);
 	sphere.get<TransformComponent>().pos = glm::vec3(meshWorldMatrix.trans * glm::vec4(totalPos, 1));
 }
 
@@ -993,228 +822,3 @@ static void calculateStatistics(Ground& g)
 }
 
 
-static void doAll(Ground& old, Ground& next, gfloat dt)
-{
-	const gfloat A_PIPE = 0.6f;
-	const gfloat G = 9.81f;
-	const gfloat L_PIPE = 1.f;
-	const gfloat LL = 1.f;
-	const gfloat K_max_disolve = 0.1;
-
-	auto w = next.width;
-	auto h = next.height;
-
-
-	// 1. rain
-	for (int y = 1; y < h - 1; y++)
-		for (int x = 1; x < w - 1; x++)
-		{
-			auto d = glm::ivec2(x, y) - glm::ivec2(w / 2);
-
-			gfloat increase = (d.x * d.x + d.y * d.y < 100 || (x > w / 2 - 10 && x < w / 2 + 10))
-				                  ? K_rain
-				                  : 0;
-
-			//increase = K_rain;
-			auto d1 = old.water_height[x + y * w] + dt * increase;
-			next.water_height[x + y * w] = d1;
-		}
-
-	// totalHeight = terrain_height + water_height
-	auto totalHeight = old.terrain_height;
-	for (size_t i = 0; i < totalHeight.size(); i++)
-		totalHeight[i] += next.water_height[i];
-
-	// 2. flux
-	for (int y = 1; y < h - 1; y++)
-		for (int x = 1; x < w - 1; x++)
-		{
-			auto idx = y * w + x;
-			auto deltaH = gvec4(
-				totalHeight[idx] - totalHeight[y * w + x - 1],
-				totalHeight[idx] - totalHeight[y * w + x + 1],
-				totalHeight[idx] - totalHeight[(y - 1) * w + x],
-				totalHeight[idx] - totalHeight[(y + 1) * w + x]);
-
-			auto fluxFactor = dt * A_PIPE / L_PIPE * G;
-			next.flux[idx] = glm::max(gvec4(0.f), old.flux[idx] + deltaH * fluxFactor);
-
-			auto sumF = glm::compAdd(next.flux[idx]);
-
-			if (sumF > 0)
-			{
-				auto waterVolume = next.water_height[idx] * LL * LL;
-				auto outVolume = sumF * dt;
-				auto adjustmentFactor = glm::min((gfloat)1, waterVolume / outVolume);
-
-				next.flux[idx] *= adjustmentFactor;
-			}
-		}
-
-	// 3. water height
-
-	for (int y = 1; y < h - 1; y++)
-		for (int x = 1; x < w - 1; x++)
-		{
-			auto idx = y * w + x;
-			auto sumIn =
-				+next.flux[y * w + x - 1].y
-				+ next.flux[y * w + x + 1].x
-				+ next.flux[(y - 1) * w + x].w
-				+ next.flux[(y + 1) * w + x].z;
-			auto sumOut = glm::compAdd(next.flux[idx]);
-
-			auto deltaV = (sumIn - sumOut) * dt;
-			auto deltaH = deltaV / (LL * LL);
-			next.water_height[idx] = glm::max((gfloat)0.f, next.water_height[idx] + deltaH);
-			auto meanH = next.water_height[idx] - deltaH / 2.f;
-
-			if (meanH > 0)
-			{
-				auto fluxX =
-					+next.flux[y * w + x - 1].y
-					- next.flux[idx].x
-					+ next.flux[idx].y
-					- next.flux[y * w + x + 1].x;
-				auto fluxY =
-					+next.flux[(y - 1) * w + x].w
-					- next.flux[idx].z
-					+ next.flux[idx].w
-					- next.flux[(y + 1) * w + x].z;
-				next.velocity[idx] = gvec2(fluxX, fluxY) / (meanH * LL);
-			}
-			else
-				next.velocity[idx] = gvec2(0.f);
-		}
-
-	// 4. erosion
-	constexpr gfloat erosionClamp = 10;
-
-	for (int y = 1; y < h - 1; y++)
-		for (int x = 1; x < w - 1; x++)
-		{
-			auto idx = y * w + x;
-
-			auto gradX = (next.terrain_height[y * w + x + 1] - next.terrain_height[y * w + x - 1]) / 2;
-			auto gradY = (next.terrain_height[(y + 1) * w + x] - next.terrain_height[(y - 1) * w + x]) / 2;
-
-			auto grade = glm::clamp(gradX * gradX + gradY * gradY, -erosionClamp, erosionClamp);
-			auto sin_local_tilt = glm::sqrt(grade / (1 + grade));
-
-			sin_local_tilt = glm::max(sin_local_tilt, K_tilt_minimum);
-
-			auto capacity = K_sediment_capacity * glm::length(next.velocity[idx]) * sin_local_tilt * glm::min(
-				(gfloat)1, next.water_height[idx]);
-
-
-			//auto perlinFactor = myPerlin(gvec2((gfloat)x / w, (gfloat)y / h));
-			auto perlinFactor = perlinMap[idx];
-
-			// the deeper the harder to dissolve
-			auto depthFactor = 1 / (1 + originalHeightMap[idx] - next.terrain_height[idx]);
-			if (originalHeightMap[idx] - next.terrain_height[idx] < 0)
-				depthFactor = 1;
-
-			if (capacity > old.sediment[idx])
-			{
-				auto dSoil = K_s_dissolving * (capacity - old.sediment[idx]) * perlinFactor * depthFactor;
-
-				// limit dissolve
-				dSoil = glm::min(dSoil, K_max_disolve);
-
-				// limit dissolve to the terrain height
-				dSoil = glm::min(dSoil, old.terrain_height[idx]);
-
-				next.terrain_height[idx] = old.terrain_height[idx] - dSoil;
-				old.sediment[idx] = old.sediment[idx] + dSoil;
-			}
-			else
-			{
-				auto dSoil = K_d_depositing * (old.sediment[idx] - capacity);
-
-				// limit deposit
-				dSoil = glm::min(dSoil, K_max_disolve);
-
-				next.terrain_height[idx] = old.terrain_height[idx] + dSoil;
-				old.sediment[idx] = old.sediment[idx] - dSoil;
-			}
-		}
-
-	// 5. sediment transport
-	for (int y = 1; y < h - 1; y++)
-		for (int x = 1; x < w - 1; x++)
-		{
-			auto idx = y * w + x;
-
-			gfloat velx = next.velocity[idx].x;
-			gfloat vely = next.velocity[idx].y;
-
-			gfloat fx = (gfloat)x - velx * dt;
-			gfloat fy = (gfloat)y - vely * dt;
-
-
-			next.sediment[idx] = interpolate2D(old.sediment, w, h, fx, fy);
-			//next.sediment[idx] = old.sediment[idx];
-		}
-
-	// 6. evaporation
-	if (e_evaporation)
-		for (int y = 1; y < h - 1; y++)
-			for (int x = 1; x < w - 1; x++)
-			{
-				auto idx = y * w + x;
-				next.water_height[idx] *= 1 - K_evaporation * dt;
-
-				// remove the incredibly small values
-				constexpr gfloat evaporationEpsilon = 0.001;
-				if (next.water_height[idx] < evaporationEpsilon)
-					next.water_height[idx] = 0;
-			}
-
-	// 7. landslide
-	if (e_landslide)
-		for (int y = 1; y < h - 1; y++)
-			for (int x = 1; x < w - 1; x++)
-			{
-				auto idx = y * w + x;
-
-				auto& height = next.terrain_height[idx];
-
-				auto heightN = gvec2(
-					next.terrain_height[y * next.width + x + 1],
-					next.terrain_height[(y + 1) * next.width + x]);
-
-				auto delta = heightN - height;
-
-				auto takeN = K_landSlideSpeed * dt * delta;
-
-				auto signs = glm::sign(takeN);
-				takeN = glm::max(glm::abs(takeN) - K_landSlideCutoffAngle, (gfloat)0.f) * signs;
-				// should produce something like
-				//                   /
-				//                  /
-				//   -------+-------
-				//  /
-				// /
-
-				height += glm::compAdd(takeN);
-				next.terrain_height[y * w + x + 1] -= takeN.x;
-				next.terrain_height[(y + 1) * w + x] -= takeN.y;
-			}
-}
-
-
-
-static void dropAll(Ground& g, int steps)
-{
-	Droplet d;
-	d.init(g);
-	for (int i = 0; i < steps && d.step(g); ++i);
-}
-
-void TerrainLayer::simulate(Ground& now, Ground& next, gfloat delta)
-{
-	//doAll(now, next, delta);
-	next = now;
-	//dropAll(next, 128);
-}

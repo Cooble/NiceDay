@@ -233,7 +233,10 @@ void Window::setFullScreen(bool fullscreen)
 	{
 		glfwGetWindowPos(m_window, &m_data.lastX, &m_data.lastY);
 		glfwGetWindowSize(m_window, &m_data.lastWidth, &m_data.lastHeight);
-		glfwSetWindowMonitor(m_window, glfwGetPrimaryMonitor(), 0, 0, 1920, 1080, 60);
+
+		const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+		glfwSetWindowMonitor(m_window, glfwGetPrimaryMonitor(), 0, 0, mode->width, mode->height, mode->refreshRate);
+		
 	}
 	else
 	{

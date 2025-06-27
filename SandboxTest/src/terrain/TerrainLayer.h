@@ -1,21 +1,13 @@
 ﻿#pragma once
+#include "ndpch.h"
+
 #include "layer/Layer.h"
 #include "scene/NewScene.h"
+#include "types.h"
 
 
 namespace nd {class EditorLayer;}
-/*
-using gvec2 = glm::vec2;
-using gvec3 = glm::vec3;
-using gvec4 = glm::vec4;
 
-using gfloat = float;
-*/
-using gvec2 = glm::dvec2;
-using gvec3 = glm::dvec3;
-using gvec4 = glm::dvec4;
-
-using gfloat = double;
 
 struct Ground
 {
@@ -26,8 +18,6 @@ struct Ground
 	std::vector<gvec2> velocity;
 
 	int width, height;
-
-
 
 	void resize(int size)
 	{
@@ -46,8 +36,6 @@ struct Ground
 		ZeroMemory(flux.data(), flux.size() * sizeof(decltype(flux)::value_type));
 		ZeroMemory(velocity.data(), velocity.size() * sizeof(decltype(velocity)::value_type));
 	}
-
-	
 };
 class TerrainLayer:public nd::Layer
 {
@@ -55,9 +43,7 @@ private:
 	nd::EditorLayer& m_editorLayer;
 	nd::Entity m_entity;
 	nd::Entity m_water_entity;
-	Ground* m_currentGround;
-	Ground* m_nextGround;
-	Ground a, b;
+	Ground g;
 
 public:
 	TerrainLayer(nd::EditorLayer&);
@@ -69,5 +55,5 @@ public:
 	void onUpdate() override;
 	void createGround();
 	void createMaterial();
-	void simulate(Ground& now, Ground& next,gfloat delta);
+	void simulate(Ground& g,gfloat delta);
 };

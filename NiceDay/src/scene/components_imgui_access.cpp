@@ -1305,10 +1305,74 @@ bool drawQuantizeDialog(bool enabled)
 
 bool drawToolPanel()
 {
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 10));
+	const float toolbarWidth = 50.0f;
+	ImGuiViewport* viewport = ImGui::GetMainViewport(); // Get info about the main window area
+
+	// Calculate position and size based on the viewport's *work area*
+	// Work area excludes menu bars, task bars etc.
+	ImVec2 toolbarPos = viewport->WorkPos; // Top-left corner of the usable area
+	ImVec2 toolbarSize = ImVec2(toolbarWidth, viewport->WorkSize.y); // Fixed width, full height
+
+	// --- Optional: Place on the right instead ---
+	// toolbarPos.x = viewport->WorkPos.x + viewport->WorkSize.x - toolbarWidth;
+	toolbarPos.y+=27; // the menu bar offset
+	toolbarSize.y -= 27;
+
+	// -------------------------------------------
+
+	// Set the position and size for the *next* window
+	ImGui::SetNextWindowPos(toolbarPos, ImGuiCond_Always);
+	ImGui::SetNextWindowSize(toolbarSize, ImGuiCond_Always);
+
+	// Define the flags to make it non-interactive and fixed
+	ImGuiWindowFlags window_flags =
+		ImGuiWindowFlags_NoTitleBar |
+		ImGuiWindowFlags_NoResize |
+		ImGuiWindowFlags_NoMove |
+		ImGuiWindowFlags_NoScrollbar |
+		ImGuiWindowFlags_NoSavedSettings |
+		ImGuiWindowFlags_NoDocking; // Add this for robustness
+
+	// Setting p_open to NULL makes the window non-closable.
+	// If you pass a bool*, you get a closable window (but NoTitleBar hides the 'X')
+	bool is_toolbar_open = true; // Dummy variable if needed, but NULL is fine.
+
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f); // Remove rounded corners
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f); // Remove border
+
+	// Begin the window
+	/*if (ImGui::Begin("FixedToolbar", nullptr , window_flags))
+	{
+		// --- Toolbar Content Goes Here ---
+		if (ImGui::Button("Btn1")) {  }
+		if (ImGui::Button("Btn2")) { }
+		// Add icons, other widgets...
+		// Make sure your content fits within the 50px width!
+		// You might need ImGui::SameLine() etc. for horizontal layout
+
+		ImGui::Separator(); // Example separator
+
+		// Position button at the bottom (example)
+		// float bottomButtonPosY = ImGui::GetWindowContentRegionMax().y - ImGui::GetFrameHeightWithSpacing();
+		// ImGui::SetCursorPosY(bottomButtonPosY);
+		// if (ImGui::Button("Quit")) {  }
+
+		// --- End Toolbar Content ---
+	}
+	ImGui::End(); // End the window definition
+
+	ImGui::PopStyleVar(2); // Pop rounding and border size styles
+
+	return true;
+	*/
+	//ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
 	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{0, 10});
-	ImGui::SetNextWindowSize(ImVec2(52, 0), ImGuiCond_Always);
+	////ImGui::SetNextWindowSize(ImVec2(52, 0), ImGuiCond_Always);
+	//ImGui::SetNextWindowSizeConstraints(
+	//	ImVec2(52, 0),  // Min size: 400 width, any height
+	//	ImVec2(52, FLT_MAX) // Max size: 400 width, infinite height
+	//);
 	ImGui::Begin("Tools", 0, ImGuiWindowFlags_NoDecoration);
 	Image(windows.transformOperation == TRANSOP_MOVE ? SIDS("move_on") : SIDS("move_off"), *ui_icons, {50.f, 50.f});
 	if (ImGui::IsItemClicked())windows.transformOperation = TRANSOP_MOVE;
@@ -1324,7 +1388,7 @@ bool drawToolPanel()
 	drawQuantizeDialog(ImGui::IsItemClicked());
 
 
-	ImGui::PopStyleVar(3);
+	ImGui::PopStyleVar(4);
 	ImGui::End();
 	return true;
 }
