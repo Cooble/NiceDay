@@ -2,7 +2,12 @@
 #include "ndpch.h"
 #include "types.h"
 
-struct Ground;
+namespace nd
+{
+	class NBT;
+}
+
+struct BaseGround;
 
 struct Droplet
 {
@@ -22,18 +27,30 @@ struct Droplet
 	gfloat toErode;
 
 
-	static constexpr gfloat pMomentum = 0.2;
-	static constexpr gfloat pMinSlope = 0.01;
-	static constexpr gfloat pCapacity = 4;
-	static constexpr gfloat pDeposition = 0.3;
-	static constexpr gfloat pErosion = 0.3;
-	static constexpr gfloat pEvaporation = 0.01;
-	static constexpr gfloat pGravity = 4;
+	gfloat pMomentum = 0.2;
+	gfloat pMinSlope = 0.01;
+	gfloat pCapacity = 1.5;
+	gfloat pDeposition = 0.3;
+	gfloat pErosion = 0.3;
+	gfloat pEvaporation = 0.01;
+	gfloat pGravity = 4;
+	int pRadius = 0;
+	static constexpr int MAX_RADIUS = 16;
 
-	void init(Ground& g);
+	// keep track of number of balls dropped
+	static int balls;
 
-	bool step(Ground& g);
+	std::vector<gfloat> kernel;
+
+	void init(BaseGround& g);
+
+	bool step(BaseGround& g);
 
 
 	void imguiRender();
+
+	void save(nd::NBT& src);
+	void load(nd::NBT& src);
+
+	
 };

@@ -84,18 +84,44 @@ namespace ter
 			}
 			
 	}
+	template <typename T>
+	static bool SliderGFloat(const char* label, T* v, float min, float max, const char* format = "%.3f", ImGuiSliderFlags flags = 0)
+	{
+		if constexpr (std::is_same_v<T, float>)
+		{
+			return ImGui::SliderFloat(label, v, min, max, format, flags);
+		}
+		else if constexpr (std::is_same_v<T, double>)
+		{
+			return ImGui::SliderScalar(label, ImGuiDataType_Double, v, &min, &max, format, flags);
+		}
+		else static_assert(false, "Unsupported type for SliderGFloat");
+	}
+	template <typename T>
+	static bool SliderGFloat2(const char* label, T* v, float min, float max, const char* format = "%.3f", ImGuiSliderFlags flags = 0)
+	{
+		if constexpr (std::is_same_v<T, float>)
+		{
+			return ImGui::SliderFloat2(label, v, min, max, format, flags);
+		}
+		else if constexpr (std::is_same_v<T, double>)
+		{
+			return ImGui::SliderScalarN(label, ImGuiDataType_Double, v, 2, &min, &max, format, flags);
+		}
+		else static_assert(false, "Unsupported type for SliderGFloat2");
+	}
 
 	template <typename T>
-	static void InputGFloat(const char* label, T* v, float step = 0.0f, float step_fast = 0.0f, const char* format = "%.3f",
+	static bool InputGFloat(const char* label, T* v, float step = 0.0f, float step_fast = 0.0f, const char* format = "%.3f",
 		ImGuiInputTextFlags flags = 0)
 	{
 		if constexpr (std::is_same_v<T, float>)
 		{
-			ImGui::InputFloat(label, v, step, step_fast, format, flags);
+			return ImGui::InputFloat(label, v, step, step_fast, format, flags);
 		}
 		else if constexpr (std::is_same_v<T, double>)
 		{
-			ImGui::InputDouble(label, v, step, step_fast, format, flags);
+			return ImGui::InputDouble(label, v, step, step_fast, format, flags);
 		}
 		else static_assert(false, "Unsupported type for InputGFloat");
 	}

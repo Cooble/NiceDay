@@ -24,7 +24,7 @@ TestQuad::TestQuad(bool centered)
 	VertexBufferLayout l{g_typ::VEC2};
 	vbo->setLayout(l);
 	vao->addBuffer(*vbo);
-	shader = ShaderLib::loadOrGetShader("res/shaders/Test.shader");
+	shader = ShaderLib::loadOrGetShader("res/engine/shaders/Test.shader");
 }
 
 TestQuad::~TestQuad()

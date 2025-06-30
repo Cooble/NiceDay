@@ -17,16 +17,7 @@ project(SandboxTest)
     target_include_directories(SandboxTest PUBLIC 
         "src"
     )
-	 add_custom_command(TARGET SandboxTest 
-	 POST_BUILD
-     COMMAND  ${CMAKE_COMMAND} -DTT_TARGET_DIR=${CMAKE_CURRENT_BINARY_DIR} -P ${CMAKE_SOURCE_DIR}/CopyMonoDll.cmake
-     COMMENT "copying mono dll to build dir..."
-     )
-    add_custom_command(TARGET SandboxTest 
-	POST_BUILD
-    COMMAND  ${CMAKE_COMMAND} -DTT_TARGET_DIR=${CMAKE_CURRENT_BINARY_DIR} -DTT_SOURCE_DIR=${CMAKE_SOURCE_DIR} -P ${CMAKE_SOURCE_DIR}/CopyMonoConfig.cmake
-    COMMENT "copying mono config to build dir..."
-)
+	 
 
 # Precompiled Header
 #    target_precompile_headers(NiceDay PRIVATE 
@@ -45,7 +36,21 @@ project(SandboxTest)
 
 # Dependencies
     target_link_libraries(SandboxTest PUBLIC NiceDay)
+if(ND_ENABLE_DOTNET)
     target_link_libraries(SandboxTest PUBLIC Managed)
+    
+    add_custom_command(TARGET SandboxTest 
+	 POST_BUILD
+     COMMAND  ${CMAKE_COMMAND} -DTT_TARGET_DIR=${CMAKE_CURRENT_BINARY_DIR} -P ${CMAKE_SOURCE_DIR}/CopyMonoDll.cmake
+     COMMENT "copying mono dll to build dir..."
+     )
+    add_custom_command(TARGET SandboxTest 
+	POST_BUILD
+    COMMAND  ${CMAKE_COMMAND} -DTT_TARGET_DIR=${CMAKE_CURRENT_BINARY_DIR} -DTT_SOURCE_DIR=${CMAKE_SOURCE_DIR} -P ${CMAKE_SOURCE_DIR}/CopyMonoConfig.cmake
+    COMMENT "copying mono config to build dir..."
+    )
+endif()
+
 #   macro(add_my_lib name)
 #       add_subdirectory("vendor/${name}")
 #       list(APPEND EXTRA_LIBS ${name})

@@ -1,6 +1,15 @@
 #Base CMAKE
 cmake_minimum_required(VERSION 3.16.1)
+
+
 project("NiceDaySolution")
+
+
+set(CMAKE_MSVC_RUNTIME_LIBRARY
+    "MultiThreaded$<$<CONFIG:Debug>:Debug>"   # /MT in Release, /MTd in Debug
+    CACHE STRING "Use static VC++ runtime (/MT or /MTd)" FORCE)
+
+option(ND_ENABLE_DOTNET "Build with C# scripting support" OFF)   # default = ON
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
@@ -65,8 +74,11 @@ add_compile_definitions(
 #set(CMAKE_SYSTEM_PREFIX_PATH ${CMAKE_SYSTEM_PREFIX_PATH} "./")
 # Subdirs
 add_subdirectory(NiceDay)
-add_subdirectory(ManagedCore)
-add_subdirectory(Managed)
+
+if(ND_ENABLE_DOTNET)
+    add_subdirectory(ManagedCore)
+    add_subdirectory(Managed)
+endif()
 add_subdirectory(Sandbox)
 add_subdirectory(SandboxTest)
 enable_testing()

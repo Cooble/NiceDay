@@ -11,8 +11,8 @@ void Atelier::init()
 {
 	m_fbo = FrameBuffer::create(FrameBufferInfo().multiSample(4));
 	m_fbo->createBindSpecialAttachment(FBAttachment::DEPTH_STENCIL, {256, 256});
-	m_background = TextureLib::loadOrGetTexture("res/engine/images/material_bg.png");
-	m_sphere = MeshLibrary::buildNewMesh(Colli::buildMesh(ND_RESLOC("res/examples/models/sphere.fbx")));
+	m_background = TextureLib::loadOrGetTexture("res/scene/images/material_bg.png");
+	m_sphere = MeshLibrary::buildNewMesh(Colli::buildMesh(ND_RESLOC("res/scene/models/sphere.fbx")));
 
 	static UniformLayout envLayout;
 	envLayout.name = "GLO";
@@ -33,7 +33,7 @@ void Atelier::init()
 
 
 	m_default_material = Material::create({
-		ShaderLib::loadOrGetShader("res/shaders/Model.shader"), "MAT", "DefaultMaterial"
+		ShaderLib::loadOrGetShader("res/scene/shaders/Model.shader"), "MAT", "DefaultMaterial"
 	});
 	m_default_material->setValue("color", glm::vec4(0.5f, 0.5f, 0.5f, 1.f));
 	m_default_material->setValue("shines", 64.f);

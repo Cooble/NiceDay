@@ -46,7 +46,7 @@ public:
 		s_vao = VertexArray::create();
 		s_vao->addBuffer(*s_vbo);
 
-		s_shader = ShaderLib::loadOrGetShader("res/shaders/TextureQuad.shader");
+		s_shader = ShaderLib::loadOrGetShader("res/engine/shaders/TextureQuad.shader");
 		auto sh = std::static_pointer_cast<internal::GLShader>(s_shader);
 		sh->bind();
 		sh->setUniformMat4("transform", glm::mat4(1.0f));
@@ -127,7 +127,7 @@ private:
 		static ShaderPtr s = nullptr;
 		if (s == nullptr)
 		{
-			s = ShaderLib::loadOrGetShader("res/shaders/AlphaMask.shader");
+			s = ShaderLib::loadOrGetShader("res/engine/shaders/AlphaMask.shader");
 			s->bind();
 			std::static_pointer_cast<internal::GLShader>(s)->setUniform1i("u_attachment", 0); //txture input
 			s->unbind();
@@ -151,7 +151,7 @@ private:
 		static ShaderPtr s = nullptr;
 		if (s == nullptr)
 		{
-			s = ShaderLib::loadOrGetShader("res/shaders/ScaleEdge.shader");
+			s = ShaderLib::loadOrGetShader("res/engine/shaders/ScaleEdge.shader");
 			s->bind();
 			std::static_pointer_cast<internal::GLShader>(s)->setUniform1i("u_attachment", 0); //txture input
 			s->unbind();
@@ -199,7 +199,7 @@ protected:
 		static ShaderPtr s = nullptr;
 		if (s == nullptr)
 		{
-			s = ShaderLib::loadOrGetShader("res/shaders/Blur.shader");
+			s = ShaderLib::loadOrGetShader("res/engine/shaders/Blur.shader");
 			s->bind();
 			std::static_pointer_cast<internal::GLShader>(s)->setUniform1i("u_attachment", 0); //txture input
 			s->unbind();
@@ -241,7 +241,7 @@ namespace Effecto {
 			static ShaderPtr s = nullptr;
 			if (s == nullptr)
 			{
-				s = ShaderLib::loadOrGetShader("res/shaders/Blur.shader");
+				s = ShaderLib::loadOrGetShader("res/engine/shaders/Blur.shader");
 				s->bind();
 				std::static_pointer_cast<internal::GLShader>(s)->setUniform1i("u_attachment", 0); //txture input
 				s->unbind();

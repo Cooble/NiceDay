@@ -17,14 +17,16 @@ project(TestNiceDay)
     endmacro()
 
     add_my_test(NDUtilTest)
-    add_my_test(monoTest)
+    
  
 
 
 # Include files
-    target_include_directories(TestNiceDay PUBLIC 
-        "src"
-    )
+target_include_directories(TestNiceDay PUBLIC 
+    "src"
+)
+
+if(ND_ENABLE_DOTNET)
 	add_custom_command(TARGET TestNiceDay 
 	POST_BUILD
     COMMAND  ${CMAKE_COMMAND} -DTT_TARGET_DIR=${CMAKE_CURRENT_BINARY_DIR} -P ${CMAKE_SOURCE_DIR}/CopyMonoDll.cmake
@@ -36,9 +38,14 @@ project(TestNiceDay)
     COMMENT "copying mono config to build dir..."
 )
 
+    
+    target_link_libraries(TestNiceDay PUBLIC Managed)
+
+    add_my_test(monoTest)
+endif()
+
 
 
 
 # Dependencies
     target_link_libraries(TestNiceDay PUBLIC NiceDay)
-    target_link_libraries(TestNiceDay PUBLIC Managed)

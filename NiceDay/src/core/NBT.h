@@ -841,6 +841,10 @@ public:
 bool operator==(const NBT& a, const NBT& b);
 inline bool operator!=(const NBT& a, const NBT& b) { return !operator==(a, b); }
 
+#define NBT_SAVE(nbt,variable) (nbt).save(#variable, variable)
+#define NBT_LOAD(nbt,variable) (nbt).load(#variable, variable)
+
+
 namespace BinarySerializer {
 	//writes to a binary stream
 	void write(const NBT& n, const IBinaryStream::WriteFunc& write);

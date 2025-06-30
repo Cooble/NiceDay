@@ -73,14 +73,14 @@ static Entity loadEntity(NewScene* s, const std::string& path)
 
 static void drawTexOrNo(MaterialPtr& c, int width, int height)
 {
-	static auto no = TextureLib::loadOrGetTexture("res/images/no.png")->getID();
+	static auto no = TextureLib::loadOrGetTexture("res/scene/images/no.png")->getID();
 	ImGui::Image(c ? Atelier::get().getPhoto(c)->getID() : no,
 	             {(float)width, (float)height}, {0.f, 1.f}, {1.f, 0.f});
 }
 
 static void drawTexOrNo(MeshPtr& c, int width, int height)
 {
-	static auto no = TextureLib::loadOrGetTexture("res/images/no.png")->getID();
+	static auto no = TextureLib::loadOrGetTexture("res/scene/images/no.png")->getID();
 	ImGui::Image(c ? Atelier::get().getPhoto(c)->getID() : no,
 	             {(float)width, (float)height}, {0.f, 1.f}, {1.f, 0.f});
 }
@@ -582,7 +582,7 @@ static std::string textureCombo(const std::string& currentCombo, TextureType typ
 	{
 		auto id = std::filesystem::exists(ND_RESLOC(currentCombo))
 			          ? TextureLib::loadOrGetTexture(currentCombo)->getID()
-			          : TextureLib::loadOrGetTexture("res/images/no.png")->getID();
+			          : TextureLib::loadOrGetTexture("res/scene/images/no.png")->getID();
 		if (id)
 			ImGui::Image(id, {(float)AtelierDim::width, (float)AtelierDim::height},
 			             {0.f, 1.f}, {1.f, 0.f});
@@ -1069,7 +1069,7 @@ bool drawMaterialManager(bool clickOnNew)
 {
 	comp_util::drawStringDialog(clickOnNew, "MaterNew?", "Texture Name", [](const char* c)
 	{
-		MaterialLibrary::create({ShaderLib::loadOrGetShader("res/shaders/Model.shader"), "MAT", c});
+		MaterialLibrary::create({ShaderLib::loadOrGetShader("res/scene/shaders/Model.shader"), "MAT", c});
 	});
 
 	auto& list = MaterialLibrary::getList();
@@ -1320,6 +1320,9 @@ bool drawToolPanel()
 
 	// -------------------------------------------
 
+	constexpr bool showTools = false;
+
+	if (showTools) {
 	// Set the position and size for the *next* window
 	ImGui::SetNextWindowPos(toolbarPos, ImGuiCond_Always);
 	ImGui::SetNextWindowSize(toolbarSize, ImGuiCond_Always);
@@ -1373,23 +1376,24 @@ bool drawToolPanel()
 	//	ImVec2(52, 0),  // Min size: 400 width, any height
 	//	ImVec2(52, FLT_MAX) // Max size: 400 width, infinite height
 	//);
-	ImGui::Begin("Tools", 0, ImGuiWindowFlags_NoDecoration);
-	Image(windows.transformOperation == TRANSOP_MOVE ? SIDS("move_on") : SIDS("move_off"), *ui_icons, {50.f, 50.f});
-	if (ImGui::IsItemClicked())windows.transformOperation = TRANSOP_MOVE;
 
-	Image(windows.transformOperation == TRANSOP_SCALE ? SIDS("scale_on") : SIDS("scale_off"), *ui_icons, {50.f, 50.f});
-	if (ImGui::IsItemClicked())windows.transformOperation = TRANSOP_SCALE;
+		ImGui::Begin("Tools", 0, ImGuiWindowFlags_NoDecoration);
+		Image(windows.transformOperation == TRANSOP_MOVE ? SIDS("move_on") : SIDS("move_off"), *ui_icons, { 50.f, 50.f });
+		if (ImGui::IsItemClicked())windows.transformOperation = TRANSOP_MOVE;
 
-	Image(windows.transformOperation == TRANSOP_ROTATE ? SIDS("rotate_on") : SIDS("rotate_off"), *ui_icons,
-	      {50.f, 50.f});
-	if (ImGui::IsItemClicked())windows.transformOperation = TRANSOP_ROTATE;
+		Image(windows.transformOperation == TRANSOP_SCALE ? SIDS("scale_on") : SIDS("scale_off"), *ui_icons, { 50.f, 50.f });
+		if (ImGui::IsItemClicked())windows.transformOperation = TRANSOP_SCALE;
 
-	Image(SIDS("quantize"), *ui_icons, {50.f, 50.f});
-	drawQuantizeDialog(ImGui::IsItemClicked());
+		Image(windows.transformOperation == TRANSOP_ROTATE ? SIDS("rotate_on") : SIDS("rotate_off"), *ui_icons,
+			{ 50.f, 50.f });
+		if (ImGui::IsItemClicked())windows.transformOperation = TRANSOP_ROTATE;
 
+		Image(SIDS("quantize"), *ui_icons, { 50.f, 50.f });
+		drawQuantizeDialog(ImGui::IsItemClicked());
 
-	ImGui::PopStyleVar(4);
-	ImGui::End();
+		ImGui::PopStyleVar(4);
+		ImGui::End();
+	}
 	return true;
 }
 

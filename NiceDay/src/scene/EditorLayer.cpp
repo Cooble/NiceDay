@@ -306,7 +306,7 @@ struct EditorHUD
 
 	void init()
 	{
-		shader = Shader::create("res/shaders/Arrow.shader");
+		shader = Shader::create("res/scene/shaders/Arrow.shader");
 
 		fbo = FrameBuffer::create(
 			FrameBufferInfo().defaultTarget(1920, 1080, TextureFormat::RGBA).special(FBAttachment::DEPTH_STENCIL));
@@ -646,12 +646,15 @@ struct WireMoveScript : NativeScript
 };
 
 static float centerDepth;
-static float* depth_buff;
+static float depth_sampling_buff;
+static float* depth_center_ptr;
+static float* depth_sampling_buff_ptr;
 static Entity sphere;
 
 void EditorLayer::onAttach()
 {
 	hud.init();
+	m_depth_sampling_position = glm::vec2(0, 0);
 	components_imgui_access::windows.quantizationPos = &hud.quantizationPos;
 	components_imgui_access::windows.quantizationScale = &hud.quantizationScale;
 	components_imgui_access::windows.quantizationRot = &hud.quantizationRotate;
@@ -665,8 +668,9 @@ void EditorLayer::onAttach()
 	//auto back = screenToWorld(screenTrans,proj,view,world,screenRes);
 
 
-	depth_buff = &centerDepth;
-	//depth_buff = (float*)malloc(1920 * 1080 * sizeof(float));
+	depth_center_ptr = &centerDepth;
+	depth_sampling_buff_ptr = &depth_sampling_buff;
+	//depth_center_ptr = (float*)malloc(1920 * 1080 * sizeof(float));
 	components_imgui_access::windows.init();
 	auto t = Atelier::get(); //just init atelier
 	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
@@ -680,7 +684,7 @@ void EditorLayer::onAttach()
 	io.Fonts->AddFontFromFileTTF(ND_RESLOC("res/fonts/NotoSansCJKjp-Medium.otf").c_str(), 20, &config, io.Fonts->GetGlyphRangesJapanese());
 	io.Fonts->Build();*/
 
-	oneColorShader = ShaderLib::loadOrGetShader("res/shaders/OneColor.shader");
+	oneColorShader = ShaderLib::loadOrGetShader("res/scene/shaders/OneColor.shader");
 
 	m_scene = new NewScene;
 	m_scene->reg().on_destroy<CameraComponent>().connect<&onCamComponentDestroyed>();
@@ -845,7 +849,11 @@ void EditorLayer::onRender()
 		}
 	}
 	auto size = Renderer::getDefaultFBO()->getSize();
-	GLCall(glReadPixels(size.x / 2, size.y / 2, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, depth_buff));
+
+
+	GLCall(glReadPixels(size.x / 2, size.y / 2, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, depth_center_ptr));
+	GLCall(glReadPixels(m_depth_sampling_position.x*size.x, m_depth_sampling_position.y * size.y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, depth_sampling_buff_ptr));
+
 	m_scene->getLookingDepth() = getCurrentDepth();
 
 	if (selectedE != entt::null)
@@ -913,8 +921,8 @@ void EditorLayer::onEvent(Event& e)
 
 float EditorLayer::getCurrentDepth()
 {
-	//float f = *(depth_buff + APwin()->getWidth() * APwin()->getHeight() / 2);
-	float f = *depth_buff;
+	//float f = *(depth_center_ptr + APwin()->getWidth() * APwin()->getHeight() / 2);
+	float f = *depth_center_ptr;
 	return transformDepth(f, minMaxCam.x, minMaxCam.y);
 }
 
@@ -926,7 +934,7 @@ void EditorLayer::onWindowResize(int width, int height)
 void EditorLayer::addExampleObjects()
 {
 	auto modelMat = Material::create({
-		std::shared_ptr<Shader>(ShaderLib::loadOrGetShader("res/shaders/Model.shader")), "MAT",
+		std::shared_ptr<Shader>(ShaderLib::loadOrGetShader("res/scene/shaders/Model.shader")), "MAT",
 		"modelMaterial"
 		});
 	modelMat->setValue("color", glm::vec4(1.0, 1.0, 0, 1));
@@ -936,7 +944,7 @@ void EditorLayer::addExampleObjects()
 	auto crate1Mesh = MeshLibrary::loadOrGet("res/examples/models/cube.fbx");
 
 	auto simpleMat = MaterialLibrary::create({
-		std::shared_ptr<Shader>(ShaderLib::loadOrGetShader("res/shaders/Model.shader")), "MAT",
+		std::shared_ptr<Shader>(ShaderLib::loadOrGetShader("res/scene/shaders/Model.shader")), "MAT",
 		"simpleColorMat"
 		});
 	simpleMat->setValue("color", glm::vec4(1.0, 1.0, 0.5, 1));
@@ -959,7 +967,7 @@ void EditorLayer::addExampleObjects()
 
 		ND_INFO("Loading cubemaps");
 		auto mat = MaterialLibrary::create({
-			ShaderLib::loadOrGetShader("res/shaders/CubeMap.shader"), "MAT", "SkyMaterial2", nullptr, flags
+			ShaderLib::loadOrGetShader("res/scene/shaders/CubeMap.shader"), "MAT", "SkyMaterial2", nullptr, flags
 			});
 		mat->setValue("cubemap", std::shared_ptr<Texture>(
 			Texture::create(TextureInfo(TextureType::_CUBE_MAP, "res/examples/images/skymap2/*.png"))));
@@ -997,7 +1005,7 @@ void EditorLayer::addExampleObjects()
 	{
 		auto diffusePtr = std::shared_ptr<Texture>(Texture::create(TextureInfo("res/examples/images/crate.png")));
 
-		auto mesh = MeshLibrary::loadOrGet("res/examples/models/sphere.fbx");
+		auto mesh = MeshLibrary::loadOrGet("res/scene/models/sphere.fbx");
 
 		auto mat = MaterialLibrary::copy(modelMat, "SphereMat");
 		mat->setValue("color", glm::vec4(1.0, 1.0, 0, 0));
@@ -1078,7 +1086,7 @@ void EditorLayer::initDefaultScene()
 
 		auto mesh = MeshLibrary::registerMesh(MeshDataFactory::buildWirePlane(40, 40));
 		auto mat = MaterialLibrary::create({
-			ShaderLib::loadOrGetShader("res/shaders/Model.shader"), "MAT", "WireMat", nullptr, MaterialFlags::DEFAULT_FLAGS
+			ShaderLib::loadOrGetShader("res/scene/shaders/Model.shader"), "MAT", "WireMat", nullptr, MaterialFlags::DEFAULT_FLAGS
 			});
 		mat->setValue("shines", 0.f);
 		mat->setValue("color", glm::vec4(0.5f, 0.5f, 0.5f, 1));
@@ -1091,10 +1099,21 @@ void EditorLayer::initDefaultScene()
 	}
 }
 
-glm::vec3 EditorLayer::screenToWorld(const glm::vec2& screenPos)
+glm::vec3 EditorLayer::screenToWorld(const glm::vec2& pixelScreenPos)
 {
 	return Spacer3D::screenToRay(
-		glm::vec2(screenPos.x, APwin()->getDimensions().y - screenPos.y),
+		glm::vec2(pixelScreenPos.x, APwin()->getDimensions().y - pixelScreenPos.y),
 		env.proj, env.view, APwin()->getDimensions());
+}
+
+float EditorLayer::getDepthAtScreen(const glm::vec2& pixelScreenPos)
+{
+	auto size = Renderer::getDefaultFBO()->getSize();
+
+	m_depth_sampling_position = pixelScreenPos;
+	m_depth_sampling_position.x /= size.x;
+	m_depth_sampling_position.y = 1.f - m_depth_sampling_position.y / size.y;
+
+	return transformDepth(depth_sampling_buff, minMaxCam.x, minMaxCam.y);
 }
 }

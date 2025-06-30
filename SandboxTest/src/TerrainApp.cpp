@@ -14,6 +14,7 @@ public:
 		AppInfo info;
 		info.io.enableSCENE = true;
 		info.io.enableIMGUI = true;
+		info.io.enableMONO = false;
 		m_target_tps = 120;
 		init(info);
 		auto editor = new EditorLayer();

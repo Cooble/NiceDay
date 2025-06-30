@@ -1,21 +1,23 @@
 ﻿#include "EulerSim.h"
 
+#include <ImGuiFileDialog.h>
 #include <glm/gtc/noise.hpp>
 
 #include "TerrainLayer.h"
 #include "TUtils.h"
-#include "core/imgui_utils.h"
+#include "core/NBT.h"
 
 
-void Euler::init(Ground& g)
+void Euler::init(EulerGround& g)
 {
 	perlinMap.resize(g.width * g.width);
 	sediment = g.sediment;
 	originalHeight = g.terrain_height;
 	ter::generate2DPerlin(perlinMap, g.width, g.height);
+	ZeroMemory(g.water_height.data(), g.water_height.size() * sizeof(decltype(g.water_height)::value_type));
 }
 
-void Euler::step(Ground& g)
+void Euler::step(EulerGround& g)
 {
 	if (g.height * g.height != sediment.size())
 		init(g);
@@ -25,7 +27,7 @@ void Euler::step(Ground& g)
 
 
 	// 1. rain
-	for (int y = 1; y < h - 1; y++)
+	for (int y = 1; y < h - 1 && e_rain; y++)
 		for (int x = 1; x < w - 1; x++)
 		{
 			auto d = glm::ivec2(x, y) - glm::ivec2(w / 2);
@@ -34,17 +36,17 @@ void Euler::step(Ground& g)
 				? K_rain
 				: 0;
 
-			//increase = K_rain;
+			// rain everywhere same
+			increase = K_rain;
 			g.water_height[x + y * w] +=K_dt * increase;
 		}
 
-	// totalHeight = terrain_height + water_height
 	auto totalHeight = g.terrain_height;
 	for (size_t i = 0; i < totalHeight.size(); i++)
 		totalHeight[i] += g.water_height[i];
 
 	// 2. flux
-	for (int y = 1; y < h - 1; y++)
+	for (int y = 1; y < h - 1 && e_flow; y++)
 		for (int x = 1; x < w - 1; x++)
 		{
 			auto idx = y * w + x;
@@ -70,7 +72,7 @@ void Euler::step(Ground& g)
 		}
 
 	// 3. water height
-	for (int y = 1; y < h - 1; y++)
+	for (int y = 1; y < h - 1 && e_flow; y++)
 		for (int x = 1; x < w - 1; x++)
 		{
 			auto idx = y * w + x;
@@ -107,7 +109,7 @@ void Euler::step(Ground& g)
 	// 4. erosion
 	constexpr gfloat erosionClamp = 10;
 
-	for (int y = 1; y < h - 1; y++)
+	for (int y = 1; y < h - 1 && e_erosion; y++)
 		for (int x = 1; x < w - 1; x++)
 		{
 			auto idx = y * w + x;
@@ -124,7 +126,6 @@ void Euler::step(Ground& g)
 				(gfloat)1, g.water_height[idx]);
 
 
-			//auto perlinFactor = myPerlin(gvec2((gfloat)x / w, (gfloat)y / h));
 			auto perlinFactor = perlinMap[idx];
 
 			// the deeper the harder to dissolve
@@ -158,7 +159,7 @@ void Euler::step(Ground& g)
 		}
 
 	// 5. sediment transport
-	for (int y = 1; y < h - 1; y++)
+	for (int y = 1; y < h - 1 && e_erosion; y++)
 		for (int x = 1; x < w - 1; x++)
 		{
 			auto idx = y * w + x;
@@ -175,49 +176,47 @@ void Euler::step(Ground& g)
 		}
 
 	// 6. evaporation
-	if (e_evaporation)
-		for (int y = 1; y < h - 1; y++)
-			for (int x = 1; x < w - 1; x++)
-			{
-				auto idx = y * w + x;
-				g.water_height[idx] *= 1 - K_evaporation * K_dt;
+	for (int y = 1; y < h - 1 && e_evaporation; y++)
+		for (int x = 1; x < w - 1; x++)
+		{
+			auto idx = y * w + x;
+			g.water_height[idx] *= 1 - K_evaporation * K_dt;
 
-				// remove the incredibly small values
-				constexpr gfloat evaporationEpsilon = 0.001;
-				if (g.water_height[idx] < evaporationEpsilon)
-					g.water_height[idx] = 0;
-			}
+			// remove the incredibly small values
+			constexpr gfloat evaporationEpsilon = 0.001;
+			if (g.water_height[idx] < evaporationEpsilon)
+				g.water_height[idx] = 0;
+		}
 
 	// 7. landslide
-	if (e_landslide)
-		for (int y = 1; y < h - 1; y++)
-			for (int x = 1; x < w - 1; x++)
-			{
-				auto idx = y * w + x;
+	for (int y = 1; y < h - 1 && e_landslide; y++)
+		for (int x = 1; x < w - 1; x++)
+		{
+			auto idx = y * w + x;
 
-				auto& height = g.terrain_height[idx];
+			auto& height = g.terrain_height[idx];
 
-				auto heightN = gvec2(
-					g.terrain_height[y * g.width + x + 1],
-					g.terrain_height[(y + 1) * g.width + x]);
+			auto heightN = gvec2(
+				g.terrain_height[y * g.width + x + 1],
+				g.terrain_height[(y + 1) * g.width + x]);
 
-				auto delta = heightN - height;
+			auto delta = heightN - height;
 
-				auto takeN = K_landSlideSpeed * K_dt * delta;
+			auto takeN = K_landSlideSpeed * K_dt * delta;
 
-				auto signs = glm::sign(takeN);
-				takeN = glm::max(glm::abs(takeN) - K_landSlideCutoffAngle, (gfloat)0.f) * signs;
-				// should produce something like
-				//                   /
-				//                  /
-				//   -------+-------
-				//  /
-				// /
+			auto signs = glm::sign(takeN);
+			takeN = glm::max(glm::abs(takeN) - K_landSlideCutoffAngle, (gfloat)0.f) * signs;
+			// should produce something like
+			//                   /
+			//                  /
+			//   -------+-------
+			//  /
+			// /
 
-				height += glm::compAdd(takeN);
-				g.terrain_height[y * w + x + 1] -= takeN.x;
-				g.terrain_height[(y + 1) * w + x] -= takeN.y;
-			}
+			height += glm::compAdd(takeN);
+			g.terrain_height[y * w + x + 1] -= takeN.x;
+			g.terrain_height[(y + 1) * w + x] -= takeN.y;
+		}
 }
 
 
@@ -235,16 +234,94 @@ void Euler::imguiRender()
 	ImGui::SeparatorText("Euler Settings");
 	ImGui::PushID(this);
 
-	InputGFloat("Dt", &K_dt, 0, 0, "%.6f");
-	InputGFloat("Rain", &K_rain, 0, 0, "%.6f");
+
 	InputGFloat("Gravity", &K_g, 0, 0, "%.6f");
-	InputGFloat("Sediment Capacity", &K_sediment_capacity, 0, 0, "%.6f");
-	InputGFloat("Dissolving", &K_s_dissolving, 0, 0, "%.6f");
-	InputGFloat("Depositing", &K_d_depositing, 0, 0, "%.6f");
-	InputGFloat("Evaporation", &K_evaporation, 0, 0, "%.6f");
-	InputGFloat("Tilt Minimum", &K_tilt_minimum, 0, 0, "%.6f");
-	InputGFloat("Land Slide Speed", &K_landSlideSpeed, 0, 0, "%.6f");
-	InputGFloat("Land Slide Cutoff Angle", &K_landSlideCutoffAngle, 0, 0, "%.6f");
+	SliderGFloat("Dt", &K_dt, 0, (gfloat)0.1, "%.6f");
+	SliderGFloat("Rain", &K_rain, 0, 10, "%.3f");
+	SliderGFloat("Sediment Capacity", &K_sediment_capacity, 0, (gfloat)0.5, "%.6f");
+	SliderGFloat("Dissolving", &K_s_dissolving, 0, (gfloat)0.5, "%.6f");
+	SliderGFloat("Depositing", &K_d_depositing, 0, (gfloat)0.5, "%.6f");
+	SliderGFloat("Evaporation", &K_evaporation, 0, (gfloat)0.5, "%.6f");
+
+	SliderGFloat("Tilt Minimum", &K_tilt_minimum, 0, 10, "%.3f");
+	SliderGFloat("Land Slide Speed", &K_landSlideSpeed, 0, 1, "%.3f");
+	SliderGFloat("Land Slide Cutoff Angle", &K_landSlideCutoffAngle, 0, 1, "%.3f");
 
 	ImGui::PopID();
+
+
+
+	// ======== CONFIG SERIALIZATION
+	{
+		if (ImGui::Button("Load Config"))
+		{
+			IGFD::FileDialogConfig config;
+			config.path = ".";
+			ImGuiFileDialog::Instance()->OpenDialog("LoadConfig1", "Choose config file to open", ".json", config);
+		}
+		ImGui::SetItemTooltip("Load simulation parameters from file\n"
+			"Config is a json file with all the parameters of the euler simulation.");
+		ImGui::SameLine();
+		if (ImGui::Button("Save Config"))
+		{
+			IGFD::FileDialogConfig config;
+			config.path = ".";
+			ImGuiFileDialog::Instance()->OpenDialog("SaveConfig1", "Choose config file to save", ".json", config);
+		}
+		ImGui::SetItemTooltip("Save simulation parameters to file\n"
+			"Config is a json file with all the parameters of the euler simulation.");
+
+		if (ImGuiFileDialog::Instance()->Display("LoadConfig1"))
+		{
+			if (ImGuiFileDialog::Instance()->IsOk())
+			{
+				std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
+				ND_BUG("Loading config from {}", filePathName);
+				nd::NBT nbt;
+				nd::NBT::loadFromFile(filePathName, nbt);
+				load(nbt);
+			}
+			ImGuiFileDialog::Instance()->Close();
+		}
+		if (ImGuiFileDialog::Instance()->Display("SaveConfig1"))
+		{
+			if (ImGuiFileDialog::Instance()->IsOk())
+			{
+				std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
+				ND_BUG("Saving config to {}", filePathName);
+				nd::NBT nbt;
+				save(nbt);
+				nd::NBT::saveToFile(filePathName, nbt);
+			}
+			ImGuiFileDialog::Instance()->Close();
+		}
+	}
+}
+
+void Euler::save(nd::NBT& src)
+{
+	NBT_SAVE(src, K_dt);
+	NBT_SAVE(src, K_rain);
+	NBT_SAVE(src, K_g);
+	NBT_SAVE(src, K_sediment_capacity);
+	NBT_SAVE(src, K_s_dissolving);
+	NBT_SAVE(src, K_d_depositing);
+	NBT_SAVE(src, K_evaporation);
+	NBT_SAVE(src, K_tilt_minimum);
+	NBT_SAVE(src, K_landSlideSpeed);
+	NBT_SAVE(src, K_landSlideCutoffAngle);
+}
+
+void Euler::load(nd::NBT& src)
+{
+	NBT_LOAD(src, K_dt);
+	NBT_LOAD(src, K_rain);
+	NBT_LOAD(src, K_g);
+	NBT_LOAD(src, K_sediment_capacity);
+	NBT_LOAD(src, K_s_dissolving);
+	NBT_LOAD(src, K_d_depositing);
+	NBT_LOAD(src, K_evaporation);
+	NBT_LOAD(src, K_tilt_minimum);
+	NBT_LOAD(src, K_landSlideSpeed);
+	NBT_LOAD(src, K_landSlideCutoffAngle);
 }

@@ -28,7 +28,7 @@ ParticleRenderer2D::ParticleRenderer2D()
 	{
 		uniforms[i] = i;
 	}
-	m_shader = ShaderLib::loadOrGetShader("res/shaders/ParticleSprite.shader");
+	m_shader = ShaderLib::loadOrGetShader("res/engine/shaders/ParticleSprite.shader");
 	m_shader->bind();
 	std::static_pointer_cast<internal::GLShader>(m_shader)->setUniform1iv(
 		"u_textures", PRenderer2DSpecs::MAX_TEXTURES, uniforms);

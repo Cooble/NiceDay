@@ -406,7 +406,7 @@ void EditCameraController::onUpdate()
 		}
 	}
 
-	if (navBar.freshRelease)
+	if (navBar.freshRelease || APin().isKeyFreshlyPressed(KeyCode::ESCAPE))
 	{
 		fullRotation = false;
 		fullMove = false;

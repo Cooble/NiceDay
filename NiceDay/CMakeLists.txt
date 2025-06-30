@@ -211,6 +211,7 @@ LIST( APPEND CMAKE_MODULE_PATH
 
 
     #obtain dotnet
+if(ND_ENABLE_DOTNET)
     set(ENV{DOTNET_ROOT} "C:/Program Files/dotnet")
 
     FIND_PACKAGE( Dotnet )
@@ -220,5 +221,11 @@ LIST( APPEND CMAKE_MODULE_PATH
     target_link_directories(NiceDay PUBLIC ${DOTNET_INCLUDE_DIRS})
     target_include_directories(NiceDay PUBLIC ${DOTNET_INCLUDE_DIRS})
     target_link_libraries(NiceDay PUBLIC ${DOTNET_IJWHOST_LIB} ${DOTNET_NETHOST_LIB} ${DOTNET_LIBNETHOST_LIB})
-
+    
+    # Give C/C++ code a symbol it can #ifdef against
+    target_compile_definitions(NiceDay PUBLIC DOTNET_MODULE_INCLUDED=1)
+else()
+    message(STATUS "Building without .NET scripting support")
+    target_compile_definitions(NiceDay PUBLIC DOTNET_MODULE_INCLUDED=0)
+endif()
     

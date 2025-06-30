@@ -494,6 +494,11 @@ void MonoLayer::onDetach()
 #endif
 
 
+
+#include "MonoLayer.h"
+
+// Only compile if support is enabled
+#if ND_ENABLE_DOTNET
 #define WINDOWS
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
@@ -508,14 +513,14 @@ void MonoLayer::onDetach()
 #include <assert.h>
 #include <chrono>
 #include <iostream>
-#include <thread>
 #include <vector>
+#include <thread>
 
 // Provided by the AppHost NuGet package and installed as an SDK pack
 #include <nethost.h>
 
 // Header files copied from https://github.com/dotnet/core-setup
-#include "MonoLayer.h"
+
 
 #include <coreclr_delegates.h>
 #include <hostfxr.h>
@@ -995,3 +1000,20 @@ namespace
 
 	// </SnippetInitialize>
 }
+#else
+
+namespace nd
+{
+	void MonoLayer::onAttach(){}
+
+	void MonoLayer::onDetach(){}
+
+	void MonoLayer::onUpdate(){}
+
+	bool MonoLayer::isMonoLoaded() const
+	{
+		return false;
+	}
+}
+
+#endif

@@ -9,6 +9,7 @@ class EditorLayer : public Layer
 {
 private:
 	NewScene* m_scene;
+	glm::vec2 m_depth_sampling_position;
 public:
 	void onAttach() override;
 	void onDetach() override;
@@ -27,7 +28,10 @@ public:
 	void initDefaultScene();
 
 	// normalized world direction
-	glm::vec3 screenToWorld(const glm::vec2& screenPos);
+	glm::vec3 screenToWorld(const glm::vec2& pixelScreenPos);
 	//void initDefaultCamera();
+
+	// this will return the last depth value, not the current one
+	float getDepthAtScreen(const glm::vec2& pixelScreenPos);
 };
 }

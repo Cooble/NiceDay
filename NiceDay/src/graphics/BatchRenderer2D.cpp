@@ -36,7 +36,7 @@ void BatchRenderer2D::prepareQuad()
 	{
 		uniforms[i] = i;
 	}
-	m_shader = ShaderLib::loadOrGetShader("res/shaders/Sprite.shader");
+	m_shader = ShaderLib::loadOrGetShader("res/engine/shaders/Sprite.shader");
 	m_shader->bind();
 	std::static_pointer_cast<nd::internal::GLShader>(m_shader)->setUniform1iv("u_textures", MAX_TEXTURES, uniforms);
 	std::static_pointer_cast<nd::internal::GLShader>(m_shader)->setUniformMat4("u_projectionMatrix", mat4(1.0f));
@@ -82,7 +82,7 @@ void BatchRenderer2D::prepareText()
 	m_text_buff = new TextVertexData[MAX_VERTICES];
 #endif
 
-	m_text_shader = ShaderLib::loadOrGetShader("res/shaders/Font.shader");
+	m_text_shader = ShaderLib::loadOrGetShader("res/engine/shaders/Font.shader");
 	m_text_shader->bind();
 	std::static_pointer_cast<nd::internal::GLShader>(m_text_shader)->setUniform1i("u_texture", 0);
 	std::static_pointer_cast<nd::internal::GLShader>(m_text_shader)->setUniformMat4("u_transform", mat4(1.0f));

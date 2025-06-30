@@ -93,7 +93,14 @@ GLTexture::GLTexture(const TextureInfo& info)
 		// resolves problem with weird alignment of pixels
 		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 		auto fixer = m_format == TextureFormat::RGB ? GL_RGB8 : (int)m_format;
-		GLCall(glTexImage2D(GL_TEXTURE_2D, 0, fixer, m_width, m_height, 0, (int)m_format, GL_UNSIGNED_BYTE, nullptr));
+		auto typeVal = m_format == TextureFormat::RED_32F ? GL_FLOAT : GL_UNSIGNED_BYTE;
+
+		auto format = m_format == TextureFormat::RED_32F ? GL_RED : (uint32_t)m_format;
+
+		//(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const void* pixels);
+
+		GLCall(glTexImage2D(GL_TEXTURE_2D, 0, fixer, m_width, m_height, 0, format, typeVal, nullptr));
+		
 	}
 	GLCall(glBindTexture(GL_TEXTURE_2D, 0));
 }
@@ -125,9 +132,12 @@ GLTexture::GLTexture(uint32_t id, const TextureInfo& info)
 
 void GLTexture::setPixels(float* pixels)
 {
+	auto format = m_format == TextureFormat::RED_32F ? GL_RED : (uint32_t)m_format;
+
+
 	ASSERT(m_not_proxy, "This texture is only proxy");
 	GLCall(glBindTexture((int)m_type, m_id));
-	GLCall(glTexSubImage2D((int)m_type, 0, 0, 0, m_width, m_height, (int)m_format, GL_FLOAT, pixels));
+	GLCall(glTexSubImage2D((int)m_type, 0, 0, 0, m_width, m_height, format, GL_FLOAT, pixels));
 	GLCall(glBindTexture((int)m_type, 0));
 }
 

@@ -27,7 +27,7 @@ ParticleRenderer::ParticleRenderer()
 	{
 		uniforms[i] = i;
 	}
-	m_shader = ShaderLib::loadOrGetShader("res/shaders/ParticleSprite.shader");
+	m_shader = ShaderLib::loadOrGetShader("res/engine/shaders/ParticleSprite.shader");
 	m_shader->bind();
 	std::static_pointer_cast<internal::GLShader>(m_shader)->setUniform1iv("u_textures", PR_MAX_TEXTURES, uniforms);
 	std::static_pointer_cast<internal::GLShader>(m_shader)->setUniformMat4("u_projectionMatrix", mat4(1.0f));

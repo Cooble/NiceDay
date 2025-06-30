@@ -3,10 +3,40 @@
 
 #include <vector>
 
+#include "BaseGround.h"
 #include "types.h"
 
 
-struct Ground;
+namespace nd
+{
+	class NBT;
+}
+
+// EulerGround is a specialized ground structure for the Euler simulation
+struct EulerGround : BaseGround
+{
+	std::vector<gfloat> water_height;
+	std::vector<gfloat> sediment;
+	std::vector<gvec4> flux;
+	std::vector<gvec2> velocity;
+
+	void resize(int size)
+	{
+		BaseGround::resize(size);
+		
+		auto sq = width * width;
+		water_height.resize(sq);
+		sediment.resize(sq);
+		flux.resize(sq);
+		velocity.resize(sq);
+
+		ZeroMemory(water_height.data(), water_height.size() * sizeof(decltype(water_height)::value_type));
+		ZeroMemory(sediment.data(), sediment.size() * sizeof(decltype(sediment)::value_type));
+		ZeroMemory(flux.data(), flux.size() * sizeof(decltype(flux)::value_type));
+		ZeroMemory(velocity.data(), velocity.size() * sizeof(decltype(velocity)::value_type));
+	}
+};
+
 
 struct Euler
 {
@@ -18,10 +48,10 @@ struct Euler
 
 
 	bool e_rain = false;
-	bool e_flow = false;
-	bool e_erosion = false;
-	bool e_evaporation = false;
-	bool e_landslide = false;
+	bool e_flow = true;
+	bool e_erosion = true;
+	bool e_evaporation = true;
+	bool e_landslide = true;
 
 	int groundSize = 128;
 	gfloat totalGround = 0;
@@ -52,13 +82,18 @@ struct Euler
 	std::vector<gfloat> originalHeight;
 	std::vector<gfloat> sediment;
 
+	// prepare special fields based on terrain_height
+	void init(EulerGround& g);
 
-	void init(Ground& g);
 
-
-	void step(Ground& g);
+	void step(EulerGround& g);
 
 
 	void imguiRender();
+
+
+	void save(nd::NBT& src);
+	void load(nd::NBT& src);
+
 	
 };

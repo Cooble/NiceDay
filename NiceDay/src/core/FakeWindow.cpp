@@ -11,7 +11,7 @@
 #include "scene/components_imgui_access.h"
 
 namespace nd {
-static Texture* templateTex = nullptr;
+//static Texture* templateTex = nullptr;
 
 FakeWindow::FakeWindow(WindowTemplate* realWindow, int width, int height, const std::string& title, bool fullscreen)
 	:
@@ -36,7 +36,7 @@ FakeWindow::FakeWindow(WindowTemplate* realWindow, int width, int height, const 
 	m_fbo->clear(BuffBit::COLOR | BuffBit::DEPTH, {1, 0, 0, 1});
 	Renderer::setDefaultFBO(m_fbo);
 
-	templateTex = Texture::create(TextureInfo("res/images/gui_back.png"));
+	//templateTex = Texture::create(TextureInfo("res/images/gui_back.png"));
 }
 
 FakeWindow::~FakeWindow()
@@ -107,11 +107,8 @@ void FakeWindow::swapBuffers()
 	if (m_dirty_dim)
 	{
 		m_dirty_dim = false;
-		ND_BUG("Resizing fbo to {}, {}", m_dim.x, m_dim.y);
 		m_fbo->resize(m_dim.x, m_dim.y);
-
 		auto e = WindowResizeEvent(m_data.width, m_data.height);
-		ND_BUG("Firing WindowsResizeEvent, {}, {}", m_data.width, m_data.height);
 		App::get().fireEvent(e);
 	}
 }

@@ -34,6 +34,16 @@ public:
 		CURSOR_ENABLED = 1,
 		CURSOR_HIDDEN = 2
 	};
+	constexpr const char* WindowCursorToString(WindowCursor c)
+	{
+		switch (c)
+		{
+		case CURSOR_DISABLED: return "CURSOR_DISABLED";
+		case CURSOR_ENABLED: return "CURSOR_ENABLED";
+		case CURSOR_HIDDEN: return "CURSOR_HIDDEN";
+		default: return "UNKNOWN_CURSOR";
+		}
+	}
 
 protected:
 	WindowCursor m_cursor_policy = CURSOR_ENABLED;
