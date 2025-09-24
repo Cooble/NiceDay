@@ -9,7 +9,7 @@ void ResourceMan::init()
 {
 	auto currentDir = std::filesystem::path(FUtil::getExecutableFolderPath());
 	//LOOK 3 STEPS UP for /res
-	for (int i = 0; i < 4; ++i)
+	for (int i = 0; i < 5; ++i)
 	{
 		currentDir = currentDir.parent_path();
 		if (std::filesystem::exists(currentDir.string() + "/res"))

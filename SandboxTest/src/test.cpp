@@ -25,8 +25,6 @@ public:
 	
 };
 
-
-#ifdef ND_TEST
 int main()
 {
 	Log::init();
@@ -38,4 +36,3 @@ int main()
 	return 0;
 	
 }
-#endif

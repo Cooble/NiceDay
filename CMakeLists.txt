@@ -81,6 +81,7 @@ if(ND_ENABLE_DOTNET)
 endif()
 add_subdirectory(Sandbox)
 add_subdirectory(SandboxTest)
+add_subdirectory(Terrain)
 enable_testing()
 add_subdirectory(TestNiceDay)
 

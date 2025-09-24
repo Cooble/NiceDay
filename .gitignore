@@ -23,6 +23,7 @@ res/engine/lua/temp
 res/lua/temp
 res/registry/headers
 res/engine/tracing
+res/scene/
 
 # Files
 .mat #material files of the engine
@@ -37,6 +38,9 @@ res/engine/tracing
 *log.txt
 *.dll
 *crateM.mat
+*.fbx
+*.obj
+*.bin
 
 
 # CMake
