@@ -1,226 +1,73 @@
-﻿#include "EulerSim.h"
-
+﻿#include "ndpch.h"
+#include "core/Scoper.h"
+#include "EulerSim.h"
 #include <ImGuiFileDialog.h>
-#include <glm/gtc/noise.hpp>
 
 #include "TerrainLayer.h"
 #include "TUtils.h"
 #include "core/NBT.h"
 
+#include <immintrin.h>
 
+
+using namespace nd;
 void Euler::init(EulerGround& g)
 {
 	perlinMap.resize(g.width * g.width);
 	sediment = g.sediment;
 	originalHeight = g.terrain_height;
-	ter::generate2DPerlin(perlinMap, g.width, g.height);
+
+	ter::generate2DPerlin(REINTERPRET_AS(std::vector<gfloat>,perlinMap), g.width, g.height);
 	ZeroMemory(g.water_height.data(), g.water_height.size() * sizeof(decltype(g.water_height)::value_type));
 }
+
+
+static uint64_t sMeasureFunctionTime = 1;
+void measureFunction(std::function<void(EulerGround&)> a1, std::function<void(EulerGround&)> a2, EulerGround& g)
+{
+	uint64_t micros1, micros2;
+	{
+		TimerStaper p("");
+		for (int i = 0; i < sMeasureFunctionTime; ++i)
+			a1(g);
+		micros1 = p.getUS();
+	}
+	{
+		TimerStaper p("");
+		for (int i = 0; i < sMeasureFunctionTime; ++i)
+			a2(g);
+		micros2 = p.getUS();
+	}
+	ND_BUG("SIMD took {} us, BASIC took {} us, SpeedUp of {}", micros1 / sMeasureFunctionTime, micros2 / sMeasureFunctionTime, (gfloat)micros2 / (gfloat)micros1);
+}
+
+#define measureFuncFixed(name) measureFunction(std::bind(&Euler::name##_simd, this,std::placeholders::_1), std::bind(&Euler::name,this, std::placeholders::_1), g)
 
 void Euler::step(EulerGround& g)
 {
 	if (g.height * g.height != sediment.size())
 		init(g);
 
-	auto w = g.width;
-	auto h = g.height;
-
-
-	// 1. rain
-	for (int y = 1; y < h - 1 && e_rain; y++)
-		for (int x = 1; x < w - 1; x++)
+	static bool first = true;
+	if (first)
 		{
-			auto d = glm::ivec2(x, y) - glm::ivec2(w / 2);
-
-			gfloat increase = (d.x * d.x + d.y * d.y < 100 || (x > w / 2 - 10 && x < w / 2 + 10))
-				? K_rain
-				: 0;
-
-			// rain everywhere same
-			increase = K_rain;
-			g.water_height[x + y * w] +=K_dt * increase;
-		}
-
-	auto totalHeight = g.terrain_height;
-	for (size_t i = 0; i < totalHeight.size(); i++)
-		totalHeight[i] += g.water_height[i];
-
-	// 2. flux
-	for (int y = 1; y < h - 1 && e_flow; y++)
-		for (int x = 1; x < w - 1; x++)
-		{
-			auto idx = y * w + x;
-			auto deltaH = gvec4(
-				totalHeight[idx] - totalHeight[y * w + x - 1],
-				totalHeight[idx] - totalHeight[y * w + x + 1],
-				totalHeight[idx] - totalHeight[(y - 1) * w + x],
-				totalHeight[idx] - totalHeight[(y + 1) * w + x]);
-
-			auto fluxFactor = K_dt * pPipeArea / pPipeLen * pGravity;
-			g.flux[idx] = glm::max(gvec4(0.f), g.flux[idx] + deltaH * fluxFactor);
-
-			auto sumF = glm::compAdd(g.flux[idx]);
-
-			if (sumF > 0)
-			{
-				auto waterVolume = g.water_height[idx] * pLL * pLL;
-				auto outVolume = sumF * K_dt;
-				auto adjustmentFactor = glm::min((gfloat)1, waterVolume / outVolume);
-
-				g.flux[idx] *= adjustmentFactor;
-			}
-		}
-
-	// 3. water height
-	for (int y = 1; y < h - 1 && e_flow; y++)
-		for (int x = 1; x < w - 1; x++)
-		{
-			auto idx = y * w + x;
-			auto sumIn =
-				+g.flux[y * w + x - 1].y
-				+ g.flux[y * w + x + 1].x
-				+ g.flux[(y - 1) * w + x].w
-				+ g.flux[(y + 1) * w + x].z;
-			auto sumOut = glm::compAdd(g.flux[idx]);
-
-			auto deltaV = (sumIn - sumOut) * K_dt;
-			auto deltaH = deltaV / (pLL * pLL);
-			g.water_height[idx] = glm::max((gfloat)0.f, g.water_height[idx] + deltaH);
-			auto meanH = g.water_height[idx] - deltaH / 2.f;
-
-			if (meanH > 0)
-			{
-				auto fluxX =
-					+g.flux[y * w + x - 1].y
-					- g.flux[idx].x
-					+ g.flux[idx].y
-					- g.flux[y * w + x + 1].x;
-				auto fluxY =
-					+g.flux[(y - 1) * w + x].w
-					- g.flux[idx].z
-					+ g.flux[idx].w
-					- g.flux[(y + 1) * w + x].z;
-				g.velocity[idx] = gvec2(fluxX, fluxY) / (meanH * pLL);
-			}
-			else
-				g.velocity[idx] = gvec2(0.f);
-		}
-
-	// 4. erosion
-	constexpr gfloat erosionClamp = 10;
-
-	for (int y = 1; y < h - 1 && e_erosion; y++)
-		for (int x = 1; x < w - 1; x++)
-		{
-			auto idx = y * w + x;
-
-			auto gradX = (g.terrain_height[y * w + x + 1] - g.terrain_height[y * w + x - 1]) / 2;
-			auto gradY = (g.terrain_height[(y + 1) * w + x] - g.terrain_height[(y - 1) * w + x]) / 2;
-
-			auto grade = glm::clamp(gradX * gradX + gradY * gradY, -erosionClamp, erosionClamp);
-			auto sin_local_tilt = glm::sqrt(grade / (1 + grade));
-
-			sin_local_tilt = glm::max(sin_local_tilt, K_tilt_minimum);
-
-			auto capacity = K_sediment_capacity * glm::length(g.velocity[idx]) * sin_local_tilt * glm::min(
-				(gfloat)1, g.water_height[idx]);
+		first = false;
+		sMeasureFunctionTime = 1;//warmup
+	}
+	else
+		sMeasureFunctionTime = 1000;
 
 
-			auto perlinFactor = perlinMap[idx];
-
-			// the deeper the harder to dissolve
-			auto depthFactor = 1 / (1 + originalHeight[idx] - g.terrain_height[idx]);
-			if (originalHeight[idx] - g.terrain_height[idx] < 0)
-				depthFactor = 1;
-
-			if (capacity > g.sediment[idx])
-			{
-				auto dSoil = K_s_dissolving * (capacity - g.sediment[idx]) * perlinFactor * depthFactor;
-
-				// limit dissolve
-				dSoil = glm::min(dSoil, pMaxDissolve);
-
-				// limit dissolve to the terrain height
-				dSoil = glm::min(dSoil, g.terrain_height[idx]);
-
-				g.terrain_height[idx] = g.terrain_height[idx] - dSoil;
-				g.sediment[idx] = g.sediment[idx] + dSoil;
-			}
-			else
-			{
-				auto dSoil = K_d_depositing * (g.sediment[idx] - capacity);
-
-				// limit deposit
-				dSoil = glm::min(dSoil, pMaxDissolve);
-
-				g.terrain_height[idx] = g.terrain_height[idx] + dSoil;
-				g.sediment[idx] = g.sediment[idx] - dSoil;
-			}
-		}
-
-	// 5. sediment transport
-	for (int y = 1; y < h - 1 && e_erosion; y++)
-		for (int x = 1; x < w - 1; x++)
-		{
-			auto idx = y * w + x;
-
-			gfloat velx = g.velocity[idx].x;
-			gfloat vely = g.velocity[idx].y;
-
-			gfloat fx = (gfloat)x - velx * K_dt;
-			gfloat fy = (gfloat)y - vely * K_dt;
-
-
-			g.sediment[idx] = ter::interpolate2D(g.sediment, w, h, fx, fy);
-			//g.sediment[idx] = g.sediment[idx];
-		}
-
-	// 6. evaporation
-	for (int y = 1; y < h - 1 && e_evaporation; y++)
-		for (int x = 1; x < w - 1; x++)
-		{
-			auto idx = y * w + x;
-			g.water_height[idx] *= 1 - K_evaporation * K_dt;
-
-			// remove the incredibly small values
-			constexpr gfloat evaporationEpsilon = 0.001;
-			if (g.water_height[idx] < evaporationEpsilon)
-				g.water_height[idx] = 0;
-		}
-
-	// 7. landslide
-	for (int y = 1; y < h - 1 && e_landslide; y++)
-		for (int x = 1; x < w - 1; x++)
-		{
-			auto idx = y * w + x;
-
-			auto& height = g.terrain_height[idx];
-
-			auto heightN = gvec2(
-				g.terrain_height[y * g.width + x + 1],
-				g.terrain_height[(y + 1) * g.width + x]);
-
-			auto delta = heightN - height;
-
-			auto takeN = K_landSlideSpeed * K_dt * delta;
-
-			auto signs = glm::sign(takeN);
-			takeN = glm::max(glm::abs(takeN) - K_landSlideCutoffAngle, (gfloat)0.f) * signs;
-			// should produce something like
-			//                   /
-			//                  /
-			//   -------+-------
-			//  /
-			// /
-
-			height += glm::compAdd(takeN);
-			g.terrain_height[y * w + x + 1] -= takeN.x;
-			g.terrain_height[(y + 1) * w + x] -= takeN.y;
-		}
+	ND_BUG("======================Measuring Euler Steps");
+	measureFuncFixed(ero1);
+	measureFuncFixed(ero2);
+	measureFuncFixed(ero3);
+	measureFuncFixed(ero4);
+	measureFuncFixed(ero5);
+	measureFuncFixed(ero6);
+	measureFuncFixed(ero7);
+	ND_BUG("======================Done");
 }
-
-
-
 
 void Euler::imguiRender()
 {
@@ -324,4 +171,379 @@ void Euler::load(nd::NBT& src)
 	NBT_LOAD(src, K_tilt_minimum);
 	NBT_LOAD(src, K_landSlideSpeed);
 	NBT_LOAD(src, K_landSlideCutoffAngle);
+}
+
+void Euler::ero1(EulerGround& g)
+{
+	ND_PROFILE_METHOD();
+
+	auto w = g.width;
+	auto h = g.height;
+
+
+	// 1. rain
+	for (int y = 1; y < h - 1 && e_rain; y++)
+		for (int x = 1; x < w - 1; x++)
+		{
+			auto d = glm::ivec2(x, y) - glm::ivec2(w / 2);
+
+			gfloat increase = (d.x * d.x + d.y * d.y < 100 || (x > w / 2 - 10 && x < w / 2 + 10))
+				? K_rain
+				: 0;
+
+			// rain everywhere same
+			increase = K_rain;
+			g.water_height[x + y * w] += K_dt * increase;
+		}
+}
+
+void Euler::ero1_simd(EulerGround& g)
+{
+	ND_PROFILE_METHOD();
+
+	auto w = g.width;
+	auto h = g.height;
+
+	const int stride = w;
+	const float val = K_dt * K_rain;
+
+	__m512 vval = _mm512_set1_ps(val);
+
+	for (int y = 1; y < h - 1; y++) {
+		int offset = y * stride + 1;
+		int x = 1;
+
+		// process 16 floats at a time
+		for (; x <= w - 17; x += 16) {
+			__m512 vdata = _mm512_loadu_ps(&g.water_height[offset + x]);
+			vdata = _mm512_add_ps(vdata, vval);
+			_mm512_storeu_ps(&g.water_height[offset + x], vdata);
+		}
+
+		// remainder (mask tail if you want)
+		for (; x < w - 1; x++) {
+			g.water_height[offset + x] += val;
+		}
+	}
+}
+
+void Euler::ero2(EulerGround& g)
+{
+	ND_PROFILE_METHOD();
+
+	auto w = g.width;
+	auto h = g.height;
+
+
+	static std::vector<gfloat> totalHeight(g.terrain_height.size());
+	if (totalHeight.size() != g.terrain_height.size())
+		totalHeight.resize(g.terrain_height.size());
+
+	for (size_t i = 0; i < totalHeight.size(); i++)
+		totalHeight[i] += g.water_height[i];
+
+	// 2. flux
+	for (int y = 1; y < h - 1 && e_flow; y++)
+		for (int x = 1; x < w - 1; x++)
+		{
+			auto idx = y * w + x;
+			auto deltaH = gvec4(
+				totalHeight[idx] - totalHeight[y * w + x - 1],
+				totalHeight[idx] - totalHeight[y * w + x + 1],
+				totalHeight[idx] - totalHeight[(y - 1) * w + x],
+				totalHeight[idx] - totalHeight[(y + 1) * w + x]);
+
+			auto fluxFactor = K_dt * pPipeArea / pPipeLen * pGravity;
+			g.flux[idx] = glm::max(gvec4(0.f), g.flux[idx] + deltaH * fluxFactor);
+
+			auto sumF = glm::compAdd(g.flux[idx]);
+
+			if (sumF > 0)
+			{
+				auto waterVolume = g.water_height[idx] * pLL * pLL;
+				auto outVolume = sumF * K_dt;
+				auto adjustmentFactor = glm::min((gfloat)1, waterVolume / outVolume);
+
+				g.flux[idx] *= adjustmentFactor;
+			}
+		}
+
+}
+
+void Euler::ero3(EulerGround& g)
+{
+	ND_PROFILE_METHOD();
+
+	auto w = g.width;
+	auto h = g.height;
+
+
+
+	// 3. water height
+	for (int y = 1; y < h - 1 && e_flow; y++)
+		for (int x = 1; x < w - 1; x++)
+		{
+			auto idx = y * w + x;
+			auto sumIn =
+				+g.flux[y * w + x - 1].y
+				+ g.flux[y * w + x + 1].x
+				+ g.flux[(y - 1) * w + x].w
+				+ g.flux[(y + 1) * w + x].z;
+			auto sumOut = glm::compAdd(g.flux[idx]);
+
+			auto deltaV = (sumIn - sumOut) * K_dt;
+			auto deltaH = deltaV / (pLL * pLL);
+			g.water_height[idx] = glm::max((gfloat)0.f, g.water_height[idx] + deltaH);
+			auto meanH = g.water_height[idx] - deltaH / 2.f;
+
+			if (meanH > 0)
+			{
+				auto fluxX =
+					+g.flux[y * w + x - 1].y
+					- g.flux[idx].x
+					+ g.flux[idx].y
+					- g.flux[y * w + x + 1].x;
+				auto fluxY =
+					+g.flux[(y - 1) * w + x].w
+					- g.flux[idx].z
+					+ g.flux[idx].w
+					- g.flux[(y + 1) * w + x].z;
+				g.velocity[idx] = gvec2(fluxX, fluxY) / (meanH * pLL);
+			}
+			else
+				g.velocity[idx] = gvec2(0.f);
+		}
+}
+
+void Euler::ero4(EulerGround& g)
+{
+	ND_PROFILE_METHOD();
+
+	auto w = g.width;
+	auto h = g.height;
+
+	// 4. erosion
+	constexpr gfloat erosionClamp = 10;
+
+	for (int y = 1; y < h - 1 && e_erosion; y++)
+		for (int x = 1; x < w - 1; x++)
+		{
+			auto idx = y * w + x;
+
+			auto gradX = (g.terrain_height[y * w + x + 1] - g.terrain_height[y * w + x - 1]) / 2;
+			auto gradY = (g.terrain_height[(y + 1) * w + x] - g.terrain_height[(y - 1) * w + x]) / 2;
+
+			auto grade = glm::clamp(gradX * gradX + gradY * gradY, -erosionClamp, erosionClamp);
+			auto sin_local_tilt = glm::sqrt(grade / (1 + grade));
+
+			sin_local_tilt = glm::max(sin_local_tilt, K_tilt_minimum);
+
+			auto capacity = K_sediment_capacity * glm::length(g.velocity[idx]) * sin_local_tilt * glm::min(
+				(gfloat)1, g.water_height[idx]);
+
+
+			auto perlinFactor = perlinMap[idx];
+
+			// the deeper the harder to dissolve
+			auto depthFactor = 1 / (1 + originalHeight[idx] - g.terrain_height[idx]);
+			if (originalHeight[idx] - g.terrain_height[idx] < 0)
+				depthFactor = 1;
+
+			if (capacity > g.sediment[idx])
+			{
+				auto dSoil = K_s_dissolving * (capacity - g.sediment[idx]) * perlinFactor * depthFactor;
+
+				// limit dissolve
+				dSoil = glm::min(dSoil, pMaxDissolve);
+
+				// limit dissolve to the terrain height
+				dSoil = glm::min(dSoil, g.terrain_height[idx]);
+
+				g.terrain_height[idx] = g.terrain_height[idx] - dSoil;
+				g.sediment[idx] = g.sediment[idx] + dSoil;
+			}
+			else
+			{
+				auto dSoil = K_d_depositing * (g.sediment[idx] - capacity);
+
+				// limit deposit
+				dSoil = glm::min(dSoil, pMaxDissolve);
+
+				g.terrain_height[idx] = g.terrain_height[idx] + dSoil;
+				g.sediment[idx] = g.sediment[idx] - dSoil;
+			}
+		}
+}
+
+void Euler::ero5(EulerGround& g)
+{
+	ND_PROFILE_METHOD();
+
+	auto w = g.width;
+	auto h = g.height;
+
+	// 5. sediment transport
+	for (int y = 1; y < h - 1 && e_erosion; y++)
+		for (int x = 1; x < w - 1; x++)
+		{
+			auto idx = y * w + x;
+
+			gfloat velx = g.velocity[idx].x;
+			gfloat vely = g.velocity[idx].y;
+
+			gfloat fx = (gfloat)x - velx * K_dt;
+			gfloat fy = (gfloat)y - vely * K_dt;
+
+
+			g.sediment[idx] = ter::interpolate2D(REINTERPRET_AS(std::vector<gfloat>, g.sediment), w, h, fx, fy);
+			//g.sediment[idx] = g.sediment[idx];
+		}
+}
+
+void Euler::ero6(EulerGround& g)
+{
+	ND_PROFILE_METHOD();
+
+	auto w = g.width;
+	auto h = g.height;
+
+
+	// 6. evaporation
+	for (int y = 1; y < h - 1 && e_evaporation; y++)
+		for (int x = 1; x < w - 1; x++)
+		{
+			auto idx = y * w + x;
+			g.water_height[idx] *= 1 - K_evaporation * K_dt;
+
+			// remove the incredibly small values
+			constexpr gfloat evaporationEpsilon = 0.001;
+			if (g.water_height[idx] < evaporationEpsilon)
+				g.water_height[idx] = 0;
+		}
+}
+
+void Euler::ero7(EulerGround& g)
+{
+	ND_PROFILE_METHOD();
+
+	auto w = g.width;
+	auto h = g.height;
+
+	// 7. landslide
+	for (int y = 1; y < h - 1 && e_landslide; y++)
+		for (int x = 1; x < w - 1; x++)
+		{
+			auto idx = y * w + x;
+
+			auto& height = g.terrain_height[idx];
+
+			auto heightN = gvec2(
+				g.terrain_height[y * g.width + x + 1],
+				g.terrain_height[(y + 1) * g.width + x]);
+
+			auto delta = heightN - height;
+
+			auto takeN = K_landSlideSpeed * K_dt * delta;
+
+			auto signs = glm::sign(takeN);
+			takeN = glm::max(glm::abs(takeN) - K_landSlideCutoffAngle, (gfloat)0.f) * signs;
+			// should produce something like
+			//                   /
+			//                  /
+			//   -------+-------
+			//  /
+			// /
+
+			height += glm::compAdd(takeN);
+			g.terrain_height[y * w + x + 1] -= takeN.x;
+			g.terrain_height[(y + 1) * w + x] -= takeN.y;
+		}
+}
+
+
+
+void Euler::ero2_simd(EulerGround& g)
+{
+	ND_PROFILE_METHOD();
+
+	auto w = g.width;
+	auto h = g.height;
+
+	static std::vector<gfloat> totalHeight(g.terrain_height.size());
+	if (totalHeight.size() != g.terrain_height.size())
+		totalHeight.resize(g.terrain_height.size());
+
+	// totalHeight = terrain + water
+	for (int y = 0; y < h; y++) {
+		int offset = y * w;
+
+		// process 16 floats at a time
+		for (int x=0; x < w; x += 8) {
+			__m512 vdataA = _mm512_load_ps(&g.terrain_height[offset + x]);
+			__m512 vdataB = _mm512_load_ps(&g.water_height[offset + x]);
+			vdataA = _mm512_add_ps(vdataA, vdataB);
+			_mm512_store_ps(&totalHeight[offset + x], vdataA);
+		}
+	}
+	if (!e_flow) return;
+
+	const float fluxFactor = K_dt * pPipeArea / pPipeLen * pGravity;
+
+	for (int y = 1; y < h - 1; ++y){
+		int rowU = (y - 1) * w;
+		int rowC = y * w;
+		int rowD = (y + 1) * w;
+
+		for (int x = 1; x < w - 1; ++x){
+			int idx = rowC + x;
+			int idxL = idx - 1;
+			int idxR = idx + 1;
+			int idxU = rowU + x;
+			int idxD = rowD + x;
+
+			glm::vec4 deltaH(
+				totalHeight[idx] - totalHeight[idxL],
+				totalHeight[idx] - totalHeight[idxR],
+				totalHeight[idx] - totalHeight[idxU],
+				totalHeight[idx] - totalHeight[idxD]
+			);
+
+			// Update flux and clamp to >=0
+			g.flux[idx] = glm::max(glm::vec4(0.f), g.flux[idx] + deltaH * fluxFactor);
+
+			// Huge difference to glm::compAdd which uses for loop that compiler does not want to unroll for some reason
+			// like 20% or something
+			float sumF = g.flux[idx].x + g.flux[idx].y + g.flux[idx].z + g.flux[idx].w;
+
+			if (sumF > 0.f)
+			{
+				float waterVolume = g.water_height[idx] * pLL * pLL;
+				float outVolume = sumF * K_dt;
+				float adjustmentFactor = std::min(1.f, waterVolume / outVolume);
+
+				g.flux[idx] *= adjustmentFactor;
+			}
+		}
+	}
+}
+
+
+void Euler::ero3_simd(EulerGround& g)
+{
+}
+
+void Euler::ero4_simd(EulerGround& g)
+{
+}
+
+void Euler::ero5_simd(EulerGround& g)
+{
+}
+
+void Euler::ero6_simd(EulerGround& g)
+{
+}
+
+void Euler::ero7_simd(EulerGround& g)
+{
 }

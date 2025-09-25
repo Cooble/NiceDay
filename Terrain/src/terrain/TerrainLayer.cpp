@@ -117,7 +117,7 @@ static glm::vec3 pointer_relative_pos;
 
 
 // Imgui Vars
-static int groundSize = 128;
+static int groundSize = 1024;
 static bool toggle_render_water = false;
 static bool toggle_sim_drop = false;
 static bool toggle_sim_euler = false;
@@ -648,6 +648,39 @@ void TerrainLayer::onImGuiRenderSimulator()
 	ImGui::SeparatorText("Simulation");
 	ImGui::SetItemTooltip("Two simulation methods available\nFor both methods you can adjust simulation speed");
 
+	bool eulerSimOpen = ImGui::CollapsingHeader("EulerSim");
+	ImGui::SetItemTooltip("Every cell is connected to its 4 neighbors and transfers water and soil to them\nComputationally expensive, not recommended to tinker with sizes bigger than 256x256");
+	if (eulerSimOpen)
+	{
+		if (ImGui::Button("Init"))
+			m_euler.init(g);
+		ImGui::SetItemTooltip("Restarts sim, clears water");
+		if (ImGui::Button("Step"))
+			m_euler.step(g);
+
+		ImGui::PushStyleColor(ImGuiCol_Button,
+			toggle_sim_euler ? ImVec4(0.2f, 0.7f, 0.2f, 1.0f) : ImVec4(0.7f, 0.2f, 0.2f, 1.0f));
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered,
+			toggle_sim_euler ? ImVec4(0.3f, 0.8f, 0.3f, 1.0f) : ImVec4(0.8f, 0.3f, 0.3f, 1.0f));
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive,
+			toggle_sim_euler ? ImVec4(0.1f, 0.6f, 0.1f, 1.0f) : ImVec4(0.6f, 0.1f, 0.1f, 1.0f));
+
+		toggle_sim_euler ^= ImGui::Button("Play");
+		ImGui::PopStyleColor(3);
+
+		ImGui::SameLine();
+		if (ImGui::Button("Reset Simulation"))
+			recreateTerrain(g);
+		ImGui::SetItemTooltip("Resets the terrain to the initial state, removing all simulation progress");
+
+
+		int min = 1;
+		int max = 10;
+		ImGui::SliderScalar("Speed", ImGuiDataType_U32, &playspeed_sim_euler, &min, &max, "%ld");
+		ImGui::Checkbox("Render Water", &toggle_render_water);
+
+		m_euler.imguiRender();
+	}
 
 	bool dropSimOpen = ImGui::CollapsingHeader("Droplet Sim");
 	ImGui::SetItemTooltip("Drop randomly spawns on the terrain and simulate erosion by moving around, picking up soil and depositing it elsewhere");
@@ -719,41 +752,6 @@ void TerrainLayer::onImGuiRenderSimulator()
 		if (ImGui::Button("RunBenchMark"))
 			runDropBenchmark(10);
 		ImGui::SetItemTooltip("Run the benchmark\nWill make app unresponsive for a while!\nWatch console for results");
-	}
-
-
-	bool eulerSimOpen = ImGui::CollapsingHeader("EulerSim");
-	ImGui::SetItemTooltip("Every cell is connected to its 4 neighbors and transfers water and soil to them\nComputationally expensive, not recommended to tinker with sizes bigger than 256x256");
-	if (eulerSimOpen)
-	{
-		if (ImGui::Button("Init"))
-			m_euler.init(g);
-		ImGui::SetItemTooltip("Restarts sim, clears water");
-		if (ImGui::Button("Step"))
-			m_euler.step(g);
-
-		ImGui::PushStyleColor(ImGuiCol_Button,
-		                      toggle_sim_euler ? ImVec4(0.2f, 0.7f, 0.2f, 1.0f) : ImVec4(0.7f, 0.2f, 0.2f, 1.0f));
-		ImGui::PushStyleColor(ImGuiCol_ButtonHovered,
-		                      toggle_sim_euler ? ImVec4(0.3f, 0.8f, 0.3f, 1.0f) : ImVec4(0.8f, 0.3f, 0.3f, 1.0f));
-		ImGui::PushStyleColor(ImGuiCol_ButtonActive,
-		                      toggle_sim_euler ? ImVec4(0.1f, 0.6f, 0.1f, 1.0f) : ImVec4(0.6f, 0.1f, 0.1f, 1.0f));
-
-		toggle_sim_euler ^= ImGui::Button("Play");
-		ImGui::PopStyleColor(3);
-
-		ImGui::SameLine();
-		if (ImGui::Button("Reset Simulation"))
-			recreateTerrain(g);
-		ImGui::SetItemTooltip("Resets the terrain to the initial state, removing all simulation progress");
-
-
-		int min = 1;
-		int max = 10;
-		ImGui::SliderScalar("Speed", ImGuiDataType_U32, &playspeed_sim_euler, &min, &max, "%ld");
-		ImGui::Checkbox("Render Water", &toggle_render_water);
-
-		m_euler.imguiRender();
 	}
 
 

@@ -94,4 +94,7 @@ struct Has_##methName <T,decltype(/*std::is_member_function_pointer<decltype(*/&
 
 #define ND_HAS_MEMBER_METHOD(Type,methName)\
 	Has_##methName <Type>::value
+
+#define REINTERPRET_AS(Type, Value) (*reinterpret_cast<Type*>(&Value))
+
 }

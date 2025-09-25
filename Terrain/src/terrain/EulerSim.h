@@ -15,10 +15,10 @@ namespace nd
 // EulerGround is a specialized ground structure for the Euler simulation
 struct EulerGround : BaseGround
 {
-	std::vector<gfloat> water_height;
-	std::vector<gfloat> sediment;
-	std::vector<gvec4> flux;
-	std::vector<gvec2> velocity;
+	AFVector<gfloat> water_height;
+	AFVector<gfloat> sediment;
+	AFVector<gvec4> flux;
+	AFVector<gvec2> velocity;
 
 	void resize(int size)
 	{
@@ -78,9 +78,9 @@ struct Euler
 	gfloat K_dt = 0.004f;
 
 
-	std::vector<gfloat> perlinMap;
-	std::vector<gfloat> originalHeight;
-	std::vector<gfloat> sediment;
+	AFVector<gfloat> perlinMap;
+	AFVector<gfloat> originalHeight;
+	AFVector<gfloat> sediment;
 
 	// prepare special fields based on terrain_height
 	void init(EulerGround& g);
@@ -94,6 +94,24 @@ struct Euler
 
 	void save(nd::NBT& src);
 	void load(nd::NBT& src);
+
+private:
+	void ero1(EulerGround& g);
+	void ero2(EulerGround& g);
+	void ero3(EulerGround& g);
+	void ero4(EulerGround& g);
+	void ero5(EulerGround& g);
+	void ero6(EulerGround& g);
+	void ero7(EulerGround& g);
+
+	void ero1_simd(EulerGround& g);
+	void ero2_simd(EulerGround& g);
+	void ero3_simd(EulerGround& g);
+	void ero4_simd(EulerGround& g);
+	void ero5_simd(EulerGround& g);
+	void ero6_simd(EulerGround& g);
+	void ero7_simd(EulerGround& g);
+	
 
 	
 };

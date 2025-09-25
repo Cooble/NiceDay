@@ -14,6 +14,9 @@
 
 
 
+
+#define REINTERPRET_AS(Type, Value) (*reinterpret_cast<Type*>(&Value))
+
 int Droplet::balls = 0;
 
 void Droplet::init(BaseGround& g)
@@ -22,7 +25,7 @@ void Droplet::init(BaseGround& g)
 	auto h = g.height;
 	pos.x = (std::rand() % (w - 2)) + 1;
 	pos.y = (std::rand() % (h - 2)) + 1;
-	oldHeight = ter::interpolate2D(g.terrain_height, w, h, pos.x, pos.y);
+	oldHeight = ter::interpolate2D(REINTERPRET_AS(std::vector<gfloat>, g.terrain_height), w, h, pos.x, pos.y);
 	sediment = 0;
 	water = 1;
 	direction = gvec2(0, 0.1);
@@ -113,12 +116,13 @@ bool Droplet::step(BaseGround& g)
 	auto w = g.width;
 	auto h = g.height;
 
+	auto& terrain_height = REINTERPRET_AS(std::vector<gfloat>, g.terrain_height);
 	// 2. gradient
 	grad = interPol(
-		gradAt(g.terrain_height, (int)pos.x, (int)pos.y, w),
-		gradAt(g.terrain_height, (int)pos.x, (int)(pos.y + 1), w),
-		gradAt(g.terrain_height, (int)(pos.x + 1), (int)pos.y, w),
-		gradAt(g.terrain_height, (int)(pos.x + 1), (int)(pos.y + 1), w),
+		gradAt(terrain_height, (int)pos.x, (int)pos.y, w),
+		gradAt(terrain_height, (int)pos.x, (int)(pos.y + 1), w),
+		gradAt(terrain_height, (int)(pos.x + 1), (int)pos.y, w),
+		gradAt(terrain_height, (int)(pos.x + 1), (int)(pos.y + 1), w),
 		pos - (gvec2)glm::ivec2(pos)
 	);
 
@@ -144,7 +148,7 @@ bool Droplet::step(BaseGround& g)
 		return false; //we are out of map
 
 
-	auto newHeight = interpolate2D(g.terrain_height, w, h, pos.x, pos.y);
+	auto newHeight = interpolate2D(REINTERPRET_AS(std::vector<gfloat>,g.terrain_height), w, h, pos.x, pos.y);
 	auto heightDiff = newHeight - oldHeight;
 
 	capacity = glm::max(-heightDiff * speed * water * pCapacity, pMinSlope);
@@ -166,9 +170,9 @@ bool Droplet::step(BaseGround& g)
 	{
 		// wanna erode
 		if(pRadius >0)
-			erodeInRadius(g.terrain_height, pos, w, pRadius, kernel, sediment, pErosion, capacity, heightDiff);
+			erodeInRadius(REINTERPRET_AS(std::vector<gfloat>,g.terrain_height), pos, w, pRadius, kernel, sediment, pErosion, capacity, heightDiff);
 		else
-			erodePrimitive(g.terrain_height, oldipos, oldOffset, w, heightDiff, capacity, sediment, pErosion);
+			erodePrimitive(REINTERPRET_AS(std::vector<gfloat>, g.terrain_height), oldipos, oldOffset, w, heightDiff, capacity, sediment, pErosion);
 	}
 
 	speed = glm::sqrt(glm::max((gfloat)0, speed * speed - heightDiff * pGravity));
