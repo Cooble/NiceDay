@@ -64,12 +64,13 @@ constexpr bool operator!=(const AlignedAllocator<T1, A1>&, const AlignedAllocato
 }
 //================ BaseGround =================
 
+// Aligned vector
 template<typename T>
-using AFVector = std::vector<T, AlignedAllocator<T,64>>;
+using AVector = std::vector<T, AlignedAllocator<T,64>>;
 
 struct BaseGround
 {
-	AFVector<gfloat> terrain_height;
+	AVector<gfloat> terrain_height;
 	int width, height;
 
 

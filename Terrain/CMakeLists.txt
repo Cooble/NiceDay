@@ -1,6 +1,13 @@
 cmake_minimum_required(VERSION 3.16.1)
 project(Terrain)
 
+#if(MSVC)
+#    add_compile_options(/arch:AVX512)
+#endif()
+
+find_package(OpenCL REQUIRED)
+
+
 # Source files
     file(GLOB_RECURSE SOURCES 
         "src/*.cpp" 
@@ -16,6 +23,7 @@ project(Terrain)
 # Include files
     target_include_directories(Terrain PUBLIC 
         "src"
+        ${OpenCL_INCLUDE_DIRS}
     )
 	 
 
@@ -36,6 +44,8 @@ project(Terrain)
 
 # Dependencies
     target_link_libraries(Terrain PUBLIC NiceDay)
+    target_link_libraries(Terrain PUBLIC ${OpenCL_LIBRARIES})
+
 if(ND_ENABLE_DOTNET)
     target_link_libraries(Terrain PUBLIC Managed)
     

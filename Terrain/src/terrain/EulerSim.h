@@ -15,10 +15,10 @@ namespace nd
 // EulerGround is a specialized ground structure for the Euler simulation
 struct EulerGround : BaseGround
 {
-	AFVector<gfloat> water_height;
-	AFVector<gfloat> sediment;
-	AFVector<gvec4> flux;
-	AFVector<gvec2> velocity;
+	AVector<gfloat> water_height;
+	AVector<gfloat> sediment;
+	AVector<gvec4> flux;
+	AVector<gvec2> velocity;
 
 	void resize(int size)
 	{
@@ -78,9 +78,9 @@ struct Euler
 	gfloat K_dt = 0.004f;
 
 
-	AFVector<gfloat> perlinMap;
-	AFVector<gfloat> originalHeight;
-	AFVector<gfloat> sediment;
+	AVector<gfloat> perlinMap;
+	AVector<gfloat> originalHeight;
+	AVector<gfloat> sediment;
 
 	// prepare special fields based on terrain_height
 	void init(EulerGround& g);
@@ -95,7 +95,7 @@ struct Euler
 	void save(nd::NBT& src);
 	void load(nd::NBT& src);
 
-private:
+public:
 	void ero1(EulerGround& g);
 	void ero2(EulerGround& g);
 	void ero3(EulerGround& g);

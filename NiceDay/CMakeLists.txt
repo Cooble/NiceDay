@@ -183,6 +183,16 @@ LIST( APPEND CMAKE_MODULE_PATH
     #set_target_properties(zlib PROPERTIES USE_FOLDERS ON FOLDER "vendor")
     set_target_properties(zlibstatic PROPERTIES USE_FOLDERS ON FOLDER "vendor")
     #set_target_properties(uninstall PROPERTIES USE_FOLDERS ON FOLDER "vendor")
+
+
+    #ignore warning as errors from assimp
+    # disable warnings-as-errors for all assimp-related targets and contrib libs
+    foreach(tgt assimp IrrXML zlibstatic zlib)
+        if (TARGET ${tgt})
+            target_compile_options(${tgt} PRIVATE /WX-) # disable warnings-as-errors
+        endif()
+    endforeach()
+
     
     # == spdlog (no need to subdir (header-only))
     #add_subdirectory("vendor/spdlog")
