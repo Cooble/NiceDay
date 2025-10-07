@@ -4,6 +4,8 @@
 #include <glm/common.hpp>
 #include <glm/gtc/noise.hpp>
 #include <imgui.h>
+#include <immintrin.h>
+
 
 #include "types.h"
 
@@ -33,6 +35,43 @@ namespace ter
 			h10 * (yLerp) * (1 - xLerp) +
 			h11 * (xLerp) * (yLerp);
 	}
+	inline __m512 interpolate2D(gfloat* data, int width, int height, __m512 x, __m512 y)
+	{
+		// idx
+		__m512i x0 = _mm512_cvttps_epi32(x);
+		__m512i y0 = _mm512_cvttps_epi32(y);
+		__m512i x1 = _mm512_add_epi32(x0, _mm512_set1_epi32(1));
+		__m512i y1 = _mm512_add_epi32(y0, _mm512_set1_epi32(1));
+
+		// clamp
+		x0 = _mm512_min_epi32(_mm512_max_epi32(x0, _mm512_set1_epi32(0)), _mm512_set1_epi32(width - 1));
+		y0 = _mm512_min_epi32(_mm512_max_epi32(y0, _mm512_set1_epi32(0)), _mm512_set1_epi32(height - 1));
+		x1 = _mm512_min_epi32(_mm512_max_epi32(x1, _mm512_set1_epi32(0)), _mm512_set1_epi32(width - 1));
+		y1 = _mm512_min_epi32(_mm512_max_epi32(y1, _mm512_set1_epi32(0)), _mm512_set1_epi32(height - 1));
+
+		// lerp
+		__m512 xLerp = _mm512_sub_ps(x, _mm512_cvtepi32_ps(x0));
+		__m512 yLerp = _mm512_sub_ps(y, _mm512_cvtepi32_ps(y0));
+
+		__m512 oneMinusXLerp = _mm512_sub_ps(_mm512_set1_ps(1.0f), xLerp);
+		__m512 oneMinusYLerp = _mm512_sub_ps(_mm512_set1_ps(1.0f), yLerp);
+		// gather the four corner values
+		__m512 h00 = _mm512_i32gather_ps(_mm512_add_epi32(_mm512_mullo_epi32(y0, _mm512_set1_epi32(width)), x0), data, 4);
+		__m512 h01 = _mm512_i32gather_ps(_mm512_add_epi32(_mm512_mullo_epi32(y0, _mm512_set1_epi32(width)), x1), data, 4);
+		__m512 h10 = _mm512_i32gather_ps(_mm512_add_epi32(_mm512_mullo_epi32(y1, _mm512_set1_epi32(width)), x0), data, 4);
+		__m512 h11 = _mm512_i32gather_ps(_mm512_add_epi32(_mm512_mullo_epi32(y1, _mm512_set1_epi32(width)), x1), data, 4);
+
+		// compute
+		__m512 result = _mm512_fmadd_ps(h00, _mm512_mul_ps(oneMinusXLerp, oneMinusYLerp),
+			_mm512_fmadd_ps(h01, _mm512_mul_ps(xLerp, oneMinusYLerp),
+				_mm512_fmadd_ps(h10, _mm512_mul_ps(yLerp, oneMinusXLerp),
+					_mm512_mul_ps(h11, _mm512_mul_ps(xLerp, yLerp)))));
+
+		return result;
+	}
+
+
+
 
 	inline gvec2 gradAt(std::vector<gfloat>& scalarField, int x, int y, int w)
 	{

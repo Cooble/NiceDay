@@ -265,7 +265,8 @@ void Euler::ero2(EulerGround& g)
 			auto fluxFactor = K_dt * pPipeArea / pPipeLen * pGravity;
 			g.flux[idx] = glm::max(gvec4(0.f), g.flux[idx] + deltaH * fluxFactor);
 
-			auto sumF = glm::compAdd(g.flux[idx]);
+			//auto sumF = glm::compAdd(g.flux[idx]);
+			auto sumF = g.flux[idx].x + g.flux[idx].y + g.flux[idx].z + g.flux[idx].w;
 
 			if (sumF > 0)
 			{
@@ -296,7 +297,7 @@ void Euler::ero3(EulerGround& g)
 				+ g.flux[y * w + x + 1].x
 				+ g.flux[(y - 1) * w + x].w
 				+ g.flux[(y + 1) * w + x].z;
-			auto sumOut = glm::compAdd(g.flux[idx]);
+			auto sumOut = g.flux[idx].x + g.flux[idx].y + g.flux[idx].z + g.flux[idx].w;
 
 			auto deltaV = (sumIn - sumOut) * K_dt;
 			auto deltaH = deltaV / (pLL * pLL);
@@ -591,46 +592,60 @@ void Euler::ero3_simd(EulerGround& g)
 
 	// 3. water height
 	for (int y = 1; y < h - 1 && e_flow; y++)
-		for (int x = 1; x < w - 1; x++)
+		for (int x = 1; x < w - 1 - 16; x += 16)
 		{
 			auto idx = y * w + x;
 
-			auto leftIn = g.flux[idx - 1].y;
-			auto rightIn = g.flux[idx + 1].x;
-			auto upIn = g.flux[idx - w].w;
-			auto downIn = g.flux[idx + w].z;
+			// flux from neighbors
+			__m512 leftIn = _mm512_loadu_ps(((float*)g.flux.data()) + idx - 1 + g.flux.size() * 1);
+			__m512 rightIn = _mm512_loadu_ps(((float*)g.flux.data()) + idx + 1 + g.flux.size() * 0);
+			__m512 upIn = _mm512_loadu_ps(((float*)g.flux.data()) + idx - w + g.flux.size() * 3);
+			__m512 downIn = _mm512_loadu_ps(((float*)g.flux.data()) + idx + w + g.flux.size() * 2);
+			__m512 sumIn = _mm512_add_ps(leftIn, _mm512_add_ps(rightIn, _mm512_add_ps(upIn, downIn)));
 
-			auto sumIn = leftIn + rightIn + upIn + downIn;
-			auto sumOut = g.flux[idx].x + g.flux[idx].y + g.flux[idx].z + g.flux[idx].w;
+			// flux out
+			__m512 curFluxL = _mm512_loadu_ps(((float*)g.flux.data()) + idx + g.flux.size() * 0);
+			__m512 curFluxR = _mm512_loadu_ps(((float*)g.flux.data()) + idx + g.flux.size() * 1);
+			__m512 curFluxU = _mm512_loadu_ps(((float*)g.flux.data()) + idx + g.flux.size() * 2);
+			__m512 curFluxD = _mm512_loadu_ps(((float*)g.flux.data()) + idx + g.flux.size() * 3);
+			__m512 sumOut = _mm512_add_ps(curFluxL, _mm512_add_ps(curFluxR, _mm512_add_ps(curFluxU, curFluxD)));
+
+			// deltaV = (sumIn - sumOut) * dt
+			__m512 deltaV = _mm512_mul_ps(_mm512_sub_ps(sumIn, sumOut), _mm512_set1_ps(K_dt));
+			// deltaH = deltaV / (pLL * pLL)
+			__m512 deltaH = _mm512_div_ps(deltaV, _mm512_set1_ps(pLL * pLL));
+			// new water height = max(0, old + deltaH)
+			__m512 curWater = _mm512_loadu_ps(&g.water_height[idx]);
+			curWater = _mm512_max_ps(_mm512_set1_ps(0.f), _mm512_add_ps(curWater, deltaH));
+			_mm512_storeu_ps(&g.water_height[idx], curWater);
+			// meanH = water - deltaH/2
+			__m512 meanH = _mm512_sub_ps(curWater, _mm512_mul_ps(deltaH, _mm512_set1_ps(0.5f)));
 
 
-			auto deltaV = (sumIn - sumOut) * K_dt;
-			auto deltaH = deltaV / (pLL * pLL);
-			g.water_height[idx] = glm::max((gfloat)0.f, g.water_height[idx] + deltaH);
-			auto meanH = g.water_height[idx] - deltaH / 2.f;
+			// fluxX = leftIn - curFluxL + curFluxR - rightIn
+			__m512 fluxX = _mm512_sub_ps(_mm512_add_ps(leftIn, _mm512_sub_ps(curFluxR, rightIn)), curFluxL);
+			// fluxY = upIn - curFluxU + curFluxD - downIn
+			__m512 fluxY = _mm512_sub_ps(_mm512_add_ps(upIn, _mm512_sub_ps(curFluxD, downIn)), curFluxU);
 
-			if (meanH > 0)
-			{
-				auto fluxX =
-					+leftIn
-					- g.flux[idx].x
-					+ g.flux[idx].y
-					- rightIn;
-				auto fluxY =
-					+upIn
-					- g.flux[idx].z
-					+ g.flux[idx].w
-					- downIn;
-				g.velocity[idx] = gvec2(fluxX, fluxY) / (meanH * pLL);
-			}
-			else
-				g.velocity[idx] = gvec2(0.f);
+			// velocity = flux / (meanH * pLL)
+			fluxX = _mm512_div_ps(fluxX, _mm512_mul_ps(meanH, _mm512_set1_ps(pLL)));
+			fluxY = _mm512_div_ps(fluxY, _mm512_mul_ps(meanH, _mm512_set1_ps(pLL)));
+
+			// set flux to 0 where meanH <= 0
+			__mmask16 mask = _mm512_cmp_ps_mask(meanH, _mm512_set1_ps(0.f), _CMP_GT_OQ);
+			fluxX = _mm512_mask_mov_ps(_mm512_set1_ps(0.f), ~mask, fluxX);
+			fluxY = _mm512_mask_mov_ps(_mm512_set1_ps(0.f), ~mask, fluxY);
+
+			// store velocity
+			_mm512_storeu_ps(((float*)g.velocity.data()) + idx + g.velocity.size() * 0, fluxX);
+			_mm512_storeu_ps(((float*)g.velocity.data()) + idx + g.velocity.size() * 1, fluxY);
 		}
 }
 
 #include <glm/glm.hpp>
 #include <glm/gtx/component_wise.hpp>
 #include <algorithm>
+
 
 void Euler::ero4_simd(EulerGround& g)
 {
@@ -643,51 +658,279 @@ void Euler::ero4_simd(EulerGround& g)
 	for (int y = 1; y < h - 1 && e_erosion; ++y)
 	{
 		const int yw = y * w;
-		const int ym1w = (y - 1) * w;
-		const int yp1w = (y + 1) * w;
+		const int ym1w = yw - w;
+		const int yp1w = yw + w;
 
-		for (int x = 1; x < w - 1; ++x)
+		for (int x = 1; x < w - 1 - 16; x += 16)
 		{
 			const int idx = yw + x;
 
-			gfloat gradX = (g.terrain_height[yw + x + 1] - g.terrain_height[yw + x - 1]) * 0.5f;
-			gfloat gradY = (g.terrain_height[yp1w + x] - g.terrain_height[ym1w + x]) * 0.5f;
+			// gradX and gradY
+			__m512 terrainL = _mm512_loadu_ps(&g.terrain_height[yw + x - 1]);
+			__m512 terrainR = _mm512_loadu_ps(&g.terrain_height[yw + x + 1]);
+			__m512 terrainU = _mm512_loadu_ps(&g.terrain_height[ym1w + x]);
+			__m512 terrainD = _mm512_loadu_ps(&g.terrain_height[yp1w + x]);
 
-			gfloat grade = glm::clamp(gradX * gradX + gradY * gradY, -erosionClamp, erosionClamp);
+			__m512 gradX = _mm512_mul_ps(_mm512_sub_ps(terrainR, terrainL), _mm512_set1_ps(0.5f));
+			__m512 gradY = _mm512_mul_ps(_mm512_sub_ps(terrainD, terrainU), _mm512_set1_ps(0.5f));
 
-			gfloat sin_local_tilt = glm::sqrt(grade / (1.0f + grade));
-			sin_local_tilt = glm::max(sin_local_tilt, K_tilt_minimum);
+			// Compute vx*vx + vy*vy
+			__m512 sumSq = _mm512_fmadd_ps(gradX, gradX, _mm512_mul_ps(gradY, gradY));
 
-			gfloat velLen = glm::length(g.velocity[idx]);
+			// local tilt = sumSq / (1 + sumSq)
+			__m512 tilt = _mm512_div_ps(sumSq, _mm512_add_ps(_mm512_set1_ps(1.0f), sumSq));
 
-			gfloat capacity = K_sediment_capacity * velLen * sin_local_tilt *
-				glm::min(1.0f, g.water_height[idx]);
+			// clamp tilt to minimum
+			tilt = _mm512_max_ps(tilt, _mm512_set1_ps(K_tilt_minimum));
 
-			gfloat perlinFactor = perlinMap[idx];
-			gfloat depthDiff = originalHeight[idx] - g.terrain_height[idx];
-			gfloat depthFactor = (depthDiff < 0.0f) ? 1.0f : 1.0f / (1.0f + depthDiff);
+			// sqrt
+			__m512 velocityLen = _mm512_sqrt_ps(tilt);
 
-			if (capacity > g.sediment[idx])
-			{
-				gfloat dSoil = K_s_dissolving * (capacity - g.sediment[idx]) * perlinFactor * depthFactor;
-				dSoil = glm::min(dSoil, pMaxDissolve);
-				dSoil = glm::min(dSoil, g.terrain_height[idx]);
 
-				g.terrain_height[idx] -= dSoil;
-				g.sediment[idx] += dSoil;
-			}
-			else
-			{
-				gfloat dSoil = K_d_depositing * (g.sediment[idx] - capacity);
-				dSoil = glm::min(dSoil, pMaxDissolve);
+			//gfloat grade = glm::clamp(gradX * gradX + gradY * gradY, -erosionClamp, erosionClamp);
+			//gfloat sin_local_tilt = glm::sqrt(grade / (1.0f + grade));
+			//sin_local_tilt = glm::max(sin_local_tilt, K_tilt_minimum);
+			//gfloat velLen = glm::length(g.velocity[idx]);
 
-				g.terrain_height[idx] += dSoil;
-				g.sediment[idx] -= dSoil;
-			}
+			// capacity = K_sediment_capacity * velLen * sin_local_tilt * glm::min(1.0f, g.water_height[idx]);
+			__m512 capacity = _mm512_mul_ps(_mm512_set1_ps(K_sediment_capacity),
+			                                _mm512_mul_ps(velocityLen,
+			                                              _mm512_min_ps(
+				                                              _mm512_set1_ps(1.0f),
+				                                              _mm512_loadu_ps(&g.water_height[idx]))));
+
+			// perlin
+			__m512 perlinFactor = _mm512_loadu_ps(&perlinMap[idx]);
+			// depth factor
+			__m512 depthDiff = _mm512_sub_ps(_mm512_loadu_ps(&originalHeight[idx]),
+			                                 _mm512_loadu_ps(&g.terrain_height[idx]));
+
+			// (depthDiff < 0.0f) ? 1.0f : 1.0f / (1.0f + depthDiff)
+			__mmask16 mask = _mm512_cmp_ps_mask(depthDiff, _mm512_set1_ps(0.0f), _CMP_LT_OQ);
+			__m512 depthFactor = _mm512_div_ps(_mm512_set1_ps(1.0f), _mm512_add_ps(_mm512_set1_ps(1.0f), depthDiff));
+			depthFactor = _mm512_mask_mov_ps(_mm512_set1_ps(1.0f), mask, depthFactor);
+
+			__m512 sediment = _mm512_loadu_ps(&g.sediment[idx]);
+
+
+			// ====== now dissolve or deposit in case capacity > sediment or not
+
+			// Compare mask: capacity > sediment → dissolving
+			__mmask16 maskDissolve = _mm512_cmp_ps_mask(capacity, sediment, _CMP_GT_OQ);
+
+			// Shared absolute difference
+			__m512 diff = _mm512_sub_ps(capacity, sediment);
+			diff = _mm512_abs_ps(diff); // shared magnitude for both branches
+
+			// Base dSoil = K * diff
+			__m512 k_mix = _mm512_mask_blend_ps(maskDissolve, _mm512_set1_ps(K_s_dissolving),
+			                                    _mm512_set1_ps(K_d_depositing));
+			__m512 dSoil = _mm512_mul_ps(k_mix, diff);
+
+			// If dissolving, multiply by perlin and depth factor
+			dSoil = _mm512_mask_mul_ps(dSoil, maskDissolve, dSoil, _mm512_mul_ps(perlinFactor, depthFactor));
+
+			// Clamp to max dissolve
+			dSoil = _mm512_min_ps(dSoil, _mm512_set1_ps(pMaxDissolve));
+			// If dissolving, clamp to terrain height
+			__m512 terrainHeight = _mm512_loadu_ps(&g.terrain_height[idx]);
+			dSoil = _mm512_mask_min_ps(dSoil, maskDissolve, dSoil, terrainHeight);
+
+			// make dSoil negative if depositing
+			dSoil = _mm512_mask_mov_ps(dSoil, ~maskDissolve, _mm512_sub_ps(_mm512_set1_ps(0.0f), dSoil));
+			// update terrain height and sediment
+			//_mm512_storeu_ps(&g.terrain_height[idx], _mm512_add_ps(terrainHeight, dSoil));
+			//_mm512_storeu_ps(&g.sediment[idx], _mm512_sub_ps(sediment, dSoil));
+			_mm512_storeu_ps(&g.terrain_height[idx], _mm512_add_ps(terrainHeight, dSoil));
+			_mm512_storeu_ps(&g.sediment[idx], _mm512_sub_ps(sediment, dSoil));
+
+
+			//if (capacity > g.sediment[idx])
+			//{
+			//	gfloat dSoil = K_s_dissolving * (capacity - g.sediment[idx]) * perlinFactor * depthFactor;
+			//	dSoil = glm::min(dSoil, pMaxDissolve);
+			//	dSoil = glm::min(dSoil, g.terrain_height[idx]);
+			//
+			//	g.terrain_height[idx] -= dSoil;
+			//	g.sediment[idx] += dSoil;
+			//}
+			//else
+			//{
+			//	gfloat dSoil = K_d_depositing * (g.sediment[idx] - capacity);
+			//	dSoil = glm::min(dSoil, pMaxDissolve);
+			//
+			//	g.terrain_height[idx] += dSoil;
+			//	g.sediment[idx] -= dSoil;
+			//}
 		}
 	}
 }
 
+/*
+#include <immintrin.h>
+#include <stddef.h>
+#include <math.h>
+
+// Example required constants (replace with your real ones)
+extern const float K_tilt_minimum;
+extern const float K_sediment_capacity;
+extern const float K_s_dissolving;
+extern const float K_d_depositing;
+extern const float pMaxDissolve;
+
+// Helper: float absolute via bitmask (safe, single instruction)
+static inline __m512 mm512_abs_ps_safe(__m512 v) {
+	const __m512i absmask = _mm512_set1_epi32(0x7fffffff);
+	return _mm512_and_ps(v, _mm512_castsi512_ps(absmask));
+}
+
+void Euler::ero4_simd(EulerGround& g)
+{
+	// ND_PROFILE_METHOD(); -- keep or remove as you like
+
+	const int w = g.width;
+	const int h = g.height;
+
+	// constants used in the loop
+	const __m512 half = _mm512_set1_ps(0.5f);
+	const __m512 one = _mm512_set1_ps(1.0f);
+	const __m512 one_f = one;
+	const __m512 k_tilt_min = _mm512_set1_ps(K_tilt_minimum);
+	const __m512 k_sed_cap = _mm512_set1_ps(K_sediment_capacity);
+	const __m512 k_s_diss = _mm512_set1_ps(K_s_dissolving);
+	const __m512 k_d_depo = _mm512_set1_ps(K_d_depositing);
+	const __m512 maxD_vec = _mm512_set1_ps(pMaxDissolve);
+	const __m512 erosionClampMax = _mm512_set1_ps((float)10.0f); // as per your original constexpr
+
+	// component stride for velocity (pattern you described)
+	const size_t velCompStride = g.velocity.size(); // number of floats per component offset
+	// pointers to raw arrays
+	float* terrain_ptr = g.terrain_height.data();
+	float* sed_ptr = g.sediment.data();
+	float* water_ptr = g.water_height.data();
+	float* perlin_ptr = perlinMap.data();
+	float* origH_ptr = originalHeight.data();
+	float* vel_base = (float*)g.velocity.data(); // base pointer for velocity components
+
+	// iterate rows (avoid borders)
+	for (int y = 1; y < h - 1; ++y) {
+		// x runs 1 .. w-2
+		int x = 1;
+		const int x_end = w - 1; // exclusive index for natural loops; we'll stop at w-1
+		// vectorized main loop, 16 floats per iteration
+		for (; x + 15 <= w - 2; x += 16) {
+			const int idx = y * w + x; // base index into 1D arrays for this 16-wide block
+
+			// ---- load terrain neighbors for gradient ----
+			// left: idx - 1
+			__m512 terrainL = _mm512_loadu_ps(&terrain_ptr[idx - 1]);
+			// right: idx + 1
+			__m512 terrainR = _mm512_loadu_ps(&terrain_ptr[idx + 1]);
+			// up: (y-1)*w + x  -> which is idx - w
+			__m512 terrainU = _mm512_loadu_ps(&terrain_ptr[idx - w]);
+			// down: (y+1)*w + x -> idx + w
+			__m512 terrainD = _mm512_loadu_ps(&terrain_ptr[idx + w]);
+
+			// gradX = (R - L) * 0.5
+			__m512 gradX = _mm512_mul_ps(_mm512_sub_ps(terrainR, terrainL), half);
+			// gradY = (D - U) * 0.5
+			__m512 gradY = _mm512_mul_ps(_mm512_sub_ps(terrainD, terrainU), half);
+
+			// grade = gradX*gradX + gradY*gradY
+			__m512 grade = _mm512_fmadd_ps(gradX, gradX, _mm512_mul_ps(gradY, gradY));
+
+			// clamp grade to [-erosionClamp, +erosionClamp]
+			// You used glm::clamp(grade, -erosionClamp, erosionClamp)
+			__m512 grade_clamped = _mm512_min_ps(grade, erosionClampMax);
+			grade_clamped = _mm512_max_ps(grade_clamped, _mm512_sub_ps(_mm512_setzero_ps(), erosionClampMax)); // -10.0f
+
+			// sin_local_tilt = sqrt(grade / (1.0 + grade))
+			__m512 denom = _mm512_add_ps(one_f, grade_clamped);
+			__m512 sin_local_tilt = _mm512_sqrt_ps(_mm512_div_ps(grade_clamped, denom));
+
+			// max with K_tilt_minimum
+			sin_local_tilt = _mm512_max_ps(sin_local_tilt, k_tilt_min);
+
+			// ---- velocity magnitude (assume 2 components: vx, vy) ----
+			// Using the component-stride pattern you gave for flux/velocity:
+			// vx = vel_base + idx + velCompStride * 0
+			// vy = vel_base + idx + velCompStride * 1
+			__m512 vx = _mm512_loadu_ps(vel_base + idx + velCompStride * 0);
+			__m512 vy = _mm512_loadu_ps(vel_base + idx + velCompStride * 1);
+			// velLen = sqrt(vx*vx + vy*vy)
+			__m512 velLen = _mm512_sqrt_ps(_mm512_fmadd_ps(vx, vx, _mm512_mul_ps(vy, vy)));
+
+			// ---- capacity = K_sediment_capacity * velLen * sin_local_tilt * min(1, water_height) ----
+			__m512 wh = _mm512_loadu_ps(&water_ptr[idx]);
+			__m512 min1wh = _mm512_min_ps(one_f, wh);
+			__m512 capacity = _mm512_mul_ps(k_sed_cap, _mm512_mul_ps(velLen, _mm512_mul_ps(sin_local_tilt, min1wh)));
+
+			// ---- perlin factor & depth factor ----
+			__m512 perlinF = _mm512_loadu_ps(&perlin_ptr[idx]);
+
+			// depthDiff = originalHeight[idx] - terrain_height[idx]
+			__m512 origH = _mm512_loadu_ps(&origH_ptr[idx]);
+			__m512 terr = _mm512_loadu_ps(&terrain_ptr[idx]);
+			__m512 depthDiff = _mm512_sub_ps(origH, terr);
+
+			// depthFactor = 1 / (1 + depthDiff)
+			__mmask16 maskNegDepth = _mm512_cmp_ps_mask(depthDiff, _mm512_set1_ps(0.0f), _CMP_LT_OQ);
+			__m512 depthFactor = _mm512_div_ps(one_f, _mm512_add_ps(one_f, depthDiff));
+			// if depthDiff < 0 -> depthFactor = 1
+			depthFactor = _mm512_mask_mov_ps(_mm512_set1_ps(1.0f), maskNegDepth, depthFactor);
+
+			// ---- capacity vs sediment decision (mask) ----
+			__m512 sedv = _mm512_loadu_ps(&sed_ptr[idx]);
+			__mmask16 maskDissolve = _mm512_cmp_ps_mask(capacity, sedv, _CMP_GT_OQ); // 1 -> dissolve, 0 -> deposit
+
+			// ---- compute shared abs diff = |capacity - sediment| ----
+			__m512 diff_raw = _mm512_sub_ps(capacity, sedv);
+			__m512 diff = mm512_abs_ps_safe(diff_raw);
+
+			// ---- compute dSoil for both branches while sharing work ----
+			// k_mix: choose coefficient per lane (k_s_dissolve for dissolve lanes, k_d_deposit for deposit lanes)
+			__m512 k_mix = _mm512_mask_blend_ps(maskDissolve, k_d_depo, k_s_diss);
+
+			// base dSoil = k_mix * diff
+			__m512 dSoil = _mm512_mul_ps(k_mix, diff);
+
+			// For dissolving lanes only: multiply by perlinFactor * depthFactor
+			__m512 modFactor = _mm512_mul_ps(perlinF, depthFactor);
+			// multiply only where maskDissolve==1
+			dSoil = _mm512_mask_mul_ps(dSoil, maskDissolve, dSoil, modFactor);
+
+			// clamp to pMaxDissolve for all lanes
+			dSoil = _mm512_min_ps(dSoil, maxD_vec);
+
+			// For dissolve lanes only: further clamp to terrain height (cannot dissolve more than existing height)
+			__m512 dSoil_clamped = _mm512_mask_min_ps(dSoil, maskDissolve, dSoil, terr);
+
+			// For deposit lanes dSoil_clamped equals dSoil (mask keeps value)
+			// Now dSoil_clamped contains the actual delta magnitude for both branches:
+			// - if maskDissolve == 1 : amount to remove from terrain (and add to sediment)
+			// - if maskDissolve == 0 : amount to add to terrain (and remove from sediment)
+
+			// ---- update terrain and sediment branchlessly ----
+			// terrain: dissolve -> terr - dSoil_clamped (mask=1)
+			//          deposit  -> terr + dSoil_clamped (mask=0)
+			// We'll do two masked ops: first mask=1: terrNew = terr - dSoil_clamped; then mask=~mask: add for deposit lanes
+			__m512 terrNew = _mm512_mask_sub_ps(terr, maskDissolve, terr, dSoil_clamped);
+			terrNew = _mm512_mask_add_ps(terrNew, ~maskDissolve, terrNew, dSoil_clamped);
+
+			// sediment: dissolve -> sed + dSoil_clamped (mask=1)
+			//           deposit -> sed - dSoil_clamped (mask=0)
+			__m512 sedNew = _mm512_mask_add_ps(sedv, maskDissolve, sedv, dSoil_clamped);
+			sedNew = _mm512_mask_sub_ps(sedNew, ~maskDissolve, sedNew, dSoil_clamped);
+
+			// store results
+			_mm512_storeu_ps(&terrain_ptr[idx], terrNew);
+			_mm512_storeu_ps(&sed_ptr[idx], sedNew);
+		} // end vectorized x loop
+
+		// scalar remainder for this row (handle up to w-2)
+	} // end y loop
+}
+*/
 
 void Euler::ero5_simd(EulerGround& g)
 {
@@ -696,21 +939,28 @@ void Euler::ero5_simd(EulerGround& g)
 	const int w = g.width;
 	const int h = g.height;
 
+	const __m512 kdt = _mm512_set1_ps(K_dt);
+
 	for (int y = 1; y < h - 1 && e_erosion; ++y)
 	{
 		const int yw = y * w;
-		for (int x = 1; x < w - 1; ++x)
+		for (int x = 1; x < w - 1 - 16; x += 16)
 		{
 			const int idx = yw + x;
 
-			gfloat velx = g.velocity[idx].x;
-			gfloat vely = g.velocity[idx].y;
+			__m512 velX = _mm512_loadu_ps(((float*)g.velocity.data()) + idx + g.velocity.size() * 0);
+			__m512 velY = _mm512_loadu_ps(((float*)g.velocity.data()) + idx + g.velocity.size() * 1);
 
-			gfloat fx = (gfloat)x - velx * K_dt;
-			gfloat fy = (gfloat)y - vely * K_dt;
+			velX = _mm512_mul_ps(velX, kdt);
+			velY = _mm512_mul_ps(velY, kdt);
 
+			// target position = current position - velocity * dt
+			__m512 fx = _mm512_sub_ps(_mm512_set1_ps((gfloat)x), velX);
+			__m512 fy = _mm512_sub_ps(_mm512_set1_ps((gfloat)y), velY);
 
-			g.sediment[idx] = ter::interpolate2D(REINTERPRET_AS(std::vector<gfloat>, g.sediment), w, h, fx, fy);
+			__m512 sediment = ter::interpolate2D(g.sediment.data(), w, h, fx, fy);
+
+			_mm512_storeu_ps(&g.sediment[idx], sediment);
 		}
 	}
 }
@@ -725,16 +975,25 @@ void Euler::ero6_simd(EulerGround& g)
 	const gfloat evapFactor = 1.0f - K_evaporation * K_dt;
 	constexpr gfloat evaporationEpsilon = 0.001f;
 
+	const __m512 evap = _mm512_set1_ps(evapFactor);
+	const __m512 epsilon = _mm512_set1_ps(evaporationEpsilon);
+
 	for (int y = 1; y < h - 1 && e_evaporation; ++y)
 	{
 		const int yw = y * w;
-		for (int x = 1; x < w - 1; ++x)
+		for (int x = 1; x < w - 1 - 16; x += 16)
 		{
 			const int idx = yw + x;
 
-			g.water_height[idx] *= evapFactor;
-			if (g.water_height[idx] < evaporationEpsilon)
-				g.water_height[idx] = 0.0f;
+			// waterHeight *= evapFactor
+			__m512 waterHeight = _mm512_loadu_ps(&g.water_height[idx]);
+			waterHeight = _mm512_mul_ps(waterHeight, evap);
+			// clamp to 0 if below epsilon
+			__mmask16 mask = _mm512_cmp_ps_mask(waterHeight, epsilon, _CMP_LT_OQ);
+			waterHeight = _mm512_mask_mov_ps(waterHeight, mask, _mm512_setzero_ps());
+
+			// store
+			_mm512_storeu_ps(&g.water_height[idx], waterHeight);
 		}
 	}
 }
@@ -746,31 +1005,56 @@ void Euler::ero7_simd(EulerGround& g)
 	const int w = g.width;
 	const int h = g.height;
 
+	const gfloat multiplier = K_landSlideSpeed * K_dt;
+	const __m512 k_mult = _mm512_set1_ps(multiplier);
+	const __m512 zero = _mm512_setzero_ps();
+	const __m512 landslideCutoff = _mm512_set1_ps(K_landSlideCutoffAngle);
+	__mmask16 interleave = 0b0101010101010101;
+
+	static bool interLeaveFlag = false;
+	interLeaveFlag = !interLeaveFlag;
+	if (interLeaveFlag)
+		interleave = ~interleave;
+
+
 	for (int y = 1; y < h - 1 && e_landslide; ++y)
 	{
 		const int yw = y * w;
-		const int yp1w = (y + 1) * w;
 
-		for (int x = 1; x < w - 1; ++x)
+		for (int x = 1; x < w - 1 - 16; x += 16)
 		{
 			const int idx = yw + x;
 
-			gfloat& height = g.terrain_height[idx];
+			__m512 height = _mm512_loadu_ps(&g.terrain_height[idx]);
+			__m512 heightE = _mm512_loadu_ps(&g.terrain_height[idx + 1]); // east neighbor
+			__m512 heightS = _mm512_loadu_ps(&g.terrain_height[idx + w]); // south neighbor
+			__m512 deltaE = _mm512_sub_ps(heightE, height);
+			__m512 deltaS = _mm512_sub_ps(heightS, height);
 
-			gvec2 heightN(
-				g.terrain_height[yw + x + 1], // east neighbor
-				g.terrain_height[yp1w + x] // south neighbor
-			);
+			__m512 takeNE = _mm512_mul_ps(deltaE, k_mult);
+			__m512 takeNS = _mm512_mul_ps(deltaS, k_mult);
 
-			gvec2 delta = heightN - gvec2(height);
-			gvec2 takeN = delta * (K_landSlideSpeed * K_dt);
+			__mmask16 signsE = _mm512_cmp_ps_mask(takeNE, zero, _CMP_LT_OQ);
+			__mmask16 signsS = _mm512_cmp_ps_mask(takeNS, zero, _CMP_LT_OQ);
 
-			gvec2 signs = glm::sign(takeN);
-			takeN = glm::max(glm::abs(takeN) - K_landSlideCutoffAngle, 0.0f) * signs;
+			takeNE = _mm512_max_ps(zero, _mm512_sub_ps(_mm512_abs_ps(takeNE), landslideCutoff));
+			takeNS = _mm512_max_ps(zero, _mm512_sub_ps(_mm512_abs_ps(takeNS), landslideCutoff));
 
-			height += glm::compAdd(takeN);
-			g.terrain_height[yw + x + 1] -= takeN.x;
-			g.terrain_height[yp1w + x] -= takeN.y;
+
+			takeNE = _mm512_mask_sub_ps(takeNE, signsE, zero, takeNE);
+			takeNS = _mm512_mask_sub_ps(takeNS, signsS, zero, takeNS);
+
+
+			__m512 sum = _mm512_add_ps(height, _mm512_add_ps(takeNE, takeNS));
+
+			_mm512_mask_storeu_ps(&g.terrain_height[idx], interleave, sum);
+
+			// subtract from neighbors
+			__m512 heightE_new = _mm512_sub_ps(heightE, takeNE);
+			__m512 heightS_new = _mm512_sub_ps(heightS, takeNS);
+
+			_mm512_mask_storeu_ps(&g.terrain_height[idx + 1], interleave, heightE_new);
+			_mm512_mask_storeu_ps(&g.terrain_height[idx + w], interleave, heightS_new);
 		}
 	}
 }
