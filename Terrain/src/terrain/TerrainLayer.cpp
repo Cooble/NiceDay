@@ -27,31 +27,26 @@ TerrainLayer::TerrainLayer(nd::EditorLayer& l) : m_editorLayer(l)
 // Primitives for rendering heightmap
 struct TerrainMesh
 {
-	// graphical primitives
-	VertexBuffer* pos_vbo;
-	VertexArray* vao;
-	IndexBuffer* index_buffer;
-	TexturePtr height_texture;
+	MeshPtr meshPtr;
 
-	std::vector<float> float_height;
+	TexturePtr terrain_texture;
+	TexturePtr water_texture;
 
 	void create(EulerGround& map)
 	{
-		float_height.resize(map.width * map.height);
-		ZeroMemory(float_height.data(), float_height.size() * sizeof(decltype(float_height)::value_type));
+		auto mesh_data = new MeshData(
+			map.width * map.height * 2,
+			sizeof(float) * 2, 
+			(map.width - 1) * (map.height - 1) * 6,
+			VertexBufferLayout{ g_typ::VEC2 });
 
+		mesh_data->setID("terrainMesh");
 
-		if (pos_vbo)
-		{
-			delete vao;
-			delete pos_vbo;
-			delete index_buffer;
-		}
 
 		gfloat scaler = 1.f / (map.width - 1);
 
 
-		auto f = std::vector<float>(map.width * map.height * 2);
+		auto f = (float*)mesh_data->getVertices();
 
 		for (int y = 0; y < map.height; y++)
 			for (int x = 0; x < map.width; ++x)
@@ -63,14 +58,11 @@ struct TerrainMesh
 		TextureInfo info = TextureInfo().size(map.width, map.height).format(TextureFormat::RED_32F).wrapMode(
 			TextureWrapMode::CLAMP_TO_EDGE);
 
-		height_texture = std::shared_ptr<Texture>(Texture::create(info));
-		height_texture->setPixels(float_height.data());
+		terrain_texture = std::shared_ptr<Texture>(Texture::create(info));
+		water_texture = std::shared_ptr<Texture>(Texture::create(info));
 
 
-		pos_vbo = VertexBuffer::create(f.data(), f.size() * sizeof(float));
-		pos_vbo->setLayout({g_typ::VEC2});
-
-		auto indices = std::vector<uint32_t>((map.width - 1) * (map.height - 1) * 6);
+		auto indices = (uint32_t*)mesh_data->getIndices();
 
 		for (int y = 0; y < map.height - 1; y++)
 			for (int x = 0; x < map.width - 1; ++x)
@@ -87,38 +79,31 @@ struct TerrainMesh
 				indices[startIdx + 5] = y * map.width + x + 1;
 			}
 
-
-		index_buffer = IndexBuffer::create(indices.data(), indices.size());
-
-		vao = VertexArray::create();
-		vao->addBuffer(*pos_vbo);
-		vao->addBuffer(*index_buffer);
+		meshPtr = MeshLibrary::buildNewMesh(mesh_data);
+		MeshLibrary::registerMesh(meshPtr);
 	}
 
 	void refreshHeight(EulerGround& map)
 	{
-		height_texture->setPixels(map.terrain_height.data());
+		terrain_texture->setPixels(map.terrain_height.data());
 	}
-
 	void refreshWaterHeight(EulerGround& map)
 	{
-		height_texture->setPixels(map.water_height.data());
+		water_texture->setPixels(map.water_height.data());
 	}
 };
 
 
 // Scene + Graphics
 static TerrainMesh mesh;
-static TerrainMesh waterMesh;
-static Ref<Mesh> meshPtr;
 static MaterialPtr matPtr;
 static MaterialPtr waterMatPtr;
 static glm::vec3 pointer_relative_pos;
 
 
 // Imgui Vars
-static int groundSize = 1024;
-static bool toggle_render_water = false;
+static int groundSize = 512;
+static bool toggle_render_water = true;
 static bool toggle_sim_drop = false;
 static bool toggle_sim_euler = false;
 static int playspeed_sim_drop = 1;
@@ -134,23 +119,19 @@ static gfloat currentWater = 0;
 static gfloat minTerrain = 0, maxTerrain = 0;
 
 
-
-
 // ========== Graphics and Scene ==========
 
 // create shaders and materials for terrain and water
 void TerrainLayer::createMaterial()
 {
-
-	{
-		std::string vertexShader = R"(
+	std::string vertexShader = R"(
 			#version 330 core
 
 			layout(location = 0) in vec2 a_pos;
 
 			struct MAT {
 				vec4 color;
-				sampler2D height_texture;
+				sampler2D water_texture;
 				sampler2D terrain_texture;
 				float shines;
 				float width;
@@ -186,14 +167,14 @@ void TerrainLayer::createMaterial()
 			void main()
 			{
 
-				vec3 central = vec3(a_pos.x,texture2D(mat.height_texture, a_pos).r/mat.width,a_pos.y);
+				vec3 central = vec3(a_pos.x,texture2D(mat.terrain_texture, a_pos).r/mat.width,a_pos.y);
 				const float eps = 0.02;
 
 
-				float hL = texture2D(mat.height_texture, a_pos - vec2(eps, 0.0)).r/mat.width;
-			    float hR = texture2D(mat.height_texture, a_pos + vec2(eps, 0.0)).r/mat.width;
-			    float hD = texture2D(mat.height_texture, a_pos - vec2(0.0, eps)).r/mat.width;
-			    float hU = texture2D(mat.height_texture, a_pos + vec2(0.0, eps)).r/mat.width;
+				float hL = texture2D(mat.terrain_texture, a_pos - vec2(eps, 0.0)).r/mat.width;
+			    float hR = texture2D(mat.terrain_texture, a_pos + vec2(eps, 0.0)).r/mat.width;
+			    float hD = texture2D(mat.terrain_texture, a_pos - vec2(0.0, eps)).r/mat.width;
+			    float hU = texture2D(mat.terrain_texture, a_pos + vec2(0.0, eps)).r/mat.width;
 
 				vec3 dx = vec3(2 * eps, hR - hL, 0);
 				vec3 dy = vec3(0, hU - hD, 2 * eps);
@@ -209,7 +190,7 @@ void TerrainLayer::createMaterial()
 			}
 		)";
 
-		std::string fragmentShader = R"(
+	std::string fragmentShader = R"(
 			#version 330 core
 
 
@@ -234,7 +215,7 @@ void TerrainLayer::createMaterial()
 						
 			struct MAT {
 				vec4 color;
-				sampler2D height_texture;
+				sampler2D water_texture;
 				sampler2D terrain_texture;
 				float shines;
 				float width;
@@ -267,33 +248,14 @@ void TerrainLayer::createMaterial()
 				color = vec4(diffuseLight+diffuseColor*0.3 + reflectiveLight,1);				
 			}
 		)";
-
-		auto shader = Shader::create(Shader::ShaderProgramSources(vertexShader, fragmentShader));
-		//std::shared_ptr<internal::GLShader> shaderGL = std::dynamic_pointer_cast<internal::GLShader*>(shader);
-		std::shared_ptr<internal::GLShader> bp = std::dynamic_pointer_cast<internal::GLShader>(shader);
-		bp->bind();
-		bp->setUniform1i("mat.height_texture", 0);
-		bp->unbind();
-
-		MaterialInfo in;
-		in.shader = shader;
-		in.name = "terrainMaterial";
-		in.structName = "MAT";
-		in.flags = MaterialFlags::FLAG_DEPTH_MASK | MaterialFlags::FLAG_DEPTH_TEST;
-		matPtr = MaterialLibrary::create(in);
-		matPtr->setValue("shines", 64.f);
-		matPtr->setValue("width", 128.f);
-	}
-
-	{
-		std::string waterVertexShader = R"(
+	std::string waterVertexShader = R"(
 		#version 330 core
 
 		layout(location = 0) in vec2 a_pos;
 
 		struct MAT {
 			vec4 color;
-			sampler2D height_texture;
+			sampler2D water_texture;
 			sampler2D terrain_texture;
 			float shines;
 			float width;
@@ -329,14 +291,14 @@ void TerrainLayer::createMaterial()
 		void main()
 		{
 
-			vec3 central = vec3(a_pos.x,(texture2D(mat.height_texture, a_pos).r+texture2D(mat.terrain_texture, a_pos).r)/mat.width,a_pos.y);
+			vec3 central = vec3(a_pos.x,(texture2D(mat.water_texture, a_pos).r+texture2D(mat.terrain_texture, a_pos).r)/mat.width,a_pos.y);
 			const float eps = 0.02;
 			
 			
-			float hL = (texture2D(mat.height_texture, a_pos - vec2(eps, 0.0)).r+texture2D(mat.terrain_texture, a_pos - vec2(eps, 0.0)).r)/mat.width;
-		    float hR = (texture2D(mat.height_texture, a_pos + vec2(eps, 0.0)).r+texture2D(mat.terrain_texture, a_pos + vec2(eps, 0.0)).r)/mat.width;
-		    float hD = (texture2D(mat.height_texture, a_pos - vec2(0.0, eps)).r+texture2D(mat.terrain_texture, a_pos - vec2(0.0, eps)).r)/mat.width;
-		    float hU = (texture2D(mat.height_texture, a_pos + vec2(0.0, eps)).r+texture2D(mat.terrain_texture, a_pos + vec2(0.0, eps)).r)/mat.width;	
+			float hL = (texture2D(mat.water_texture, a_pos - vec2(eps, 0.0)).r+texture2D(mat.terrain_texture, a_pos - vec2(eps, 0.0)).r)/mat.width;
+		    float hR = (texture2D(mat.water_texture, a_pos + vec2(eps, 0.0)).r+texture2D(mat.terrain_texture, a_pos + vec2(eps, 0.0)).r)/mat.width;
+		    float hD = (texture2D(mat.water_texture, a_pos - vec2(0.0, eps)).r+texture2D(mat.terrain_texture, a_pos - vec2(0.0, eps)).r)/mat.width;
+		    float hU = (texture2D(mat.water_texture, a_pos + vec2(0.0, eps)).r+texture2D(mat.terrain_texture, a_pos + vec2(0.0, eps)).r)/mat.width;	
 
 
 			vec3 dx = vec3(2 * eps, hR - hL, 0);
@@ -352,7 +314,7 @@ void TerrainLayer::createMaterial()
 			outpost=a_pos;
 		}
 		)";
-		std::string waterFragmentShader = R"(
+	std::string waterFragmentShader = R"(
 			#version 330 core
 			struct GLO {
 				mat4 view;
@@ -371,7 +333,7 @@ void TerrainLayer::createMaterial()
 						
 				struct MAT {
 				vec4 color;
-				sampler2D height_texture;
+				sampler2D water_texture;
 				sampler2D terrain_texture;
 				float shines;
 				float width;
@@ -384,7 +346,7 @@ void TerrainLayer::createMaterial()
 			void main()
 			{
 
-				float waterHeight = texture2D(mat.terrain_texture, outpost).r/mat.width;
+				float waterHeight = texture2D(mat.water_texture, outpost).r/mat.width;
 				if (waterHeight < 0.005)
 				{
 					discard;
@@ -405,21 +367,99 @@ void TerrainLayer::createMaterial()
 				if(mat.shines!=0)
 					reflectiveLight = glo.specular * specularColor * pow(max(dot(reflection, toSun), 0.0), mat.shines);
 
-				color = vec4(diffuseLight+diffuseColor*0.3 + reflectiveLight,min(0.6,waterHeight*10));
+				color = vec4(diffuseLight+diffuseColor*0.3 + reflectiveLight,min(0.65,waterHeight*10));
+			}
+		)";
+	std::string waterVertexShader2 = R"(
+			#version 330 core
+
+			layout(location = 0) in vec2 a_pos;
+
+			struct MAT {
+				vec4 color;
+				sampler2D water_texture;
+				sampler2D terrain_texture;
+				float shines;
+				float width;
+			};
+			uniform MAT mat;
+
+
+			struct GLO {
+
+				mat4 view;
+				mat4 proj;
+
+				vec3 sunPos;
+
+				vec3 ambient;
+				vec3 diffuse;
+				vec3 specular;
+				vec3 camera_pos;
+				//attenuation
+				float constant;
+				float linear;
+				float quadratic;
+			};
+			uniform GLO glo;
+
+			uniform mat4 world;
+
+			out vec2 outpost;
+
+			out vec3 v_normal;
+			out vec3 v_world_pos;
+
+			void main()
+			{
+
+				//float height =  texture2D(mat.water_texture, a_pos).r;
+				float height =  texture2D(mat.water_texture, a_pos).r+texture2D(mat.terrain_texture, a_pos).r;
+
+				vec3 central = vec3(a_pos.x,height/mat.width,a_pos.y);
+				const float eps = 0.02;
+
+
+				float hL = (texture2D(mat.water_texture, a_pos - vec2(eps, 0.0)).r);
+			    float hR = (texture2D(mat.water_texture, a_pos + vec2(eps, 0.0)).r);
+			    float hD = (texture2D(mat.water_texture, a_pos - vec2(0.0, eps)).r);
+			    float hU = (texture2D(mat.water_texture, a_pos + vec2(0.0, eps)).r);
+
+				vec3 dx = vec3(2 * eps, hR - hL, 0);
+				vec3 dy = vec3(0, hU - hD, 2 * eps);
+
+				vec3 nor = normalize(cross(dy,dx));
+
+				v_normal = (world * vec4(nor,0)).xyz;
+				v_world_pos = (world * vec4(central, 1.0)).xyz;
+
+
+				gl_Position = glo.proj * glo.view * vec4(v_world_pos,1.0);
+				outpost=a_pos;
 			}
 		)";
 
+	{
+		auto shader = Shader::create(Shader::ShaderProgramSources(vertexShader, fragmentShader));
+		std::shared_ptr<internal::GLShader> bp = std::dynamic_pointer_cast<internal::GLShader>(shader);
+	
+		MaterialInfo in;
+		in.shader = shader;
+		in.name = "terrainMaterial";
+		in.structName = "MAT";
+		in.flags = MaterialFlags::FLAG_DEPTH_MASK | MaterialFlags::FLAG_DEPTH_TEST;
+		matPtr = MaterialLibrary::create(in);
+		matPtr->setValue("shines", 64.f);
+		matPtr->setValue("width", 128.f);
+	}
+
+	{
 		auto waterShader = Shader::create(Shader::ShaderProgramSources(waterVertexShader, waterFragmentShader));
 		std::shared_ptr<internal::GLShader> bp = std::dynamic_pointer_cast<internal::GLShader>(waterShader);
-		bp->bind();
-		bp->setUniform1i("mat.height_texture", 0);
-		bp->setUniform1i("mat.terrain_texture", 1);
-		bp->unbind();
-
 
 		MaterialInfo in;
 		in.shader = waterShader;
-		in.name = "terrainMaterialWater";
+		in.name = "waterMaterial";
 		in.structName = "MAT";
 		in.flags = MaterialFlags::FLAG_DEPTH_MASK | MaterialFlags::FLAG_DEPTH_TEST | MaterialFlags::FLAG_BLEND;
 		waterMatPtr = MaterialLibrary::create(in);
@@ -434,47 +474,15 @@ void TerrainLayer::createGround()
 	g.resize(groundSize);
 
 	mesh.create(g);
-	waterMesh.create(g);
-
 
 	recreateTerrain(g);
 
-
-	static MeshData* data = nullptr;
-	delete data;
-	data = new MeshData;
-
-	VertexBufferLayout layout = { g_typ::VEC2 };
-	data->allocate(mesh.pos_vbo->getSize(), 3 * sizeof(gfloat), (g.width - 1) * (g.height - 1) * 6, layout);
-	data->setID("terrainMesh");
-	{
-		meshPtr = std::make_shared<Mesh>();
-		meshPtr->data = data;
-
-		meshPtr->indexData.count = data->getIndicesCount();
-		meshPtr->indexData.offset = 0;
-		// this might be the most disgusting thing i ever did, but it cannot be nullptr since it checks during draw call,
-		// it should not read from it though, >)
-		meshPtr->indexData.indexBuffer = (IndexBuffer*)0x42;
-		int index = 0;
-		for (auto& e : mesh.pos_vbo->getLayout().getElements())
-		{
-			meshPtr->vertexData.declaration.addElement(index, e.typ, VertexType::POS);
-			meshPtr->vertexData.binding.setBinding(index++, mesh.pos_vbo);
-		}
-		meshPtr->vao_temp = mesh.vao;
-	}
-	MeshLibrary::registerMesh(meshPtr);
-
-	// must not forge to update texture to newer version as well
-	matPtr->setValue("height_texture", mesh.height_texture);
-	// must not forge to update texture to newer version as well
-	waterMatPtr->setValue("height_texture", mesh.height_texture);
-	waterMatPtr->setValue("terrain_texture", waterMesh.height_texture);
-
+	// don't forget to update material with new textures
+	matPtr->setValue("terrain_texture", mesh.terrain_texture);
+	matPtr->setValue("water_texture", mesh.water_texture);
+	waterMatPtr->setValue("terrain_texture", mesh.terrain_texture);
+	waterMatPtr->setValue("water_texture", mesh.water_texture);
 }
-
-
 
 
 // ========== Terrain Generation ==========
@@ -489,32 +497,29 @@ enum class TerrainLayerType
 
 static TerrainLayerType terrainLayerType = TerrainLayerType::FLAT;
 
-void TerrainLayer::recreateTerrain(EulerGround& g)  
-{  
-   using namespace BaseGroundImgui;  
+void TerrainLayer::recreateTerrain(EulerGround& g)
+{
+	using namespace BaseGroundImgui;
 
-   switch (terrainLayerType)  
-   {  
-   case TerrainLayerType::FLAT:  
-       BaseGround::generateFlat(g, Flat::uiHeight);  
-       break;  
-   case TerrainLayerType::SINE:  
-       BaseGround::generateGroundSine(g, Sine::uiAmplitude, Sine::uiFreq, Sine::uiPhase);  
-       break;  
-   case TerrainLayerType::PERLIN:  
-       BaseGround::generatePerlinMultiOctave(g, Perlin::uiLayers, Perlin::uiScale, Perlin::uiOffset);  
-       break;  
-   case TerrainLayerType::BASIN:  
-       BaseGround::generateBasin(g, Basin::uiScale, Basin::uiOffset);  
-       break;  
-   }  
-   Droplet::balls = 0;  
-   mesh.refreshHeight(g);  
-   ZeroMemory(g.water_height.data(), g.water_height.size() * sizeof(gfloat));  
-   waterMesh.refreshWaterHeight(g);  
+	switch (terrainLayerType)
+	{
+	case TerrainLayerType::FLAT:
+		BaseGround::generateFlat(g, Flat::uiHeight);
+		break;
+	case TerrainLayerType::SINE:
+		BaseGround::generateGroundSine(g, Sine::uiAmplitude, Sine::uiFreq, Sine::uiPhase);
+		break;
+	case TerrainLayerType::PERLIN:
+		BaseGround::generatePerlinMultiOctave(g, Perlin::uiLayers, Perlin::uiScale, Perlin::uiOffset);
+		break;
+	case TerrainLayerType::BASIN:
+		BaseGround::generateBasin(g, Basin::uiScale, Basin::uiOffset);
+		break;
+	}
+	Droplet::balls = 0;
+	ZeroMemory(g.water_height.data(), g.water_height.size() * sizeof(gfloat));
+	mesh.refreshHeight(g);
 }
-
-
 
 
 // ========== TerrainLayer ==========
@@ -529,7 +534,7 @@ void TerrainLayer::onAttach()
 		auto entit = m_editorLayer.scene().createEntity("terrain");
 		entit.emplaceOrReplace<TransformComponent>(glm::vec3(0.f), glm::vec3(10.f),
 		                                           glm::vec3(0.f, 0.f, 0.f));
-		entit.emplaceOrReplace<ModelComponent>(meshPtr->getID(), matPtr->getID());
+		entit.emplaceOrReplace<ModelComponent>(mesh.meshPtr->getID(), matPtr->getID());
 		m_entity = entit;
 	}
 	// water
@@ -537,7 +542,7 @@ void TerrainLayer::onAttach()
 		auto entit = m_editorLayer.scene().createEntity("terrainWater");
 		entit.emplaceOrReplace<TransformComponent>(glm::vec3(0.f), glm::vec3(10.f),
 		                                           glm::vec3(0.f, 0.f, 0.f));
-		entit.emplaceOrReplace<ModelComponent>(meshPtr->getID(), waterMatPtr->getID());
+		entit.emplaceOrReplace<ModelComponent>(mesh.meshPtr->getID(), waterMatPtr->getID());
 		m_water_entity = entit;
 	}
 	//adding sphere
@@ -574,7 +579,7 @@ void TerrainLayer::onRender()
 	// send heightmap to texture
 	mesh.refreshHeight(g);
 	if (toggle_render_water)
-		waterMesh.refreshWaterHeight(g);
+		mesh.refreshWaterHeight(g);
 
 	// disable water scene component
 	m_water_entity.get<TagComponent>().enabled = toggle_render_water;
@@ -649,7 +654,8 @@ void TerrainLayer::onImGuiRenderSimulator()
 	ImGui::SetItemTooltip("Two simulation methods available\nFor both methods you can adjust simulation speed");
 
 	bool eulerSimOpen = ImGui::CollapsingHeader("EulerSim");
-	ImGui::SetItemTooltip("Every cell is connected to its 4 neighbors and transfers water and soil to them\nComputationally expensive, not recommended to tinker with sizes bigger than 256x256");
+	ImGui::SetItemTooltip(
+		"Every cell is connected to its 4 neighbors and transfers water and soil to them\nComputationally expensive, not recommended to tinker with sizes bigger than 256x256");
 	if (eulerSimOpen)
 	{
 		if (ImGui::Button("Init"))
@@ -659,11 +665,11 @@ void TerrainLayer::onImGuiRenderSimulator()
 			m_euler.step(g);
 
 		ImGui::PushStyleColor(ImGuiCol_Button,
-			toggle_sim_euler ? ImVec4(0.2f, 0.7f, 0.2f, 1.0f) : ImVec4(0.7f, 0.2f, 0.2f, 1.0f));
+		                      toggle_sim_euler ? ImVec4(0.2f, 0.7f, 0.2f, 1.0f) : ImVec4(0.7f, 0.2f, 0.2f, 1.0f));
 		ImGui::PushStyleColor(ImGuiCol_ButtonHovered,
-			toggle_sim_euler ? ImVec4(0.3f, 0.8f, 0.3f, 1.0f) : ImVec4(0.8f, 0.3f, 0.3f, 1.0f));
+		                      toggle_sim_euler ? ImVec4(0.3f, 0.8f, 0.3f, 1.0f) : ImVec4(0.8f, 0.3f, 0.3f, 1.0f));
 		ImGui::PushStyleColor(ImGuiCol_ButtonActive,
-			toggle_sim_euler ? ImVec4(0.1f, 0.6f, 0.1f, 1.0f) : ImVec4(0.6f, 0.1f, 0.1f, 1.0f));
+		                      toggle_sim_euler ? ImVec4(0.1f, 0.6f, 0.1f, 1.0f) : ImVec4(0.6f, 0.1f, 0.1f, 1.0f));
 
 		toggle_sim_euler ^= ImGui::Button("Play");
 		ImGui::PopStyleColor(3);
@@ -683,7 +689,8 @@ void TerrainLayer::onImGuiRenderSimulator()
 	}
 
 	bool dropSimOpen = ImGui::CollapsingHeader("Droplet Sim");
-	ImGui::SetItemTooltip("Drop randomly spawns on the terrain and simulate erosion by moving around, picking up soil and depositing it elsewhere");
+	ImGui::SetItemTooltip(
+		"Drop randomly spawns on the terrain and simulate erosion by moving around, picking up soil and depositing it elsewhere");
 	if (dropSimOpen)
 	{
 		static bool stepSucces = true;
@@ -736,7 +743,8 @@ void TerrainLayer::onImGuiRenderSimulator()
 
 
 		ImGui::InputInt("Stop at # balls", &stopAtBalls);
-		ImGui::SetItemTooltip("Stop simulation after this many balls are spawned\nSet to -1 to disable stopping at balls");
+		ImGui::SetItemTooltip(
+			"Stop simulation after this many balls are spawned\nSet to -1 to disable stopping at balls");
 		if (stopAtBalls == Droplet::balls)
 			toggle_sim_drop = false;
 
@@ -862,7 +870,8 @@ void TerrainLayer::onUpdate()
 	auto cam = m_editorLayer.scene().currentCamera();
 	auto camPos = cam.get<TransformComponent>().pos;
 	auto mousePx = APin().getMouseLocation();
-	auto worldPos = camPos + m_editorLayer.screenToWorld(mousePx) * m_editorLayer.getDepthAtScreen(APin().getMouseLocation());
+	auto worldPos = camPos + m_editorLayer.screenToWorld(mousePx) * m_editorLayer.getDepthAtScreen(
+		APin().getMouseLocation());
 
 	// now figure out where on mesh the point is
 	auto meshWorldMatrix = m_entity.get<TransformComponent>();
@@ -871,14 +880,12 @@ void TerrainLayer::onUpdate()
 
 
 	gvec3 totalPos = gvec3(m_droplet.pos.x / g.width,
-		g.terrain_height[glm::clamp(
-			(int)(m_droplet.pos.y) * g.width + (int)m_droplet.pos.x, 0,
-			g.width * g.width - 1)] / g.width,
-		m_droplet.pos.y / g.width);
+	                       g.terrain_height[glm::clamp(
+		                       (int)(m_droplet.pos.y) * g.width + (int)m_droplet.pos.x, 0,
+		                       g.width * g.width - 1)] / g.width,
+	                       m_droplet.pos.y / g.width);
 	m_sphere.get<TransformComponent>().pos = glm::vec3(meshWorldMatrix.trans * glm::vec4(totalPos, 1));
 }
-
-
 
 
 // ========== Simulation ==========

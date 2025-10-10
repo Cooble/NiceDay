@@ -256,23 +256,16 @@ void GLShader::setUniformiv(const std::string& name, int count, int arraySize, i
 	switch (count)
 	{
 	case 1:
-		//GLCall(glUniform1iv(loc, arraySize, v));
-		glUniform1iv(loc, arraySize, v);
+		GLCall(glUniform1iv(loc, arraySize, v));
 		break;
 	case 2:
-		//GLCall(glUniform2iv(loc, arraySize, v));
-		glUniform2iv(loc, arraySize, v);
-
+		GLCall(glUniform2iv(loc, arraySize, v));
 		break;
 	case 3:
-		//GLCall(glUniform3iv(loc, arraySize, v));
-		glUniform3iv(loc, arraySize, v);
-
+		GLCall(glUniform3iv(loc, arraySize, v));
 		break;
 	case 4:
-		//GLCall(glUniform4iv(loc, arraySize, v));
-		glUniform4iv(loc, arraySize, v);
-
+		GLCall(glUniform4iv(loc, arraySize, v));
 		break;
 	default:
 		ASSERT(false, "Nonexistent type");
@@ -288,20 +281,16 @@ void GLShader::setUniformfv(const std::string& name, int count, int arraySize, f
 	switch (count)
 	{
 	case 1:
-		//GLCall(glUniform1fv(loc, arraySize, v));
-		glUniform1fv(loc, arraySize, v);
+		GLCall(glUniform1fv(loc, arraySize, v));
 		break;
 	case 2:
-		//GLCall(glUniform2fv(loc, arraySize, v));
-		glUniform2fv(loc, arraySize, v);
+		GLCall(glUniform2fv(loc, arraySize, v));
 		break;
 	case 3:
-		//GLCall(glUniform3fv(loc, arraySize, v));
-		glUniform3fv(loc, arraySize, v);
+		GLCall(glUniform3fv(loc, arraySize, v));
 		break;
 	case 4:
-		//	GLCall(glUniform4fv(loc, arraySize, v));
-		glUniform4fv(loc, arraySize, v);
+		GLCall(glUniform4fv(loc, arraySize, v));
 		break;
 	default:
 		ASSERT(false, "Nonexistent type");
@@ -316,20 +305,16 @@ void GLShader::setUniformuiv(const std::string& name, int count, int arraySize, 
 	switch (count)
 	{
 	case 1:
-		//GLCall(glUniform1uiv(loc, arraySize, v));
-		glUniform1uiv(loc, arraySize, v);
+		GLCall(glUniform1uiv(loc, arraySize, v));
 		break;
 	case 2:
-		//GLCall(glUniform2uiv(loc, arraySize, v));
-		glUniform2uiv(loc, arraySize, v);
+		GLCall(glUniform2uiv(loc, arraySize, v));
 		break;
 	case 3:
-		//GLCall(glUniform3uiv(loc, arraySize, v));
-		glUniform3uiv(loc, arraySize, v);
+		GLCall(glUniform3uiv(loc, arraySize, v));
 		break;
 	case 4:
-		//GLCall(glUniform4uiv(loc, arraySize, v));
-		glUniform4uiv(loc, arraySize, v);
+		GLCall(glUniform4uiv(loc, arraySize, v));
 		break;
 	default:
 		ASSERT(false, "Nonexistent type");

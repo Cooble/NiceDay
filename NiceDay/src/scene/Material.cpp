@@ -73,6 +73,7 @@ void Material::bind(int slotBindingOffset, const ShaderPtr& shader)
 			if(!ee/*|| ((UniformElement*)ee)!=(UniformElement*)&element*/ //we just assume that names are enough
 		/*	continue;
 	}*/
+		bool skipNonExistentTexture = false;
 		if (GTypes::isTexture(element.type))
 			for (int i = 0; i < element.arraySize; ++i)
 			{
@@ -80,7 +81,13 @@ void Material::bind(int slotBindingOffset, const ShaderPtr& shader)
 				if (t)
 					t->bind(slotBindingOffset + localTexIdx);
 				localTexIdx++;
+
+				skipNonExistentTexture |= !t; // we will not try to set index of nonexistent texture to ubo
 			}
+
+		if (skipNonExistentTexture)
+			continue;
+
 		switch (element.type)
 		{
 		case g_typ::FLOAT:
@@ -135,6 +142,7 @@ void Material::updateLayoutFromShader()
 	}
 	m_textures.resize(textures);
 
+	free(m_ubo);
 	m_ubo = (char*)malloc(m_layout->size);
 }
 

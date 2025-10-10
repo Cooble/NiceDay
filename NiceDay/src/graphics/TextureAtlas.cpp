@@ -432,8 +432,7 @@ half_int TextureAtlas::getSubImage(const std::string& fileName, const char* subN
 
 TextureAtlasUV::~TextureAtlasUV()
 {
-	if (m_texture)
-		delete m_texture;
+	delete m_texture;
 }
 
 bool TextureAtlasUV::createAtlas(std::string_view folder, int size, int padding, TextureAtlasFlags flags)

@@ -7,9 +7,11 @@
 
 namespace nd {
 
+	Atelier Atelier::g_instance;
+
 void Atelier::init()
 {
-	m_fbo = FrameBuffer::create(FrameBufferInfo().multiSample(4));
+	m_fbo = std::shared_ptr<FrameBuffer>(FrameBuffer::create(FrameBufferInfo().multiSample(4)));
 	m_fbo->createBindSpecialAttachment(FBAttachment::DEPTH_STENCIL, {256, 256});
 	m_background = TextureLib::loadOrGetTexture("res/scene/images/material_bg.png");
 	m_sphere = MeshLibrary::buildNewMesh(Colli::buildMesh(ND_RESLOC("res/scene/models/sphere.fbx")));
@@ -60,7 +62,7 @@ void Atelier::snapshot(TexturePtr& photo, MaterialPtr& mat)
 
 	m_fbo->attachTexture(photo.get(), 0);
 	m_fbo->clear(BuffBit::COLOR | BuffBit::DEPTH, {0, 0, 0.5f, 1});
-	Effect::render(m_background.get(), m_fbo);
+	Effect::render(m_background.get(), m_fbo.get());
 
 	Gcon.enableDepthTest(true);
 	Gcon.enableBlend();
@@ -103,7 +105,7 @@ void Atelier::snapshot(TexturePtr& photo, MeshPtr& mesh)
 
 	m_fbo->attachTexture(photo.get(), 0);
 	m_fbo->clear(BuffBit::COLOR | BuffBit::DEPTH, {0, 0, 0.5f, 1});
-	Effect::render(m_background.get(), m_fbo);
+	Effect::render(m_background.get(), m_fbo.get());
 
 	Gcon.enableDepthTest(true);
 	Gcon.enableBlend();

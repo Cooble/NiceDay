@@ -17,6 +17,7 @@ MeshPtr buildNewMesh(MeshData* data)
 {
 	auto mesh = MakeRef<Mesh>();
 	mesh->data = data;
+	mesh->id = data->getID();
 	if (data->getIndicesCount())
 	{
 		mesh->indexData.count = data->getIndicesCount();
@@ -75,4 +76,9 @@ MeshPtr& get(Strid id)
 		return nullmesh;
 	return it->second;
 }
+}
+
+nd::Mesh::~Mesh()
+{
+	delete vao_temp;
 }

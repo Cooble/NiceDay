@@ -3,7 +3,7 @@
 
 namespace nd::internal
 {
-#define BREAK_ON_GL_ERROR 0
+#define BREAK_ON_GL_ERROR 1
 
 void checkGLError(int line, const char* method_name, const char* file)
 {
@@ -17,8 +17,7 @@ void checkGLError(int line, const char* method_name, const char* file)
 		std::cout << "[OpenGL Error]: code:" << e << ", " << method_name << ", " << line << ", " << file << std::endl;
 	}
 #if BREAK_ON_GL_ERROR
-	if (shit)
-		assert(false);
+	assert(!shit);
 #endif
 }
 }

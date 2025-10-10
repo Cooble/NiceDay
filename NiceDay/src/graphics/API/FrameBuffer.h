@@ -126,4 +126,5 @@ public:
 	virtual uint32_t getAttachmentID(uint32_t attachmentIndex, FBAttachment type = FBAttachment::COLOR) const = 0;
 	virtual const Texture* getAttachment(uint32_t attachmentIndex = 0, FBAttachment type = FBAttachment::COLOR) = 0;
 };
+typedef Ref<FrameBuffer> FrameBufferPtr;
 }

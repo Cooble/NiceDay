@@ -50,8 +50,8 @@ private:
 	Strid m_id;
 	std::string m_name;
 	std::string m_structName;
-	char* m_ubo;
-	ShaderPtr m_shader = std::shared_ptr<Shader>(nullptr);
+	char* m_ubo{};
+	ShaderPtr m_shader;
 	const UniformLayout* m_layout;
 	std::unordered_map<Strid, size_t> m_offsets;
 	//each texture has a slot associated and index in m_textures array
@@ -78,7 +78,7 @@ public:
 
 	void bind(int slotBindingOffset = 0)
 	{
-		ShaderPtr ptr;
+		ShaderPtr ptr{};
 		bind(slotBindingOffset, ptr);
 	}
 
@@ -129,9 +129,13 @@ public:
 	template <>
 	void setValue(StringId name, TexturePtr texture)
 	{
+		// save texture AND set slot in ubo
 		auto it = m_tex_indexes.find(name());
 		ASSERT(it != m_tex_indexes.end(), "INvalid texture name");
 		m_textures[it->second] = texture;
+		int texSlot = it->second;
+		*(int*)(m_ubo + m_offsets[name()]) = texSlot;
+		int e = 0;
 	}
 
 	// cuts of struct prefix e.g. from "mat.color" -> "color"

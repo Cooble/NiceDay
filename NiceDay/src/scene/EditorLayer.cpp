@@ -16,6 +16,7 @@
 #include "platform/OpenGL/GLRenderer.h"
 #include "components_imgui_access.h"
 #include "Atelier.h"
+#include "GlobalAccess.h"
 #include "files/FUtil.h"
 #include "script/NativeScript.h"
 #include "graphics/TextureAtlas.h"
@@ -653,6 +654,8 @@ static Entity sphere;
 
 void EditorLayer::onAttach()
 {
+	Atelier::get().init();
+
 	hud.init();
 	m_depth_sampling_position = glm::vec2(0, 0);
 	components_imgui_access::windows.quantizationPos = &hud.quantizationPos;
@@ -713,6 +716,13 @@ void EditorLayer::onAttach()
 
 void EditorLayer::onDetach()
 {
+	delete m_scene;
+	Atelier::unloadAll(); // release all gl resources before context is destroyed, otherwise we get nasty errors
+	MeshLibrary::unloadAll();
+	TextureLib::unloadAll();// this should not be here
+	ShaderLib::unloadAll();
+	nd::GlobalAccess::ui_icons = {};
+
 }
 
 void EditorLayer::onUpdate()

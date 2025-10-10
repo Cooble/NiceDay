@@ -3,6 +3,7 @@
 #include "Material.h"
 #include "Camm.h"
 #include "Mesh.h"
+#include "graphics/API/FrameBuffer.h"
 
 namespace nd {
 namespace AtelierDim {
@@ -12,14 +13,16 @@ namespace AtelierDim {
 
 class Atelier
 {
-private:
-	Atelier() { init(); }
+	static Atelier g_instance;
 
-	FrameBuffer* m_fbo;
-	TexturePtr m_background = nullptr;
-	MeshPtr m_sphere;
-	MaterialPtr m_enviroment = nullptr;
-	MaterialPtr m_default_material = nullptr;
+private:
+	Atelier() = default;
+
+	FrameBufferPtr m_fbo{};
+	TexturePtr m_background{};
+	MeshPtr m_sphere{};
+	MaterialPtr m_enviroment{};
+	MaterialPtr m_default_material{};
 
 	struct Env
 	{
@@ -43,10 +46,15 @@ private:
 	std::vector<MaterialPtr> m_pending_work;
 	std::vector<MeshPtr> m_pending_work_mesh;
 public:
+
 	static Atelier& get()
 	{
-		static Atelier a;
-		return a;
+		return g_instance;
+	}
+	static void unloadAll()
+	{
+		// reset singleton
+		g_instance = Atelier();
 	}
 
 	void init();

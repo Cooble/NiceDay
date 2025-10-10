@@ -24,7 +24,7 @@ public:
 	}
 };
 
-#undef ND_TERRAIN_APP
+//#undef ND_TERRAIN_APP
 
 #ifdef ND_TERRAIN_APP
 int main()

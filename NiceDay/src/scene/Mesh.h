@@ -76,10 +76,14 @@ public:
 	//this will not be here
 	VertexArray* vao_temp;
 
+	// this is non owning, can point to unmanaged memory, be careful, the owner might have already deleted it
 	MeshData* data;
+	Strid id;
 
-	Strid getID() const { return data->getID(); }
+	Strid getID() const { return id; }
 	const std::string& getName() const { return data->getFilePath(); }
+
+	~Mesh();
 };
 
 typedef Ref<Mesh> MeshPtr;
@@ -93,7 +97,7 @@ namespace MeshLibrary {
 	void registerMesh(MeshPtr mesh);
 	std::unordered_map<Strid, MeshPtr>& getList();
 
-
+	inline void unloadAll() { getList().clear(); }
 	//returns meshptr or nullptr
 	MeshPtr& get(Strid id);
 	inline void remove(Strid id) { getList().erase(getList().find(id)); }

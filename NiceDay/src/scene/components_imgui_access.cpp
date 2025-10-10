@@ -1403,7 +1403,7 @@ void SceneWindows::drawWindows()
 		open_material = drawWindow(material);
 	drawEntityManager();
 	//drawMMBrowser();
-	drawToolPanel();
+	//drawToolPanel();
 }
 
 void SceneWindows::init()
