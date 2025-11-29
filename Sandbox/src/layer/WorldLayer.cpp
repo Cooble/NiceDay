@@ -31,7 +31,7 @@
 #include "world/entity/EntityAllocator.h"
 #include "graphics/BlockTextureCreator.h"
 #include "event/SandboxControls.h"
-#include "audio/player.h"
+#include "audio/Player.h"
 #include "core/imgui_utils.h"
 #include "world/nd_registry.h"
 #include "gui/GUIContext.h"
@@ -115,7 +115,8 @@ void WorldLayer::loadWorld(nd::temp_string& worldname, bool regen)
 	//world===================================================
 	WorldInfo info;
 
-	strcpy_s(info.name, worldname.c_str());
+	//strcpy_s(info.name, worldname.c_str());
+	std::strncpy(info.name, worldname.c_str(), sizeof(info.name));
 	info.chunk_width = 50;
 	info.chunk_height = 10;
 	info.seed = 0;

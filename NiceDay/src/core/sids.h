@@ -26,17 +26,17 @@ To obtain string from id call StringIdLookup::getString(id)
 // FNV-1a hash
 // https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function
 //-----------------------------------------------------------------------------
-constexpr unsigned long long stringIdHashConcat(unsigned long long base, const char* str)
+constexpr uint64_t stringIdHashConcat(uint64_t base, const char* str)
 {
 	return (*str) ? (stringIdHashConcat((base ^ *str) * 0x100000001b3, str + 1)) : base;
 }
 
-constexpr unsigned long long stringIdHash(const char* str)
+constexpr uint64_t stringIdHash(const char* str)
 {
 	return stringIdHashConcat(0xcbf29ce484222325, str);
 }
 
-constexpr unsigned long long stringIdHash(const std::string& str)
+constexpr uint64_t stringIdHash(const std::string& str)
 {
 	return stringIdHashConcat(0xcbf29ce484222325, str.c_str());
 }

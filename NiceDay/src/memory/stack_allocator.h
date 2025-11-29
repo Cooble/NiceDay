@@ -1,4 +1,6 @@
 ﻿#pragma once
+#include <charconv>
+
 #include "ndpch.h"
 
 
@@ -77,81 +79,66 @@ using temp_unordered_map = std::unordered_map<_Kty, _Ty, _Hasher, _Keyeq, intern
 	                                              const _Kty, _Ty>>>;
 
 template <class _Ty>
-temp_string integr_to_string(const _Ty _Val)
+temp_string integr_to_string(_Ty val)
 {
-	// convert _Val to string
 	static_assert(std::is_integral_v<_Ty>, "_Ty must be integral");
-	using _UTy = std::make_unsigned_t<_Ty>;
-	char _Buff[21]; // can hold -2^63 and 2^64 - 1, plus NUL
-	char* const _Buff_end = _STD end(_Buff);
-	char* _RNext = _Buff_end;
-	const auto _UVal = static_cast<_UTy>(_Val);
-	if (_Val < 0)
-	{
-		_RNext = std::_UIntegral_to_buff(_RNext, 0 - _UVal);
-		*--_RNext = '-';
-	}
-	else
-	{
-		_RNext = std::_UIntegral_to_buff(_RNext, _UVal);
+	char buf[21]; // enough for int64_t or uint64_t
+	auto [ptr, ec] = std::to_chars(buf, buf + sizeof(buf), val);
+	if (ec != std::errc()) {
+		return {}; // error fallback
 	}
 
-	return temp_string(_RNext, _Buff_end);
+	return temp_string(buf, ptr);
 }
-
 // to_string NARROW CONVERSIONS
-_NODISCARD inline temp_string to_string(int _Val)
+[[nodiscard]] inline temp_string to_string(int _Val)
 {
 	// convert int to string
 	return integr_to_string(_Val);
 }
 
-_NODISCARD inline temp_string to_string(unsigned int _Val)
+[[nodiscard]] inline temp_string to_string(unsigned int _Val)
 {
 	// convert unsigned int to string
 	return integr_to_string(_Val);
 }
 
-_NODISCARD inline temp_string to_string(long _Val)
+[[nodiscard]] inline temp_string to_string(int64_t _Val)
 {
 	// convert long to string
 	return integr_to_string(_Val);
 }
 
-_NODISCARD inline temp_string to_string(unsigned long _Val)
+[[nodiscard]] inline temp_string to_string(uint64_t _Val)
 {
 	// convert unsigned long to string
 	return integr_to_string(_Val);
 }
 
-_NODISCARD inline temp_string to_string(long long _Val)
+
+
+[[nodiscard]] inline temp_string to_string(double v)
 {
-	// convert long long to string
-	return integr_to_string(_Val);
+	char buf[64]; // enough for any %f double with sane precision
+	int n = std::snprintf(buf, sizeof(buf), "%f", v);
+
+	if (n < 0) return temp_string();         // encode error
+	if ((size_t)n < sizeof(buf))
+		return temp_string(buf, n);          // fast path
+
+	// Rare path: required length > local buffer
+	temp_string out(n, '\0');
+	std::snprintf(&out[0], out.size() + 1, "%f", v);
+	return out;
 }
 
-_NODISCARD inline temp_string to_string(unsigned long long _Val)
-{
-	// convert unsigned long long to string
-	return integr_to_string(_Val);
-}
-
-_NODISCARD inline temp_string to_string(double _Val)
-{
-	// convert double to string
-	const auto _Len = static_cast<size_t>(_CSTD _scprintf("%f", _Val));
-	temp_string _Str(_Len, '\0');
-	_CSTD sprintf_s(&_Str[0], _Len + 1, "%f", _Val);
-	return _Str;
-}
-
-_NODISCARD inline temp_string to_string(float _Val)
+[[nodiscard]] inline temp_string to_string(float _Val)
 {
 	// convert float to string
 	return to_string(static_cast<double>(_Val));
 }
 
-_NODISCARD inline temp_string to_string(long double _Val)
+[[nodiscard]] inline temp_string to_string(long double _Val)
 {
 	// convert long double to string
 	return to_string(static_cast<double>(_Val));

@@ -179,3 +179,26 @@ namespace ter
 	}
 
 }
+
+// Pre-compute chunks once during initialization
+struct ParallelChunks {
+	std::vector<std::pair<int, int>> chunks;
+
+	void initialize(int start, int end, int chunk_size = 0) {
+		chunks.clear();
+
+		// Auto-determine chunk size if not specified
+		if (chunk_size == 0) {
+			int total_rows = end - start;
+			int num_threads = std::thread::hardware_concurrency();
+			// Aim for 2-4x more chunks than threads for load balancing
+			//chunk_size = std::max(1, total_rows / (num_threads * 3));
+			chunk_size = std::max(1, total_rows / num_threads );
+			ND_BUG("Total row count: {}, Using chunk size: {}", total_rows, chunk_size);
+		}
+
+		for (int y = start; y < end; y += chunk_size) {
+			chunks.emplace_back(y, std::min(y + chunk_size, end));
+		}
+	}
+};

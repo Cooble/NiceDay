@@ -461,12 +461,12 @@ public:
 
 	T& operator[](const Key& key)
 	{
-		auto it = find(key);
+		auto it = this->find(key);
 
-		if (it == end())
+		if (it == this->end())
 		{
 			// insert default value
-			auto result = insert(std::make_pair(key, value));
+			auto result = this->insert(std::make_pair(key, value));
 			it = result.first;
 		}
 
@@ -475,7 +475,7 @@ public:
 
 	bool contains(const Key& key)
 	{
-		return find(key) != end();
+		return this->find(key) != this->end();
 	}
 };
 
@@ -488,12 +488,12 @@ public:
 
 	T& operator[](const Key& key)
 	{
-		auto it = find(key);
+		auto it = this->find(key);
 
-		if (it == end())
+		if (it == this->end())
 		{
 			// insert default value
-			auto result = insert(std::make_pair(key, T()));
+			auto result = this->insert(std::make_pair(key, T()));
 			it = result.first;
 		}
 
@@ -502,7 +502,7 @@ public:
 
 	bool contains(const Key& key)
 	{
-		return find(key) != end();
+		return this->find(key) != this->end();
 	}
 };
 
@@ -515,10 +515,10 @@ public:
 
 	T& operator[](size_t idx)
 	{
-		if (idx >= size())
-			resize(idx + 1);
+		if (idx >= this->size())
+			this->resize(idx + 1);
 
-		return at(idx);
+		return this->at(idx);
 	}
 };
 

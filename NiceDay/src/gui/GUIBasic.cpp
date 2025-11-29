@@ -6,7 +6,7 @@
 #include "event/KeyEvent.h"
 #include "GLFW/glfw3.h"
 #include "core/AppGlobals.h"
-#include "audio/player.h"
+#include "audio/Player.h"
 #include "graphics/FontMaterial.h"
 
 namespace nd {

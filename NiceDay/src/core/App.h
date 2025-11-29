@@ -51,6 +51,7 @@ public:
 	virtual bool onWindowClose(WindowCloseEvent& e);
 
 	void fireEvent(Event& e);
+	void fireEvent(Event&& e) { fireEvent(e); }
 
 	static App& get() { return *s_Instance; }
 	WindowTemplate* getWindow() { return m_defaultWindow; }

@@ -75,7 +75,8 @@ MainWindow::MainWindow(const MessageConsumer& c)
 	playBtn->minScale = minScale;
 	playBtn->onPressed = [this](GUIElement& e)
 	{
-		m_messenger(MessageEvent(WindowMess::OpenWorldSelection));
+		auto ev = MessageEvent(OpenWorldSelection);
+		m_messenger(ev);
 		logoTransient = -1;
 	};
 	col->appendChild(playBtn);
@@ -87,7 +88,8 @@ MainWindow::MainWindow(const MessageConsumer& c)
 	playNew->onPressed = [this](GUIElement& e)
 	{
 		logoTransient = -1;
-		m_messenger(MessageEvent(WindowMess::OpenSkin));
+		auto ev = MessageEvent(WindowMess::OpenSkin);
+		m_messenger(ev);
 	};
 	col->appendChild(playNew);
 
@@ -97,7 +99,8 @@ MainWindow::MainWindow(const MessageConsumer& c)
 	setBtn->minScale = minScale;
 	setBtn->onPressed = [this](GUIElement& e)
 	{
-		m_messenger(MessageEvent(WindowMess::OpenSettings));
+			auto ev = MessageEvent(WindowMess::OpenSettings);
+			m_messenger(ev);
 	};
 	col->appendChild(setBtn);
 
@@ -107,7 +110,8 @@ MainWindow::MainWindow(const MessageConsumer& c)
 	exitBtn->minScale = minScale;
 	exitBtn->onPressed = [this](GUIElement& e)
 	{
-		m_messenger(MessageEvent(WindowMess::OpenExit));
+			auto ev = MessageEvent(WindowMess::OpenExit);
+			m_messenger(ev);
 	};
 	col->appendChild(exitBtn);
 
@@ -264,7 +268,8 @@ SelectWorldWindow::SelectWorldWindow(const MessageConsumer& c)
 
 	get<GUIButton>("btn.back")->onPressed = [this](GUIElement& e)
 	{
-		m_messenger(MessageEvent(WindowMess::OpenBack));
+		auto ev = MessageEvent(WindowMess::OpenBack);
+		m_messenger(ev);
 	};
 }
 
@@ -334,7 +339,8 @@ PauseWindow::PauseWindow(const MessageConsumer& c)
 	createNewBtn->setPadding(5);
 	createNewBtn->onPressed = [this](GUIElement& e)
 	{
-		m_messenger(MessageEvent(WindowMess::OpenBack));
+			auto ev = MessageEvent(WindowMess::OpenBack);
+			m_messenger(ev);
 	};
 	col->appendChild(createNewBtn);
 
@@ -346,7 +352,8 @@ PauseWindow::PauseWindow(const MessageConsumer& c)
 	goToMainScreenBtn->setPadding(5);
 	goToMainScreenBtn->onPressed = [this](GUIElement& e)
 	{
-		m_messenger(MessageEvent(WindowMess::ActionWorldQuit));
+			auto ev = MessageEvent(WindowMess::ActionWorldQuit);
+			m_messenger(ev);
 	};
 	col->appendChild(goToMainScreenBtn);
 
@@ -404,7 +411,8 @@ ControlsWindow::ControlsWindow(const MessageConsumer& c)
 			 if (!e.contains(loc.x, loc.y))
 			 {
 				GUIContext::get().setFocusedElement(nullptr);
-				e.onMyEventFunc(MouseFocusLost(0, 0), e);
+				auto ev = MouseFocusLost(0, 0);
+				e.onMyEventFunc(ev, e);
 			 }
 
 		  }
@@ -452,7 +460,8 @@ ControlsWindow::ControlsWindow(const MessageConsumer& c)
 			 if (!e.contains(loc.x, loc.y))
 			 {
 				GUIContext::get().setFocusedElement(nullptr);
-				e.onMyEventFunc(MouseFocusLost(0, 0), e);
+				auto ev = MouseFocusLost(0, 0);
+				e.onMyEventFunc(ev, e);
 			 }
 
 		  }
@@ -484,7 +493,8 @@ ControlsWindow::ControlsWindow(const MessageConsumer& c)
 	// back buttons
 	auto onPressed = [this](GUIElement& e)
 	{
-	   m_messenger(MessageEvent(WindowMess::OpenBack));
+			auto ev = MessageEvent(WindowMess::OpenBack);
+			m_messenger(ev);
 	};
 	get<GUIButton>("btn.back")->onPressed = onPressed;
 	get<GUIButton>("btn.save_back")->onPressed = onPressed;
@@ -505,7 +515,8 @@ SettingsWindow::SettingsWindow(const MessageConsumer& c) :m_messenger(c) {
 	auto navCon = new GUITextButton(ND_TRANSLATE("btn.controls"), materialSmall);
 	navCon->onPressed = [this](GUIElement& e)
 	{
-		m_messenger(MessageEvent(WindowMess::OpenControls));
+		auto ev = MessageEvent(WindowMess::OpenControls);
+		m_messenger(ev);
 	};
 	navCon->setPadding(5);
 	navCon->isAlwaysPacked = true;
@@ -514,7 +525,8 @@ SettingsWindow::SettingsWindow(const MessageConsumer& c) :m_messenger(c) {
 	lang->setPadding(5);
 	lang->onPressed = [this](GUIElement& e)
 	{
-		m_messenger(MessageEvent(WindowMess::OpenLanguage));
+			auto ev = MessageEvent(WindowMess::OpenLanguage);
+			m_messenger(ev);
 	};
 	lang->isAlwaysPacked = true;
 	keyColumn->appendChild(lang);
@@ -522,7 +534,8 @@ SettingsWindow::SettingsWindow(const MessageConsumer& c) :m_messenger(c) {
 	// back buttons
 	auto onPressed = [this](GUIElement& e)
 	{
-	   m_messenger(MessageEvent(WindowMess::OpenBack));
+			auto ev = MessageEvent(WindowMess::OpenBack);
+			m_messenger(ev);
 	};
 	get<GUIButton>("btn.back")->onPressed = onPressed;
 	get<GUIButton>("btn.save_back")->onPressed = onPressed;
@@ -552,8 +565,10 @@ LanguageWindow::LanguageWindow(const MessageConsumer& c)
 			{
 			   App::get().fireEvent(MessageEvent("language_change", abbrev));
 				
-				m_messenger(MessageEvent(WindowMess::OpenBack));//go up
-				m_messenger(MessageEvent(WindowMess::OpenLanguage));//go back again
+			   auto ev = MessageEvent(WindowMess::OpenBack);
+			   m_messenger(ev);//go up
+			   ev = MessageEvent(WindowMess::OpenBack);
+			   m_messenger(ev); // go back again
 			};
 		}
 
@@ -565,7 +580,8 @@ LanguageWindow::LanguageWindow(const MessageConsumer& c)
 	// back button
 	auto onPressed = [this](GUIElement& e)
 	{
-	   m_messenger(MessageEvent(WindowMess::OpenBack));
+			auto ev = MessageEvent(WindowMess::OpenBack);
+			m_messenger(ev);
 	};
 
 	get<GUIButton>("btn.back")->onPressed = onPressed;
@@ -597,6 +613,7 @@ void SkinWindow::onMyEvent(Event& e)
 	else if (KeyPressEvent::getKeyNumber(e) == KeyCode::B)
 	{
 		GUIContext::get().setFocusedElement(nullptr);
-		m_messenger(MessageEvent(WindowMess::OpenBack));
+		auto ev = MessageEvent(WindowMess::OpenBack);
+		m_messenger(ev);
 	}
 }

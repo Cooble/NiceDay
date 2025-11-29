@@ -33,7 +33,7 @@ void GUIElement::checkFocus(MouseMoveEvent& e)
 		if (!m_has_focus && !e.handled) //if event has been handled we are in a different unfocused window
 		{
 			m_has_focus = true;
-			onMyEvent(MouseFocusGain(e.getX(), e.getY()));
+			onMyEvent(MouseMoveEvent(e.getX(), e.getY()));
 			e.handled = true;
 			//GUIContext::get().submitBroadcastEvent(MouseFocusLost(this->id, GUIElement_InvalidNumber));
 		}
@@ -41,7 +41,8 @@ void GUIElement::checkFocus(MouseMoveEvent& e)
 	else if (m_has_focus)
 	{
 		m_has_focus = false;
-		onMyEvent(MouseFocusLost(e.getX(), e.getY()));
+		//auto ee = MouseMoveEvent(e.getX(), e.getY());
+		onMyEvent(MouseMoveEvent(e.getX(), e.getY()));
 	}
 }
 

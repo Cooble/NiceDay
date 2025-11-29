@@ -17,10 +17,12 @@
 
 using namespace nd;
 
+#ifdef _WIN32
 //suggests driver to use nvidia and not integrated
 extern "C" {
 _declspec(dllexport) DWORD NvOptimusEnablement = 1;
 }
+#endif
 
 namespace nd {
 static void blankFun(Event& e)

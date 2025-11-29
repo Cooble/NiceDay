@@ -243,7 +243,7 @@ void GUIFactory::begin()
 	s_map.maps().clear();
 }
 
-void GUIFactory::setAttrib(const std::string& name, NBT& val)
+void GUIFactory::setAttrib(const std::string& name, NBT&& val)
 {
 	s_map[name] = std::move(val);
 }

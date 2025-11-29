@@ -7,6 +7,8 @@
 #include "types.h"
 
 
+class EroCLContext;
+
 namespace nd
 {
 	class NBT;
@@ -20,6 +22,15 @@ struct EulerGround : BaseGround
 	AVector<gvec4> flux;
 	AVector<gvec2> velocity;
 
+	AVector<gfloat> new_terrain_height;
+	AVector<gfloat> new_sediment;
+	AVector<gfloat> perlin_map;
+	AVector<gfloat> original_height;
+	AVector<gfloat> total_height;
+
+	ParallelChunks pc;
+
+
 	void resize(int size)
 	{
 		BaseGround::resize(size);
@@ -29,11 +40,22 @@ struct EulerGround : BaseGround
 		sediment.resize(sq);
 		flux.resize(sq);
 		velocity.resize(sq);
+		new_terrain_height.resize(sq);
+		new_sediment.resize(sq);
+		perlin_map.resize(sq);
+		original_height.resize(sq);
+		total_height.resize(sq);
+
+		pc.initialize(1, height-1);
+
 
 		ZeroMemory(water_height.data(), water_height.size() * sizeof(decltype(water_height)::value_type));
 		ZeroMemory(sediment.data(), sediment.size() * sizeof(decltype(sediment)::value_type));
 		ZeroMemory(flux.data(), flux.size() * sizeof(decltype(flux)::value_type));
 		ZeroMemory(velocity.data(), velocity.size() * sizeof(decltype(velocity)::value_type));
+		ZeroMemory(new_terrain_height.data(), new_terrain_height.size() * sizeof(decltype(new_terrain_height)::value_type));
+		ZeroMemory(new_sediment.data(), new_sediment.size() * sizeof(decltype(new_sediment)::value_type));
+
 	}
 };
 
@@ -44,15 +66,70 @@ struct Euler
 	static constexpr gfloat pGravity = 9.81f;
 	static constexpr gfloat pPipeLen = 1.f;
 	static constexpr gfloat pLL = 1.f;
-	static constexpr gfloat pMaxDissolve = 0.1;
+	static constexpr gfloat pMaxDissolve = 0.1f;
 
+	enum : int
+	{
+		CPU_BASIC,
+		CPU_SIMD,
+		OPENCL,
+		CPU_PARALLEL,
+		SIMD_PARALLEL
+	} sim_type = CPU_BASIC;
+	constexpr static const char* sim_type_names[] = {
+		"CPU",
+		"SIMD",
+		"OpenCL",
+		"CPU_PARALLEL",
+		"SIMD_PARALLEL"
+	};
 
-	bool e_rain = false;
-	bool e_flow = true;
-	bool e_erosion = true;
-	bool e_evaporation = true;
-	bool e_landslide = true;
+	struct EulerSettings
+	{
+		bool e_rain = true;
+		bool e_flow = true;
+		bool e_erosion = true;
+		bool e_evaporation = true;
+		bool e_landslide = true;
 
+		gfloat K_rain = 0.01f;
+		gfloat K_g = 9.81f;
+		// Sediment Capacity
+		gfloat K_sediment_capacity = 0.05f;
+		// Dissolving constant 
+		gfloat K_s_dissolving = 0.1f;
+		// Depositing constant
+		gfloat K_d_depositing = 0.03f;
+		// Evaporation constant
+		gfloat K_evaporation = 0.03f;
+		gfloat K_tilt_minimum = 0.15f;
+		gfloat K_landSlideSpeed = 20.5f;
+		gfloat K_landSlideCutoffAngle = 0.80f;
+		gfloat K_dt = 0.004f;
+
+		bool operator==(const EulerSettings& s) const
+		{
+			return e_rain == s.e_rain &&
+				e_flow == s.e_flow &&
+				e_erosion == s.e_erosion &&
+				e_evaporation == s.e_evaporation &&
+				e_landslide == s.e_landslide &&
+				K_rain == s.K_rain &&
+				K_g == s.K_g &&
+				K_sediment_capacity == s.K_sediment_capacity &&
+				K_s_dissolving == s.K_s_dissolving &&
+				K_d_depositing == s.K_d_depositing &&
+				K_evaporation == s.K_evaporation &&
+				K_tilt_minimum == s.K_tilt_minimum &&
+				K_landSlideSpeed == s.K_landSlideSpeed &&
+				K_landSlideCutoffAngle == s.K_landSlideCutoffAngle &&
+				K_dt == s.K_dt;
+		}
+	};
+	EulerSettings* s;
+	EroCLContext* cl = nullptr;
+
+	
 	int groundSize = 128;
 	gfloat totalGround = 0;
 	gfloat currentGround = 0;
@@ -62,32 +139,18 @@ struct Euler
 	gfloat minTerrain = 0, maxTerrain = 0;
 
 
-	gfloat K_rain = 0.01f;
-	gfloat K_g = 9.81f;
-	// Sediment Capacity
-	gfloat K_sediment_capacity = 0.05f;
-	// Dissolving constant 
-	gfloat K_s_dissolving = 0.1f;
-	// Depositing constant
-	gfloat K_d_depositing = 0.03f;
-	// Evaporation constant
-	gfloat K_evaporation = 0.03f;
-	gfloat K_tilt_minimum = 0.15f;
-	gfloat K_landSlideSpeed = 20.5f;
-	gfloat K_landSlideCutoffAngle = 0.80f;
-	gfloat K_dt = 0.004f;
-
-
 	AVector<gfloat> perlinMap;
 	AVector<gfloat> originalHeight;
-	AVector<gfloat> sediment;
+	AVector<gfloat> sedimentDontUse;
 
 	// prepare special fields based on terrain_height
-	void init(EulerGround& g);
+	void init(EulerGround& g,EulerSettings * s,bool generatePerlin=true);
 
-
+	void refreshParams(EulerGround& g, EulerSettings& s);
 	void step(EulerGround& g);
+	void stepRender(EulerGround& g);
 
+	bool settings_dirty = true;
 
 	void imguiRender();
 
@@ -95,22 +158,31 @@ struct Euler
 	void save(nd::NBT& src);
 	void load(nd::NBT& src);
 
-public:
-	void ero1(EulerGround& g);
-	void ero2(EulerGround& g);
-	void ero3(EulerGround& g);
-	void ero4(EulerGround& g);
-	void ero5(EulerGround& g);
-	void ero6(EulerGround& g);
-	void ero7(EulerGround& g);
+	Euler();
+	~Euler();
 
-	void ero1_simd(EulerGround& g);
-	void ero2_simd(EulerGround& g);
-	void ero3_simd(EulerGround& g);
-	void ero4_simd(EulerGround& g);
-	void ero5_simd(EulerGround& g);
-	void ero6_simd(EulerGround& g);
-	void ero7_simd(EulerGround& g);
+public:
+	void ero1_old(EulerGround& g);
+	void ero2_old(EulerGround& g);
+	void ero3_old(EulerGround& g);
+	void ero4_old(EulerGround& g);
+	void ero5_old(EulerGround& g);
+	void ero6_old(EulerGround& g);
+	void ero7_old(EulerGround& g);
+
+	void ero1_simd_old(EulerGround& g);
+	void ero2_simd_old(EulerGround& g);
+	void ero3_simd_old(EulerGround& g);
+	void ero4_simd_old(EulerGround& g);
+	void ero5_simd_old(EulerGround& g);
+	void ero6_simd_old(EulerGround& g);
+	void ero7_simd_old(EulerGround& g);
+
+	void ero3_simd_fix_borders(EulerGround& g);
+	void ero2_simd_fix_borders(EulerGround& g);
+
+	void ero3_fix_borders(EulerGround& g);
+	void ero2_fix_borders(EulerGround& g);
 	
 
 	

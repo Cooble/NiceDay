@@ -5,7 +5,7 @@
 #endif
 
 #include "audio/audio_handle.h"
-#include "audio/player.h"
+#include "audio/Player.h"
 #include "core/NBT.h"
 #include "gui/GUIElement.h"
 #include "gui/GUIBasic.h"

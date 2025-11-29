@@ -58,7 +58,7 @@ public:
 };
 
 #define EVENT_TYPE_BUILD(type) \
-static EventType getEventTypeStatic() {return EventType::##type;};\
+static EventType getEventTypeStatic() {return EventType::type;};\
 virtual EventType getEventType() const override {return getEventTypeStatic();};\
 virtual const char* getName() const override {return #type;};
 

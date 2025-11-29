@@ -101,22 +101,13 @@ public:
 		return *(T*)t;
 	}
 
-	// retrieves value by shortened name (without layout name) e.g. "color"
-	template <>
-	TexturePtr& getValue(StringId name)
-	{
-		auto it = m_tex_indexes.find(name());
-		ASSERT(it != m_tex_indexes.end(), "INvalid texture name");
-		return m_textures[it->second];
-	}
+
 
 	// retrieves value by full name as in layout e.g. "mat.color"
 	template <typename T>
 	T& getValueFullName(const char* name) { return getValue<T>(toShortName(name)); }
 
-	// retrieves value by full name as in layout e.g. "mat.color"
-	template <>
-	TexturePtr& getValueFullName(const char* name) { return getValue<TexturePtr>(toShortName(name)); }
+
 
 	template <typename T>
 	void setValue(StringId name, T val)
@@ -126,17 +117,6 @@ public:
 		*(T*)t = val;
 	}
 
-	template <>
-	void setValue(StringId name, TexturePtr texture)
-	{
-		// save texture AND set slot in ubo
-		auto it = m_tex_indexes.find(name());
-		ASSERT(it != m_tex_indexes.end(), "INvalid texture name");
-		m_textures[it->second] = texture;
-		int texSlot = it->second;
-		*(int*)(m_ubo + m_offsets[name()]) = texSlot;
-		int e = 0;
-	}
 
 	// cuts of struct prefix e.g. from "mat.color" -> "color"
 	Strid toShortName(const char* name)
@@ -164,6 +144,41 @@ public:
 	//changes the name but id will stay the same
 	void setName(const std::string& name) { m_name = name; }
 };
+
+template <>
+inline TexturePtr& Material::getValue<std::shared_ptr<Texture>>(StringId name)
+{
+	auto it = m_tex_indexes.find(name());
+	ASSERT(it != m_tex_indexes.end(), "INvalid texture name");
+	return m_textures[it->second];
+}
+
+template <>
+void Material::setValue(StringId name, TexturePtr texture);
+
+// retrieves value by full name as in layout e.g. "mat.color"
+template <>
+TexturePtr& Material::getValueFullName(const char* name);
+
+// retrieves value by shortened name (without layout name) e.g. "color"
+template <>
+TexturePtr& Material::getValue(StringId name);
+
+template <>
+inline TexturePtr& Material::getValueFullName<std::shared_ptr<Texture>>(const char* name)
+{ return getValue<TexturePtr>(toShortName(name)); }
+
+template <>
+inline void Material::setValue<std::shared_ptr<Texture>>(StringId name, TexturePtr texture)
+{
+	// save texture AND set slot in ubo
+	auto it = m_tex_indexes.find(name());
+	ASSERT(it != m_tex_indexes.end(), "INvalid texture name");
+	m_textures[it->second] = texture;
+	int texSlot = it->second;
+	*(int*)(m_ubo + m_offsets[name()]) = texSlot;
+	int e = 0;
+}
 
 
 typedef Ref<Material> MaterialPtr;

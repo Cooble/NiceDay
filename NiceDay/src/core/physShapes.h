@@ -15,7 +15,12 @@ namespace Phys {
 
 	inline uint64_t toInt64(float x, float y)
 	{
-		return *(uint64_t*)&glm::vec2(x, y);
+		//todo increase C++ to 20 and use std::bit_cast
+		//return *(uint64_t*)&glm::vec2(x, y);
+		glm::vec2 v(x, y);
+		uint64_t ret;
+		memcpy(&ret, &v, sizeof(uint64_t));//yuck
+		return ret;
 	}
 
 	inline uint64_t toInt64(const glm::vec2& v)

@@ -151,7 +151,7 @@ GLShader::GLShader(const Shader::ShaderProgramSources& src) : m_id(0)
 
 GLShader::GLShader(const std::string& file_path) : m_id(0), m_file_path(file_path)
 {
-	Shader::ShaderProgramSources& s = parseShader(ND_RESLOC(file_path));
+	Shader::ShaderProgramSources s = parseShader(ND_RESLOC(file_path));
 	m_layout = Shader::extractLayout(s);
 	m_id = buildProgram(s);
 #if THROW_PARSING

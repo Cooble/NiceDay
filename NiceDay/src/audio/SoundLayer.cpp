@@ -3,7 +3,7 @@
 #include "portaudio.h"
 #include "imgui.h"
 #include "memory/RingBuffer.h"
-#include "player.h"
+#include "Player.h"
 #include "ImGuiFileDialog.h"
 #include "event/KeyEvent.h"
 #include "GLFW/glfw3.h"

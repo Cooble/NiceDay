@@ -421,7 +421,7 @@ half_int TextureAtlas::getSubImage(const std::string& fileName, const char* subN
 	std::string subNameC = subName;
 	SUtil::toLower(subNameC);
 	subNameC = fileName + '/' + subNameC;
-	auto& i = m_subtextures.find(SID(subNameC));
+	auto i = m_subtextures.find(SID(subNameC));
 	if (i == m_subtextures.end())
 	{
 		ND_ERROR("Trying to retrieve not loaded texture: {}", subNameC);

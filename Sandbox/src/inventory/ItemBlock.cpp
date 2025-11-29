@@ -22,7 +22,7 @@ void ItemBlock::onTextureLoaded(const TextureAtlas& atlas)
 
 int ItemBlock::getTextureOffset(const ItemStack& b) const
 {
-	return m_texture_pos + (isUseMetaAsTexture() ? half_int(b.getMetadata(), 0) : 0);
+	return m_texture_pos + (isUseMetaAsTexture() ? half_int(b.getMetadata(), 0) : half_int(0));
 }
 
 int ItemBlock::getBlockMetadata(ItemStack* stack) const
@@ -106,7 +106,7 @@ void ItemWall::onTextureLoaded(const nd::TextureAtlas& atlas)
 }
 int ItemWall::getTextureOffset(const ItemStack& b) const
 {
-		return m_texture_pos + (isUseMetaAsTexture() ? half_int(b.getMetadata(), 0) : 0);
+		return m_texture_pos + (isUseMetaAsTexture() ? half_int(b.getMetadata(), 0) : half_int(0));
 }
 void* ItemWall::instantiateDataBox() const
 {

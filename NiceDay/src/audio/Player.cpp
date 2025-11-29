@@ -1,5 +1,5 @@
 ﻿#include "ndpch.h"
-#include "player.h"
+#include "Player.h"
 #include "core/App.h"
 #include "files/FUtil.h"
 #include <portaudio.h>

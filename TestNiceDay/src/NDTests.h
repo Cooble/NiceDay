@@ -26,15 +26,18 @@ namespace NDT
 #endif
 #define NDT_STRINGIFY(x) #x
 #define NDT_TOSTRING(x) NDT_STRINGIFY(x)
-#define NDT_FILE_LINE NDT_TOSTRING(__FILE__) ":(" NDT_TOSTRING(__LINE__) ") in " NDT_FUNCTION_NAME
+//#define NDT_FILE_LINE NDT_TOSTRING(__FILE__) ":(" NDT_TOSTRING(__LINE__) ") in " NDT_FUNCTION_NAME
 
-#define NDT_ASSERT(cond)\
-	if(!(cond)){throw std::string("Assert failed at: " NDT_FILE_LINE);}
+#define NDT_FILE_LINE __FILE__ "(" NDT_TOSTRING(__LINE__) ") in " NDT_TOSTRING(NDT_FUNCTION_NAME)
+
+#define NDT_ASSERT(cond) \
+    if (!(cond)) { throw std::string("Assert failed at: " NDT_FILE_LINE); }
 
 #define NDT_ASSERT_EQUAL(value,target)\
 	if((value)!=(target)){throw std::string("Assert failed at: " NDT_FILE_LINE);}
 #define NDT_ASSERT_NOT_EQUAL(value,target)\
 	if((value)==(target)){throw std::string("Assert failed at: " NDT_FILE_LINE);}
+
 
 #define NDT_TRY(call)\
 	 try{call;}catch(const std::string& s){NDT::pushError(s);/*std::cout << s << std::endl;return 1;*/}

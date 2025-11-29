@@ -62,8 +62,8 @@ inline static float getFloorHeight(World& w, const glm::vec2& entityPos, const P
 		{
 			float x = entityRectangle.x0 + entityPos.x + i * entityRectangle.width();
 			float y = entityRectangle.y0 + entityPos.y + yy;
-			auto& pointDown0 = glm::vec2(x, y);
-			auto& pointDown1 = glm::vec2(x, y - 10000);
+			auto pointDown0 = glm::vec2(x, y);
+			auto pointDown1 = glm::vec2(x, y - 10000);
 
 			auto stru = w.getBlock((int)pointDown0.x, (int)pointDown0.y);
 			if (stru == nullptr || stru->block_id == BLOCK_AIR)
@@ -76,8 +76,8 @@ inline static float getFloorHeight(World& w, const glm::vec2& entityPos, const P
 			auto blockPos = glm::vec2((int)pointDown0.x, (int)pointDown0.y);
 			for (int j = 0; j < blockBounds.size(); ++j)
 			{
-				auto& v0 = blockBounds[j] + blockPos;
-				auto& v1 = blockBounds[(j + 1) % blockBounds.size()] + blockPos;
+				auto v0 = blockBounds[j] + blockPos;
+				auto v1 = blockBounds[(j + 1) % blockBounds.size()] + blockPos;
 
 				if (i == 0) //left
 				{
@@ -360,7 +360,7 @@ void PhysEntity::load(NBT& src)
 {
 	WorldEntity::load(src);
 	src.load("velocity", m_velocity, glm::vec2(0, 0));
-	src.load("acceleration", glm::vec2(0, -9.8f / 60));
+	src.load("acceleration", m_velocity, glm::vec2(0, -9.8f / 60));
 }
 
 //Bullet======================================================

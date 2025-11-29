@@ -1,8 +1,12 @@
 ﻿#include "components_imgui_access.h"
 #include <imgui.h>
 #include "imgui_internal.h"
-#include "files/FUtil.h"
+
+#if defined(_WIN32)
 #include <shellapi.h>
+#endif
+
+#include "files/FUtil.h"
 #include "Atelier.h"
 #include <sol/sol.hpp>
 #include "Mesh.h"
@@ -500,8 +504,15 @@ static std::string shaderCombo(const std::string& currentCombo)
 	auto path = ND_RESLOC(shaders[item_current_idx]);
 	if (std::filesystem::exists(path) && ImGui::Button("Open"))
 	{
+#if defined(_WIN32)
 		SUtil::replaceWith(path, '/', '\\');
-		ShellExecute(0, 0, path.c_str(), 0, 0, SW_SHOW);
+		ShellExecute(nullptr, nullptr, path.c_str(), nullptr, nullptr, SW_SHOW);
+
+#elif defined(__linux__)
+		// open in default file manager / application
+		std::string cmd = "xdg-open \"" + path + "\"\"";
+		std::system(cmd.c_str());
+#endif
 	}
 	return shaders[item_current_idx];
 }

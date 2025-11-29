@@ -203,6 +203,86 @@ bool NBT::loadFromFile(const Stringo& filePath, NBT& nbt)
 	return false;
 }
 
+bool NBT::saveAsCSV(const Stringo& filePath, const NBT& nbt, char separator, const char* idxName)
+{
+	if (!nbt.isContainer())
+	{
+		ND_ERROR("NBT is not an array nor map");
+		return false;
+	}
+
+	// in case of array its simply 0,1,2,3...
+	// in case of map we need to extract keys (which must be ints) and sort them
+	std::vector<int> indexes;
+	if (nbt.isMap())
+	{
+		// need to convert
+		for (auto& [key,val] : nbt.maps())
+		{
+			try
+			{
+				int index = std::stoi(key);
+				indexes.push_back(index);
+			}
+			catch (...)
+			{
+				ND_ERROR("NBT map key is not an integer: {}", key);
+				return false;
+			}
+		}
+	}
+	std::sort(indexes.begin(), indexes.end());
+
+
+	// first headers
+	auto& firstMap = nbt.isArray() ? nbt.arrays()[0].maps() : nbt[std::to_string(indexes[0])].maps();
+	std::ofstream o(ND_RESLOC(filePath));
+
+	if (idxName && strlen(idxName))
+		o << idxName << separator;
+
+	for (auto& map : firstMap)
+		o << "\"" << map.first << "\"" << separator;
+	o.seekp(-1, std::ios_base::cur); //remove last comma
+	o << "\n";
+
+	for (int i = 0;i < nbt.size();i++)
+	{
+		auto& item = nbt.isArray() ? nbt.arrays()[i] : nbt[std::to_string(indexes[i])];
+
+		// always write index as first column
+		o << (nbt.isArray() ? i : indexes[i]) << separator;
+
+		for (auto& [key,_] : firstMap)
+		{
+			if (item.exists(key))
+			{
+				auto& val = item.access_map_const(key);
+				if (val.isString())
+					o << "\"" << val.string() << "\"" << separator;
+				else if (val.isFloat())
+					o << val.val_float << separator;
+				else if (val.isInt())
+					o << val.val_int << separator;
+				else if (val.isUInt())
+					o << val.val_uint << separator;
+				else if (val.isBool())
+					o << (bool)val.val_int << separator;
+				else
+					o << "\"\"" <<separator;
+			}
+			else
+			{
+				o << "\"\"" << separator;
+			}
+		}
+		o.seekp(-1, std::ios_base::cur); //remove last comma
+		o << "\n";
+	}
+	o << "\n";
+	return true;
+}
+
 void NBT::write(const IBinaryStream::RWStream& write) const
 {
 	BinarySerializer::write(*this, write.m_write);

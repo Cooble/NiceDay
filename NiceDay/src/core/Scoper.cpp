@@ -1,5 +1,4 @@
 ﻿#include "ndpch.h"
-#include "Scoper.h"
 #include "files/FUtil.h"
 
 namespace nd {
@@ -99,7 +98,7 @@ void ScoperTimer::stop()
 	auto endTimepoint = std::chrono::high_resolution_clock::now();
 
 
-	long long end = std::chrono::time_point_cast<std::chrono::microseconds>(endTimepoint)
+	int64_t end = std::chrono::time_point_cast<std::chrono::microseconds>(endTimepoint)
 	                .time_since_epoch().count();
 
 	uint32_t threadID = std::hash<std::thread::id>{}(std::this_thread::get_id());

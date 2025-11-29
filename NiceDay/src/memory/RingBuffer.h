@@ -132,12 +132,12 @@ public:
 	 */
 	size_t getAvailableReads() const
 	{
-		return std::max((unsigned long long)0, (unsigned long long)(m_writes - m_reads));
+		return std::max((size_t)0, (size_t)(m_writes - m_reads));
 	}
 
 	size_t getAvailableWrites() const
 	{
-		return std::max((unsigned long long)0, m_frame_count - getAvailableReads());
+		return std::max((size_t)0, m_frame_count - getAvailableReads());
 	}
 
 	inline bool isEmpty() const { return m_reads == m_writes; }

@@ -15,11 +15,30 @@ Ref<_Ty> MakeRef(_Types&&... _Args)
 	return std::make_shared<_Ty>(std::forward<_Types>(_Args)...);
 }
 
+
+#if defined(_MSC_VER)
+#define ND_DEBUGBREAK() __debugbreak()
+#elif defined(__clang__) || defined(__GNUC__)
+#if defined(__i386__) || defined(__x86_64__)
+#define ND_DEBUGBREAK() __asm__("int $3")
+#else
+#include <signal.h>
+#define ND_DEBUGBREAK() raise(SIGTRAP)
+#endif
+#else
+#include <signal.h>
+#define ND_DEBUGBREAK() raise(SIGTRAP)
+#endif
+
+#ifndef _MSC_VER
+#define ZeroMemory(Destination,Length) memset((Destination),0,(Length))
+#endif
+
 //#ifdef ND_DEBUG
 #define ASSERT(cond,...) if(!(cond))\
 	{ND_ERROR("Assertion Failed: {}",#cond);\
 	ND_ERROR(__VA_ARGS__);\
-	__debugbreak();}
+	ND_DEBUGBREAK();}
 //#else
 //#define ASSERT(cond,message) 
 //#endif
@@ -89,8 +108,8 @@ template<typename T, typename U = void>\
 struct Has_##methName :std::false_type{};\
 \
 template<typename T>\
-struct Has_##methName <T,decltype(/*std::is_member_function_pointer<decltype(*/&T::##methName/*)>::value*/,void())>\
-:std::is_member_function_pointer<decltype(&T::##methName)>{};
+struct Has_##methName <T,decltype(/*std::is_member_function_pointer<decltype(*/&T::methName/*)>::value*/,void())>\
+:std::is_member_function_pointer<decltype(&T::methName)>{};
 
 #define ND_HAS_MEMBER_METHOD(Type,methName)\
 	Has_##methName <Type>::value

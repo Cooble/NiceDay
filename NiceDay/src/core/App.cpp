@@ -193,8 +193,7 @@ void App::start()
 	}
 
 	ND_PROFILE_BEGIN_SESSION("end", "end.json");
-	for (Layer* l : m_LayerStack)
-		l->onDetach();
+	m_LayerStack.clear();
 
 	m_Window->close();
 	ND_TRACE("Saving settings.json");

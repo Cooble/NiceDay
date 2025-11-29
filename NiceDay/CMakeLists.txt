@@ -179,7 +179,8 @@ LIST( APPEND CMAKE_MODULE_PATH
     set_property(TARGET assimp PROPERTY CXX_STANDARD 14) 
     #set_target_properties(IrrXML PROPERTIES USE_FOLDERS ON FOLDER "vendor")
     #set_target_properties(assimp_cmd PROPERTIES USE_FOLDERS ON FOLDER "vendor")
-    set_target_properties(UpdateAssimpLibsDebugSymbolsAndDLLs PROPERTIES USE_FOLDERS ON FOLDER "vendor")
+    #todo uncomment line 
+    #set_target_properties(UpdateAssimpLibsDebugSymbolsAndDLLs PROPERTIES USE_FOLDERS ON FOLDER "vendor")
     #set_target_properties(zlib PROPERTIES USE_FOLDERS ON FOLDER "vendor")
     set_target_properties(zlibstatic PROPERTIES USE_FOLDERS ON FOLDER "vendor")
     #set_target_properties(uninstall PROPERTIES USE_FOLDERS ON FOLDER "vendor")
@@ -188,9 +189,12 @@ LIST( APPEND CMAKE_MODULE_PATH
     #ignore warning as errors from assimp
     # disable warnings-as-errors for all assimp-related targets and contrib libs
     foreach(tgt assimp IrrXML zlibstatic zlib)
-        if (TARGET ${tgt})
-            target_compile_options(${tgt} PRIVATE /WX-) # disable warnings-as-errors
-        endif()
+    if(TARGET ${tgt})
+        target_compile_options(${tgt} PRIVATE
+            $<$<CXX_COMPILER_ID:MSVC>:/WX->
+            $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wno-error>
+        )
+    endif()
     endforeach()
 
     
@@ -207,7 +211,7 @@ LIST( APPEND CMAKE_MODULE_PATH
        "vendor/json/single_include"
     )
     target_compile_definitions(NiceDay PUBLIC GLFW_INCLUDE_NONE)
-    target_compile_options(NiceDay PUBLIC /bigobj)
+    target_compile_options(NiceDay PUBLIC $<$<CXX_COMPILER_ID:MSVC>:/bigobj>)
 
 
     #obtain mono installation

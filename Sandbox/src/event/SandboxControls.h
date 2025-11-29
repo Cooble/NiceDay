@@ -1,5 +1,6 @@
 #pragma once
-typedef unsigned long long ControlType;
+#include <cstdint>
+typedef uint64_t ControlType;
 
 namespace Controls {
 	extern ControlType SPAWN_ENTITY;

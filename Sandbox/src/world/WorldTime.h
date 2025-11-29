@@ -7,8 +7,8 @@ enum class Day : int
 constexpr long TICKS_PER_MINUTE = 60;
 struct WorldTime
 {
-	long long m_ticks;
-	WorldTime(long long ticks) :m_ticks(ticks) {}
+	int64_t m_ticks;
+	WorldTime(int64_t ticks) :m_ticks(ticks) {}
 
 	//total hours
 	inline float hours() const
@@ -42,7 +42,7 @@ struct WorldTime
 		return hou > 19.5 || hou < 5.5;
 	}
 	auto ticks()const { return m_ticks; }
-	inline long long operator()() const { return m_ticks; }
+	inline int64_t operator()() const { return m_ticks; }
 	inline WorldTime operator+(const WorldTime& t) const
 	{
 		return t.m_ticks + m_ticks;

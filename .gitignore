@@ -427,3 +427,4 @@ FodyWeavers.xsd
 /Sandbox/settings.json
 *.tcl
 *.csproj
+/buil

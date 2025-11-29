@@ -53,7 +53,10 @@ namespace WorldIO
 	:m_file_path(path)
 	{
 		m_stream = new std::fstream(
-			path, (write_only ? 0 : std::ios::in) | (write_mode ? std::ios::out : 0) | std::ios::binary);
+			path, 
+			(write_only ? std::ios::openmode(0) : std::ios::in) 
+			| (write_mode ? std::ios::out : std::ios::openmode(0)) 
+			| std::ios::binary);
 		CHECK_STREAM_STATE_START(m_stream, path);
 	}
 

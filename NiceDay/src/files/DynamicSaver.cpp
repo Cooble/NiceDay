@@ -101,7 +101,7 @@ void DynamicSaver::loadVTable()
 
 
 	m_stream->seekg(0, std::ios::end);
-	long long length = m_stream->tellg();
+	int64_t length = m_stream->tellg();
 
 	if (length < m_BASE_TOTAL_OFFSET + sizeof(BigHeaderHeader)) //never ever was it created
 	{

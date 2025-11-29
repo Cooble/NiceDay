@@ -48,7 +48,7 @@ public:
 
 	ParticleID particle(const char* name)
 	{
-		auto& it = m_ids.find(SID(name));
+		auto it = m_ids.find(SID(name));
 		if (it == m_ids.end())
 			return INVALID_PARTICLE_ID;
 		return it->second;

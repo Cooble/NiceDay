@@ -148,7 +148,7 @@ protected:
 #ifdef ND_DEBUG
 #define GUIE_CHECK_PARENT(child) ASSERT(!child->m_has_parent,"Adding child which already has a parent!");child->m_has_parent=true;
 #else
-#define GUIE_CHECK_PARENT()
+#define GUIE_CHECK_PARENT(c)
 #endif
 
 public:
@@ -309,6 +309,8 @@ public:
 	//called when broadcasting events
 	//called when no child has consumed it
 	inline virtual void onMyEvent(Event& e);
+	void onMyEvent(Event&& e) { onMyEvent(e); }
+
 	void clearChildren();
 	//searches through all grand..children and returns child with the id or nullptr
 	GUIElement* getChildWithID(const std::string& id)

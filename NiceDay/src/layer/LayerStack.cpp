@@ -81,4 +81,18 @@ void LayerStack::pushOverlayEventually(Layer* overlay)
 {
 	m_tasks.push_back({true, true, overlay});
 }
+
+void LayerStack::clear()
+{
+	// reverse order
+	for (int i = m_Layers.size()-1; i >=0; --i)
+	{
+		Layer* layer = m_Layers[i];
+		layer->onDetach();
+		delete layer;
+		
+	}
+	m_Layers.clear();
+	m_LayerInsertIndex = 0;
+}
 }

@@ -95,7 +95,20 @@ private:
 public:
 	Entity createEntity(const char* name = "Invalid")
 	{
-		Entity e{m_reg.create(), &m_reg};
+		// Search for an existing entity with the same TagComponent name
+		auto view = m_reg.view<TagComponent>();
+		for (auto entity : view)
+		{
+			const auto& tag = view.get<TagComponent>(entity);
+			if (strcmp(tag.name,name)==0)
+			{
+				// Entity already exists — return it
+				return Entity{ entity, &m_reg };
+			}
+		}
+
+		// Not found — create a new one
+		Entity e{ m_reg.create(), &m_reg };
 		e.emplaceOrReplace<TagComponent>(name);
 		return e;
 	}

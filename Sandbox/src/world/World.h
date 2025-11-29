@@ -357,9 +357,12 @@ public:
 
 	//automatically calls chunk.markdirty() to update graphics and call onNeighborBlockChange()
 	void setBlockWithNotify(int x, int y, BlockStruct& block) override;
+	void setBlockWithNotify(int x, int y, BlockStruct&& block) {setBlockWithNotify(x, y, block);}
+	
 
 	// just changes block value of blockstruct (no notification)
 	void setBlock(int x, int y, BlockStruct& block) override;
+	void setBlock(int x, int y, BlockStruct&& block) { setBlock(x, y, block); }
 	void setBlock(int x, int y, int blockid) { setBlock(x, y, BlockStruct(blockid)); }
 	void setBlockWithNotify(int x, int y, int blockid) { setBlockWithNotify(x, y, BlockStruct(blockid)); }
 

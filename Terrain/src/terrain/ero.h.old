@@ -1,0 +1,82 @@
+#pragma once
+
+
+#ifdef __OPENCL_VERSION__
+#define constant __constant
+#else
+#define constant inline
+#endif
+
+
+constant float pPipeArea = 0.6f;
+constant float pGravity = 9.81f;
+constant float pPipeLen = 1.f;
+constant float pLL = 1.f;
+constant float pMaxDissolve = 0.1f;
+
+
+#ifdef __OPENCL_VERSION__
+#define CPU_INLINE
+#define GET_X_Y int x = get_global_id(0);\
+                 int y = get_global_id(1);\
+                 int idx = y * width + x;
+#else
+#define __kernel inline
+#define __global
+// CPU fallback for get_global_id
+#define get_global_id(dim) ((dim) == 0 ? x : y)
+#define GET_X_Y for (int y = 1, idxOffset = w; y < h-1; y++, idxOffset += w) for (int x = 1, idx = idxOffset + 1; x < w - 1; x++, idx++)
+#include <algorithm>
+#include <glm/glm.hpp>
+#include "EulerSim.h"
+using float4 = glm::vec4;
+using float2 = glm::vec2;
+
+inline float4 fmax(float4 a, float4 b)
+{
+	return glm::max(a, b);
+}
+
+inline float2 fmax(float2 a, float2 b)
+{
+	return glm::max(a, b);
+}
+#endif
+
+
+__kernel void ero1_kernel(__global float* water_height,
+                          const int w,
+                          const int h,
+                          const float K_rain)
+{
+	GET_X_Y
+	{
+		// 1. rain
+		float increase = K_rain;
+		water_height[idx] += increase;
+	}
+}
+#ifndef __OPENCL_VERSION__
+inline void ero1(EulerGround& g, Euler::EulerSettings* s)
+{
+	ero1_kernel(g.water_height.data(),
+	            g.width,
+	            g.height,
+	            s->K_rain);
+}
+#endif
+
+
+
+__kernel void ero2_kernel(__global float* terrain_height,
+                          __global float* water_height,
+                          __global float4* flux,
+                          const int w,
+                          const int h,
+                          const float K_dt)
+{
+	GET_X_Y
+	{
+		
+	}
+}

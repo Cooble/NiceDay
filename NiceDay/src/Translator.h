@@ -24,23 +24,17 @@ inline StringId nd_string_id_unzip(StringId id)
 // =======
 
 // ======= unwrapping string args to string
-template <typename String, typename... Args>
-std::string nd_string_unzip(std::string& id, String string, Args&&... args)
+template <typename... Args>
+StringId nd_string_id_unzip(StringId id, Args&&... args)
 {
-	return nd_string_unzip(std::move(id).append(string), std::forward<Args>(args)...);
+	return (id.concat(std::forward<Args>(args)), ...);
 }
-
-template <typename String>
-std::string nd_string_unzip(std::string& id, String string)
+template <typename... Args>
+std::string nd_string_unzip(std::string id, Args&&... args)
 {
-	return std::move(id).append(string);
+	(id.append(std::forward<Args>(args)), ...);
+	return id;
 }
-
-inline std::string nd_string_unzip(std::string& id)
-{
-	return std::move(id);
-}
-
 // =======
 
 
@@ -49,7 +43,7 @@ inline std::string nd_string_unzip(std::string& id)
 //#define ND_TRANSLATE(first, ...) Translator::translate(nd_string_id_unzip(StringId(first),__VA_ARGS__))
 
 // translates key created by joining string arguments together
-#define ND_TRANSLATE(first, ...) Translator::translate(nd_string_unzip(std::string(first),__VA_ARGS__))
+#define ND_TRANSLATE(first, ...) Translator::translate(nd_string_unzip(std::string(first),##__VA_ARGS__))
 
 // Translates keys to their specified words specified in lang file
 // It's customary to use "nested.key.structure.btn.play.title" for keys separated by '.'

@@ -504,7 +504,7 @@ half_int BlockTextureAtlas::getTexture(const std::string& fileName, const std::s
 	std::transform(subNameC.begin(), subNameC.end(), subNameC.begin(),
 	               [](unsigned char c) { return std::tolower(c); });
 
-	auto& i = m_subtextures.find(fileName + subNameC);
+	auto i = m_subtextures.find(fileName + subNameC);
 	if (i == m_subtextures.end())
 	{
 		ND_ERROR("Trying to retrieve not loaded texture: {}", (fileName + +":\t\t"+ subNameC));

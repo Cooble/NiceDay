@@ -8,7 +8,7 @@ namespace nd {
 struct ProfileResult
 {
 	std::string name;
-	long long start, end;
+	int64_t start, end;
 	uint32_t threadID;
 };
 
@@ -50,7 +50,7 @@ class ScoperTimer
 {
 private:
 	std::string m_name;
-	long long m_startTimepoint;
+	int64_t m_startTimepoint;
 	bool m_stopped;
 
 public:
@@ -60,7 +60,7 @@ public:
 		auto now = std::chrono::time_point_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now())
 		           .time_since_epoch().count();
 
-		thread_local long long lastStart = 0;
+		thread_local int64_t lastStart = 0;
 
 		m_startTimepoint = now;
 

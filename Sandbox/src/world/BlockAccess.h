@@ -10,8 +10,11 @@ public:
 	virtual BlockStruct* getBlockM(int x, int y) = 0;
 	virtual Chunk* getChunkM(int cx, int cy) = 0;
 	virtual void setBlock(int x, int y, BlockStruct& block) = 0;
+	void setBlock(int x, int y, BlockStruct&& block) { setBlock(x, y, block); }
 	void setBlock(int x, int y, int blockid);
 	virtual void setBlockWithNotify(int x, int y, BlockStruct& block) = 0;
+	void setBlockWithNotify(int x, int y, BlockStruct&& block) { setBlockWithNotify(x, y, block); }
+	
 	void setBlockWithNotify(int x, int y, int blockid);
 	virtual void setWallWithNotify(int x, int y, int wallid) = 0;
 };

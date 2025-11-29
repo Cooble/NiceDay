@@ -56,17 +56,34 @@ const std::string& FUtil::getExecutableFolderPath()
 	}
 	return out;
 }
-
 const std::string& FUtil::getExecutablePath()
 {
 	static std::string out;
-	if (out.empty())
-	{
-		WCHAR path[260];
-		GetModuleFileNameW(NULL, path, 260);
-		out = ws2s(std::wstring(path));
-		cleanPathString(out);
+	if (!out.empty())
+		return out;
+
+#if defined(_WIN32)
+	WCHAR path[260];
+	GetModuleFileNameW(nullptr, path, 260);
+	out = ws2s(std::wstring(path));
+
+#elif defined(__linux__)
+	char path[4096];
+	ssize_t len = readlink("/proc/self/exe", path, sizeof(path) - 1);
+	if (len != -1) {
+		path[len] = '\0';
+		out = path;
 	}
+	else {
+		out = ""; // or fallback
+	}
+
+#else
+	// put platform-specific stuff here if you care
+	out = "";
+#endif
+
+	cleanPathString(out);
 	return out;
 }
 
@@ -82,7 +99,8 @@ std::vector<std::string> FUtil::fileList(std::string_view folder_path, FileSearc
 	{
 		for (const auto& entry : std::filesystem::directory_iterator(folder_path))
 		{
-			std::string s = ws2s(std::wstring(entry.path().c_str()));
+			//std::string s = ws2s(std::wstring(entry.path().c_str()));
+			std::string s = ws2s(entry.path().wstring());
 			if (entry.is_directory() && flags & FileSearchFlags_OnlyFiles)
 			{
 			}
@@ -116,7 +134,8 @@ std::vector<std::string> FUtil::fileList(std::string_view folder_path, FileSearc
 	{
 		for (const auto& entry : std::filesystem::recursive_directory_iterator(folder_path))
 		{
-			std::string s = ws2s(std::wstring(entry.path().c_str()));
+			//std::string s = ws2s(std::wstring(entry.path().c_str()));
+			std::string s = ws2s(entry.path().wstring());
 			if (entry.is_directory() && flags & FileSearchFlags_OnlyFiles)
 			{
 			}

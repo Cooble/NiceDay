@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.16.1)
 project(Terrain)
 
 #if(MSVC)
-#    add_compile_options(/arch:AVX512)
+#add_compile_options(/arch:AVX512)
 #endif()
 
 find_package(OpenCL REQUIRED)
@@ -19,13 +19,28 @@ find_package(OpenCL REQUIRED)
 # Target creation
     add_executable(Terrain ${SOURCES})
 
+    #enable openmp with compiler flags
+    if (MSVC)
+    target_compile_options(${PROJECT_NAME} PRIVATE /openmp)
+    else()
+        target_compile_options(${PROJECT_NAME} PRIVATE -fopenmp)
+    endif()
+   
+
+
 
 # Include files
-    target_include_directories(Terrain PUBLIC 
-        "src"
-        ${OpenCL_INCLUDE_DIRS}
-    )
-	 
+    #target_include_directories(Terrain PUBLIC 
+    #    "src"
+    #    ${OpenCL_INCLUDE_DIRS}
+    #)
+ target_include_directories(Terrain 
+    PRIVATE "src"
+    SYSTEM PRIVATE ${OpenCL_INCLUDE_DIRS}
+)
+message(STATUS "OpenCL Include Dirs: ${OpenCL_INCLUDE_DIRS}")
+
+
 
 # Precompiled Header
 #    target_precompile_headers(NiceDay PRIVATE 
@@ -44,7 +59,13 @@ find_package(OpenCL REQUIRED)
 
 # Dependencies
     target_link_libraries(Terrain PUBLIC NiceDay)
-    target_link_libraries(Terrain PUBLIC ${OpenCL_LIBRARIES})
+	target_link_libraries(Terrain PUBLIC OpenCL::OpenCL)
+    target_compile_options(Terrain PRIVATE
+        $<$<CXX_COMPILER_ID:MSVC>:/arch:AVX512>
+        $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-march=native>
+    )
+
+
 
 if(ND_ENABLE_DOTNET)
     target_link_libraries(Terrain PUBLIC Managed)

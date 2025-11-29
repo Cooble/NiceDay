@@ -235,6 +235,8 @@ public:
 	{
 	}
 
+	// === Assignment operators ===
+
 	NBT& operator=(bool i)
 	{
 		destruct();
@@ -360,6 +362,7 @@ public:
 		return *this;
 	}
 
+
 	constexpr bool canCast() const { return isString() && string().size(); }
 
 	int invalidCast() const
@@ -371,6 +374,17 @@ public:
 	NBT& operator=(const char* i)
 	{
 		return this->operator=(Stringo(i));
+	}
+
+	// === += Operators ===
+	template <typename T>
+	NBT& operator+=(T i)
+	{
+		if (isNull())
+			this->operator=(i);
+		else
+			this->operator=((T)(*this) + i);
+		return *this;
 	}
 
 	operator bool() const
@@ -597,7 +611,7 @@ public:
 			ASSERT(false, "");
 			return nullVal();
 		}
-		auto& it = val_map->find(name);
+		auto it = val_map->find(name);
 		if (it == val_map->end())
 			return val_map->insert_or_assign(name, NBT()).first->second;
 		return it->second;
@@ -651,7 +665,7 @@ public:
 			return nullVal();
 		}
 		while (val_array->size() <= index)
-			val_array->push_back(NBT());
+			val_array->emplace_back();
 		return val_array->operator[](index);
 	}
 
@@ -715,13 +729,27 @@ public:
 	// return false if cannot load
 	static bool loadFromFile(const Stringo& filePath, NBT& nbt);
 
+	// saves nbt array as csv file
+	// nbt must be an array of maps with same keys
+	// useful for tables
+	static bool saveAsCSV(const Stringo& filePath, const NBT& nbt, char separator = ',',const char* idxName = "idx");
+
 	// same function as nbt["name"]=val;
 	template <typename Arg>
 	void save(const Stringo& name, const Arg& val)
 	{
 		if (!checkForMap())
 			return;
-		access_map(name) = val;
+		//access_map(name) = val;
+			// Explicitly cast to int64_t if val is an integral type but not already int64_t
+		if constexpr (std::is_same_v<std::decay_t<Arg>, long long> && !std::is_same_v<std::decay_t<Arg>, int64_t>)
+		{
+			access_map(name) = static_cast<int64_t>(val);
+		}
+		else
+		{
+			access_map(name) = val;
+		}
 	}
 
 	//=================Load new================================
@@ -735,7 +763,7 @@ public:
 			val = defaultVal;
 			return false;
 		}
-		auto& it = val_map->find(key);
+		auto it = val_map->find(key);
 		bool found = it != val_map->end();
 		if (found)
 			val = (Arg0)it->second;
@@ -753,7 +781,7 @@ public:
 			val = defaultVal;
 			return false;
 		}
-		auto& it = val_map->find(key);
+		auto it = val_map->find(key);
 		bool found = it != val_map->end();
 		if (found)
 			val = it->second.string();
@@ -772,7 +800,7 @@ public:
 			val = defaultVal;
 			return false;
 		}
-		auto& it = val_map->find(key);
+		auto it = val_map->find(key);
 		bool found = it != val_map->end();
 		if (found)
 			val = (Arg)it->second;
@@ -795,7 +823,7 @@ public:
 			val = defaultVal;
 			return false;
 		}
-		auto& it = val_map->find(key);
+		auto it = val_map->find(key);
 		bool found = it != val_map->end();
 		if (found && it->second.isString())
 			val = it->second.string();
@@ -813,23 +841,10 @@ public:
 	{
 		if (!isMap()) return false;
 
-		auto& it = val_map->find(key);
+		auto it = val_map->find(key);
 		bool found = it != val_map->end();
 		if (found)
 			val = (Arg)it->second;
-		return found;
-	}
-
-	// sets val if value exists or returns false
-	template <>
-	bool load(const Stringo& key, Stringo& val) const
-	{
-		if (!isMap()) return false;
-
-		auto& it = val_map->find(key);
-		bool found = it != val_map->end();
-		if (found && it->second.isString())
-			val = it->second.string();
 		return found;
 	}
 
@@ -837,6 +852,19 @@ public:
 	void write(const IBinaryStream::RWStream& write) const;
 	void read(const IBinaryStream::RWStream& read);
 };
+
+// sets val if value exists or returns false
+template <>
+inline bool NBT::load<Stringo>(const Stringo& key, Stringo& val) const
+{
+	if (!isMap()) return false;
+
+	auto it = val_map->find(key);
+	bool found = it != val_map->end();
+	if (found && it->second.isString())
+		val = it->second.string();
+	return found;
+}
 
 bool operator==(const NBT& a, const NBT& b);
 inline bool operator!=(const NBT& a, const NBT& b) { return !operator==(a, b); }

@@ -139,8 +139,10 @@ void GUIContext::onEvent(Event& e)
 			m_windows.erase(m_windows.begin() + focusIndex);
 			m_windows.push_back(win);
 			for (int i = 0; i < m_windows.size() - 1; ++i) //anotate all other windows -> they had lost focus
-				if (m_windows[i]->isEnabled)
-					m_windows[i]->onMyEvent(MouseFocusLost(-10000, -10000));
+				if (m_windows[i]->isEnabled) {
+					auto ee = MouseFocusLost(-10000, -10000);
+					m_windows[i]->onMyEvent(ee);
+				}
 		}
 
 		if (!m_event_buffer.empty())

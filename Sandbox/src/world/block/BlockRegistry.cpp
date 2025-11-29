@@ -350,7 +350,7 @@ void BlockRegistry::registerBlockBounds(const std::string& id, const Phys::Polyg
 
 int BlockRegistry::getConnectGroupIndex(const std::string& id)
 {
-	auto& it = m_connect_groups.find(id);
+	auto it = m_connect_groups.find(id);
 	if (it == m_connect_groups.end())
 		m_connect_groups[id] = m_currentConnectGroup++;
 	return m_connect_groups[id];
@@ -358,7 +358,7 @@ int BlockRegistry::getConnectGroupIndex(const std::string& id)
 
 int BlockRegistry::getFlagIndex(const std::string& id)
 {
-	auto& it = m_block_flags.find(id);
+	auto it = m_block_flags.find(id);
 	ASSERT(it != m_block_flags.end(), "Unregistered block flag {}", id);
 	return m_block_flags[id];
 }
@@ -367,11 +367,11 @@ const half_int* BlockRegistry::getCorners(const std::string& id, bool isWall) co
 {
 	if (!isWall)
 	{
-		auto& it = m_block_corners.find(id);
+		auto it = m_block_corners.find(id);
 		ASSERT(it != m_block_corners.end(), "use of unregistered corners");
 		return it->second;
 	}
-	auto& it = m_wall_corners.find(id);
+	auto it = m_wall_corners.find(id);
 	ASSERT(it != m_wall_corners.end(), "use of unregistered corners");
 	return it->second;
 }
@@ -379,7 +379,7 @@ const half_int* BlockRegistry::getCorners(const std::string& id, bool isWall) co
 const Phys::Polygon* BlockRegistry::getBlockBounds(const std::string& id, int& size) const
 {
 	size = 0;
-	auto& it = m_block_bounds.find(id);
+	auto it = m_block_bounds.find(id);
 	if (it == m_block_bounds.end())
 		return nullptr;
 	size = it->second.second;

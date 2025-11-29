@@ -1,0 +1,59 @@
+#pragma once
+#include "DropletSim.h"
+#include "ndpch.h"
+
+#include "EulerSim.h"
+
+#include "layer/Layer.h"
+#include "scene/NewScene.h"
+#include "types.h"
+
+
+namespace nd {class EditorLayer;}
+
+enum class TerrainLayerType
+{
+	FLAT,
+	SINE,
+	PERLIN,
+	BASIN
+};
+
+
+class TerrainLayer:public nd::Layer
+{
+private:
+	nd::EditorLayer& m_editor_layer;
+	nd::Entity m_entity;
+	nd::Entity m_entity_2;
+	nd::Entity m_water_entity;
+	nd::Entity m_water_entity_2;
+	nd::Entity m_sphere;
+	Droplet m_droplet;
+	Euler m_euler;
+	Euler m_euler2;
+	EulerGround g;
+	bool m_enable_second_euler=true;
+
+	Euler::EulerSettings m_euler_settings;
+
+
+public:
+	TerrainLayer(nd::EditorLayer&);
+	void onAttach() override;
+	void onImGuiRender() override;
+	void onRender() override;
+	void onEvent(nd::Event& e) override;
+	void onUpdate() override;
+
+private:
+	void recreateTerrain(EulerGround& g);
+	void calculateStatistics(EulerGround& g);
+	void createGround();
+	void createMaterial();
+	void simulate(EulerGround& g);
+	void runDropBenchmark(int passes);
+	void onImGuiRenderSimulator();
+	void onImGuiRenderGenerator();
+
+};

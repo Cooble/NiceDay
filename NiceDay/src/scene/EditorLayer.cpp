@@ -734,7 +734,8 @@ void EditorLayer::onUpdate()
 		auto& script = view.get(entity);
 		if (!script.ptr)
 		{
-			script.construct(m_scene->wrap(entity), m_scene);
+			auto wrapped = m_scene->wrap(entity);
+			script.construct(wrapped, m_scene);
 			script.onCreate();
 		}
 		script.onUpdate();
@@ -923,8 +924,10 @@ void EditorLayer::onEvent(Event& e)
 	for (auto entity : view)
 	{
 		auto& script = view.get(entity);
-		if (!script.ptr)
-			script.construct(m_scene->wrap(entity), m_scene);
+		if (!script.ptr) {
+			auto wrapped = m_scene->wrap(entity);
+			script.construct(wrapped, m_scene);
+		}
 		script.onEvent(e);
 	}
 }
@@ -1054,6 +1057,7 @@ void EditorLayer::addExampleObjects()
 		}
 		sphere = ent;
 	}
+
 	//adding dragoon
 	/*{
 	auto dragonMesh = NewMeshFactory::buildNewMesh(MeshFactory::readBinaryFile(ND_RESLOC("res/examples/models/dragon.bin")));

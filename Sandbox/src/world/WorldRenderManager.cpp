@@ -554,7 +554,7 @@ void WorldRenderManager::render(BatchRenderer2D& batchRenderer, FrameBuffer* fbo
 	renderBiomeBackgroundToFBO(batchRenderer);
 
 	//chunk render
-	auto& chunkProgram = ChunkMesh::getProgram();
+	auto chunkProgram = ChunkMesh::getProgram();
 
 		//walls
 	m_wall_fbo->bind();
