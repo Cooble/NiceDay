@@ -68,20 +68,22 @@ struct Euler
 	static constexpr gfloat pLL = 1.f;
 	static constexpr gfloat pMaxDissolve = 0.1f;
 
-	enum : int
+	enum SimType: int
 	{
 		CPU_BASIC,
 		CPU_SIMD,
 		OPENCL,
 		CPU_PARALLEL,
-		SIMD_PARALLEL
+		SIMD_PARALLEL,
+		SIMD_PARALLEL_OMP
 	} sim_type = CPU_BASIC;
 	constexpr static const char* sim_type_names[] = {
-		"CPU",
-		"SIMD",
-		"OpenCL",
+		"CPU_BASIC",
+		"CPU_SIMD",
+		"OPENCL",
 		"CPU_PARALLEL",
-		"SIMD_PARALLEL"
+		"SIMD_PARALLEL",
+		"SIMD_PARALLEL_OMP"
 	};
 
 	struct EulerSettings

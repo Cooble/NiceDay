@@ -1,5 +1,8 @@
 ﻿#define ND_TERRAIN_APP
 
+#include <span>
+#include <valarray>
+
 #include "core/App.h"
 #include "core/NBT.h"
 #include "scene/EditorLayer.h"
@@ -25,6 +28,7 @@ public:
 	}
 };
 
+
 #undef ND_TERRAIN_APP
 
 #ifdef ND_TERRAIN_APP
@@ -40,54 +44,32 @@ int main()
 }
 #else
 
-void measureStatsOld()
-{
-	//std::vector sizes = { 128, 256, 512, 1024, 2048, 4096, 8192 };
-	std::vector sizes = {
-		128, /* 160, 192, // ~2^7 range
-		256, 320, 384, // ~2^8 range
-		512, 640, 768, // ~2^9 range
-		1024, 1280, 1536, // ~2^10 range
-		2048, 2560, 3072, // ~2^11 range
-		4096, 5120, 6144, // ~2^12 range
-		8192 /*, 10240, 12288, // ~2^13 range
-		16384, 20480*/
-	};
-	// to allow simd to ignore tails
-	for (auto& a : sizes)
-		a += 2;
 
+void measureol(std::span<const int> sizes)
+{
 	constexpr int flagsTotal = 1;
 	constexpr const char* flagNames[] = {
 		"rain",
 		"flow",
-		"evap",
+		"eros",
 		"slid"
 	};
-
-
 	NBT stats;
-	//auto sim_types = {Euler::CPU_BASIC, Euler::CPU_SIMD, Euler::OPENCL};
-	auto sim_types = {Euler::CPU_BASIC, Euler::CPU_SIMD, Euler::CPU_PARALLEL, Euler::SIMD_PARALLEL, Euler::OPENCL};
 
-	for (int turn = 0; turn < 1; ++turn)
-		for (auto simType : sim_types)
+	Euler e;
+
+	for (auto type : {Euler::SIMD_PARALLEL, Euler::CPU_SIMD, Euler::OPENCL})
+	{
+		e.sim_type = type;
+		for (auto size : sizes)
 		{
-			Euler e;
-			e.sim_type = simType;
-			for (auto size : sizes)
+			auto chunkSizes = {1, 2, 4, 8, 16, 32, 64, 128, 256, 512};
+			for (auto cs : chunkSizes)
 			{
-				// skip waiting for Godot
-				if (simType == Euler::CPU_BASIC && size > 4000)
-					continue;
-				if (simType == Euler::CPU_PARALLEL && size > 4000)
-					continue;
-				if (simType == Euler::CPU_SIMD && size > 10240)
-					continue;
-
-
 				EulerGround g;
 				g.resize(size);
+				g.pc.initialize(1, g.height - 1, cs);
+
 
 				for (int flagIdx = 0; flagIdx < flagsTotal; flagIdx++)
 				{
@@ -114,87 +96,97 @@ void measureStatsOld()
 
 						micros = t.getUS();
 					}
-					ND_BUG("Euler size {} simType {}-{} took {} us per step", size, Euler::sim_type_names[simType], flagNames[flagIdx], micros / cycles);
-					stats[std::to_string(size)][std::string(Euler::sim_type_names[simType])] += (double)micros / (double)cycles;
+					ND_BUG("Euler size {} simType {}-{} took {} us per step", size, Euler::sim_type_names[e.sim_type], flagNames[flagIdx], micros / cycles);
+					stats[std::to_string(size)][std::string(Euler::sim_type_names[e.sim_type]) + std::string("_") + std::to_string(cs)] += (double)micros / (double)cycles;
 				}
 			}
 		}
-	NBT::saveAsCSV("sim_times_std_par.csv", stats, ',', "Size");
+	}
+	NBT::saveAsCSV("sim_times_chunk_sizes.csv", stats, ',', "Size");
 }
 
-void measureChunkSizes()
+void measureTypes(
+	std::span<const int> sizes,
+	std::initializer_list<Euler::SimType> types = {Euler::SIMD_PARALLEL, Euler::CPU_SIMD, Euler::OPENCL},
+	int cycles = 80)
 {
-	//std::vector sizes = { 128, 256, 512, 1024, 2048, 4096, 8192 };
-	std::vector sizes = {
-		128, 160, 192, // ~2^7 range
-		256, 320, 384, // ~2^8 range
-		512, 640, 768, // ~2^9 range
-		1024, 1280, 1536, // ~2^10 range
-		2048, 2560, 3072, // ~2^11 range
-		4096, 5120, 6144, // ~2^12 range
-		8192 /*, 10240, 12288, // ~2^13 range
-		16384, 20480*/
-	};
-	// to allow simd to ignore tails
-	for (auto& a : sizes)
-		a += 2;
+	NBT stats;
 
-	constexpr int flagsTotal = 1;
-	constexpr const char* flagNames[] = {
-		"rain",
-		"flow",
-		"eros",
-		"evap",
-		"slid"
-	};
+	Euler e;
+
+	for (auto type : types)
+	{
+		e.sim_type = type;
+		for (auto size : sizes)
+		{
+			EulerGround g;
+			g.resize(size);
 
 
+			Euler::EulerSettings s;
+
+			e.init(g, &s, false);
+			uint64_t micros;
+			{
+				e.refreshParams(g, s);
+				e.step(g); //warmup
+				e.step(g);
+
+				TimerStaper t("");
+				for (int i = 0; i < cycles; ++i)
+					e.step(g);
+				e.stepRender(g);
+
+				micros = t.getUS();
+			}
+			ND_BUG("Euler size {} simType {} took {} us per step", size, Euler::sim_type_names[e.sim_type], micros / cycles);
+			stats[std::to_string(size)][std::string(Euler::sim_type_names[e.sim_type])] += (double)micros / (double)cycles;
+		}
+	}
+	NBT::saveAsCSV("sim_times_OMP_longerjbjb2.csv", stats, ',', "Size");
+}
+
+void measureChunksSimdMD(
+	std::span<const int> sizes,
+	std::initializer_list<int> chunkSizes = {1, 2, 4, 8, 16, 32, 64, 128, 256, 512},
+	int cycles = 80)
+{
 	NBT stats;
 
 	Euler e;
 	e.sim_type = Euler::SIMD_PARALLEL;
 	for (auto size : sizes)
 	{
-		auto chunkSizes = {1, 2, 4, 8, 16, 32, 64, 128, 256, 512};
 		for (auto cs : chunkSizes)
 		{
 			EulerGround g;
 			g.resize(size);
 			g.pc.initialize(1, g.height - 1, cs);
 
+			Euler::EulerSettings s;
+			e.init(g, &s, false);
 
-			for (int flagIdx = 0; flagIdx < flagsTotal; flagIdx++)
+			uint64_t micros;
 			{
-				Euler::EulerSettings s;
-				// disable all
-				//ZeroMemory(&s.e_rain, sizeof(bool) * flagsTotal);
-				// enable one
-				//bool* flagPtr = &s.e_rain + flagIdx;
-				//*flagPtr = true;
+				e.refreshParams(g, s);
+				e.step(g); //warmup
+				e.step(g);
+				e.stepRender(g);
 
-
-				e.init(g, &s, false);
-				uint64_t micros;
-				constexpr int cycles = 80;
-				{
-					e.refreshParams(g, s);
-					e.step(g); //warmup
+				TimerStaper t("");
+				for (int i = 0; i < cycles; ++i)
 					e.step(g);
+				e.stepRender(g);
 
-					TimerStaper t("");
-					for (int i = 0; i < cycles; ++i)
-						e.step(g);
-					e.stepRender(g);
-
-					micros = t.getUS();
-				}
-				ND_BUG("Euler size {} simType {}-{} took {} us per step", size, Euler::sim_type_names[e.sim_type], flagNames[flagIdx], micros / cycles);
-				stats[std::to_string(size)][std::string(Euler::sim_type_names[e.sim_type]) + std::string("_") + std::to_string(cs)] += (double)micros / (double)cycles;
+				micros = t.getUS();
 			}
+			ND_BUG("Euler size {}-{} took {} us per step", size, cs, micros / cycles);
+			stats[std::to_string(size)][std::to_string(cs)] += (double)micros * 1000.0 / (double)cycles / (double)(size * size);
 		}
 	}
 	NBT::saveAsCSV("sim_times_chunk_sizes.csv", stats, ',', "Size");
 }
+
 
 void measureCacheMisses(int size)
 {
@@ -226,21 +218,85 @@ void measureCacheMisses(int size)
 	}
 }
 
+
+static constexpr auto chunkSizes = std::to_array<int>({
+	128, 160, 192,
+	256, 320, 384,
+	512, 640, 768,
+	1024, 1280, 1536,
+	2048, 2560, 3072,
+	4096, 5120, 6144,
+	8192, 10240, 12288,
+});
+static constexpr auto chunkSizesPlus2 = []
+{
+	auto arr = chunkSizes;
+	for (auto& v : arr)
+		v += 2;
+	return arr;
+}();
+
+
+// expect args: size simType
+// e.g. "./Terrain 2048 SIMD_PARALLEL"
+static void fromCmd(int argc, char* argv[])
+{
+	// extract size from args
+	int size = 2048;
+	if (argc > 1)
+	{
+		size = std::atoi(argv[1]);
+	}
+	size += 2; //for simd tail ignore
+
+	Euler::SimType t = Euler::SIMD_PARALLEL;
+	if (argc > 2)
+	{
+		t =
+			std::string(argv[2]) == "SIMD_PARALLEL" ? Euler::SIMD_PARALLEL : 
+		(std::string(argv[2]) == "CPU_SIMD" ? Euler::CPU_SIMD : 
+			(std::string(argv[2]) == "OPENCL" ? Euler::OPENCL : 
+				(std::string(argv[2]) == "CPU_PARALLEL" ? Euler::CPU_PARALLEL 
+					: Euler::SIMD_PARALLEL)));
+	}
+	ND_BUG("Using size: {}", size);
+	ND_BUG("Using type: {}", Euler::sim_type_names[t]);
+
+	Euler e;
+	e.sim_type = t;
+	EulerGround g;
+	g.resize(size);
+	Euler::EulerSettings s;
+	e.init(g, &s, false);
+	constexpr int cycles = 100;
+	{
+		e.refreshParams(g, s);
+		TimerStaper t("");
+		for (int i = 0; i < cycles; ++i)
+			e.step(g);
+		e.stepRender(g);
+		auto micros = t.getUS();
+		ND_BUG("Euler size {} simType {} took {} us per step", size, Euler::sim_type_names[e.sim_type], micros / cycles);
+	}
+}
+
 int main(int argc, char* argv[])
 {
 	Log::init();
 
-	// extract size from args
-	int size = 1024;
-	if (argc > 1 )
-	{
-		size = std::atoi(argv[1]);
-		ND_BUG("Using size from args: {}", size);
-	}
+
+	fromCmd(argc, argv);
+	return 0;
+
+
+	//measureChunksSimdMD(std::span{chunkSizesPlus2}.first(15));
+	measureTypes(std::span{chunkSizesPlus2}.first(21).last(3), {Euler::SIMD_PARALLEL, Euler::CPU_SIMD}, 100);
+	return 0;
+
 
 	//measureChunkSizes();
 	//measureStatsOld();
-	measureCacheMisses(size);
+	//measureCacheMisses(size);
 	return 0;
 }
 #endif

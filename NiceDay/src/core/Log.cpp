@@ -22,8 +22,8 @@ void Log::init()
 	sinks.push_back(std::make_shared<spdlog::sinks::rotating_file_sink_mt>("log.txt", 1048576 * 1, 1, true));
 	sinks[1]->set_level(spdlog::level::trace);
 
-	sinks[0]->set_pattern("[%=26@]%^  %v%$");
-	sinks[1]->set_pattern("[%-7l|%-26@] %v%$");
+	sinks[0]->set_pattern("[%=100@]%^  %v%$");
+	sinks[1]->set_pattern("[%-7l|%-100@] %v%$");
 
 	s_CoreLogger = std::make_shared<spdlog::logger>("ND", begin(sinks), end(sinks));
 	s_CoreLogger->set_level(spdlog::level::trace);

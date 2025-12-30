@@ -20,7 +20,7 @@ constexpr int FRAME_SAMPLE_SIZE = 256;
 //DanielsonLanczos
 
 
-typedef struct
+struct paTestData
 {
 	float left_phase;
 	float right_phase;
@@ -35,8 +35,7 @@ typedef struct
 	int valuesReadInCurrentFrame = 0;
 	bool error = false;
 	int channels = 1;
-}
-paTestData;
+};
 
 /* This routine will be called by the PortAudio engine when audio is needed.
    It may called at interrupt level on some machines so don't do anything

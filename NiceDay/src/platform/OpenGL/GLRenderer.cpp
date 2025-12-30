@@ -3,7 +3,7 @@
 
 namespace nd::internal
 {
-#define BREAK_ON_GL_ERROR 1
+#define BREAK_ON_GL_ERROR 0
 
 void checkGLError(int line, const char* method_name, const char* file)
 {

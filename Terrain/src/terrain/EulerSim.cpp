@@ -15,9 +15,24 @@
 #include "ero.h"
 
 
-#include "ero_simd.h"
+/*#include "ero_simd.h"
 #define EROSIMD_PARALLEL_ENABLE 1
-#include "ero_simd.h"
+#include "ero_simd.h"*/
+
+// 1. Primitive / Vanilla version (No Defines)
+#include "ero_new.h" 
+
+// 2. Parallel STL version
+#define EROSIMD_PARALLEL_ENABLE
+#include "ero_new.h"
+#undef EROSIMD_PARALLEL_ENABLE
+
+// 3. OpenMP version
+#define EROSIMD_OMP_ENABLE
+#include "ero_new.h"
+#undef EROSIMD_OMP_ENABLE
+
+
 
 #include "cl_context.h"
 
@@ -169,6 +184,15 @@ void Euler::step(EulerGround& g)
 		//cl->upload_all(g);
 		//cl->upload_params(g, *s);
 		cl->step(*s);
+		return;
+
+	case SIMD_PARALLEL_OMP:
+		EroOmp::ero1_simd(g, s);
+		EroOmp::ero2_simd(g, s);
+		EroOmp::ero3_simd(g, s);
+		EroOmp::ero4_simd(g, s);
+		EroOmp::ero5_simd(g, s);
+		EroOmp::ero7_simd(g, s);
 		return;
 	}
 
