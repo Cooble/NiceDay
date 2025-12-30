@@ -21,7 +21,7 @@ LIST( APPEND CMAKE_MODULE_PATH
 set_property(GLOBAL PROPERTY CTEST_TARGETS_ADDED 1) # hack to prevent CTest added targets
 
 MARK_AS_ADVANCED(MULTITHREADED_BUILD)
-set(MULTITHREADED_BUILD 8 CACHE STRING "How many threads are used to build the project")
+set(MULTITHREADED_BUILD 32 CACHE STRING "How many threads are used to build the project")
 if(${CMAKE_GENERATOR} MATCHES "Unix Makefiles")
        message(STATUS ${CMAKE_BUILD_TOOL})
        set(CMAKE_MAKE_PROGRAM "${CMAKE_MAKE_PROGRAM} -j${MULTITHREADED_BUILD}")
@@ -47,6 +47,9 @@ else()
    message("    XXX custom build types are not allowed...")
 endif()
 
+if(MSVC)
+    add_compile_options(/utf-8)
+endif()
 
 
 #Global DEFINES based on Config

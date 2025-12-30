@@ -185,8 +185,8 @@ Window::Window(int width, int height, const std::string& title, bool fullscreen)
 	ND_TRACE("Graphics card info:");
 	ND_TRACE((char*)vendor);
 	ND_TRACE((char*)renderer);
-	ND_TRACE("GL version: {}", gl);
-	ND_TRACE("GLSL version: {}", glsl);
+	ND_TRACE("GL version: {}", *gl);
+	ND_TRACE("GLSL version: {}", *glsl);
 	ND_TRACE("MaxVertexAttribs: {}", maxVertAttrib);
 
 
