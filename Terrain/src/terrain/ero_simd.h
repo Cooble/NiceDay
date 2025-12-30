@@ -48,25 +48,44 @@
 namespace EroParallel {
 #endif
 
-	// 1. Rain - SIMD
+	// 1. Rain & Evaporation - SIMD (Merged)
 	inline void ero1_simd(EulerGround& g, Euler::EulerSettings* s)
 	{
-		if (!s->e_rain)
-			return;
-
 		auto w = g.width;
 		auto h = g.height;
 
-		const float val = s->K_dt * s->K_rain;
-		__m512 vval = _mm512_set1_ps(val);
+		// Rain Constant
+		const float rainVal = s->K_dt * s->K_rain;
+		const __m512 V_RAIN = _mm512_set1_ps(rainVal);
+
+		// Evaporation Constants
+		const float evapFactor = 1.0f - s->K_evaporation * s->K_dt;
+		const __m512 V_EVAP = _mm512_set1_ps(evapFactor);
+
+		const __m512 V_EPSILON = _mm512_set1_ps(0.001f);
+		const __m512 V_ZERO = _mm512_setzero_ps();
 
 		PARALLELIZE_LOOP
 			int offset = y * w;
 
 		for (int x = 1; x < w - 16; x += 16)
 		{
+			// Load
 			__m512 vdata = _mm512_loadu_ps(&g.water_height[offset + x]);
-			vdata = _mm512_add_ps(vdata, vval);
+
+			// 1. Apply Rain (Add)
+			vdata = _mm512_add_ps(vdata, V_RAIN);
+
+			// 2. Apply Evaporation (Multiply)
+			vdata = _mm512_mul_ps(vdata, V_EVAP);
+
+			// 3. Clean up extremely small values (Epsilon check)
+			// mask = (vdata < epsilon)
+			__mmask16 mask = _mm512_cmp_ps_mask(vdata, V_EPSILON, _CMP_LT_OQ);
+			// if mask is true, replace value with ZERO
+			vdata = _mm512_mask_mov_ps(vdata, mask, V_ZERO);
+
+			// Store
 			_mm512_storeu_ps(&g.water_height[offset + x], vdata);
 		}
 		END_PARALLELIZE_LOOP
@@ -386,42 +405,6 @@ namespace EroParallel {
 
 			// swap sediment buffers
 			std::swap(g.new_sediment, g.sediment);
-	}
-
-	// 6. Evaporation - SIMD
-	inline void ero6_simd(EulerGround& g, Euler::EulerSettings* s)
-	{
-		if (!s->e_evaporation)
-			return;
-
-		const int w = g.width;
-		const int h = g.height;
-
-		const float evapFactor = 1.0f - s->K_evaporation * s->K_dt;
-		constexpr float evaporationEpsilon = 0.001f;
-
-		const __m512 EVAP_FACT = _mm512_set1_ps(evapFactor);
-		const __m512 EPSILON = _mm512_set1_ps(evaporationEpsilon);
-		const __m512 ZERO = _mm512_setzero_ps();
-
-		PARALLELIZE_LOOP
-			const int yw = y * w;
-		for (int x = 0; x < w - 16; x += 16)
-		{
-			const int idx = yw + x;
-
-			// waterHeight *= evapFactor
-			__m512 waterHeight = _mm512_loadu_ps(&g.water_height[idx]);
-			waterHeight = _mm512_mul_ps(waterHeight, EVAP_FACT);
-
-			// clamp to 0 if below epsilon
-			__mmask16 mask = _mm512_cmp_ps_mask(waterHeight, EPSILON, _CMP_LT_OQ);
-			waterHeight = _mm512_mask_mov_ps(waterHeight, mask, ZERO);
-
-			// store
-			_mm512_storeu_ps(&g.water_height[idx], waterHeight);
-		}
-		END_PARALLELIZE_LOOP
 	}
 
 	// 7. Landslide - SIMD

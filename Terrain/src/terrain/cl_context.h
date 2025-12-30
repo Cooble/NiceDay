@@ -1,5 +1,5 @@
 #pragma once
-#include <CL/cl2.hpp>
+#include <CL/cl.hpp>
 #include <fstream>
 #include <iostream>
 #include <vector>

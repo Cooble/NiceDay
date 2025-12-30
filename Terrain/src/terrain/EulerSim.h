@@ -162,22 +162,6 @@ struct Euler
 	~Euler();
 
 public:
-	void ero1_old(EulerGround& g);
-	void ero2_old(EulerGround& g);
-	void ero3_old(EulerGround& g);
-	void ero4_old(EulerGround& g);
-	void ero5_old(EulerGround& g);
-	void ero6_old(EulerGround& g);
-	void ero7_old(EulerGround& g);
-
-	void ero1_simd_old(EulerGround& g);
-	void ero2_simd_old(EulerGround& g);
-	void ero3_simd_old(EulerGround& g);
-	void ero4_simd_old(EulerGround& g);
-	void ero5_simd_old(EulerGround& g);
-	void ero6_simd_old(EulerGround& g);
-	void ero7_simd_old(EulerGround& g);
-
 	void ero3_simd_fix_borders(EulerGround& g);
 	void ero2_simd_fix_borders(EulerGround& g);
 

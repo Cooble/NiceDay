@@ -145,20 +145,34 @@ inline float interpolate2D(__global const float* data, int width, int height, fl
 }
 
 
-// 1. Rain
+// 1. Rain & Evaporation (Merged)
 __kernel void ero1_kernel(
 	__global float* water_height,
 	const int w,
 	const int h,
 	const float K_rain,
+	const float K_evaporation,
 	const float K_dt)
 {
 	GET_X_Y
 	{
-		float increase = K_rain;
-		water_height[idx] += K_dt * increase;
+		float wh = water_height[idx];
+
+		// Apply Rain
+		wh += K_dt * K_rain;
+
+		// Apply Evaporation
+		wh *= (1.0f - K_evaporation * K_dt);
+
+		// Remove incredibly small values
+		float evaporationEpsilon = 0.001f;
+		if (wh < evaporationEpsilon)
+			wh = 0.0f;
+
+		water_height[idx] = wh;
 	}
 }
+
 #ifndef __OPENCL_VERSION__
 inline void ero1(EulerGround& g, Euler::EulerSettings* s)
 {
@@ -170,6 +184,7 @@ inline void ero1(EulerGround& g, Euler::EulerSettings* s)
 		g.width,
 		g.height,
 		s->K_rain,
+		s->K_evaporation,
 		s->K_dt);
 }
 #endif
@@ -454,39 +469,6 @@ inline void ero5(EulerGround& g, Euler::EulerSettings* s)
 		s->K_dt);
 
 	std::swap(g.sediment, g.new_sediment);
-}
-#endif
-
-
-// 6. Evaporation
-__kernel void ero6_kernel(
-	__global float* water_height,
-	const int w,
-	const int h,
-	const float K_evaporation,
-	const float K_dt)
-{
-	GET_X_Y
-	{
-		water_height[idx] *= 1 - K_evaporation * K_dt;
-
-		// Remove incredibly small values
-		float evaporationEpsilon = 0.001f;
-		if (water_height[idx] < evaporationEpsilon)
-			water_height[idx] = 0;
-	}
-}
-#ifndef __OPENCL_VERSION__
-inline void ero6(EulerGround& g, Euler::EulerSettings* s)
-{
-	if (!s->e_evaporation)
-		return;
-	ero6_kernel(
-		g.water_height.data(),
-		g.width,
-		g.height,
-		s->K_evaporation,
-		s->K_dt);
 }
 #endif
 

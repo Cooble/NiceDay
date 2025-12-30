@@ -70,11 +70,8 @@ void EroCLContext::init(EulerGround& g, Euler::EulerSettings& s)
 	kernels[4].setArg(1, b.buf_new_sediment);
 	kernels[4].setArg(2, b.buf_velocity);
 
-	//ero6
-	kernels[5].setArg(0, b.buf_water_height);
-
 	//ero7
-	kernels[6].setArg(0, b.buf_terrain_height);
+	kernels[5].setArg(0, b.buf_terrain_height);
 
 	upload_all(g);
 	upload_params(g, s);
@@ -87,6 +84,7 @@ void EroCLContext::upload_params(EulerGround& g, Euler::EulerSettings& s)
 	kernels[0].setArg(idx++, g.width);
 	kernels[0].setArg(idx++, g.height);
 	kernels[0].setArg(idx++, s.K_rain);
+	kernels[0].setArg(idx++, s.K_evaporation);
 	kernels[0].setArg(idx++, s.K_dt);
 
 	//ero2
@@ -116,22 +114,15 @@ void EroCLContext::upload_params(EulerGround& g, Euler::EulerSettings& s)
 	kernels[4].setArg(idx++, g.height);
 	kernels[4].setArg(idx++, s.K_dt);
 
-	//ero6
+	//ero7
 	idx = 1;
 	kernels[5].setArg(idx++, g.width);
 	kernels[5].setArg(idx++, g.height);
-	kernels[5].setArg(idx++, s.K_evaporation);
-	kernels[5].setArg(idx++, s.K_dt);
-
-	//ero7
-	idx = 1;
-	kernels[6].setArg(idx++, g.width);
-	kernels[6].setArg(idx++, g.height);
 	idx++; // offset x
 	idx++; // offset y
-	kernels[6].setArg(idx++, s.K_landSlideSpeed);
-	kernels[6].setArg(idx++, s.K_landSlideCutoffAngle);
-	kernels[6].setArg(idx++, s.K_dt);
+	kernels[5].setArg(idx++, s.K_landSlideSpeed);
+	kernels[5].setArg(idx++, s.K_landSlideCutoffAngle);
+	kernels[5].setArg(idx++, s.K_dt);
 }
 
 void EroCLContext::upload_all(EulerGround& g)
@@ -195,8 +186,6 @@ void EroCLContext::step(Euler::EulerSettings& s)
 		queue.enqueueNDRangeKernel(kernels[4], of, global, cl::NullRange);
 		queue.enqueueCopyBuffer(b.buf_new_sediment, b.buf_sediment, 0, 0, sizeof(float) * width * height);
 	}
-	if (s.e_evaporation)
-		queue.enqueueNDRangeKernel(kernels[5], of, global, cl::NullRange);
 	if (s.e_landslide)
 	{
 		global = cl::NDRange((width - 1) / 2, (height - 1) / 2);
@@ -204,9 +193,9 @@ void EroCLContext::step(Euler::EulerSettings& s)
 		// 4 passes for land slide
 		for (int pass = 0; pass < 4; pass++)
 		{
-			kernels[6].setArg(3, pass & 1); // offset x
-			kernels[6].setArg(4, (pass >> 1) & 1); // offset y
-			queue.enqueueNDRangeKernel(kernels[6], of, global, cl::NullRange);
+			kernels[5].setArg(3, pass & 1); // offset x
+			kernels[5].setArg(4, (pass >> 1) & 1); // offset y
+			queue.enqueueNDRangeKernel(kernels[5], of, global, cl::NullRange);
 		}
 	}
 }
@@ -253,7 +242,7 @@ void EroCLContext::initializeContext()
 	// Create all kernels
 	const char* names[] = {
 		"ero1_kernel", "ero2_kernel", "ero3_kernel",
-		"ero4_kernel", "ero5_kernel", "ero6_kernel", "ero7_kernel"
+		"ero4_kernel", "ero5_kernel", "ero7_kernel"
 	};
 
 	for (const char* name : names)
