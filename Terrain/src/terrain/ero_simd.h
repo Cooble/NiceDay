@@ -1,4 +1,5 @@
-﻿// ===== Include guard for parallel/primitive selection =====
+﻿#if 0
+// ===== Include guard for parallel/primitive selection =====
 #if defined(EROSIMD_PARALLEL_ENABLE)
 #   ifdef EROSIMD_H_PARALLEL_INCLUDED
 #       define SKIP_SIMD_PARALLEL 1
@@ -472,3 +473,4 @@ namespace EroParallel {
 #endif
 
 #endif // skip whole file if already included
+#endif

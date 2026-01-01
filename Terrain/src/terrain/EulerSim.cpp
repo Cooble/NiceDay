@@ -135,14 +135,6 @@ void Euler::step(EulerGround& g)
 		ero4(g, s);
 		ero5(g, s);
 		ero7(g, s);
-
-		//ero1_old(g);
-		//ero2_old(g);
-		//ero3_old(g);
-		//ero4_old(g);
-		//ero5_old(g);
-		//ero7_old(g);
-
 		return;
 
 	case CPU_PARALLEL:
@@ -157,29 +149,25 @@ void Euler::step(EulerGround& g)
 	case CPU_SIMD:
 		ero1_simd(g, s);
 		ero2_simd(g, s);
-		//ero2_simd_fix_borders(g);
+		ero2_simd_fix_borders(g);
 		ero3_simd(g, s);
-		//ero3_simd_fix_borders(g);
+		ero3_simd_fix_borders(g);
 		ero4_simd(g, s);
 		ero5_simd(g, s);
 		ero7_simd(g, s);
-
-		//ero1_simd_old(g);
-		//ero2_simd_old(g);
-		//ero3_simd_old(g);
-		//ero4_simd_old(g);
-		//ero5_simd_old(g);
-		//ero7_simd_old(g);
-
 		return;
+
 	case SIMD_PARALLEL:
 		EroParallel::ero1_simd(g, s);
 		EroParallel::ero2_simd(g, s);
+		ero2_simd_fix_borders(g);
 		EroParallel::ero3_simd(g, s);
+		ero3_simd_fix_borders(g);
 		EroParallel::ero4_simd(g, s);
 		EroParallel::ero5_simd(g, s);
 		EroParallel::ero7_simd(g, s);
 		return;
+
 	case OPENCL:
 		//cl->upload_all(g);
 		//cl->upload_params(g, *s);
@@ -189,7 +177,9 @@ void Euler::step(EulerGround& g)
 	case SIMD_PARALLEL_OMP:
 		EroOmp::ero1_simd(g, s);
 		EroOmp::ero2_simd(g, s);
+		ero2_simd_fix_borders(g);
 		EroOmp::ero3_simd(g, s);
+		ero3_simd_fix_borders(g);
 		EroOmp::ero4_simd(g, s);
 		EroOmp::ero5_simd(g, s);
 		EroOmp::ero7_simd(g, s);

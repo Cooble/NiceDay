@@ -628,14 +628,9 @@ void TerrainLayer::onImGuiRenderSimulator()
 	using namespace ter;
 
 	ImGui::SeparatorText("Comparison Mode");
-	if (ImGui::Checkbox("Enable SIMD Comparison", &m_enable_simd))
-	{
-		// Visibility will be updated in onRender
-	}
-	if (ImGui::Checkbox("Enable Vanilla", &m_enable_vanilla))
-	{
-		// Visibility will be updated in onRender
-	}
+	ImGui::Checkbox("Enable SIMD", &m_enable_simd);
+	ImGui::Checkbox("Enable OPENCL", &m_enable_vanilla);
+	
 	ImGui::SetItemTooltip("Show both vanilla and SIMD implementations side by side");
 
 	ImGui::SeparatorText("Simulation");
@@ -680,7 +675,7 @@ void TerrainLayer::onImGuiRenderSimulator()
 		ImGui::SetItemTooltip("Resets the terrain to the initial state, removing all simulation progress");
 
 		int min = 1;
-		int max = 10;
+		int max = 50;
 		ImGui::SliderScalar("Speed", ImGuiDataType_U32, &playspeed_sim_euler, &min, &max, "%ld");
 		ImGui::Checkbox("Render Water", &toggle_render_water);
 

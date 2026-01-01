@@ -25,7 +25,7 @@
 #else
 
 #if ERO_PARALLEL_ENABLE
-#define PARALLELIZE_LOOP /*_Pragma("omp parallel for schedule(static)")*/
+#define PARALLELIZE_LOOP _Pragma("omp parallel for schedule(static)")
 #else
 #define PARALLELIZE_LOOP
 #endif

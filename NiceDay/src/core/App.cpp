@@ -41,6 +41,7 @@ static void physicalWindowCallback(Event& e);
 
 void App::init(const AppInfo& info)
 {
+	Log::init();
 	ResourceMan::init(); //init location of /res
 	m_info = info;
 	m_io = info.io;
@@ -51,7 +52,6 @@ void App::init(const AppInfo& info)
 		m_settings->access_map("INFO") = "Application temporary file";
 	}
 	ControlMap::init();
-	Log::init();
 	m_Window = new Window(info.width, info.height, info.title);
 	m_Input = new RealInput(m_Window);
 	if (m_io.enableSCENE)

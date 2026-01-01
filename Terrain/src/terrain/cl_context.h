@@ -1,4 +1,5 @@
 #pragma once
+#define CL_HPP_ENABLE_EXCEPTIONS
 #include <CL/cl.hpp>
 #include <fstream>
 #include <iostream>
@@ -17,7 +18,6 @@ public:
     cl::Program program;
 
     // GPU Buffers corresponding to EulerGround
-
     struct {
         cl::Buffer
             buf_terrain_height,
@@ -30,8 +30,11 @@ public:
             buf_velocity,
             buf_perlin_map;
 	} b;
-    // Kernel handles
-    std::vector<cl::Kernel> kernels;
+	std::vector<cl::Kernel> kernels;
+    
+	int current_fence_idx=0;
+    std::array<cl::Event,10> fence_ring_buff;
+
 
     int width=0, height=0;
 
@@ -49,4 +52,7 @@ private:
     cl::Platform platform;
     bool initialized = false;
     void initializeContext();
+private:
+    void bind_terrain_buffers();
+    void bind_sediment_buffers();
 };

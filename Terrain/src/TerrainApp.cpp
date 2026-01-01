@@ -20,7 +20,7 @@ public:
 		info.io.enableSCENE = true;
 		info.io.enableIMGUI = true;
 		info.io.enableMONO = false;
-		m_target_tps = 60;
+		m_target_tps = 30;
 		init(info);
 		auto editor = new EditorLayer();
 		m_LayerStack.pushLayer(editor);
@@ -28,22 +28,29 @@ public:
 	}
 };
 
+static void fromCmd(int argc, char* argv[]);
+
 
 #undef ND_TERRAIN_APP
 
 #ifdef ND_TERRAIN_APP
-int main()
+int main(int argc, char* argv[])
 {
-	Log::init();
+	// CLI if program args
+	if (argc > 1)
+	{
+		Log::init();
+		ResourceMan::init();
+		fromCmd(argc, argv);
+		return 0;
+	}
 
 	TerrainApp t;
-
 	t.start();
 
 	return 0;
 }
-#else
-
+#endif
 
 void measureol(std::span<const int> sizes)
 {
@@ -105,10 +112,24 @@ void measureol(std::span<const int> sizes)
 	NBT::saveAsCSV("sim_times_chunk_sizes.csv", stats, ',', "Size");
 }
 
-void measureTypes(
-	std::span<const int> sizes,
-	std::initializer_list<Euler::SimType> types = {Euler::SIMD_PARALLEL, Euler::CPU_SIMD, Euler::OPENCL},
-	int cycles = 80)
+
+bool ignoreBig(size_t size, Euler::SimType type)
+{
+	switch (type)
+	{
+	case Euler::CPU_BASIC:
+		return size > 3072;
+	case Euler::CPU_PARALLEL:
+		return size > 3072;
+	default:
+		return false;
+	}
+}
+
+void measureTypes(const char* filename,
+                  std::span<const int> sizes,
+                  std::initializer_list<Euler::SimType> types = {Euler::SIMD_PARALLEL, Euler::CPU_SIMD, Euler::OPENCL},
+                  int cycles = 80)
 {
 	NBT stats;
 
@@ -119,6 +140,9 @@ void measureTypes(
 		e.sim_type = type;
 		for (auto size : sizes)
 		{
+			if (ignoreBig(size, type))
+				continue;
+
 			EulerGround g;
 			g.resize(size);
 
@@ -131,6 +155,8 @@ void measureTypes(
 				e.refreshParams(g, s);
 				e.step(g); //warmup
 				e.step(g);
+				e.stepRender(g);
+
 
 				TimerStaper t("");
 				for (int i = 0; i < cycles; ++i)
@@ -143,7 +169,7 @@ void measureTypes(
 			stats[std::to_string(size)][std::string(Euler::sim_type_names[e.sim_type])] += (double)micros / (double)cycles;
 		}
 	}
-	NBT::saveAsCSV("sim_times_OMP_longerjbjb2.csv", stats, ',', "Size");
+	NBT::saveAsCSV(filename, stats, ',', "Size");
 }
 
 void measureChunksSimdMD(
@@ -188,37 +214,6 @@ void measureChunksSimdMD(
 }
 
 
-void measureCacheMisses(int size)
-{
-	size += 2; //for simd tail ignore
-	Euler e;
-	e.sim_type = Euler::SIMD_PARALLEL;
-
-	EulerGround g;
-	g.resize(size);
-
-
-	Euler::EulerSettings s;
-
-
-	e.init(g, &s, false);
-	uint64_t micros;
-	constexpr int cycles = 100;
-	{
-		e.refreshParams(g, s);
-		e.step(g); //warmup
-		e.step(g);
-
-		TimerStaper t("");
-		for (int i = 0; i < cycles; ++i)
-			e.step(g);
-		e.stepRender(g);
-
-		micros = t.getUS();
-	}
-}
-
-
 static constexpr auto chunkSizes = std::to_array<int>({
 	128, 160, 192,
 	256, 320, 384,
@@ -227,6 +222,7 @@ static constexpr auto chunkSizes = std::to_array<int>({
 	2048, 2560, 3072,
 	4096, 5120, 6144,
 	8192, 10240, 12288,
+	16384, 20480
 });
 static constexpr auto chunkSizesPlus2 = []
 {
@@ -236,31 +232,85 @@ static constexpr auto chunkSizesPlus2 = []
 	return arr;
 }();
 
-
-// expect args: size simType
-// e.g. "./Terrain 2048 SIMD_PARALLEL"
+// expect args: size simType cycles
+// e.g. "./Terrain 2048 SIMD_PARALLEL 500"
 static void fromCmd(int argc, char* argv[])
 {
 	// extract size from args
-	int size = 2048;
+	int size = 4096;
+	int cycles = 100;
+
 	if (argc > 1)
 	{
+		std::string arg1 = argv[1];
+		if (arg1 == "-h" || arg1 == "--help")
+		{
+			ND_INFO("\nUsage: {} [size] [simType] [cycles]\n\n"
+			        "Description:\n"
+			        "  Runs the Euler terrain simulation benchmark.\n\n"
+			        "Arguments:\n"
+			        "  size     : Integer grid size (default: 4096)\n"
+			        "  simType  : Execution backend (default: SIMD_PARALLEL)\n"
+			        "  cycles   : Number of simulation steps (default: 100)\n\n"
+			        "Available simTypes:\n"
+			        "  CPU - basic cpu\n"
+			        "  PARALLEL - parallel std::for_each\n"
+			        "  SIMD - AVX512\n"
+			        "  SIMD_PARALLEL - AVX512 & parallel std::for_each\n"
+			        "  SIMD_OMP - AVX512 & OpenMP\n"
+			        "  OPENCL\n"
+			        , argv[0]);
+			std::exit(0);
+		}
 		size = std::atoi(argv[1]);
+		if (!size)
+			size = 4096;
 	}
+
 	size += 2; //for simd tail ignore
 
 	Euler::SimType t = Euler::SIMD_PARALLEL;
 	if (argc > 2)
 	{
-		t =
-			std::string(argv[2]) == "SIMD_PARALLEL" ? Euler::SIMD_PARALLEL : 
-		(std::string(argv[2]) == "CPU_SIMD" ? Euler::CPU_SIMD : 
-			(std::string(argv[2]) == "OPENCL" ? Euler::OPENCL : 
-				(std::string(argv[2]) == "CPU_PARALLEL" ? Euler::CPU_PARALLEL 
-					: Euler::SIMD_PARALLEL)));
+		std::string_view simTypeStr = argv[2];
+
+		if (simTypeStr == "SIMD_PARALLEL")
+		{
+			t = Euler::SIMD_PARALLEL;
+		}
+		else if (simTypeStr == "SIMD")
+		{
+			t = Euler::CPU_SIMD;
+		}
+		else if (simTypeStr == "OPENCL")
+		{
+			t = Euler::OPENCL;
+		}
+		else if (simTypeStr == "PARALLEL")
+		{
+			t = Euler::CPU_PARALLEL;
+		}
+		else if (simTypeStr == "SIMD_OMP")
+		{
+			t = Euler::SIMD_PARALLEL_OMP;
+		}
+		else if (simTypeStr == "CPU")
+		{
+			t = Euler::CPU_BASIC;
+		}
 	}
+
+	// Parse cycles if provided
+	if (argc > 3)
+	{
+		cycles = std::atoi(argv[3]);
+		if (cycles <= 0)
+			cycles = 100;
+	}
+
 	ND_BUG("Using size: {}", size);
 	ND_BUG("Using type: {}", Euler::sim_type_names[t]);
+	ND_BUG("Using cycles: {}", cycles);
 
 	Euler e;
 	e.sim_type = t;
@@ -268,7 +318,7 @@ static void fromCmd(int argc, char* argv[])
 	g.resize(size);
 	Euler::EulerSettings s;
 	e.init(g, &s, false);
-	constexpr int cycles = 100;
+
 	{
 		e.refreshParams(g, s);
 		TimerStaper t("");
@@ -280,23 +330,21 @@ static void fromCmd(int argc, char* argv[])
 	}
 }
 
+
+#ifndef ND_TERRAIN_APP
+// Standalone benchmark mode
 int main(int argc, char* argv[])
 {
 	Log::init();
+	ResourceMan::init();
 
+	// CLI if program args
+	if (argc > 1)
+	{
+		fromCmd(argc, argv);
+		return 0;
+	}
 
-	fromCmd(argc, argv);
-	return 0;
-
-
-	//measureChunksSimdMD(std::span{chunkSizesPlus2}.first(15));
-	measureTypes(std::span{chunkSizesPlus2}.first(21).last(3), {Euler::SIMD_PARALLEL, Euler::CPU_SIMD}, 100);
-	return 0;
-
-
-	//measureChunkSizes();
-	//measureStatsOld();
-	//measureCacheMisses(size);
-	return 0;
+	measureTypes("total2.csv", std::span{chunkSizesPlus2}.first(18), {Euler::CPU_BASIC, Euler::CPU_PARALLEL, Euler::CPU_SIMD, Euler::SIMD_PARALLEL, Euler::SIMD_PARALLEL_OMP, Euler::OPENCL}, 200);
 }
 #endif
