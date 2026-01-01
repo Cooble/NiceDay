@@ -10,32 +10,32 @@ For the purposes of the current performance improvement the latter one was chose
 The Eulerian approach simulates water flow and erosion in distinct steps e.g. rain addition, water flow calculation, sediment transport, evaporation...,
 each step requiring at least one iteration over at least one field.
 
-# How to Run
-See `Terrain/terrain_manual/README.md` for building and running instructions or follow the steps below:
+# How to Run with Visual Studio
+Follow the steps below using the Visual Studio CMake integration.  
+See `Terrain/terrain_manual/README.md` for other options. (not recommended)
 
-1. Clone the repository:
-
+1. Clone the repository:  
    `git clone --branch terrain --recurse-submodules --depth=1 https://github.com/Cooble/NiceDay.git`
 
-2. In parallel, run:
+2. Open:  
+   Open the root folder as CMake project in Visual Studio
 
-   - `External-WIN32-Build.bat` (creates build directory for Visual Studio)
-   - ~~`DownloadAdditionalResources.bat` (downloads resources not part of git VCS)~~ not needed for this module
+3. Pick the CMake preset:  
+   e.g. `x64 Release AVX512` or `x64 Release` 
 
-3. Change to the build directory:
+4. Build  
+   `Terrain.exe`
 
-   - `cd build`
 
-4. Build or open the solution:
+5. Run the executable  
+   `.\build\Terrain\Terrain.exe`   
+   or   
+   `.\build\Terrain\Terrain.exe --help`
+   
+6. NOTE  
+   Instead of picking the corresponding CMakePreset, you can enable AVX512 manually by setting:  
+   `option(ENABLE_AVX512 "Enable AVX512 instruction set optimizations" OFF)`
 
-   - `start NiceDaySolution.sln`
-   - or  
-   - `cmake --build . --config Release --target Terrain`
-
-5. Run the executable
-   - `.\build\Terrain\Terrain.exe`
-   - or
-   - `.\build\Terrain\Terrain.exe --help`
 
 
 
