@@ -164,8 +164,6 @@ struct Euler
 	~Euler();
 
 public:
-	void ero3_simd_fix_borders(EulerGround& g);
-	void ero2_simd_fix_borders(EulerGround& g);
 
 	void ero3_fix_borders(EulerGround& g);
 	void ero2_fix_borders(EulerGround& g);

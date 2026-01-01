@@ -60,10 +60,14 @@ message(STATUS "OpenCL Include Dirs: ${OpenCL_INCLUDE_DIRS}")
 # Dependencies
     target_link_libraries(Terrain PUBLIC NiceDay)
 	target_link_libraries(Terrain PUBLIC OpenCL::OpenCL)
-    target_compile_options(Terrain PRIVATE
-        $<$<CXX_COMPILER_ID:MSVC>:/arch:AVX512>
-        $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-march=native>
-    )
+
+# Enable AVX512 if set
+target_compile_options(Terrain PRIVATE
+    # On MSVC if enabled, add /arch:AVX512
+    $<$<AND:$<BOOL:${ENABLE_AVX512}>,$<CXX_COMPILER_ID:MSVC>>:/arch:AVX512>
+    # On non-MSVC compilers if enabled, add -march=native
+    $<$<AND:$<BOOL:${ENABLE_AVX512}>,$<NOT:$<CXX_COMPILER_ID:MSVC>>>:-march=native>
+)
 
 
 

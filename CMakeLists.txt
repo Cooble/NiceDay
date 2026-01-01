@@ -10,6 +10,16 @@ set(CMAKE_MSVC_RUNTIME_LIBRARY
     CACHE STRING "Use static VC++ runtime (/MT or /MTd)" FORCE)
 
 option(ND_ENABLE_DOTNET "Build with C# scripting support" OFF)   # default = ON
+option(ENABLE_AVX512 "Enable AVX512 instruction set optimizations" OFF)
+message(STATUS "AVX512 ENABLED: ${ENABLE_AVX512}")
+add_compile_options(
+    # On MSVC if enabled, add /arch:AVX512
+    $<$<AND:$<BOOL:${ENABLE_AVX512}>,$<CXX_COMPILER_ID:MSVC>>:/arch:AVX512>
+    # On non-MSVC compilers if enabled, add -march=native
+    $<$<AND:$<BOOL:${ENABLE_AVX512}>,$<NOT:$<CXX_COMPILER_ID:MSVC>>>:-march=native>
+)
+
+
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)

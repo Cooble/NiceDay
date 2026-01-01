@@ -500,6 +500,53 @@ inline void ero7_simd(EulerGround& g, Euler::EulerSettings* s)
     }
 }
 
+
+// ==================================================================================
+// FIX BORDER
+// ==================================================================================
+inline void ero3_simd_fix_borders(EulerGround& g)
+{
+    auto w = g.width;
+    auto h = g.height;
+
+    // now we nullify velocity on borders if needed
+    for (int y = 1; y < h - 1; y++)
+    {
+        int row = y * w;
+        auto& velLLeft = *(((float*)g.velocity.data()) + (row + 1) + g.velocity.size() * 0);
+        auto& velLRight = *(((float*)g.velocity.data()) + (row + w - 2) + g.velocity.size() * 0);
+
+        velLLeft = std::max(0.f, velLLeft);
+        velLRight = std::min(0.f, velLRight);
+    }
+    // top and bottom
+    for (int x = 0; x < w; x++)
+    {
+        auto& velTop = *(((float*)g.velocity.data()) + (x + w) + g.velocity.size() * 1);
+        auto& velBottom = *(((float*)g.velocity.data()) + ((h - 2) * w + x) + g.velocity.size() * 1);
+        velTop = std::max(0.f, velTop);
+        velBottom = std::min(0.f, velBottom);
+    }
+}
+
+inline void ero2_simd_fix_borders(EulerGround& g)
+{
+    auto w = g.width;
+    auto h = g.height;
+
+    // nullify borders
+    // now we need to set outfluxes to zero on borders
+    for (int y = 1; y < h - 1; y++)
+    {
+        int row = y * w;
+        *((float*)g.flux.data() + (row + 1) + g.flux.size() * 0) = 0.f;
+        *((float*)g.flux.data() + (row + w - 1 - 1) + g.flux.size() * 1) = 0.f;
+    }
+    // top and bottom
+    ZeroMemory(((float*)g.flux.data()) + g.flux.size() * 2 + w, w * sizeof(float));
+    ZeroMemory(((float*)g.flux.data()) + g.flux.size() * 3 + (h - 2) * w, w * sizeof(float));
+}
+
 // ==================================================================================
 // Clean Up
 // ==================================================================================
