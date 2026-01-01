@@ -1,6 +1,6 @@
 # Optimizing Terrain Eroder Simulator
 
-## Overview
+# Overview
 Simple eroder with two algorithm strategies was already implemented before inside the C++ ND Engine:
 - **Lagrangian** approach, simulating individual droplets moving across the terrain one at the time.
 - **Eulerian** approach, simulating whole fields of water and sediment across the terrain.
@@ -10,7 +10,7 @@ For the purposes of the current performance improvement the latter one was chose
 The Eulerian approach simulates water flow and erosion in distinct steps e.g. rain addition, water flow calculation, sediment transport, evaporation...,
 each step requiring at least one iteration over at least one field.
 
-## How to Run
+# How to Run
 See `Terrain/terrain_manual/README.md` for building and running instructions or follow the steps below:
 
 1. Clone the repository:
@@ -37,7 +37,22 @@ See `Terrain/terrain_manual/README.md` for building and running instructions or 
    - or
    - `.\build\Terrain\Terrain.exe --help`
 
-## Implementation
+
+
+# Implementation
+
+## Codebase Structure
+- `Terrain/` - performance optimization project folder  
+Main code files `Terrain/src/terrain/`:
+  - `ero.h` - OpenCL kernel source code, works for both CPU and GPU
+  - `ero_simd.h` - AVX512 vectorized CPU implementation (single-threaded, multithreaded std, multithreaded omp)
+  - `EulerSim.cpp` - Represents the Euler simulator, owns resources, calls kernels
+  - `cl_context.cpp` - OpenCL context management
+  - `TerrainLayer.cpp` - UI, rendering, user interaction
+  - `../TerrainApp.cpp` - Entry point, argument parsing
+
+## Optimization Strategies
+
 Before the introduction of SIMD/multithreading/GPU acceleration the computing pipeline was restructured to minimize memory accesses. (e.g. combining rain + evaporation)  
 Two versions of the optimized eroder were implemented:
 1. **CPU Multithreading & Vectorization**
@@ -59,7 +74,7 @@ After the initial implementation, further optimalizations were applied:
 Combination of these 2 improvements led to a marginal speedup with the factor of circa 1.1x across terrain sizes. (see Results section)
 
 ### CPU Multithreading & Vectorization
-The implementation targets AVX512-capable CPUs, which limits compatibility to AVX2 only systems. These would require yet another implementation to be developed from scratch. [ further improvement, AVX2 vs AVX512 benchmark]
+The implementation targets AVX512-capable CPUs, which limits compatibility to AVX2 only systems. These would require yet another implementation to be developed from scratch.
 
 In order to utilize CPU SIMD capabilities, the data structures had to be converted from AoS to SoA, e.g. Flux vector field -> 4 separate scalar fields.  
 All major steps of the sim were vectorized with AVX512 intrinsics, operating on 16 adjacent float cells in one go.  
@@ -73,10 +88,10 @@ Store/load operations remain unaligned, as accessing neighboring cells in a row 
 The parallelization of the CPU version proved more complex due to SIMD.
 2D terrain grid had to be split into horizontal strips, each processed by one thread.
 This approach, however, was not applicable to the Landslide step, which not only modifies the current cell but also its neighbors, introducing data races at the strip borders.
-This step had to be executed single-threaded. [solution might be tiling with overlapping borders?]
+This step was implemented as single-threaded only for now. (Multithreading would be possible, but borders would need to be handled separately.)
 
 Moreover, due to this locality restriction, the step had to be divided into 2 sub-passes, each modifying only half of the cells at the time (interleaved mask - checkerboard pattern).
-To somewhat alleviate the performance hit, only one sub-pass is executed per simulation step leading to the slower lanslide effect.
+To somewhat alleviate the performance hit, only one sub-pass is executed per simulation step leading to the slower Landslide effect.
 
 For multithreading two approaches were tested:
 1. C++ parallel `std::for_each`
@@ -85,7 +100,7 @@ For multithreading two approaches were tested:
 Both approaches were implemented using a single header file that can be included multiple times with different preprocessor flags to generate the specific parallelization variant needed.
 
 
-## UI
+# UI
 Two modes of running the sim:
 - **Headless mode**:  
   Run simulations with parameters specified as program arguments.  
@@ -100,7 +115,7 @@ Two modes of running the sim:
   (see Terrain/terrain_manual/README.md for detailed usage instructions)  
   ![Navigation](ui_navigation.gif)
 
-## Results
+# Results
 Performance was evaluated on a system:
 - AMD Ryzen 9 9950X 16-Core Processor
 - 64 GB RAM
@@ -114,7 +129,7 @@ Multiple modes were compared:
 - **CPU Multithreaded with AVX512 SIMD**
 - **GPU OpenCL**
 
-### OpenCL
+## OpenCL
 OpenCL version consistently outperformed all CPU versions. 
 GPU computation times were nearly constant up to 1024x1024 terrain size, after which it started climbing linearly with the size.
 The additional overhead for smaller terrains is likely due to data transfer times dominating the computation time.
@@ -129,13 +144,12 @@ What is more, additional roughly 10% speedup was achieved by introducing double 
 | 16386 | 47699   | 50923   | 1.068   |
 | 20482 | 72832   | 79952   | 1.098   |
 
-### CPU Multithreading & Vectorization
+## CPU Multithreading & Vectorization
 
-#### Vectorization
-Vectorized CPU version showed significant speedup over the baseline single-threaded CPU version. 
-In fact superlinear speedup was observed for smaller texture sizes (greater than 16), likely due to better cache utilization and reduced branch mispredictions.
+### Vectorization
+Vectorized CPU version showed significant speedup over the baseline single-threaded CPU version. Over the factor of 8x. (see Speedup Factors table below)
 
-#### Multithreading
+### Multithreading
 Additional improvement achieved by parallelization, however, 
 the results indicate that CPU is becoming memory bandwidth bound rather quickly, as the speedup factor starts to plateau with increasing terrain sizes at about 1.4x.
 
@@ -152,7 +166,7 @@ Linux perf tool was also tried, but no useful information could be gathered from
 ### Karp-Flatt Metric
 The Karp-Flatt metric was calculated for two specific scenarios to evaluate the parallel efficiency of the vectorized implementation.  
 OpenMP's `num_threads(n)` directive was used to control the number of threads.  
-As anticipated, the results reveal a substantial serial fraction. Which can be attributed both to the non-parallelizable Landslide step and memory bandwidth limitations.  
+As anticipated, the results reveal a substantial serial fraction. Which can be attributed both to the not-parallelized Landslide step and memory bandwidth limitations.  
 Detailed investigation of individual steps would be required to isolate the exact causes.  
 
 Formula used for calculation:
@@ -175,46 +189,50 @@ Best observed speedup with multithreading:
 $$e = \frac{\frac{1}{4.0} - \frac{1}{32}}{1 - \frac{1}{32}} = \frac{0.25 - 0.03125}{0.96875} = \frac{0.21875}{0.96875} \approx 0.23$$
 
 
-### Speedup factors
+### Speedup Factors
 
-| Size | OMP/OPENCL | SIMD/OMP | CPU/OMP | CPU/OPENCL |
-|------|------------|----------|---------|------------|
-| 130  | 0.36       | 1.52     | 17.82   | 6.49       |
-| 162  | 0.59       | 1.67     | 21.59   | 12.83      |
-| 194  | 0.74       | 1.81     | 25.04   | 18.60      |
-| 258  | 0.90       | 2.36     | 32.54   | 29.40      |
-| 322  | 1.29       | 2.65     | 37.05   | 47.79      |
-| 386  | 1.75       | 2.91     | 39.69   | 69.65      |
-| 514  | 2.58       | 3.12     | 40.06   | 103.55     |
-| 642  | 4.14       | 2.80     | 38.30   | 158.54     |
-| 770  | 5.01       | 3.52     | 43.71   | 219.02     |
-| 1026 | 8.07       | 3.77     | 40.63   | 328.06     |
-| 1282 | 14.44      | 2.58     | 26.21   | 378.42     |
-| 1538 | 19.85      | 1.79     | 17.67   | 350.71     |
-| 2050 | 17.00      | 1.53     | 14.19   | 241.29     |
-| 2562 | 17.16      | 1.46     | 13.38   | 229.65     |
-| 3074 | 17.98      | 1.42     |         |            |
-| 4098 | 17.85      | 1.41     |         |            |
-| 5122 | 16.42      | 1.42     |         |            |
-| 6146 | 16.54      | 1.43     |         |            |
+
+| Size | OMP/OPENCL | SIMD/OMP | CPU/OMP | CPU/OPENCL | CPU/SIMD |
+|------|------------|----------|---------|------------|----------|
+| 130  | 0.36       | 1.52     | 17.82   | 6.49       | 11.71    |
+| 162  | 0.59       | 1.67     | 21.59   | 12.83      | 12.90    |
+| 194  | 0.74       | 1.81     | 25.04   | 18.60      | 13.87    |
+| 258  | 0.90       | 2.36     | 32.54   | 29.40      | 13.81    |
+| 322  | 1.29       | 2.65     | 37.05   | 47.79      | 13.96    |
+| 386  | 1.75       | 2.91     | 39.69   | 69.65      | 13.66    |
+| 514  | 2.58       | 3.12     | 40.06   | 103.55     | 12.84    |
+| 642  | 4.14       | 2.80     | 38.30   | 158.54     | 13.68    |
+| 770  | 5.01       | 3.52     | 43.71   | 219.02     | 12.42    |
+| 1026 | 8.07       | 3.77     | 40.63   | 328.06     | 10.79    |
+| 1282 | 14.44      | 2.58     | 26.21   | 378.42     | 10.14    |
+| 1538 | 19.85      | 1.79     | 17.67   | 350.71     | 9.89     |
+| 2050 | 17.00      | 1.53     | 14.19   | 241.29     | 9.26     |
+| 2562 | 17.16      | 1.46     | 13.38   | 229.65     | 9.14     |
+| 3074 | 17.98      | 1.42     |         |            |          |
+| 4098 | 17.85      | 1.41     |         |            |          |
+| 5122 | 16.42      | 1.42     |         |            |          |
+| 6146 | 16.54      | 1.43     |         |            |          |
 
 where:
 - OMP/OPENCL: Speedup of OpenCL over Multithreaded CPU
-- SIMD/OMP: Speedup of AVX512 over Multithreaded CPU
-- CPU/OMP: Speedup of Single-threaded CPU over Multithreaded CPU
-- CPU/OPENCL: Speedup of Single-threaded CPU over OpenCL
+- SIMD/OMP: Speedup of AVX512 Multithreaded CPU over AVX512 Single-threaded CPU
+- CPU/OMP: Speedup of AVX512 Multithreaded CPU OpenMP over Baseline Single-threaded CPU
+- CPU/OPENCL: Speedup of OpenCL over Baseline Single-threaded CPU
+- CPU/SIMD: Speedup of AVX512 Single-threaded CPU over Baseline Single-threaded CPU
 - blank cells: not measured
 
+![Times comparison graph](times.png)
 
-## Conclusion
-The terrain erosion simulator optimization project successfully achieved substantial performance improvements across multiple implementation strategies.
+
+# Conclusion
+The terrain erosion simulator optimization project successfully achieved substantial performance improvements across multiple implementation strategies.  
 **Key Achievements:**
 - **Vectorization (AVX512):** Delivered over 10x speedup compared to baseline CPU implementation
 - **Multithreading:** Provided additional 1.4x performance gain when combined with vectorization
 - **GPU OpenCL Implementation:** Achieved 200x speedup over baseline, enabling real-time simulation of large terrains previously computationally unfeasible
 
 
-## Future Work
+# Future Work
 There are still multiple areas where further improvements could be made:
 - **Handle border cases better**  
   Currently, fixing borders requires more passes over the data; accessing cold memory.  

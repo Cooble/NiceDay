@@ -20,16 +20,16 @@
 #include "ero_simd.h"*/
 
 // 1. Primitive / Vanilla version (No Defines)
-#include "ero_new.h" 
+#include "ero_simd.h" 
 
 // 2. Parallel STL version
 #define EROSIMD_PARALLEL_ENABLE
-#include "ero_new.h"
+#include "ero_simd.h"
 #undef EROSIMD_PARALLEL_ENABLE
 
 // 3. OpenMP version
 #define EROSIMD_OMP_ENABLE
-#include "ero_new.h"
+#include "ero_simd.h"
 #undef EROSIMD_OMP_ENABLE
 
 
