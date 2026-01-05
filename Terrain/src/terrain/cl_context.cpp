@@ -174,6 +174,17 @@ void EroCLContext::init(EulerGround& g, Euler::EulerSettings& s)
 
 		upload_all(g);
 		upload_params(g, s);
+
+
+		// prime all events as done by default, for some reason, cmd queue does not like null events in wait lists
+		std::vector<cl::Event> empty;
+		queue.enqueueMarkerWithWaitList(&empty, &ready_rain);
+		queue.enqueueMarkerWithWaitList(&empty, &ready_erosion);
+		queue.enqueueMarkerWithWaitList(&empty, &ready_landslide);
+		queue.enqueueMarkerWithWaitList(&empty, &ready_sediment);
+		queue.enqueueMarkerWithWaitList(&empty, &ready_velocity);
+
+
 	}
 	catch (cl::Error& err) {
 		ND_ERROR("OpenCL Error in init(): {} ({})", err.what(), getCLErrorString(err.err()));
@@ -308,84 +319,79 @@ void EroCLContext::step(Euler::EulerSettings& s)
 
 		std::vector<cl::Event> waitFor;
 
-		// 1. Rain Evap
-		if (s.e_rain) {
-			cl::Event ev_rain;
-			// Writes: buf_water_height
-			queue.enqueueNDRangeKernel(kernels[0], of, global, cl::NullRange, &waitFor, &ev_rain);
 
-			waitFor = { ev_rain };
+		// 1. Rain & Evap
+		waitFor = { ready_erosion };
+		if (s.e_rain) {
+			// Writes: buf_water_height
+			queue.enqueueNDRangeKernel(kernels[0], of, global, cl::NullRange, &waitFor, &ready_rain);
 		}
+		else queue.enqueueMarkerWithWaitList(&waitFor, &ready_rain);
 
 		// 2. Water Flow
+		waitFor = { ready_rain, ready_landslide };
 		if (s.e_flow)
 		{
-			cl::Event ev_flow1, ev_flow2;
+			cl::Event ready_flux;
 
 			// Pass 1: Flux calculation
 			// Reads: water_height, terrain (Arg 0 bound to current terrain)
-			queue.enqueueNDRangeKernel(kernels[1], of, global, cl::NullRange, &waitFor, &ev_flow1);
+			queue.enqueueNDRangeKernel(kernels[1], of, global, cl::NullRange, &waitFor, &ready_flux);
 
 			// Pass 2: Water update
 			// Reads: Flux
 			// Writes: velocity, water_height
-			std::vector flow1_done = { ev_flow1 };
-			queue.enqueueNDRangeKernel(kernels[2], of, global, cl::NullRange, &flow1_done, &ev_flow2);
-
-			waitFor = { ev_flow2 };
+			waitFor = { ready_flux };
+			queue.enqueueNDRangeKernel(kernels[2], of, global, cl::NullRange, &waitFor, &ready_velocity);
 		}
+		else queue.enqueueMarkerWithWaitList(&waitFor, &ready_velocity);
 
 		// 3. Erosion Transport
+		waitFor = { ready_velocity, ready_sediment };
 		if (s.e_erosion)
 		{
-			cl::Event ev_ero;
-
 			// A. Erosion
 			// Reads: Terrain (Current)
 			// Writes: Terrain (New), Sediment (Current buf)
-			queue.enqueueNDRangeKernel(kernels[3], of, global, cl::NullRange, &waitFor, &ev_ero);
+			queue.enqueueNDRangeKernel(kernels[3], of, global, cl::NullRange, &waitFor, &ready_erosion);
 
 			// --- SWAP TERRAIN ---
-			// CPU-side pointer swap (O(1))
 			std::swap(b.buf_terrain_height, b.buf_new_terrain_height);
-			// Update kernel args to reflect swap
 			bind_terrain_buffers();
 
 			// B. Sediment Transport
 			// Reads: Sediment (Current)
 			// Writes: Sediment (New)
-			// Must wait for 'ev_ero' because Ero kernel generates the sediment data
-			std::vector after_erosion = { ev_ero };
-			cl::Event ev_transport;
-
-			queue.enqueueNDRangeKernel(kernels[4], of, global, cl::NullRange, &after_erosion, &ev_transport);
+			waitFor = { ready_erosion };
+			queue.enqueueNDRangeKernel(kernels[4], of, global, cl::NullRange, &waitFor, &ready_sediment);
 
 			// --- SWAP SEDIMENT ---
 			std::swap(b.buf_sediment, b.buf_new_sediment);
 			bind_sediment_buffers();
-
-			// Next stage waits for Transport to finish
-			waitFor = { ev_transport };
+		}
+		else {
+			queue.enqueueMarkerWithWaitList(&waitFor, &ready_erosion);
+			queue.enqueueMarkerWithWaitList(&waitFor, &ready_sediment);
 		}
 
+
 		// 4. Landslide
+		waitFor = { ready_erosion };
 		if (s.e_landslide)
 		{
-			// Since we called bind_terrain_buffers() above, kernels[5] is 
-			// already pointing to the valid (current) terrain.
-
 			for (int pass = 0; pass < 4; pass++)
 			{
 				kernels[5].setArg(3, pass & 1);        // offset x
 				kernels[5].setArg(4, (pass >> 1) & 1); // offset y
 
-				cl::Event ev_slide;
 				// Reads/Writes: Terrain (In-Place)
-				queue.enqueueNDRangeKernel(kernels[5], of, global_slide, cl::NullRange, &waitFor, &ev_slide);
+				queue.enqueueNDRangeKernel(kernels[5], of, global_slide, cl::NullRange, &waitFor, &ready_landslide);
 
-				waitFor = { ev_slide };
+				waitFor = { ready_landslide };
 			}
 		}
+		else queue.enqueueMarkerWithWaitList(&waitFor, &ready_landslide);
+		
 
 		// Fence after frame is done
 		cl::Event frame_done;

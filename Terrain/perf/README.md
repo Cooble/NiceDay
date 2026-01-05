@@ -73,6 +73,9 @@ After the initial implementation, further optimalizations were applied:
 
 Combination of these 2 improvements led to a marginal speedup with the factor of circa 1.1x across terrain sizes. (see Results section)
 
+Final Control flow of the OpenCL version including inter-step dependencies highlighted by red arrows over the blue simulation step boundary:
+![Flow Opencl](flow_opencl.svg)
+
 ### CPU Multithreading & Vectorization
 The implementation targets AVX512-capable CPUs, which limits compatibility to AVX2 only systems. These would require yet another implementation to be developed from scratch.
 
@@ -99,6 +102,7 @@ For multithreading two approaches were tested:
 
 Both approaches were implemented using a single header file that can be included multiple times with different preprocessor flags to generate the specific parallelization variant needed.
 
+Control flow of the CPU version remains linear, as multithreading is implemented solely at the intra-step level.
 
 # UI
 Two modes of running the sim:

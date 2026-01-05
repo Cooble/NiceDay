@@ -35,6 +35,12 @@ public:
 	int current_fence_idx=0;
     std::array<cl::Event,10> fence_ring_buff;
 
+    cl::Event ready_rain;
+    cl::Event ready_sediment;
+    cl::Event ready_landslide;
+    cl::Event ready_velocity;
+    cl::Event ready_erosion;
+
 
     int width=0, height=0;
 
